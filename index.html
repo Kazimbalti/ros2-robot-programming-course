@@ -8,6 +8,7 @@
     if(!t){ t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
     document.documentElement.setAttribute('data-theme', t);
   }catch(e){}
+  document.documentElement.classList.add('js');
 })();
 </script>
 <meta charset="UTF-8">
@@ -45,8 +46,9 @@
   h2{font-size:1.5em; font-weight:800; margin:52px 0 20px; display:flex; align-items:center; gap:12px; letter-spacing:-.2px; color:var(--accent-ink);}
   p{margin:0 0 16px; color:#3c382f;} strong{color:var(--text); font-weight:700;}
   .chapter-list{display:flex; flex-direction:column; gap:12px;}
-  .chapter-card{display:flex; align-items:center; gap:18px; background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:18px 22px; text-decoration:none; color:var(--text); transition:transform .15s, box-shadow .15s, border-color .15s; box-shadow:0 1px 2px rgba(33,31,26,0.03);}
+  .chapter-card{display:flex; align-items:center; gap:14px; background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:18px 22px; transition:transform .15s, box-shadow .15s, border-color .15s; box-shadow:0 1px 2px rgba(33,31,26,0.03);}
   .chapter-card:hover{transform:translateY(-2px); box-shadow:0 16px 32px -20px rgba(33,31,26,0.25); border-color:#c7cbfa;}
+  .chapter-card-link{flex:1; min-width:0; display:flex; align-items:center; gap:18px; text-decoration:none; color:var(--text);}
   .chapter-num{flex-shrink:0; width:46px; height:46px; border-radius:12px; background:#eef0ff; color:var(--accent-ink); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.05em; font-family:'JetBrains Mono', monospace;}
   .chapter-info{flex:1; min-width:0;}
   .chapter-title{font-weight:700; font-size:1.03em; margin-bottom:3px;}
@@ -102,13 +104,79 @@
   html[data-theme="dark"] .coursenav a{color:#c7c9dc;}
   html[data-theme="dark"] .coursenav a:hover{background:#262a45; color:#aab1ff;}
   @media print{ .coursenav{display:none;} }
+
+  /* ---- scroll-position progress bar ---- */
+  #scroll-progress{position:fixed; top:0; left:0; height:3px; width:0%; background:linear-gradient(90deg,var(--accent),var(--purple),var(--accent2)); z-index:1000; transition:width .08s linear;}
+
+  /* ---- scroll-reveal ---- */
+  /* Visible by default (no-JS / slow-JS safe). Only hidden pre-reveal once html.js
+     confirms JS is running, so content is never blocked from appearing. */
+  .reveal{transition:opacity .6s cubic-bezier(.2,.7,.3,1), transform .6s cubic-bezier(.2,.7,.3,1);}
+  html.js .reveal{opacity:0; transform:translateY(22px);}
+  html.js .reveal.in{opacity:1; transform:translateY(0);}
+  @media (prefers-reduced-motion: reduce){ html.js .reveal{opacity:1; transform:none; transition:none;} }
+
+  /* ---- cover node-graph canvas ---- */
+  .cover canvas{position:absolute; inset:0; width:100%; height:100%; opacity:.6; pointer-events:none;}
+
+  /* ---- animated counters ---- */
+  .stats-strip{display:grid; grid-template-columns:repeat(auto-fit,minmax(128px,1fr)); gap:14px; margin:0 0 44px;}
+  .stat-card{background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:22px 14px; text-align:center; transition:transform .15s, box-shadow .15s, border-color .15s;}
+  .stat-card:hover{transform:translateY(-3px); box-shadow:0 16px 32px -20px rgba(33,31,26,0.25); border-color:#c7cbfa;}
+  .stat-num{font-family:'JetBrains Mono', monospace; font-size:1.95em; font-weight:800; color:var(--accent-ink); line-height:1;}
+  .stat-label{color:var(--muted); font-size:.76em; margin-top:7px; font-weight:600; letter-spacing:.2px;}
+
+  /* ---- lecture progress tracker ---- */
+  .progress-panel{background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:18px 22px; margin:0 0 20px; display:flex; align-items:center; gap:18px; flex-wrap:wrap;}
+  .progress-ring-wrap{position:relative; width:54px; height:54px; flex-shrink:0;}
+  .progress-ring-wrap svg{transform:rotate(-90deg); width:54px; height:54px;}
+  .progress-ring-bg{fill:none; stroke:var(--border); stroke-width:5;}
+  .progress-ring-fg{fill:none; stroke:var(--accent2); stroke-width:5; stroke-linecap:round; transition:stroke-dashoffset .5s ease;}
+  .progress-ring-text{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono', monospace; font-weight:800; font-size:.76em; color:var(--accent-ink);}
+  .progress-info{flex:1; min-width:190px;}
+  .progress-info b{display:block; margin-bottom:3px; font-size:1.02em;}
+  .progress-info span{color:var(--muted); font-size:.85em;}
+  .progress-reset{background:none; border:1px solid var(--border); color:var(--muted); font-size:.78em; font-weight:700; padding:8px 14px; border-radius:999px; cursor:pointer; transition:border-color .15s, color .15s; white-space:nowrap;}
+  .progress-reset:hover{border-color:var(--danger); color:var(--danger);}
+
+  /* ---- filter / search bar ---- */
+  .filter-bar{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:0 0 22px;}
+  .filter-chip{background:var(--panel); border:1px solid var(--border); color:var(--muted); font-size:.82em; font-weight:700; padding:7px 14px; border-radius:999px; cursor:pointer; transition:.15s;}
+  .filter-chip:hover{border-color:#c7cbfa; color:var(--accent-ink);}
+  .filter-chip.active{background:var(--accent); border-color:var(--accent); color:#fff;}
+  .search-box{position:relative; flex:1; min-width:190px;}
+  .search-box input{width:100%; padding:10px 14px 10px 34px; border-radius:999px; border:1px solid var(--border); background:var(--panel); color:var(--text); font-family:inherit; font-size:.87em;}
+  .search-box input:focus{outline:2px solid var(--accent); outline-offset:1px;}
+  .search-icon{position:absolute; left:13px; top:50%; transform:translateY(-50%); font-size:.85em; opacity:.55; pointer-events:none;}
+  .no-results{display:none; text-align:center; color:var(--muted); padding:34px 10px; font-size:.92em; border:1px dashed var(--border); border-radius:16px;}
+
+  /* ---- chapter-card completion check ---- */
+  .chapter-check{flex-shrink:0; width:26px; height:26px; border-radius:50%; border:2px solid var(--border); background:var(--bg); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:.15s; font-size:13px; color:transparent; line-height:1;}
+  .chapter-check:hover{border-color:var(--accent2); transform:scale(1.08);}
+  .chapter-card.done{border-color:#bfe9d4;}
+  .chapter-card.done .chapter-check{background:var(--accent2); border-color:var(--accent2); color:#fff;}
+  .chapter-card.done .chapter-num{background:#eafaf3; color:var(--accent2);}
+  html[data-theme="dark"] .chapter-card.done{border-color:#1f4a3d;}
+  .chapter-card.hidden-filter{display:none;}
+
+  /* ---- back to top ---- */
+  #back-to-top{position:fixed; bottom:22px; right:22px; z-index:999; width:46px; height:46px; border-radius:50%; border:1px solid var(--border); background:var(--panel); color:var(--text); font-size:18px; cursor:pointer; box-shadow:0 6px 18px -8px rgba(0,0,0,0.35); opacity:0; pointer-events:none; transform:translateY(10px) scale(.9); transition:opacity .2s, transform .2s;}
+  #back-to-top.show{opacity:1; pointer-events:auto; transform:translateY(0) scale(1);}
+  #back-to-top:hover{transform:translateY(-2px) scale(1.05);}
+
+  @media (max-width:640px){
+    .progress-panel{padding:16px 18px;}
+    .stat-num{font-size:1.6em;}
+  }
 </style>
 <link rel="stylesheet" href="projector.css">
 </head>
 <body>
+<div id="scroll-progress"></div>
 <button id="theme-toggle" aria-label="Toggle light/dark mode" title="Light/Dark mode">
   <span id="theme-toggle-icon">🌙</span>
 </button>
+<button id="back-to-top" aria-label="Back to top" title="Back to top">↑</button>
 <nav class="coursenav"><div class="inner">
   <span class="brand">ROS &amp; Robot Programming</span>
   <a href="index.html" class="active">Home</a>
@@ -120,6 +188,7 @@
 <div class="wrap">
 
   <div class="cover">
+    <canvas id="cover-canvas" aria-hidden="true"></canvas>
     <div class="kicker">Hands-On Lecture Series &nbsp;·&nbsp; 14 Lectures &nbsp;·&nbsp; ~51 Contact Hours</div>
     <h1>ROS and Robot Programming</h1>
     <div class="subtitle">From an empty laptop to a robot you designed yourself — VMware, Ubuntu, and ROS 2 Humble installed on Day 1; a fully autonomous AgileX LIMO surveying and mapping in simulation by Week 10; LIMO's real electronics in your hands by Week 11; and your own ROS 2 robot, built from a bare motor and an empty microSD card, running by Week 14.</div>
@@ -138,9 +207,17 @@
     </div>
   </div>
 
+  <div class="stats-strip">
+    <div class="stat-card reveal"><div class="stat-num" data-count="14">0</div><div class="stat-label">Lectures</div></div>
+    <div class="stat-card reveal"><div class="stat-num" data-count="51">0</div><div class="stat-label">Contact Hours</div></div>
+    <div class="stat-card reveal"><div class="stat-num" data-count="4">0</div><div class="stat-label">Drive Modes</div></div>
+    <div class="stat-card reveal"><div class="stat-num" data-count="2">0</div><div class="stat-label">Real Robot Builds</div></div>
+    <div class="stat-card reveal"><div class="stat-num" data-count="6">0</div><div class="stat-label">Course Parts</div></div>
+  </div>
+
   <h2>🗂️ Course Information</h2>
   <div class="chapter-list">
-    <a class="chapter-card" href="syllabus.html">
+    <a class="chapter-card reveal" href="syllabus.html">
       <div class="chapter-num">§</div>
       <div class="chapter-info">
         <div class="chapter-title">Syllabus</div>
@@ -148,7 +225,7 @@
       </div>
       <div class="chapter-arrow">→</div>
     </a>
-    <a class="chapter-card" href="schedule.html">
+    <a class="chapter-card reveal" href="schedule.html">
       <div class="chapter-num">📅</div>
       <div class="chapter-info">
         <div class="chapter-title">Schedule</div>
@@ -156,7 +233,7 @@
       </div>
       <div class="chapter-arrow">→</div>
     </a>
-    <a class="chapter-card" href="assignments.html">
+    <a class="chapter-card reveal" href="assignments.html">
       <div class="chapter-num">✎</div>
       <div class="chapter-info">
         <div class="chapter-title">Assignments &amp; Capstone</div>
@@ -168,11 +245,11 @@
 
   <div class="divider"></div>
 
-  <div class="figure">
+  <div class="figure reveal">
     <img src="images/Intro_robot.png" alt="Introduction to robotics — comparing a robot's components to a human">
   </div>
 
-  <div class="figure">
+  <div class="figure reveal">
     <img src="images/Intro_robot_2.png" alt="Introduction to robotics">
   </div>
 
@@ -194,7 +271,7 @@
   <p>To understand it better, you will compare a robot to a human and see the components shared in a robotic form.</p>
 
   <h2>🌍 Robots Use Cases</h2>
-  <div class="figure">
+  <div class="figure reveal">
     <img src="images/robot_use_cases.png" alt="Robot use cases across different industries and applications">
   </div>
 
@@ -208,7 +285,7 @@
     LiDAR, a joystick, etc., as shown in Fig. 1.1. Each of those is an independent block that communicates with
     the others in a way that is powerful and scalable.
   </p>
-  <div class="figure">
+  <div class="figure reveal">
     <img src="images/ros2_communication.png" alt="ROS 2 communication — independent nodes for camera, navigation, hardware driver, LiDAR, and joystick communicating with each other">
     <figcaption>Fig. 1.1 — ROS 2 Communication</figcaption>
   </div>
@@ -218,7 +295,7 @@
     There is a bundle of libraries available — you just need to clone and use that library. Secondly, you can
     write programs in Python and C++ simultaneously, as shown in Fig. 1.2:
   </p>
-  <div class="figure">
+  <div class="figure reveal">
     <img src="images/Tools_and_Libraries.png" alt="ROS 2 tools and plug-and-play libraries, with support for writing programs in Python and C++ simultaneously">
     <figcaption>Fig. 1.2 — Tools and Libraries</figcaption>
   </div>
@@ -228,7 +305,7 @@
     A quick look at the AgileX LIMO — the four-in-one mobile robot this whole course is built around.
     Watch it drive before we open up its software architecture.
   </p>
-  <div class="figure">
+  <div class="figure reveal">
     <video controls preload="metadata" playsinline poster="images/Limo_robot.png">
       <source src="Limo_intro.mp4" type="video/mp4">
       Your browser does not support the video tag —
@@ -238,7 +315,7 @@
   </div>
 
   <h2>🧠 ROS2 Robot Architecture</h2>
-  <div class="figure figure-wide">
+  <div class="figure figure-wide reveal">
     <img src="images/ros2-robot-architecture.png" alt="ROS 2 robot architecture pipeline tailored to the AgileX LIMO — from limo_description URDF/Xacro through TF2, RViz2, Gazebo Classic, and ros2_control to deployment on the real robot">
   </div>
 
@@ -247,7 +324,7 @@
     <strong>AgileX LIMO</strong> — a four-in-one mobile robot that can switch between differential, Ackermann,
     Mecanum, and tracked drive bases on the same chassis. It merges three sources into one coherent course:
   </p>
-  <div class="box idea">
+  <div class="box idea reveal">
     <div class="box-title">🧩 What this course is built from</div>
     <p style="margin-bottom:10px;"><strong>1. Conceptual depth</strong> — the concepts and terminology of the official ROS 2 documentation at <em>docs.ros.org</em> (Nodes → Topics → URDF → TF2 → Gazebo → Nav2 → Behavior Trees), rebuilt line-by-line around LIMO instead of a generic robot.</p>
     <p style="margin-bottom:10px;"><strong>2. Tested lab exercises</strong> — the real, working package names, launch files, and CLI commands from a university LIMO+ROS2 module's teaching wiki, so every command in this course actually runs.</p>
@@ -264,141 +341,213 @@
 
   <h2 id="lectures">📚 Lectures</h2>
 
-  <div class="part-header"><span class="part-title">Part One — Foundations</span><span class="line"></span></div>
-  <div class="chapter-list">
-    <a class="chapter-card" href="01-installation-vmware-ros2-limo-intro.html">
-      <div class="chapter-num">1</div>
+  <div class="progress-panel reveal">
+    <div class="progress-ring-wrap">
+      <svg viewBox="0 0 54 54">
+        <circle class="progress-ring-bg" cx="27" cy="27" r="24"></circle>
+        <circle id="progress-ring-fg" class="progress-ring-fg" cx="27" cy="27" r="24" stroke-dasharray="150.8" stroke-dashoffset="150.8"></circle>
+      </svg>
+      <div class="progress-ring-text" id="progress-ring-text">0%</div>
+    </div>
+    <div class="progress-info">
+      <b id="progress-headline">You haven't started yet</b>
+      <span id="progress-sub">Tick the circle on any lecture card once you finish it — your progress is saved in this browser.</span>
+    </div>
+    <button class="progress-reset" id="progress-reset" title="Clear saved progress">↺ Reset progress</button>
+  </div>
+
+  <div class="filter-bar reveal">
+    <button class="filter-chip active" data-part="all">All</button>
+    <button class="filter-chip" data-part="foundations">Foundations</button>
+    <button class="filter-chip" data-part="body">Body &amp; Motion</button>
+    <button class="filter-chip" data-part="perception">Perception</button>
+    <button class="filter-chip" data-part="autonomy">Autonomy</button>
+    <button class="filter-chip" data-part="hardware">Hardware</button>
+    <button class="filter-chip" data-part="diy">Build-Your-Own</button>
+    <div class="search-box"><span class="search-icon">🔎</span><input type="text" id="lecture-search" placeholder="Search lectures — e.g. Nav2, URDF, camera…" aria-label="Search lectures"></div>
+  </div>
+
+  <div id="lecture-groups">
+  <div class="part-header reveal" data-part="foundations"><span class="part-title">Part One — Foundations</span><span class="line"></span></div>
+  <div class="chapter-list" data-part="foundations">
+    <div class="chapter-card reveal" data-lecture="1" data-part="foundations">
+      <button class="chapter-check" data-check="1" title="Mark Lecture 1 complete" aria-label="Mark Lecture 1 complete">✓</button>
+      <a class="chapter-card-link" href="01-installation-vmware-ros2-limo-intro.html">
+        <div class="chapter-num">1</div>
       <div class="chapter-info">
         <div class="chapter-title">Getting Started — VMware, Ubuntu 22.04 &amp; ROS 2 Humble</div>
         <div class="chapter-desc">Installing your Linux robotics workstation from zero, plus meeting the LIMO robot and its four drive modes</div>
       </div>
       <div class="chapter-arrow">→</div>
-    </a>
-    <a class="chapter-card" href="02-ros2-architecture-first-simulation.html">
-      <div class="chapter-num">2</div>
+      </a>
+    </div>
+    <div class="chapter-card reveal" data-lecture="2" data-part="foundations">
+      <button class="chapter-check" data-check="2" title="Mark Lecture 2 complete" aria-label="Mark Lecture 2 complete">✓</button>
+      <a class="chapter-card-link" href="02-ros2-architecture-first-simulation.html">
+        <div class="chapter-num">2</div>
       <div class="chapter-info">
         <div class="chapter-title">ROS 2 Architecture &amp; Your First LIMO Simulation</div>
         <div class="chapter-desc">Nodes, Topics, Services, Actions, Parameters — turtlesim, terminator, and launching LIMO in Gazebo</div>
       </div>
       <div class="chapter-arrow">→</div>
-    </a>
-    <a class="chapter-card" href="03-dev-environment-drive-modes.html">
-      <div class="chapter-num">3</div>
+      </a>
+    </div>
+    <div class="chapter-card reveal" data-lecture="3" data-part="foundations">
+      <button class="chapter-check" data-check="3" title="Mark Lecture 3 complete" aria-label="Mark Lecture 3 complete">✓</button>
+      <a class="chapter-card-link" href="03-dev-environment-drive-modes.html">
+        <div class="chapter-num">3</div>
       <div class="chapter-info">
         <div class="chapter-title">The ROS 2 Dev Environment &amp; LIMO's Drive Modes</div>
         <div class="chapter-desc">Workspaces, packages, colcon, your first Python controller node, and differential/Ackermann/Mecanum control</div>
       </div>
       <div class="chapter-arrow">→</div>
-    </a>
+      </a>
+    </div>
   </div>
 
-  <div class="part-header"><span class="part-title">Part Two — Building &amp; Moving LIMO's Body</span><span class="line"></span></div>
-  <div class="chapter-list">
-    <a class="chapter-card" href="04-urdf-xacro-limo-body.html">
-      <div class="chapter-num">4</div>
+  <div class="part-header reveal" data-part="body"><span class="part-title">Part Two — Building &amp; Moving LIMO's Body</span><span class="line"></span></div>
+  <div class="chapter-list" data-part="body">
+    <div class="chapter-card reveal" data-lecture="4" data-part="body">
+      <button class="chapter-check" data-check="4" title="Mark Lecture 4 complete" aria-label="Mark Lecture 4 complete">✓</button>
+      <a class="chapter-card-link" href="04-urdf-xacro-limo-body.html">
+        <div class="chapter-num">4</div>
       <div class="chapter-info">
         <div class="chapter-title">LIMO's Body — URDF &amp; Xacro</div>
         <div class="chapter-desc">Links, joints, wheels, sensors, and the real limo_description package across all four chassis types</div>
       </div>
       <div class="chapter-arrow">→</div>
-    </a>
-    <a class="chapter-card" href="05-tf2-frames-rviz.html">
-      <div class="chapter-num">5</div>
+      </a>
+    </div>
+    <div class="chapter-card reveal" data-lecture="5" data-part="body">
+      <button class="chapter-check" data-check="5" title="Mark Lecture 5 complete" aria-label="Mark Lecture 5 complete">✓</button>
+      <a class="chapter-card-link" href="05-tf2-frames-rviz.html">
+        <div class="chapter-num">5</div>
       <div class="chapter-info">
         <div class="chapter-title">TF2, Coordinate Frames &amp; RViz</div>
         <div class="chapter-desc">The TF tree, static/dynamic transforms, map→odom→base_link, and watching LIMO live</div>
       </div>
       <div class="chapter-arrow">→</div>
-    </a>
-    <a class="chapter-card" href="06-gazebo-ros2-control-path-controllers.html">
-      <div class="chapter-num">6</div>
+      </a>
+    </div>
+    <div class="chapter-card reveal" data-lecture="6" data-part="body">
+      <button class="chapter-check" data-check="6" title="Mark Lecture 6 complete" aria-label="Mark Lecture 6 complete">✓</button>
+      <a class="chapter-card-link" href="06-gazebo-ros2-control-path-controllers.html">
+        <div class="chapter-num">6</div>
       <div class="chapter-info">
         <div class="chapter-title">Gazebo, ros2_control &amp; Path-Following Controllers</div>
         <div class="chapter-desc">Physics simulation, controller_manager, and building on/off, proportional, and kinematic path controllers</div>
       </div>
       <div class="chapter-arrow">→</div>
-    </a>
+      </a>
+    </div>
   </div>
 
-  <div class="part-header"><span class="part-title">Part Three — Perception</span><span class="line"></span></div>
-  <div class="chapter-list">
-    <a class="chapter-card" href="07-sensors-lidar-imu-camera-obstacle-avoidance.html">
-      <div class="chapter-num">7</div>
+  <div class="part-header reveal" data-part="perception"><span class="part-title">Part Three — Perception</span><span class="line"></span></div>
+  <div class="chapter-list" data-part="perception">
+    <div class="chapter-card reveal" data-lecture="7" data-part="perception">
+      <button class="chapter-check" data-check="7" title="Mark Lecture 7 complete" aria-label="Mark Lecture 7 complete">✓</button>
+      <a class="chapter-card-link" href="07-sensors-lidar-imu-camera-obstacle-avoidance.html">
+        <div class="chapter-num">7</div>
       <div class="chapter-info">
         <div class="chapter-title">Sensors — LiDAR, IMU, Depth Camera &amp; Reactive Avoidance</div>
         <div class="chapter-desc">Reading LaserScan/Imu/Image data, TF-transforming points, and a safe-stop obstacle-avoidance node</div>
       </div>
       <div class="chapter-arrow">→</div>
-    </a>
-    <a class="chapter-card" href="08-computer-vision-opencv-object-detection.html">
-      <div class="chapter-num">8</div>
+      </a>
+    </div>
+    <div class="chapter-card reveal" data-lecture="8" data-part="perception">
+      <button class="chapter-check" data-check="8" title="Mark Lecture 8 complete" aria-label="Mark Lecture 8 complete">✓</button>
+      <a class="chapter-card-link" href="08-computer-vision-opencv-object-detection.html">
+        <div class="chapter-num">8</div>
       <div class="chapter-info">
         <div class="chapter-title">Robot Perception — OpenCV &amp; Object Detection</div>
         <div class="chapter-desc">cv_bridge, HSV color/contour detection, Find-Object-2D, and YOLO on LIMO's camera</div>
       </div>
       <div class="chapter-arrow">→</div>
-    </a>
+      </a>
+    </div>
   </div>
 
-  <div class="part-header"><span class="part-title">Part Four — State Estimation &amp; Autonomy</span><span class="line"></span></div>
-  <div class="chapter-list">
-    <a class="chapter-card" href="09-odometry-ekf-amcl-localization.html">
-      <div class="chapter-num">9</div>
+  <div class="part-header reveal" data-part="autonomy"><span class="part-title">Part Four — State Estimation &amp; Autonomy</span><span class="line"></span></div>
+  <div class="chapter-list" data-part="autonomy">
+    <div class="chapter-card reveal" data-lecture="9" data-part="autonomy">
+      <button class="chapter-check" data-check="9" title="Mark Lecture 9 complete" aria-label="Mark Lecture 9 complete">✓</button>
+      <a class="chapter-card-link" href="09-odometry-ekf-amcl-localization.html">
+        <div class="chapter-num">9</div>
       <div class="chapter-info">
         <div class="chapter-title">Odometry, Sensor Fusion (EKF) &amp; AMCL Localization</div>
         <div class="chapter-desc">Extended lab: wheel odometry drift, IMU/scan-matching fusion, robot_localization, the particle filter, and AMCL tuning — from a good relative estimate to knowing exactly where you are on the map</div>
       </div>
       <div class="chapter-arrow">→</div>
-    </a>
-    <a class="chapter-card" href="10-slam-nav2-capstone-mission.html">
-      <div class="chapter-num">10</div>
+      </a>
+    </div>
+    <div class="chapter-card reveal" data-lecture="10" data-part="autonomy">
+      <button class="chapter-check" data-check="10" title="Mark Lecture 10 complete" aria-label="Mark Lecture 10 complete">✓</button>
+      <a class="chapter-card-link" href="10-slam-nav2-capstone-mission.html">
+        <div class="chapter-num">10</div>
       <div class="chapter-info">
         <div class="chapter-title">SLAM, Navigation2 &amp; the Simulated Capstone Mission</div>
         <div class="chapter-desc">Extended lab: mapping the lab with slam_toolbox, costmaps/planners/behavior trees in Nav2, and a full waypoint-following + frontier-exploration mission — the simulated dress rehearsal for Lecture 14</div>
       </div>
       <div class="chapter-arrow">→</div>
-    </a>
+      </a>
+    </div>
   </div>
 
-  <div class="part-header"><span class="part-title">Part Five — Real Hardware: The LIMO Deep-Dive</span><span class="line"></span></div>
-  <div class="chapter-list">
-    <a class="chapter-card" href="11-limo-hardware-six-systems.html">
-      <div class="chapter-num">11</div>
+  <div class="part-header reveal" data-part="hardware"><span class="part-title">Part Five — Real Hardware: The LIMO Deep-Dive</span><span class="line"></span></div>
+  <div class="chapter-list" data-part="hardware">
+    <div class="chapter-card reveal" data-lecture="11" data-part="hardware">
+      <button class="chapter-check" data-check="11" title="Mark Lecture 11 complete" aria-label="Mark Lecture 11 complete">✓</button>
+      <a class="chapter-card-link" href="11-limo-hardware-six-systems.html">
+        <div class="chapter-num">11</div>
       <div class="chapter-info">
         <div class="chapter-title">LIMO Hardware Deep-Dive — The Six Real Systems</div>
         <div class="chapter-desc">Straight from the AgileX manual: chassis &amp; the four drive modules, onboard compute, LiDAR, depth camera, IMU, and battery/power — six hands-on subsystem labs on the physical robot</div>
       </div>
       <div class="chapter-arrow">→</div>
-    </a>
+      </a>
+    </div>
   </div>
 
-  <div class="part-header"><span class="part-title">Part Six — Build Your Own ROS 2 Robot</span><span class="line"></span></div>
-  <div class="chapter-list">
-    <a class="chapter-card" href="12-diy-robot-motors-power-compute.html">
-      <div class="chapter-num">12</div>
+  <div class="part-header reveal" data-part="diy"><span class="part-title">Part Six — Build Your Own ROS 2 Robot</span><span class="line"></span></div>
+  <div class="chapter-list" data-part="diy">
+    <div class="chapter-card reveal" data-lecture="12" data-part="diy">
+      <button class="chapter-check" data-check="12" title="Mark Lecture 12 complete" aria-label="Mark Lecture 12 complete">✓</button>
+      <a class="chapter-card-link" href="12-diy-robot-motors-power-compute.html">
+        <div class="chapter-num">12</div>
       <div class="chapter-info">
         <div class="chapter-title">Build Your Own Robot I — Motors, Power &amp; Compute</div>
         <div class="chapter-desc">Meet Forge: choosing gear motors with encoders, wiring the L298N to an Arduino Nano pin by pin, flashing <code>ros_arduino_bridge</code>, spinning the wheels under closed-loop control and calibrating counts-per-revolution, then the power budget, battery sizing, power distribution and a headless Ubuntu Server + ROS 2 Humble install</div>
       </div>
       <div class="chapter-arrow">→</div>
-    </a>
-    <a class="chapter-card" href="13-diy-robot-ros2-driver-urdf-lidar-camera.html">
-      <div class="chapter-num">13</div>
+      </a>
+    </div>
+    <div class="chapter-card reveal" data-lecture="13" data-part="diy">
+      <button class="chapter-check" data-check="13" title="Mark Lecture 13 complete" aria-label="Mark Lecture 13 complete">✓</button>
+      <a class="chapter-card-link" href="13-diy-robot-ros2-driver-urdf-lidar-camera.html">
+        <div class="chapter-num">13</div>
       <div class="chapter-info">
         <div class="chapter-title">Build Your Own Robot II — ROS 2 Driver, CAD, URDF, LiDAR &amp; Camera</div>
         <div class="chapter-desc">A nervous system, a body and senses: custom messages, differential-drive kinematics derived by hand then implemented in a full driver node, a bringup launch file, a chassis designed in Onshape and converted to URDF automatically, TF via <code>robot_state_publisher</code>, the udev workflow for any USB sensor, and a real silent-failure camera debugging exercise</div>
       </div>
       <div class="chapter-arrow">→</div>
-    </a>
-    <a class="chapter-card" href="14-diy-robot-simulation-3dprint-capstone.html">
-      <div class="chapter-num">14</div>
+      </a>
+    </div>
+    <div class="chapter-card reveal" data-lecture="14" data-part="diy">
+      <button class="chapter-check" data-check="14" title="Mark Lecture 14 complete" aria-label="Mark Lecture 14 complete">✓</button>
+      <a class="chapter-card-link" href="14-diy-robot-simulation-3dprint-capstone.html">
+        <div class="chapter-num">14</div>
       <div class="chapter-info">
         <div class="chapter-title">Build Your Own Robot III — Simulation, 3D-Printed Cover &amp; Capstone</div>
         <div class="chapter-desc">URDF to parameterised Xacro, diff-drive/LiDAR/camera Gazebo plugins with the sim-to-real gaps named, the four-file launch hierarchy, publishing your packages to GitHub and driving the digital twin — then designing a self-supporting 3D-printed cover and a final capstone build review</div>
       </div>
       <div class="chapter-arrow">→</div>
-    </a>
+      </a>
+    </div>
   </div>
+  </div>
+
+  <div class="no-results" id="no-results">No lectures match your search. Try a different term or clear the filter.</div>
 
   <div class="divider"></div>
 
@@ -416,7 +565,7 @@
     <tr><td>DIY robot parts for Lectures 12-14 (optional)</td><td>A gear motor with encoder, an H-bridge driver, a small MCU board, an SBC, a LiDAR, and a camera — every step also works as a design-only exercise without buying parts</td></tr>
   </table>
 
-  <div class="box real">
+  <div class="box real reveal">
     <div class="box-title">🌍 Simulation-First, Then Two Real Builds</div>
     <p style="margin:0;">
       Lectures 1-10 are designed to run start-to-finish in Gazebo, so a classroom or self-learner never needs to wait
@@ -432,7 +581,7 @@
 
   <h2 id="assessment">📄 Exams &amp; Attendance</h2>
   <div class="chapter-list">
-    <a class="chapter-card" href="midterm.html">
+    <a class="chapter-card reveal" href="midterm.html">
       <div class="chapter-num">M</div>
       <div class="chapter-info">
         <div class="chapter-title">Midterm Exam</div>
@@ -440,7 +589,7 @@
       </div>
       <div class="chapter-arrow">→</div>
     </a>
-    <a class="chapter-card" href="final.html">
+    <a class="chapter-card reveal" href="final.html">
       <div class="chapter-num">F</div>
       <div class="chapter-info">
         <div class="chapter-title">Final Exam</div>
@@ -448,7 +597,7 @@
       </div>
       <div class="chapter-arrow">→</div>
     </a>
-    <a class="chapter-card" href="attendance.html">
+    <a class="chapter-card reveal" href="attendance.html">
       <div class="chapter-num">✓</div>
       <div class="chapter-info">
         <div class="chapter-title">Attendance Policy</div>
@@ -478,6 +627,254 @@
     try{ localStorage.setItem('limo-book-theme', next); }catch(e){}
     updateIcon();
   });
+})();
+</script>
+<script>
+(function(){
+  /* ---- scroll progress bar + back-to-top ---- */
+  var bar = document.getElementById('scroll-progress');
+  var toTop = document.getElementById('back-to-top');
+  function onScroll(){
+    var h = document.documentElement;
+    var max = h.scrollHeight - h.clientHeight;
+    var pct = max > 0 ? (h.scrollTop / max) * 100 : 0;
+    if(bar) bar.style.width = pct + '%';
+    if(toTop) toTop.classList.toggle('show', h.scrollTop > 500);
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+  if(toTop) toTop.addEventListener('click', function(){
+    window.scrollTo({top:0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'});
+  });
+})();
+
+(function(){
+  /* ---- scroll-reveal ---- */
+  var els = document.querySelectorAll('.reveal');
+  if('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){ entry.target.classList.add('in'); io.unobserve(entry.target); }
+      });
+    }, {threshold:0.12, rootMargin:'0px 0px -30px 0px'});
+    els.forEach(function(el){ io.observe(el); });
+    /* Safety net: guarantee content is never left invisible (slow tab, missed
+       intersection on a fragment-jump load, etc.) */
+    setTimeout(function(){
+      els.forEach(function(el){ el.classList.add('in'); });
+    }, 2500);
+  } else {
+    els.forEach(function(el){ el.classList.add('in'); });
+  }
+})();
+
+(function(){
+  /* ---- animated stat counters ---- */
+  function animate(el){
+    var target = parseInt(el.getAttribute('data-count'), 10) || 0;
+    var suffix = el.getAttribute('data-suffix') || '';
+    if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+      el.textContent = target + suffix;
+      return;
+    }
+    var dur = 900, start = null;
+    function step(ts){
+      if(!start) start = ts;
+      var p = Math.min((ts - start) / dur, 1);
+      var eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(eased * target) + suffix;
+      if(p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+  var counters = document.querySelectorAll('.stat-num[data-count]');
+  if('IntersectionObserver' in window){
+    var cio = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){ animate(entry.target); cio.unobserve(entry.target); }
+      });
+    }, {threshold:0.5});
+    counters.forEach(function(el){ cio.observe(el); });
+  } else {
+    counters.forEach(animate);
+  }
+})();
+
+(function(){
+  /* ---- cover node-graph canvas (a little ROS computation graph) ---- */
+  var canvas = document.getElementById('cover-canvas');
+  if(!canvas || !canvas.getContext) return;
+  var ctx = canvas.getContext('2d');
+  var cover = canvas.parentElement;
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var W, H, nodes = [];
+  var NODE_COUNT = 22, LINK_DIST = 130;
+
+  function resize(){
+    W = cover.clientWidth; H = cover.clientHeight;
+    canvas.width = Math.max(1, W * dpr);
+    canvas.height = Math.max(1, H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  function initNodes(){
+    nodes = [];
+    for(var i = 0; i < NODE_COUNT; i++){
+      nodes.push({
+        x: Math.random() * W, y: Math.random() * H,
+        vx: (Math.random() - 0.5) * 0.16, vy: (Math.random() - 0.5) * 0.16,
+        r: 1.4 + Math.random() * 1.6
+      });
+    }
+  }
+  function draw(){
+    ctx.clearRect(0, 0, W, H);
+    for(var i = 0; i < nodes.length; i++){
+      for(var j = i + 1; j < nodes.length; j++){
+        var a = nodes[i], b = nodes[j];
+        var dx = a.x - b.x, dy = a.y - b.y;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        if(dist < LINK_DIST){
+          ctx.strokeStyle = 'rgba(199,205,255,' + (0.35 * (1 - dist / LINK_DIST)) + ')';
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        }
+      }
+    }
+    for(var k = 0; k < nodes.length; k++){
+      var n = nodes[k];
+      ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(212,216,255,0.9)';
+      ctx.fill();
+    }
+  }
+  function step(){
+    for(var i = 0; i < nodes.length; i++){
+      var n = nodes[i];
+      n.x += n.vx; n.y += n.vy;
+      if(n.x < 0 || n.x > W) n.vx *= -1;
+      if(n.y < 0 || n.y > H) n.vy *= -1;
+    }
+    draw();
+    if(!reduceMotion) requestAnimationFrame(step);
+  }
+  resize(); initNodes(); step();
+  window.addEventListener('resize', function(){
+    resize();
+    if(nodes.length === 0) initNodes();
+    draw();
+  });
+})();
+
+(function(){
+  /* ---- lecture progress tracker (saved to localStorage) ---- */
+  var STORAGE_KEY = 'limo-lecture-progress';
+  var TOTAL = 14;
+  var CIRC = 2 * Math.PI * 24;
+
+  function load(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      var arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    }catch(e){ return []; }
+  }
+  function save(arr){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }catch(e){}
+  }
+
+  var done = load();
+  var ringFg = document.getElementById('progress-ring-fg');
+  var ringText = document.getElementById('progress-ring-text');
+  var headline = document.getElementById('progress-headline');
+  var sub = document.getElementById('progress-sub');
+
+  function render(){
+    document.querySelectorAll('.chapter-card[data-lecture]').forEach(function(card){
+      var n = card.getAttribute('data-lecture');
+      card.classList.toggle('done', done.indexOf(n) !== -1);
+    });
+    var count = done.length;
+    var pct = Math.round((count / TOTAL) * 100);
+    if(ringFg) ringFg.style.strokeDashoffset = CIRC - (CIRC * pct / 100);
+    if(ringText) ringText.textContent = pct + '%';
+    if(!headline || !sub) return;
+    if(count === 0){
+      headline.textContent = "You haven't started yet";
+      sub.textContent = 'Tick the circle on any lecture card once you finish it — your progress is saved in this browser.';
+    } else if(count >= TOTAL){
+      headline.textContent = '🎉 All ' + TOTAL + ' lectures complete!';
+      sub.textContent = "You've finished the whole course — nice work.";
+    } else {
+      headline.textContent = count + ' of ' + TOTAL + ' lectures complete';
+      sub.textContent = (TOTAL - count) + ' to go — progress is saved in this browser, on this device.';
+    }
+  }
+
+  document.querySelectorAll('[data-check]').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.preventDefault(); e.stopPropagation();
+      var n = btn.getAttribute('data-check');
+      var idx = done.indexOf(n);
+      if(idx === -1) done.push(n); else done.splice(idx, 1);
+      save(done);
+      render();
+    });
+  });
+
+  var resetBtn = document.getElementById('progress-reset');
+  if(resetBtn){
+    resetBtn.addEventListener('click', function(){
+      if(done.length === 0) return;
+      if(window.confirm('Clear your saved lecture progress on this device?')){
+        done = [];
+        save(done);
+        render();
+      }
+    });
+  }
+
+  render();
+})();
+
+(function(){
+  /* ---- lecture filter / search ---- */
+  var chips = document.querySelectorAll('.filter-chip');
+  var searchInput = document.getElementById('lecture-search');
+  var noResults = document.getElementById('no-results');
+  var currentPart = 'all';
+
+  function applyFilters(){
+    var term = (searchInput && searchInput.value ? searchInput.value : '').trim().toLowerCase();
+    var anyVisible = false;
+    document.querySelectorAll('#lecture-groups .chapter-card').forEach(function(card){
+      var part = card.getAttribute('data-part');
+      var text = card.textContent.toLowerCase();
+      var partMatch = (currentPart === 'all' || part === currentPart);
+      var textMatch = (term === '' || text.indexOf(term) !== -1);
+      var show = partMatch && textMatch;
+      card.classList.toggle('hidden-filter', !show);
+      if(show) anyVisible = true;
+    });
+    document.querySelectorAll('#lecture-groups .part-header').forEach(function(header){
+      var part = header.getAttribute('data-part');
+      var list = document.querySelector('#lecture-groups .chapter-list[data-part="' + part + '"]');
+      var visibleCount = list ? list.querySelectorAll('.chapter-card:not(.hidden-filter)').length : 0;
+      header.style.display = visibleCount === 0 ? 'none' : '';
+      if(list) list.style.display = visibleCount === 0 ? 'none' : '';
+    });
+    if(noResults) noResults.style.display = anyVisible ? 'none' : 'block';
+  }
+
+  chips.forEach(function(chip){
+    chip.addEventListener('click', function(){
+      chips.forEach(function(c){ c.classList.remove('active'); });
+      chip.classList.add('active');
+      currentPart = chip.getAttribute('data-part');
+      applyFilters();
+    });
+  });
+  if(searchInput) searchInput.addEventListener('input', applyFilters);
 })();
 </script>
 </body>
