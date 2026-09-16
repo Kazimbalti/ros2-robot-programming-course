@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<script>
+(function(){
+  try{
+    var t = localStorage.getItem('limo-book-theme');
+    if(!t){ t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+    document.documentElement.setAttribute('data-theme', t);
+  }catch(e){}
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 2 — ROS 2 Architecture &amp; Your First LIMO Simulation</title>
+<meta name="description" content="Learn the ROS 2 graph — Nodes, Topics, Services, Actions, Parameters — with turtlesim, then launch the AgileX LIMO in Gazebo and drive it from the command line.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<style>
+  :root{
+    --bg:#f6f4ef; --panel:#fffefb; --panel2:#f1efe8; --border:#e6e1d6;
+    --text:#211f1a; --muted:#7a7568; --accent:#3d4bf5; --accent-ink:#2732b8;
+    --accent2:#0e9e6e; --gold:#c8862c; --danger:#d64a3c; --purple:#8b5cf6; --radius:14px;
+  }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--bg); color:var(--text); font-family:'Inter', -apple-system, sans-serif; line-height:1.85; font-size:17.5px; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:880px; margin:0 auto; padding:48px 24px 120px;}
+  .cover{border-radius:28px; background:#12142b; padding:64px 44px; margin-bottom:56px; position:relative; overflow:hidden; isolation:isolate;}
+  .cover::before{content:""; position:absolute; inset:-40%; background:
+      radial-gradient(38% 45% at 15% 20%, rgba(61,75,245,0.55), transparent 70%),
+      radial-gradient(35% 40% at 85% 15%, rgba(139,92,246,0.45), transparent 70%),
+      radial-gradient(45% 50% at 60% 90%, rgba(14,158,110,0.35), transparent 70%);
+    filter:blur(60px); z-index:0;}
+  .cover::after{content:""; position:absolute; inset:0; background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px); background-size: 20px 20px; z-index:0;}
+  .cover > *{position:relative; z-index:1;}
+  .kicker{display:inline-block; color:#c9cdff; font-weight:600; letter-spacing:.4px; font-size:13px; margin-bottom:18px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); padding:6px 14px; border-radius:999px;}
+  .cover h1{font-size:2.7em; margin:0 0 12px; font-weight:800; line-height:1.3; color:#ffffff; letter-spacing:-.5px;}
+  .cover .subtitle{color:#aeb2d6; font-size:1.2em; margin-bottom:30px; font-weight:400;}
+  .meta-row{display:flex; flex-wrap:wrap; gap:10px; margin-top:18px;}
+  .chip{background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.14); color:#d4d7f0; padding:7px 15px; border-radius:999px; font-size:.83em;}
+  h2{font-size:1.9em; font-weight:800; margin:72px 0 22px; display:flex; align-items:center; gap:14px; letter-spacing:-.3px;}
+  h2 .num{display:inline-flex; align-items:center; justify-content:center; min-width:40px; height:40px; padding:0 12px; border-radius:12px; background:var(--accent); box-shadow:0 6px 16px -4px rgba(61,75,245,0.5); color:#ffffff; font-size:.62em; font-weight:800; flex-shrink:0; white-space:nowrap;}
+  h3{font-size:1.3em; font-weight:700; margin:36px 0 14px; color:var(--accent-ink); letter-spacing:-.2px;}
+  h4{font-size:1.08em; font-weight:700; margin:24px 0 10px; color:var(--purple);}
+  p{margin:0 0 16px; color:#3c382f;}
+  strong{color:var(--text); font-weight:700;}
+  a{color:var(--accent);}
+  .box{border-radius:16px; padding:20px 24px; margin:22px 0; border:1px solid var(--border); background:var(--panel); position:relative; box-shadow:0 1px 2px rgba(33,31,26,0.03);}
+  .box-title{font-weight:800; margin-bottom:9px; display:flex; align-items:center; gap:8px; font-size:.96em; letter-spacing:.1px;}
+  .box p:last-child{margin-bottom:0;}
+  .box.idea{background:#eef0ff;border-color:#d6dafc;} .box.idea .box-title{color:var(--accent-ink);}
+  .box.mistake{background:#fdeeec; border-color:#f6d2cd;} .box.mistake .box-title{color:var(--danger);}
+  .box.eng{background:#f4effe; border-color:#e2d6fb;} .box.eng .box-title{color:var(--purple);}
+  .box.real{background:#eafaf3; border-color:#c9eeda;} .box.real .box-title{color:var(--accent2);}
+  .box.def{background:#fdf3e4; border-color:#f2ddb3;} .box.def .box-title{color:var(--gold);}
+  .box.hw{background:#fdeee4; border-color:#f2c9a3;} .box.hw .box-title{color:#c8622c;}
+  code, pre{font-family:'JetBrains Mono', monospace; direction:ltr; text-align:left;}
+  code{background:#eceaf9; border:1px solid #dcdaf3; border-radius:6px; padding:2px 7px; font-size:.87em; color:var(--accent-ink); display:inline-block;}
+  pre{background:#181a2e; border-radius:16px; padding:18px 20px; overflow-x:auto; margin:18px 0; font-size:.88em; line-height:1.65; box-shadow:0 12px 28px -16px rgba(24,26,46,0.5);}
+  pre code{background:none; border:none; padding:0; color:#d8dcff; display:block;}
+  table{width:100%; border-collapse:separate; border-spacing:0; margin:22px 0; font-size:.92em; border-radius:14px; overflow:hidden; border:1px solid var(--border);}
+  th, td{border-bottom:1px solid var(--border); padding:12px 15px; text-align:left;}
+  th{background:#eceaf9; color:var(--accent-ink); font-weight:700; font-size:.9em;}
+  tr:last-child td{border-bottom:none;}
+  tr:nth-child(even) td{background:rgba(33,31,26,0.02);}
+  ul, ol{margin:0 0 16px; padding-inline-start:26px; color:#3c382f;}
+  li{margin-bottom:7px;}
+  .figure{margin:28px 0; text-align:center;}
+  .figure img, .figure svg{max-width:100%; height:auto; background:#fffefb; border:1px solid var(--border); border-radius:16px; box-shadow:0 1px 2px rgba(33,31,26,0.03), 0 16px 32px -20px rgba(33,31,26,0.14);}
+  .figure figcaption{color:var(--muted); font-size:.87em; margin-top:12px;}
+  .mermaid{background:#fffefb; border:1px solid var(--border); border-radius:16px; padding:18px; margin:24px 0; text-align:center; box-shadow:0 1px 2px rgba(33,31,26,0.03), 0 16px 32px -20px rgba(33,31,26,0.14);}
+  .checkpoint{border-radius:16px; padding:22px 24px; margin:26px 0; background:#eafaf3; border:1px solid #c9eeda;}
+  .checkpoint ul{list-style:none; padding:0; margin:0;}
+  .checkpoint li{padding:9px 0; border-bottom:1px solid rgba(33,31,26,0.06); display:flex; gap:10px; align-items:flex-start;}
+  .checkpoint li:last-child{border-bottom:none;}
+  .checkpoint li::before{content:"◻"; color:var(--accent2); font-size:1.2em; line-height:1;}
+  .exercise{border-radius:14px; padding:18px 22px; margin:16px 0; background:var(--panel); border:1px solid var(--border); border-inline-start:4px solid var(--gold);}
+  .exercise .level{font-size:.76em; color:var(--gold); font-weight:800; text-transform:uppercase; letter-spacing:.6px;}
+  .glossary dt{font-weight:800; color:var(--accent-ink); margin-top:16px;}
+  .glossary dd{margin:4px 0 0; color:var(--muted);}
+  .toc{background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:26px 30px;}
+  .toc a{display:block; padding:8px 0; color:#3c382f; text-decoration:none; border-bottom:1px solid rgba(33,31,26,.06); transition:color .15s;}
+  .toc a:last-child{border-bottom:none;}
+  .toc a:hover{color:var(--accent-ink);}
+  .toc a span{color:var(--muted); font-size:.85em; margin-inline-end:10px; font-weight:600;}
+  .divider{height:1px; background:linear-gradient(90deg, transparent, var(--border), transparent); margin:52px 0;}
+  .footer-nav{display:flex; justify-content:space-between; align-items:center; gap:16px; margin-top:64px; padding-top:26px; border-top:1px solid var(--border); color:var(--muted); font-size:.9em;}
+  .footer-nav a{color:var(--text); text-decoration:none; font-weight:600;}
+  .footer-nav a:hover{color:var(--accent-ink);}
+  .badge-project{display:inline-block; background:#fdf3e4; border:1px solid #f2ddb3; color:var(--gold); border-radius:8px; padding:3px 11px; font-size:.78em; font-weight:700;}
+  .term{background:#181a2e; border-radius:16px; overflow:hidden; margin:22px 0; box-shadow:0 12px 28px -16px rgba(24,26,46,0.5);}
+  .term-bar{display:flex; align-items:center; gap:7px; padding:12px 16px; background:#20223a;}
+  .term-dot{width:11px; height:11px; border-radius:50%;}
+  .term-body{padding:16px 20px; font-family:'JetBrains Mono', monospace; direction:ltr; text-align:left; font-size:.87em; line-height:1.75; color:#d8dcff; white-space:pre-wrap;}
+  .term-prompt{color:#7ee7c7;}
+  .term-out{color:#9aa0c8;}
+  @media print{ body{background:#fff; color:#000;} }
+  html[data-theme="dark"]{
+    --bg:#12141c; --panel:#1b1e2a; --panel2:#20232f; --border:#2d3142;
+    --text:#e7e8f2; --muted:#9498b3; --accent:#7c86ff; --accent-ink:#aab1ff;
+    --accent2:#34d399; --gold:#e3a548; --danger:#f0685a; --purple:#a78bfa; --radius:14px;
+  }
+  html[data-theme="dark"] p, html[data-theme="dark"] ul, html[data-theme="dark"] ol, html[data-theme="dark"] .toc a{color:#c7c9dc;}
+  html[data-theme="dark"] code{background:#262a45; border-color:#3a3f5c;}
+  html[data-theme="dark"] th{background:#262a45;}
+  html[data-theme="dark"] tr:nth-child(even) td{background:rgba(255,255,255,0.03);}
+  html[data-theme="dark"] .box.idea{background:#1f2242; border-color:#383d6b;}
+  html[data-theme="dark"] .box.mistake{background:#3a2220; border-color:#5c332e;}
+  html[data-theme="dark"] .box.eng{background:#2a2340; border-color:#453a63;}
+  html[data-theme="dark"] .box.real{background:#16302a; border-color:#1f4a3d;}
+  html[data-theme="dark"] .box.def{background:#3a2f18; border-color:#5c4826;}
+  html[data-theme="dark"] .box.hw{background:#3a2618; border-color:#5c3f26;}
+  html[data-theme="dark"] .checkpoint{background:#16302a; border-color:#1f4a3d;}
+  html[data-theme="dark"] .checkpoint li{border-bottom-color:rgba(255,255,255,0.08);}
+  html[data-theme="dark"] .badge-project{background:#3a2f18; border-color:#5c4826;}
+  html[data-theme="dark"] .chapter-num{background:#1f2242;}
+  html[data-theme="dark"] .chapter-card{box-shadow:0 1px 2px rgba(0,0,0,0.25);}
+  html[data-theme="dark"] .chapter-card:hover{border-color:#454a7a; box-shadow:0 16px 32px -20px rgba(0,0,0,0.55);}
+  body, .box, .chapter-card, .exercise, .checkpoint, .toc, table, code, th{transition:background-color .25s ease, border-color .25s ease, color .25s ease;}
+  #theme-toggle{position:fixed; top:18px; left:18px; z-index:999; width:46px; height:46px; border-radius:50%; border:1px solid var(--border); background:var(--panel); color:var(--text); font-size:19px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px -8px rgba(0,0,0,0.35); transition:transform .15s ease, background-color .25s ease, border-color .25s ease;}
+  #theme-toggle:hover{transform:scale(1.08);}
+  @media (max-width:640px){ #theme-toggle{top:12px; left:12px; width:42px; height:42px; font-size:17px;} }
+</style>
+<link rel="stylesheet" href="projector.css">
+</head>
+<body>
+<style>
+.coursenav{position:sticky;top:0;z-index:900;background:rgba(255,254,251,0.88);backdrop-filter:saturate(160%) blur(10px);border-bottom:1px solid var(--border);}
+.coursenav .inner{max-width:1000px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;padding:10px 20px 10px 74px;}
+.coursenav .brand{font-weight:800;color:var(--accent-ink);margin-inline-end:12px;font-size:.9em;letter-spacing:-.2px;}
+.coursenav a{color:#3c382f;text-decoration:none;font-weight:600;font-size:.82em;padding:6px 10px;border-radius:999px;transition:background-color .15s,color .15s;}
+.coursenav a:hover{background:#eef0ff;color:var(--accent-ink);}
+.coursenav a.active{background:var(--accent);color:#fff;}
+html[data-theme="dark"] .coursenav{background:rgba(27,30,42,0.9);}
+html[data-theme="dark"] .coursenav a{color:#c7c9dc;}
+html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
+@media print{.coursenav{display:none;}}
+</style>
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html">Home</a>
+  <a href="syllabus.html">Syllabus</a>
+  <a href="schedule.html">Schedule</a>
+  <a href="assignments.html">Assignments</a>
+  <a href="index.html#lectures" class="active">Lectures</a>
+</div></nav>
+<button id="theme-toggle" aria-label="Toggle light/dark mode" title="Light/dark mode">
+  <span id="theme-toggle-icon">🌙</span>
+</button>
+<div class="wrap">
+
+  <div class="cover">
+    <div class="kicker">LIMO Robotics &amp; ROS 2 Lecture &nbsp;·&nbsp; Session 2 of 14</div>
+    <h1>Lecture 2: ROS 2 Architecture &amp; Your First LIMO Simulation</h1>
+    <div class="subtitle">From turtlesim to a real AgileX LIMO spinning up inside Gazebo</div>
+    <div class="meta-row">
+      <div class="chip">Duration: 3 hours</div>
+      <div class="chip">Prerequisite: Lecture 1 (install)</div>
+      <div class="chip">Robot: AgileX LIMO in Gazebo</div>
+    </div>
+  </div>
+
+  <div class="toc">
+    <strong style="color:var(--text)">In this session</strong>
+    <a href="#big-picture"><span>2.1</span>The Big Picture: What ROS 2 Actually Is</a>
+    <a href="#nodes"><span>2.2</span>Nodes — the Living Units of the Graph</a>
+    <a href="#topics"><span>2.3</span>Topics — Publish and Subscribe</a>
+    <a href="#services"><span>2.4</span>Services — Request and Response</a>
+    <a href="#actions"><span>2.5</span>Actions — Long-Running Goals</a>
+    <a href="#parameters"><span>2.6</span>Parameters — Tuning a Node Live</a>
+    <a href="#custom-messages"><span>2.7</span>Custom Messages in the Wild: LimoStatus</a>
+    <a href="#limo-gazebo"><span>2.8</span>Meeting LIMO in Gazebo for Real</a>
+    <a href="#dds"><span>2.9</span>DDS and the Network Layer</a>
+    <a href="#summary"><span>2.10</span>Summary, Checkpoint &amp; Glossary</a>
+  </div>
+
+  <section id="big-picture">
+    <h2><span class="num">2.1</span>The Big Picture: What ROS 2 Actually Is</h2>
+    <p>
+      In Lecture 1 you installed Ubuntu 22.04, ROS 2 Humble Hawksbill, and the LIMO simulation packages, and you probably
+      ran one command just to prove the install worked. Today we stop treating ROS 2 as a magic word typed into a terminal
+      and start treating it as what it actually is: <strong>not a single program</strong>. There is no "ROS 2.exe" you
+      double-click. ROS 2 is a collection of libraries and conventions that let many small, independent programs — called
+      <strong>Nodes</strong> — find each other on a computer (or across a network of computers) and exchange data, without
+      any of them needing to know the others' code, language, or even which machine they're running on.
+    </p>
+    <p>
+      This matters immediately for LIMO. A single LIMO robot, once fully running, has a Node reading the LiDAR, a Node
+      reading the depth camera, a Node reading wheel encoders and the IMU, a Node turning velocity commands into motor
+      signals, and — once you reach the navigation lectures later in the course — Nodes for mapping, localization, and
+      path planning. None of these programs was written as one giant file. They are separate processes, often shipped by
+      different teams, that agree on a common "language" for talking to each other. That common language is ROS 2.
+    </p>
+
+    <div class="box def">
+      <div class="box-title">📖 Definition: ROS 2</div>
+      <p>
+        <strong>ROS 2</strong> (Robot Operating System 2) is <em>middleware</em> for robotics: a set of libraries and
+        tools that let independent processes called Nodes discover one another and exchange Messages over a data
+        distribution layer called <strong>DDS</strong>, without a central point of control.
+      </p>
+    </div>
+
+    <div class="box idea">
+      <div class="box-title">🧠 The One Thing Different From ROS 1</div>
+      <p>
+        If you've read anything about the original ROS ("ROS 1"), you may have heard of <code>roscore</code> — a single
+        master process that every Node had to register with, and which the whole system depended on. ROS 2 has
+        <strong>no master process</strong>. It is fully decentralized: Nodes discover each other directly over the
+        network using DDS discovery, so there's no single point of failure and no single program you must remember to
+        start first.
+      </p>
+    </div>
+
+    <p>
+      Picture a tiny slice of LIMO's software running in Gazebo: a Node that pretends to be the LiDAR publishes distance
+      readings, a Node that decides "should I stop or keep going" listens to those readings, and a Node that pretends to
+      be the motor driver receives the final velocity command. None of these three programs imports the others' source
+      code. They only agree on two things: the name of the channel they're talking over, and the shape of the data on
+      that channel. That agreement is the whole idea of a <strong>Topic</strong> and a <strong>Message</strong>, which we
+      formalize in section 2.3. For now, just look at the shape of the graph:
+    </p>
+
+    <div class="mermaid">
+flowchart LR
+    L["lidar driver node"] -->|/scan| O["obstacle_avoider node"]
+    O -->|/cmd_vel| M["motor driver node"]
+    style L fill:#eef0ff,stroke:#3d4bf5,color:#211f1a
+    style O fill:#fdf3e4,stroke:#c8862c,color:#211f1a
+    style M fill:#eafaf3,stroke:#0e9e6e,color:#211f1a
+    </div>
+    <p style="text-align:center; color:var(--muted); font-size:.87em; margin-top:-10px;">Figure 2.1 — A minimal LIMO graph: three independent Nodes, connected only by two named Topics.</p>
+
+    <div class="box real">
+      <div class="box-title">🌍 Real World: This Is Not a Toy Diagram</div>
+      <p>
+        The graph in Figure 2.1 is a simplified version of what actually runs when you launch LIMO's differential-drive
+        simulation later in this lecture. The real graph has more Nodes (Gazebo's physics plugin publishing simulated
+        sensor data, robot_state_publisher broadcasting the robot's geometry, and so on) but the underlying pattern —
+        small Nodes wired together by named Topics — is identical to the real hardware. Learn the pattern in simulation
+        and it transfers directly to the physical robot.
+      </p>
+    </div>
+
+    <p>By the end of today you should be able to answer, for any ROS 2 system you're handed:</p>
+    <ul>
+      <li>What Nodes are currently running, and what is each one responsible for?</li>
+      <li>What Topics is a given Node publishing to, and what is it subscribed to?</li>
+      <li>Which interactions should be a Service, which should be an Action, and why?</li>
+      <li>How do I change a Node's behavior at runtime without touching its code?</li>
+    </ul>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="nodes">
+    <h2><span class="num">2.2</span>Nodes — the Living Units of the Graph</h2>
+    <p>
+      A <strong>Node</strong> is a single running process that does one job. In a well-designed robot, a Node has one
+      clear responsibility: read a sensor, run an algorithm, or drive an actuator. When you type <code>ros2 run
+      turtlesim turtlesim_node</code>, you are starting exactly one Node — a single operating-system process that ROS 2
+      tooling can see, name, and introspect.
+    </p>
+
+    <div class="box def">
+      <div class="box-title">📖 Definition: Node</div>
+      <p>
+        A <strong>Node</strong> is an independently executable ROS 2 process, identified by a unique name in the graph,
+        that communicates with other Nodes through Topics, Services, Actions, and Parameters.
+      </p>
+    </div>
+
+    <p>Let's stop reading about Nodes and look at a real one. Open a terminal — this course uses <strong>terminator</strong> so you can split one window into several panes instead of juggling separate terminal windows — and run:</p>
+
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dot" style="background:#f2685a;"></div><div class="term-dot" style="background:#e3b341;"></div><div class="term-dot" style="background:#3ec97a;"></div>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> ros2 run turtlesim turtlesim_node
+<span class="term-out">[INFO] [turtlesim]: Starting turtlesim with node name /turtlesim
+[INFO] [turtlesim]: Spawning turtle [turtle1] at x=[5.544445], y=[5.544445], theta=[0.000000]</span></div>
+    </div>
+
+    <p>A turtlesim window pops up with a turtle in the middle. That window is being driven entirely by one Node. In a second terminal pane, ask ROS 2 who is currently alive on the graph:</p>
+
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dot" style="background:#f2685a;"></div><div class="term-dot" style="background:#e3b341;"></div><div class="term-dot" style="background:#3ec97a;"></div>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> ros2 node list
+<span class="term-out">/turtlesim</span>
+
+<span class="term-prompt">$</span> ros2 node info /turtlesim
+<span class="term-out">/turtlesim
+  Subscribers:
+    /turtle1/cmd_vel: geometry_msgs/msg/Twist
+  Publishers:
+    /turtle1/color_sensor: turtlesim/msg/Color
+    /turtle1/pose: turtlesim/msg/Pose
+    /parameter_events: rcl_interfaces/msg/ParameterEvent
+  Service Servers:
+    /clear: std_srvs/srv/Empty
+    /reset: std_srvs/srv/Empty
+    /spawn: turtlesim/srv/Spawn
+    /turtlesim/get_parameters: rcl_interfaces/srv/GetParameters
+  Action Servers:
+
+  Action Clients:
+</span></div>
+    </div>
+
+    <p>
+      <code>ros2 node info</code> is one of the most useful commands you will run this entire course — it answers
+      exactly the four questions from section 2.1 for a single Node: what it subscribes to, what it publishes, and what
+      Services and Actions it offers.
+    </p>
+
+    <div class="box idea">
+      <div class="box-title">🧠 Why turtlesim First, Not LIMO First</div>
+      <p>
+        turtlesim draws a cartoon turtle you can drive around with the keyboard. It looks childish — that's the point.
+        It has almost zero startup time, needs no Gazebo physics, and cannot break anything. Every command you learn on
+        the turtle today (<code>node list</code>, <code>topic echo</code>, <code>service call</code>, <code>param
+        set</code>) is the exact same command you will run against the real LIMO in section 2.8 and in every later
+        lecture. Get comfortable on the turtle before you touch the robot.
+      </p>
+    </div>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ Common Mistake</div>
+      <p>
+        If <code>ros2 node list</code> prints nothing, the most common cause isn't a broken install — it's that the
+        Node was launched in a different terminal pane that you already closed, or your workspace's environment isn't
+        sourced in the current pane. Every new terminal pane needs <code>source /opt/ros/humble/setup.bash</code> (and
+        later, your workspace's <code>install/setup.bash</code>) before ROS 2 commands will find anything.
+      </p>
+    </div>
+
+    <div class="exercise">
+      <div class="level">Easy Exercise</div>
+      <p>
+        With turtlesim still running, open a third terminator pane and run <code>ros2 node list</code> again. Then close
+        the turtlesim window (or Ctrl+C the Node) and run it once more. What changes, and why does that prove there is
+        no central "master" keeping a permanent registry?
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="topics">
+    <h2><span class="num">2.3</span>Topics — Publish and Subscribe</h2>
+    <p>
+      Nodes are useless in isolation — a Node that reads a LiDAR but tells no one is just wasted electricity. The most
+      common way Nodes share data in ROS 2 is the <strong>Topic</strong>: a named, typed channel that any number of
+      Nodes can publish onto and any number of Nodes can subscribe to.
+    </p>
+
+    <div class="box def">
+      <div class="box-title">📖 Definition: Topic</div>
+      <p>
+        A <strong>Topic</strong> is a named channel over which Nodes exchange <strong>Messages</strong> of one fixed
+        type, using a <strong>publish/subscribe</strong> pattern. Publishing is asynchronous — a Publisher sends data
+        without waiting for, or even knowing about, any Subscriber. The relationship is many-to-many and fully
+        decoupled: Publishers and Subscribers can start, stop, and crash independently of each other.
+      </p>
+    </div>
+
+    <p>Let's drive the turtle to see this live. In one pane, start the keyboard teleop Node:</p>
+
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dot" style="background:#f2685a;"></div><div class="term-dot" style="background:#e3b341;"></div><div class="term-dot" style="background:#3ec97a;"></div>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> ros2 run turtlesim turtle_teleop_key
+<span class="term-out">Reading from keyboard
+Use arrow keys to move the turtle.</span></div>
+    </div>
+
+    <p>Now the graph has two Nodes: <code>/turtlesim</code> and <code>/teleop_turtle</code>, and one Topic wiring them together. Confirm it from a third pane:</p>
+
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dot" style="background:#f2685a;"></div><div class="term-dot" style="background:#e3b341;"></div><div class="term-dot" style="background:#3ec97a;"></div>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> ros2 topic list
+<span class="term-out">/parameter_events
+/rosout
+/turtle1/cmd_vel
+/turtle1/color_sensor
+/turtle1/pose</span>
+
+<span class="term-prompt">$</span> ros2 topic info /turtle1/cmd_vel
+<span class="term-out">Type: geometry_msgs/msg/Twist
+Publisher count: 1
+Subscription count: 1</span>
+
+<span class="term-prompt">$</span> ros2 topic echo /turtle1/pose
+<span class="term-out">x: 5.544445
+y: 5.544445
+theta: 0.0
+linear_velocity: 0.0
+angular_velocity: 0.0
+---</span>
+
+<span class="term-prompt">$</span> ros2 topic hz /turtle1/pose
+<span class="term-out">average rate: 62.484
+	min: 0.008s max: 0.020s std dev: 0.00312s window: 63</span></div>
+    </div>
+
+    <p>
+      Click into the teleop pane and press an arrow key — you'll see <code>/turtle1/pose</code> keep streaming, now with
+      changing numbers, while <code>ros2 topic hz</code> reports roughly how many Messages per second are flowing. This
+      is exactly the pattern LIMO's real LiDAR uses on <code>/scan</code>, its wheel odometry uses on <code>/odom</code>,
+      and its IMU uses on <code>/imu</code> — a continuous, self-paced stream, with no one waiting for a reply.
+    </p>
+
+    <div class="figure">
+      <img src="images/turtlesim.png" alt="The turtlesim simulator window showing the default turtle on a blue background">
+      <figcaption>Figure 2.2 — turtlesim: the zero-risk sandbox for learning the exact commands you'll later run against LIMO.</figcaption>
+    </div>
+
+    <p>rqt_graph gives you the same information as a live picture instead of text — worth running any time a graph feels confusing:</p>
+    <pre><code>rqt_graph</code></pre>
+
+    <p>Message types are just structured data — a table you fill in. Here are the ones you'll meet constantly once you're working with LIMO instead of a turtle:</p>
+    <table>
+      <tr><th>Message type</th><th>Carries</th><th>Seen on</th></tr>
+      <tr><td><code>geometry_msgs/msg/Twist</code></td><td>Two vectors: <code>linear</code> (x, y, z m/s) and <code>angular</code> (x, y, z rad/s)</td><td><code>/cmd_vel</code></td></tr>
+      <tr><td><code>sensor_msgs/msg/LaserScan</code></td><td>A header, an angle range/increment, and an array of range readings in meters</td><td><code>/scan</code></td></tr>
+      <tr><td><code>sensor_msgs/msg/Image</code></td><td>A header, height/width, pixel encoding, and the raw pixel byte array</td><td><code>/limo_camera/image</code></td></tr>
+      <tr><td><code>nav_msgs/msg/Odometry</code></td><td>An estimated pose (position + orientation) and a twist (current velocity), each with a covariance matrix</td><td><code>/odom</code></td></tr>
+      <tr><td><code>sensor_msgs/msg/Imu</code></td><td>Orientation, angular velocity, and linear acceleration, each with a covariance matrix</td><td><code>/imu</code></td></tr>
+    </table>
+
+    <div class="box eng">
+      <div class="box-title">🔧 Engineering Perspective</div>
+      <p>
+        Notice that every Message above starts with, or effectively behaves like, a timestamped reading rather than a
+        one-off command. That's the tell for "this should be a Topic": the data is naturally continuous, and no single
+        Node needs to block and wait for an answer. Compare that with "save the map to disk" — that happens once, on
+        request, and blocking until it's done is completely fine. That's the tell for a Service, which we cover next.
+      </p>
+    </div>
+
+    <div class="exercise">
+      <div class="level">Easy Exercise</div>
+      <p>
+        With teleop and turtlesim both still running, run <code>ros2 topic echo /turtle1/cmd_vel</code> in a fourth
+        pane, then press an arrow key in the teleop pane. What do you see appear, and why does it stop the instant you
+        release the key?
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="services">
+    <h2><span class="num">2.4</span>Services — Request and Response</h2>
+    <p>
+      Not everything a robot does is a continuous stream. Sometimes you want to ask a Node one specific question and
+      wait for one specific answer, then move on. ROS 2 has a dedicated pattern for that: the <strong>Service</strong>.
+    </p>
+
+    <div class="box def">
+      <div class="box-title">📖 Definition: Service</div>
+      <p>
+        A <strong>Service</strong> is a synchronous, one-to-one request/response interaction. A <strong>Client</strong>
+        sends a Request to a named Service and blocks until the <strong>Server</strong> sends back a Response. Unlike a
+        Topic, a Service call happens once and then the exchange is over.
+      </p>
+    </div>
+
+    <p>turtlesim's <code>/turtlesim</code> Node offers a Service called <code>/clear</code>, which wipes the trail the
+    turtle has drawn. Call it directly from the command line:</p>
+
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dot" style="background:#f2685a;"></div><div class="term-dot" style="background:#e3b341;"></div><div class="term-dot" style="background:#3ec97a;"></div>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> ros2 service list
+<span class="term-out">/clear
+/kill
+/reset
+/spawn
+/turtle1/set_pen
+/turtle1/teleport_absolute
+/turtle1/teleport_relative
+...</span>
+
+<span class="term-prompt">$</span> ros2 service type /clear
+<span class="term-out">std_srvs/srv/Empty</span>
+
+<span class="term-prompt">$</span> ros2 service call /clear std_srvs/srv/Empty
+<span class="term-out">waiting for service to become available...
+requester: making request: std_srvs.srv.Empty_Request()
+
+response:
+std_srvs.srv.Empty_Response()</span></div>
+    </div>
+
+    <p>
+      The trail behind the turtle disappears instantly. <code>std_srvs/srv/Empty</code> carries no data at all in either
+      direction — calling it is exactly like pressing a physical button. Other Services carry real fields; for example
+      <code>/spawn</code> takes an <code>x</code>, <code>y</code>, <code>theta</code>, and <code>name</code> and returns
+      the spawned turtle's name.
+    </p>
+
+    <table>
+      <tr><th></th><th>Topic</th><th>Service</th></tr>
+      <tr><td>Communication style</td><td>Publish/subscribe, asynchronous</td><td>Request/response, synchronous</td></tr>
+      <tr><td>Cardinality</td><td>Many publishers, many subscribers</td><td>One client talks to one server per call</td></tr>
+      <tr><td>Timing</td><td>Streaming, repeats continuously</td><td>One-shot, triggered on demand</td></tr>
+      <tr><td>Caller behavior</td><td>Never waits for a reply</td><td>Blocks until the response arrives</td></tr>
+      <tr><td>LIMO example</td><td><code>/scan</code>, <code>/odom</code>, <code>/imu</code></td><td>"clear costmap", "save current map"</td></tr>
+    </table>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ Common Mistake</div>
+      <p>
+        Beginners often try to use a Topic for something that should be a Service — for example, publishing a
+        "save_map_now" message and hoping something handles it — with no way to know whether the save actually
+        succeeded. If you need a definite answer back before your program continues, that's a Service, not a Topic.
+      </p>
+    </div>
+
+    <div class="exercise">
+      <div class="level">Intermediate Exercise</div>
+      <p>
+        Run <code>ros2 service call /spawn turtlesim/srv/Spawn "{x: 2.0, y: 2.0, theta: 0.0, name: 'turtle2'}"</code>.
+        Then run <code>ros2 node list</code> again. Explain in two sentences why a new Node appeared, and why the Service
+        call returned before the new turtle finished being usable.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="actions">
+    <h2><span class="num">2.5</span>Actions — Long-Running Goals</h2>
+    <p>
+      A Service is a poor fit the moment a task takes a long time. Imagine calling a Service named
+      "drive_to_kitchen" — your program would sit frozen, blocked, for however many minutes it takes the robot to
+      arrive, with zero visibility into whether it's stuck, half-way there, or already crashed into a shelf. ROS 2 has a
+      third communication pattern purpose-built for exactly this situation: the <strong>Action</strong>.
+    </p>
+
+    <div class="box def">
+      <div class="box-title">📖 Definition: Action</div>
+      <p>
+        An <strong>Action</strong> is a long-running, asynchronous task with three parts: a <strong>Goal</strong> sent by
+        the Client, periodic <strong>Feedback</strong> streamed back while the task runs, and a final
+        <strong>Result</strong> when it finishes. Unlike a Service, an in-progress Action Goal can be
+        <strong>cancelled</strong> (preempted) at any time.
+      </p>
+    </div>
+
+    <div class="mermaid">
+sequenceDiagram
+    participant C as Client (your app)
+    participant S as Action Server (Nav2 on LIMO)
+    C->>S: Goal: NavigateToPose (x=4.0, y=1.5)
+    S-->>C: Feedback: distance_remaining = 3.1 m
+    S-->>C: Feedback: distance_remaining = 1.4 m
+    Note over C,S: Client may send Cancel Goal at any point
+    S-->>C: Result: SUCCEEDED
+    </div>
+    <p style="text-align:center; color:var(--muted); font-size:.87em; margin-top:-10px;">Figure 2.3 — The Action lifecycle: one Goal, several Feedback messages, one final Result.</p>
+
+    <div class="box real">
+      <div class="box-title">🌍 Real World: This Is Exactly How LIMO Navigation Works</div>
+      <p>
+        Later in this course, once LIMO's Nav2 stack is running, you will send it a target pose and it will drive there
+        on its own, dodging obstacles along the way. That interaction is a real Action called
+        <code>NavigateToPose</code>. It is never implemented as a Service, because the drive can take minutes, the robot
+        needs to report live progress, and you must be able to cancel it (say, if a person walks in front of the robot).
+        Keep this in mind now — it will make far more sense the day you actually call it.
+      </p>
+    </div>
+
+    <table>
+      <tr><th>Pattern</th><th>Duration</th><th>Feedback while running</th><th>Cancellable</th></tr>
+      <tr><td>Topic</td><td>Continuous stream</td><td>N/A — it is itself a stream</td><td>No</td></tr>
+      <tr><td>Service</td><td>Instant / short</td><td>None</td><td>No</td></tr>
+      <tr><td>Action</td><td>Seconds to minutes</td><td>Yes, periodically</td><td>Yes</td></tr>
+    </table>
+
+    <div class="exercise">
+      <div class="level">Harder Exercise</div>
+      <p>
+        You are asked to add a "dock and recharge" behavior to LIMO, which can take up to two minutes and should be
+        abortable if a human needs the robot immediately. Would you implement it as a Service or an Action? List one
+        concrete problem you'd hit if you picked the wrong one.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="parameters">
+    <h2><span class="num">2.6</span>Parameters — Tuning a Node Live</h2>
+    <p>
+      Every Node can carry a set of named, typed settings called <strong>Parameters</strong> that change its behavior
+      without touching or recompiling its code. This is how the same navigation software can drive a small warehouse
+      robot and a large delivery robot just by changing numbers in a YAML file, not the source.
+    </p>
+
+    <div class="box def">
+      <div class="box-title">📖 Definition: Parameter</div>
+      <p>
+        A <strong>Parameter</strong> is a named, typed value owned by a specific Node that configures its behavior and
+        can be read or changed at runtime, either from the command line, a YAML file, or another Node.
+      </p>
+    </div>
+
+    <p>turtlesim exposes its background color as three Parameters. Inspect and change them live:</p>
+
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dot" style="background:#f2685a;"></div><div class="term-dot" style="background:#e3b341;"></div><div class="term-dot" style="background:#3ec97a;"></div>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> ros2 param list
+<span class="term-out">/turtlesim:
+  background_b
+  background_g
+  background_r
+  qos_overrides./parameter_events.publisher.depth
+  use_sim_time</span>
+
+<span class="term-prompt">$</span> ros2 param get /turtlesim background_r
+<span class="term-out">Integer value is: 69</span>
+
+<span class="term-prompt">$</span> ros2 param set /turtlesim background_r 150
+<span class="term-out">Set parameter successful</span>
+<span class="term-prompt">$</span> ros2 service call /clear std_srvs/srv/Empty</div>
+    </div>
+
+    <p>
+      The background instantly shifts to a different shade — no code change, no rebuild, no restart of the Node. This is
+      the same mechanism that, on the real LIMO, holds values like wheel radius, max linear/angular velocity limits, and
+      LiDAR frame IDs; changing a robot's tuning is a <code>ros2 param set</code> call or a line in a YAML file, not a
+      code edit.
+    </p>
+
+    <div class="box idea">
+      <div class="box-title">🧠 Parameter vs. Topic, in One Line</div>
+      <p>
+        A car's live speedometer reading changes every instant — that's a Topic. Setting cruise control to "keep it at
+        60 km/h" stays fixed until you change it again — that's a Parameter. Fast-changing sensor data goes on a Topic;
+        relatively stable configuration goes in a Parameter.
+      </p>
+    </div>
+
+    <div class="exercise">
+      <div class="level">Easy Exercise</div>
+      <p>
+        Change all three of <code>background_r</code>, <code>background_g</code>, and <code>background_b</code> to make
+        the turtlesim canvas roughly purple, then run <code>ros2 param get</code> on each to confirm the new values
+        stuck.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="custom-messages">
+    <h2><span class="num">2.7</span>Custom Messages in the Wild: LimoStatus</h2>
+    <p>
+      Every Message type you've seen so far — <code>Twist</code>, <code>LaserScan</code>, <code>Odometry</code> — ships
+      with ROS 2 or a common interfaces package. But robots also need to report information that has no generic
+      equivalent. LIMO's onboard embedded controller reports its own internal state — battery voltage, which of the
+      four drive modules is attached, whether it's in an error state — and none of the stock message packages have a
+      field for "which of LIMO's four drive modes is currently active." So the LIMO driver package defines its own
+      custom message type: <code>limo_msgs/msg/LimoStatus</code>.
+    </p>
+
+    <div class="box def">
+      <div class="box-title">📖 Definition: Custom Message (.msg)</div>
+      <p>
+        A <strong>custom message</strong> is a Message type defined by a package rather than borrowed from
+        <code>std_msgs</code>, <code>geometry_msgs</code>, or another common package, written as a plain-text
+        <code>.msg</code> file listing field types and names, which the ROS 2 build tools turn into real message code.
+      </p>
+    </div>
+
+    <pre><code># limo_msgs/msg/LimoStatus.msg
+std_msgs/Header header
+uint8   vehicle_state
+uint8   control_mode
+float64 battery_voltage
+uint16  error_code
+uint8   motion_mode</code></pre>
+
+    <table>
+      <tr><th>Field</th><th>Type</th><th>Meaning</th></tr>
+      <tr><td><code>header</code></td><td><code>std_msgs/Header</code></td><td>Timestamp and frame ID, like almost every ROS 2 sensor message</td></tr>
+      <tr><td><code>vehicle_state</code></td><td><code>uint8</code></td><td>Overall state of the vehicle (e.g. normal, low battery, estop)</td></tr>
+      <tr><td><code>control_mode</code></td><td><code>uint8</code></td><td>Whether the robot is being driven by remote control, command mode, or another source</td></tr>
+      <tr><td><code>battery_voltage</code></td><td><code>float64</code></td><td>Live battery voltage reported by the embedded controller</td></tr>
+      <tr><td><code>error_code</code></td><td><code>uint16</code></td><td>Bitmask/code reporting active fault conditions</td></tr>
+      <tr><td><code>motion_mode</code></td><td><code>uint8</code></td><td>Which of LIMO's drive modules is currently active: differential, Ackermann, Mecanum, or tracked</td></tr>
+    </table>
+
+    <div class="box real">
+      <div class="box-title">🌍 Real World: Why This Message Exists</div>
+      <p>
+        LIMO is a "four-in-one" robot — the same chassis can carry a differential-drive, Ackermann-steer, Mecanum, or
+        tracked drive module, a topic we go deep on in Lecture 3. The embedded controller inside LIMO always knows
+        which module is physically attached and reports it through <code>motion_mode</code> in
+        <code>LimoStatus</code>. A navigation Node can read this field at startup to decide which kinematic model to
+        use, instead of you hardcoding it — the exact same "don't hardcode it, expose it" philosophy Parameters use,
+        applied to hardware state instead of configuration.
+      </p>
+    </div>
+
+    <p>Once a LIMO driver is running (real hardware or, on some setups, a bridged simulation), inspect the type from the command line exactly like any other message:</p>
+    <pre><code>ros2 interface show limo_msgs/msg/LimoStatus</code></pre>
+
+    <div class="box eng">
+      <div class="box-title">🔧 Engineering Perspective</div>
+      <p>
+        Custom messages are how ROS 2 stays generic without being vague. The framework ships broadly useful types like
+        <code>Twist</code> and <code>LaserScan</code> so unrelated packages can interoperate, but any package is free to
+        define its own <code>.msg</code> files the moment its data doesn't fit an existing shape. You will write your
+        own custom messages later in this course once you start building LIMO-specific behaviors.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="limo-gazebo">
+    <h2><span class="num">2.8</span>Meeting LIMO in Gazebo for Real</h2>
+    <p>
+      Time to leave the turtle behind. This course simulates LIMO in <strong>Gazebo 11</strong> (the classic Gazebo,
+      driven through <code>gazebo_ros</code> and <code>gazebo_plugins</code> — not the newer gz-sim line) using the
+      <code>limo_gazebosim</code> package, which depends on <code>limo_description</code> and <code>limo_msgs</code>.
+      Launch LIMO's default differential-drive simulation:
+    </p>
+
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dot" style="background:#f2685a;"></div><div class="term-dot" style="background:#e3b341;"></div><div class="term-dot" style="background:#3ec97a;"></div>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> ros2 launch limo_gazebosim limo_gazebo_diff.launch.py
+<span class="term-out">[INFO] [launch]: All log files can be found below /home/limo/.ros/log/...
+[INFO] [gzserver-1]: process started with pid [18342]
+[INFO] [gzclient-2]: process started with pid [18344]
+[INFO] [robot_state_publisher-3]: process started with pid [18346]
+[INFO] [spawn_entity.py-4]: process started with pid [18348]</span></div>
+    </div>
+
+    <div class="figure">
+      <img src="images/gazebo_limo.jpg" alt="AgileX LIMO differential-drive model spawned inside a Gazebo 11 world">
+      <figcaption>Figure 2.4 — LIMO spawned in Gazebo via limo_gazebo_diff.launch.py, ready to be driven and inspected like any other ROS 2 graph.</figcaption>
+    </div>
+
+    <p>The Gazebo window opens with LIMO sitting in a simulated world. Leave that terminal pane running the launch file, and open a fresh terminator pane for everything else. First, look at the graph LIMO just created:</p>
+
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dot" style="background:#f2685a;"></div><div class="term-dot" style="background:#e3b341;"></div><div class="term-dot" style="background:#3ec97a;"></div>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> ros2 node list
+<span class="term-out">/gazebo
+/robot_state_publisher
+/limo_diff_controller
+...</span>
+
+<span class="term-prompt">$</span> ros2 topic list
+<span class="term-out">/cmd_vel
+/scan
+/odom
+/limo_camera/image
+/imu
+/joint_states
+/tf
+/tf_static</span>
+
+<span class="term-prompt">$</span> rqt_graph</div>
+    </div>
+
+    <p>
+      This is the same shape of graph as the mini three-node LIMO example back in Figure 2.1, just fleshed out with the
+      real Nodes Gazebo's plugins create. Drive the robot the "normal" way first, using teleop:
+    </p>
+    <pre><code>ros2 run teleop_twist_keyboard teleop_twist_keyboard</code></pre>
+    <p>Click into that pane and use the on-screen key legend to move LIMO around the Gazebo world, then Ctrl+C when you're done. Now drive it the "raw" way — publishing directly onto <code>/cmd_vel</code> without any teleop Node in between, exactly the verified command from the course's tested lab:</p>
+    <pre><code>ros2 topic pub --once /cmd_vel geometry_msgs/msg/Twist "{linear: {x: 0.25}, angular: {z: 0.5}}"</code></pre>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ Common Mistake: Forgetting <code>--once</code></div>
+      <p>
+        Without <code>--once</code>, <code>ros2 topic pub</code> keeps publishing that same Twist message repeatedly,
+        forever, at a default rate — LIMO will keep driving even after you think you've stopped it. If your simulated
+        (or real!) robot won't stop moving, check for a runaway <code>ros2 topic pub</code> still running in a
+        forgotten terminal pane and Ctrl+C it.
+      </p>
+    </div>
+
+    <p>Finally, peek at the LiDAR stream briefly — this is a firehose of numbers, so echo it for a moment and then Ctrl+C:</p>
+    <pre><code>ros2 topic echo /scan</code></pre>
+    <pre><code>header:
+  stamp: {sec: 1892, nanosec: 430000000}
+  frame_id: limo/laser_link
+angle_min: -3.1241390705108643
+angle_max: 3.1241390705108643
+angle_increment: 0.005817705299
+range_min: 0.15000000596046
+range_max: 12.0
+ranges: [1.842, 1.839, 1.847, ..., inf, inf, 2.910]
+---</code></pre>
+
+    <div class="box hw">
+      <div class="box-title">🔩 Hardware Note</div>
+      <p>
+        Every command you just ran works completely unchanged against the physical LIMO once you switch from a Gazebo
+        launch file to the real hardware driver's launch file, later in the course. <code>/cmd_vel</code>,
+        <code>/scan</code>, <code>/odom</code>, and <code>/imu</code> keep the same names and types either way — this is
+        exactly why simulation-first development works.
+      </p>
+    </div>
+
+    <div class="exercise">
+      <div class="level">Intermediate Exercise</div>
+      <p>
+        With <code>limo_gazebo_diff.launch.py</code> running, run <code>ros2 topic hz /odom</code> and
+        <code>ros2 topic hz /scan</code> one after another. Which publishes faster? Given what each sensor is used for,
+        does that difference make sense?
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="dds">
+    <h2><span class="num">2.9</span>DDS and the Network Layer</h2>
+    <p>
+      We said in section 2.1 that ROS 2 has no master process, and that Nodes just "find" each other. The mechanism
+      underneath that is <strong>DDS</strong> (Data Distribution Service), an industry-standard middleware that ROS 2 is
+      built on top of. Every Node periodically announces itself on the local network segment; other Nodes listening for
+      that announcement automatically learn its Topics, Services, and types, and connect directly to it, peer-to-peer,
+      with no broker or master process sitting in between.
+    </p>
+
+    <div class="box def">
+      <div class="box-title">📖 Definition: DDS</div>
+      <p>
+        <strong>DDS</strong> (Data Distribution Service) is the publish/subscribe middleware standard that ROS 2 uses
+        under the hood for Node discovery and data transport. ROS 2 talks to DDS through a swappable adapter layer
+        called an <strong>RMW</strong> (ROS Middleware) implementation — you can change which DDS vendor ROS 2 uses
+        without changing any of your own code.
+      </p>
+    </div>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ Classroom Gotcha: Everyone's Turtle Talks to Everyone Else's Turtle</div>
+      <p>
+        DDS discovery works over the local network by default. In a classroom where fifteen students are all running
+        turtlesim (or LIMO in Gazebo) on the same Wi-Fi, you can end up seeing — and accidentally controlling — a
+        classmate's turtle. The fix is one environment variable, added to <code>~/.bashrc</code> so it applies to every
+        new terminal:
+      </p>
+    </div>
+    <pre><code># add to ~/.bashrc
+export ROS_LOCALHOST_ONLY=1</code></pre>
+    <p>
+      With <code>ROS_LOCALHOST_ONLY=1</code> set, DDS discovery and traffic are restricted to your own machine, so your
+      Nodes only ever see your own Nodes. Some course setups also prefer swapping the default RMW implementation for
+      <code>rmw_cyclonedds_cpp</code>, another common DDS vendor, which can behave more predictably on flaky classroom
+      Wi-Fi:
+    </p>
+    <pre><code># add to ~/.bashrc
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp</code></pre>
+
+    <div class="box eng">
+      <div class="box-title">🔧 Engineering Perspective</div>
+      <p>
+        The fact that "which DDS vendor" is a one-line environment variable, not a code change, is a direct payoff of
+        ROS 2's layered design: your Nodes are written against the ROS 2 client library API, which talks to an RMW
+        interface, which talks to whichever DDS implementation is installed. Swap the bottom layer, keep every line of
+        your Python or C++ untouched.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="summary">
+    <h2><span class="num">2.10</span>Summary, Checkpoint &amp; Glossary</h2>
+    <p>
+      Today you replaced "type commands and hope" with a real mental model of ROS 2: a decentralized graph of Nodes
+      that exchange data over Topics, request answers over Services, run long tasks over Actions, and expose their
+      tuning knobs as Parameters — all discovered automatically over DDS, with no master process. You proved every one
+      of those ideas twice: once cheaply on turtlesim, and once for real by launching AgileX LIMO inside Gazebo,
+      inspecting its live graph, and driving it two different ways from the command line.
+    </p>
+
+    <div class="checkpoint">
+      <strong style="color:var(--text); display:block; margin-bottom:10px;">✅ Learning Checkpoint</strong>
+      <ul>
+        <li>I can explain why ROS 2 has no master process, unlike ROS 1's <code>roscore</code>.</li>
+        <li>I can list a Node's Topics, Services, and Actions using <code>ros2 node info</code>.</li>
+        <li>I can tell the difference between a Topic, a Service, and an Action, and pick the right one for a new task.</li>
+        <li>I can read and change a running Node's Parameters with <code>ros2 param get/set</code>.</li>
+        <li>I successfully launched <code>limo_gazebosim limo_gazebo_diff.launch.py</code> and saw LIMO's real graph.</li>
+        <li>I drove simulated LIMO both with <code>teleop_twist_keyboard</code> and with a raw <code>ros2 topic pub --once</code> command.</li>
+        <li>I know what <code>ROS_LOCALHOST_ONLY=1</code> does and why a classroom needs it.</li>
+      </ul>
+    </div>
+
+    <p>
+      <span class="badge-project">Connection to the course</span> Everything from here forward assumes today's vocabulary
+      without re-explaining it. Lecture 3 opens LIMO's chassis conceptually and covers its four drive modules
+      (differential, Ackermann, Mecanum, tracked) — you'll recognize the <code>motion_mode</code> field from
+      <code>LimoStatus</code> the moment it comes back up. Later navigation lectures will hand you the
+      <code>NavigateToPose</code> Action you were only introduced to today, and you'll already know why it isn't a
+      Service.
+    </p>
+
+    <h3>Glossary</h3>
+    <dl class="glossary">
+      <dt>Node</dt><dd>An independent ROS 2 process with one clear responsibility, discoverable by name on the graph.</dd>
+      <dt>Topic</dt><dd>A named, typed channel for asynchronous, many-to-many publish/subscribe data streaming.</dd>
+      <dt>Service</dt><dd>A synchronous, one-to-one request/response call between a Client and a Server.</dd>
+      <dt>Action</dt><dd>A long-running, cancellable task with a Goal, streaming Feedback, and a final Result.</dd>
+      <dt>Parameter</dt><dd>A named, typed setting owned by a Node that can be read or changed at runtime without editing code.</dd>
+      <dt>DDS</dt><dd>The Data Distribution Service middleware standard ROS 2 uses for decentralized Node discovery and transport.</dd>
+      <dt>Message</dt><dd>The fixed data structure carried by a single Topic, Service, or Action, defined in a .msg/.srv/.action file.</dd>
+      <dt>rqt_graph</dt><dd>A GUI tool that draws the live ROS 2 graph — Nodes and the Topics connecting them — as a diagram.</dd>
+    </dl>
+
+    <h3>Common Mistakes</h3>
+    <ul>
+      <li>Confusing Topics and Services — trying to "wait for an answer" on a Topic, or trying to stream continuous data through a Service.</li>
+      <li>Forgetting <code>--once</code> on <code>ros2 topic pub</code>, leaving a runaway publisher driving the robot forever.</li>
+      <li>Typing the wrong message type string (e.g. missing the <code>msg</code> namespace, as in <code>geometry_msgs/Twist</code> instead of <code>geometry_msgs/msg/Twist</code>) and getting a cryptic "unknown type" error.</li>
+      <li>Not sourcing the workspace (<code>source install/setup.bash</code>) before running <code>ros2 launch limo_gazebosim ...</code>, so ROS 2 reports it cannot find the package.</li>
+    </ul>
+  </section>
+
+  <div class="footer-nav">
+    <a href="01-installation-vmware-ros2-limo-intro.html">&larr; Lecture 1: Installation</a>
+    <a href="03-dev-environment-drive-modes.html">Lecture 3: Dev Environment &amp; Drive Modes &rarr;</a>
+  </div>
+
+</div>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      background: '#f1efe8', primaryColor: '#eef0ff', primaryTextColor: '#211f1a',
+      primaryBorderColor: '#3d4bf5', lineColor: '#0e9e6e', secondaryColor: '#f1efe8',
+      tertiaryColor: '#fffefb', textColor: '#211f1a', fontFamily: 'Inter, -apple-system, sans-serif'
+    },
+    flowchart: { curve: 'basis' },
+    securityLevel: 'loose'
+  });
+</script>
+<script>
+(function(){
+  var btn = document.getElementById('theme-toggle');
+  var icon = document.getElementById('theme-toggle-icon');
+  function updateIcon(){
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    icon.textContent = isDark ? '☀️' : '🌙';
+  }
+  updateIcon();
+  btn.addEventListener('click', function(){
+    var cur = document.documentElement.getAttribute('data-theme');
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try{ localStorage.setItem('limo-book-theme', next); }catch(e){}
+    updateIcon();
+  });
+})();
+</script>
+<script src="annotate.js" defer></script>
+</body>
+</html>

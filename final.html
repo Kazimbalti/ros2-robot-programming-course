@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<script>
+(function(){
+  try{
+    var t = localStorage.getItem('limo-book-theme');
+    if(!t){ t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+    document.documentElement.setAttribute('data-theme', t);
+  }catch(e){}
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Final Exam — ROS and Robot Programming</title>
+<meta name="description" content="Format, coverage, date, and preparation guidance for the ROS and Robot Programming final exam (40 marks, finals week) — including the capstone defence.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="book.css">
+<link rel="stylesheet" href="projector.css">
+</head>
+<body>
+<button id="theme-toggle" aria-label="Toggle light/dark mode" title="Light/Dark mode"><span id="theme-toggle-icon">🌙</span></button>
+
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html">Home</a>
+  <a href="syllabus.html">Syllabus</a>
+  <a href="schedule.html">Schedule</a>
+  <a href="assignments.html">Assignments</a>
+  <a href="index.html#lectures">Lectures</a>
+</div></nav>
+
+<div class="wrap">
+
+  <div class="cover">
+    <div class="kicker">Final Exam &nbsp;·&nbsp; 40 Marks &nbsp;·&nbsp; Finals Week</div>
+    <h1>Final Exam</h1>
+    <div class="subtitle">Cumulative, but weighted toward the second half — perception, state estimation, SLAM and Nav2, real hardware, and the from-scratch build — plus a live defence of your capstone.</div>
+    <div class="meta-row">
+      <div class="chip">Week 15 — Section B: Mon 7 Dec · Sections A &amp; C: Thu 10 Dec 2026</div>
+      <div class="chip">Written 2 h + capstone defence</div>
+      <div class="chip">Cumulative; emphasis on Lectures 8–14</div>
+      <div class="chip">Weight: 40% of the final grade</div>
+    </div>
+  </div>
+
+  <h2>🧾 Format</h2>
+  <div class="table-scroll">
+  <table>
+    <tr><th>Part</th><th>Marks</th><th>Style</th></tr>
+    <tr><td>A — Concepts across the whole course</td><td>10</td><td>Short answer: terminology, "why", read a rosgraph / TF tree / costmap, compare two approaches</td></tr>
+    <tr><td>B — State estimation &amp; autonomy</td><td>12</td><td>Odometry &amp; drift, EKF fusion, AMCL/particle filter, SLAM, Nav2 costmaps/planners/behaviour trees — worked reasoning</td></tr>
+    <tr><td>C — Hardware &amp; the build</td><td>8</td><td>LIMO's six subsystems; DIY robot — kinematics derivation, driver-node data flow, udev, launch hierarchy, sim-to-real gaps</td></tr>
+    <tr><td>D — Capstone defence (oral)</td><td>10</td><td>10 min + Q&amp;A: walk through your node graph, show quantified results, defend design choices</td></tr>
+  </table>
+  </div>
+  <p><strong>Materials:</strong> written parts closed book; one A4 handwritten double-sided cheat-sheet allowed. A formula/CLI sheet is provided. Bring your capstone report (printed or on screen) to the defence.</p>
+
+  <h2>📚 Coverage</h2>
+  <p><strong>Carried forward from the midterm (assumed, lightly tested in Part A):</strong> the computation graph, URDF/TF2, Gazebo &amp; <code>ros2_control</code>, the sensor pipeline.</p>
+  <div class="table-scroll">
+  <table>
+    <tr><th>Lecture</th><th>You should be able to…</th></tr>
+    <tr><td>L8 — Perception</td><td>Explain <code>cv_bridge</code>, HSV vs RGB for detection, contour features; contrast classical detection with Find-Object-2D and YOLO</td></tr>
+    <tr><td>L9 — Odometry, EKF, AMCL</td><td>Explain wheel-odometry drift sources; what an EKF fuses and why; the particle-filter update; AMCL parameters that matter and their effect</td></tr>
+    <tr><td>L10 — SLAM &amp; Nav2</td><td>Describe SLAM vs localisation; the global/local costmap; planner vs controller; where the behaviour tree sits; waypoint following &amp; frontier exploration</td></tr>
+    <tr><td>L11 — LIMO hardware</td><td>For each of the six subsystems: what it is, how ROS 2 talks to it, one realistic failure mode</td></tr>
+    <tr><td>L12 — Motors, power, compute</td><td>H-bridge control, closed-loop wheel velocity, counts-per-rev calibration, a power budget, headless bring-up</td></tr>
+    <tr><td>L13 — Driver, CAD, URDF, sensors</td><td>Differential-drive forward/inverse kinematics; the <code>/cmd_vel</code> → wheels → encoders → <code>/odom</code> loop; udev rules; CAD → URDF</td></tr>
+    <tr><td>L14 — Simulation, 3D print, capstone</td><td>Parameterised Xacro; Gazebo plugins and their sim-to-real gaps; the four-file launch hierarchy; publishing packages</td></tr>
+  </table>
+  </div>
+
+  <h2>🎯 Sample Questions</h2>
+  <div class="box idea">
+    <div class="box-title">Representative — not exhaustive</div>
+    <ol style="margin:0;">
+      <li>Wheel odometry says the robot has driven straight for 5&nbsp;m; the LiDAR scan-match disagrees by 12&nbsp;cm and 3°. Explain what an EKF does with these two inputs and why it does not simply average them.</li>
+      <li>In a Nav2 run the global plan is fine but the robot oscillates near obstacles. Name the component most likely responsible and two parameters you would change.</li>
+      <li>Derive the inverse kinematics for a differential-drive robot: given <code>v</code> and <code>ω</code>, wheel radius <code>r</code>, track width <code>L</code>, give the left/right wheel angular velocities.</li>
+      <li>Your DIY robot drives well in Gazebo but veers left on the bench. Give three physical causes and the ROS-side calibration or fix for each.</li>
+      <li>Compare SLAM and AMCL: what does each assume about the map, and when do you run which?</li>
+    </ol>
+  </div>
+
+  <h2>✅ How to Prepare</h2>
+  <ul>
+    <li>Rebuild the Lecture 10 mission from scratch in sim; be able to explain every node in the graph.</li>
+    <li>Redo the Lecture 9 drift/fusion plots and be able to read them aloud.</li>
+    <li>Write the differential-drive kinematics from memory, both directions.</li>
+    <li>For each LIMO subsystem, write one sentence on the ROS 2 interface and one realistic failure mode.</li>
+    <li>Rehearse the capstone defence out loud against a timer; anticipate "why did you choose…" for every major decision.</li>
+    <li>Review the glossary and "Common Mistakes" boxes across Lectures 8–14.</li>
+  </ul>
+
+  <div class="box real">
+    <div class="box-title">🔗 Capstone &amp; the final are graded together</div>
+    <p style="margin:0;">The oral defence (Part D) is scored with the <a href="assignments.html#capstone">capstone rubric</a>. The written capstone report is due at the start of the final exam slot and cannot use late days.</p>
+  </div>
+
+  <div class="footer-nav">
+    <a href="midterm.html">&larr; Midterm</a>
+    <a href="attendance.html">Attendance &rarr;</a>
+  </div>
+
+  <p class="footer-note">ROS and Robot Programming &nbsp;·&nbsp; Final Exam &nbsp;·&nbsp; Dr. Muhammad Kazim</p>
+
+</div>
+
+<script>
+(function(){
+  var btn = document.getElementById('theme-toggle');
+  var icon = document.getElementById('theme-toggle-icon');
+  function updateIcon(){ icon.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙'; }
+  updateIcon();
+  btn.addEventListener('click', function(){
+    var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try{ localStorage.setItem('limo-book-theme', next); }catch(e){}
+    updateIcon();
+  });
+})();
+</script>
+<script src="annotate.js" defer></script>
+</body>
+</html>

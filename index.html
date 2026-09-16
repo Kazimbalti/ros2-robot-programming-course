@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<script>
+(function(){
+  try{
+    var t = localStorage.getItem('limo-book-theme');
+    if(!t){ t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+    document.documentElement.setAttribute('data-theme', t);
+  }catch(e){}
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ROS and Robot Programming — 14-Lecture Curriculum</title>
+<meta name="description" content="A complete 14-lecture hands-on Robotics and ROS 2 Humble course built around the AgileX LIMO robot — from VMware install through autonomous SLAM and Nav2, into a real hardware deep-dive on LIMO, and out the other side building your own ROS 2 robot from raw components.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f6f4ef; --panel:#fffefb; --panel2:#f1efe8; --border:#e6e1d6;
+    --text:#211f1a; --muted:#7a7568; --accent:#3d4bf5; --accent-ink:#2732b8;
+    --accent2:#0e9e6e; --gold:#c8862c; --danger:#d64a3c; --purple:#8b5cf6; --radius:14px;
+  }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--bg); color:var(--text); font-family:'Inter', -apple-system, sans-serif; line-height:1.85; font-size:17.5px; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:900px; margin:0 auto; padding:48px 24px 120px;}
+  .cover{border-radius:28px; background:#12142b; padding:64px 44px; margin-bottom:40px; position:relative; overflow:hidden; isolation:isolate;}
+  .cover::before{content:""; position:absolute; inset:-40%; background:
+      radial-gradient(38% 45% at 15% 20%, rgba(61,75,245,0.55), transparent 70%),
+      radial-gradient(35% 40% at 85% 15%, rgba(139,92,246,0.45), transparent 70%),
+      radial-gradient(45% 50% at 60% 90%, rgba(14,158,110,0.35), transparent 70%);
+    filter:blur(60px); z-index:0;}
+  .cover::after{content:""; position:absolute; inset:0; background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px); background-size: 20px 20px; z-index:0;}
+  .cover > *{position:relative; z-index:1;}
+  .kicker{display:inline-block; color:#c9cdff; font-weight:600; letter-spacing:.4px; font-size:13px; margin-bottom:18px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); padding:6px 14px; border-radius:999px;}
+  .cover h1{font-size:2.8em; margin:0 0 12px; font-weight:800; line-height:1.25; color:#ffffff; letter-spacing:-.5px;}
+  .cover .subtitle{color:#aeb2d6; font-size:1.2em; margin-bottom:30px; font-weight:400;}
+  .meta-row{display:flex; flex-wrap:wrap; gap:10px; margin-top:18px;}
+  .chip{background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.14); color:#d4d7f0; padding:7px 15px; border-radius:999px; font-size:.83em;}
+  .instructor-row{display:flex; align-items:center; gap:14px; margin-top:30px; padding-top:26px; border-top:1px solid rgba(255,255,255,0.12);}
+  .instructor-avatar{flex-shrink:0; width:104px; height:104px; border-radius:50%; object-fit:cover; object-position:top center; border:2px solid rgba(255,255,255,0.25);}
+  .instructor-name{color:#fff; font-weight:700; font-size:.98em;}
+  .instructor-bio{color:#aeb2d6; font-size:.83em; margin-top:2px; line-height:1.6;}
+  h2{font-size:1.5em; font-weight:800; margin:52px 0 20px; display:flex; align-items:center; gap:12px; letter-spacing:-.2px; color:var(--accent-ink);}
+  p{margin:0 0 16px; color:#3c382f;} strong{color:var(--text); font-weight:700;}
+  .chapter-list{display:flex; flex-direction:column; gap:12px;}
+  .chapter-card{display:flex; align-items:center; gap:18px; background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:18px 22px; text-decoration:none; color:var(--text); transition:transform .15s, box-shadow .15s, border-color .15s; box-shadow:0 1px 2px rgba(33,31,26,0.03);}
+  .chapter-card:hover{transform:translateY(-2px); box-shadow:0 16px 32px -20px rgba(33,31,26,0.25); border-color:#c7cbfa;}
+  .chapter-num{flex-shrink:0; width:46px; height:46px; border-radius:12px; background:#eef0ff; color:var(--accent-ink); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.05em; font-family:'JetBrains Mono', monospace;}
+  .chapter-info{flex:1; min-width:0;}
+  .chapter-title{font-weight:700; font-size:1.03em; margin-bottom:3px;}
+  .chapter-desc{color:var(--muted); font-size:.87em;}
+  .chapter-arrow{flex-shrink:0; color:var(--accent); font-size:1.3em; opacity:.6;}
+  .chapter-card:hover .chapter-arrow{opacity:1;}
+  .part-header{display:flex; align-items:center; gap:10px; margin:44px 0 16px;}
+  .part-header .line{flex:1; height:1px; background:var(--border);}
+  .part-title{font-size:.82em; font-weight:800; color:var(--gold); text-transform:uppercase; letter-spacing:.7px; white-space:nowrap;}
+  .divider{height:1px; background:linear-gradient(90deg, transparent, var(--border), transparent); margin:52px 0;}
+  .box{border-radius:16px; padding:22px 26px; margin:22px 0; border:1px solid var(--border); background:var(--panel);}
+  .box.idea{background:#eef0ff;border-color:#d6dafc;}
+  .box.real{background:#eafaf3;border-color:#c9eeda;}
+  .box-title{font-weight:800; margin-bottom:9px; color:var(--accent-ink); font-size:.96em;}
+  .footer-note{text-align:center; color:var(--muted); font-size:.88em; margin-top:60px;}
+  .figure{margin:0 0 40px; text-align:center;}
+  .figure img, .figure video{max-width:100%; height:auto; display:block; margin:0 auto; border-radius:16px; border:1px solid var(--border); box-shadow:0 16px 32px -20px rgba(33,31,26,0.35);}
+  .figure video{width:100%;}
+  .figure figcaption{color:var(--muted); font-size:.87em; margin-top:12px;}
+  .figure-wide{width:100vw; position:relative; left:50%; right:50%; margin-left:-50vw; margin-right:-50vw; padding:0 24px; text-align:center;}
+  .figure-wide img{max-width:1500px; width:100%; height:auto; display:block; margin:0 auto; border-radius:16px; border:1px solid var(--border); box-shadow:0 16px 32px -20px rgba(33,31,26,0.35);}
+  table{width:100%; border-collapse:separate; border-spacing:0; margin:22px 0; font-size:.9em; border-radius:14px; overflow:hidden; border:1px solid var(--border);}
+  th, td{border-bottom:1px solid var(--border); padding:10px 14px; text-align:left;}
+  th{background:#eceaf9; color:var(--accent-ink); font-weight:700; font-size:.9em;}
+  tr:last-child td{border-bottom:none;}
+  tr:nth-child(even) td{background:rgba(33,31,26,0.02);}
+
+  html[data-theme="dark"]{
+    --bg:#12141c; --panel:#1b1e2a; --panel2:#20232f; --border:#2d3142;
+    --text:#e7e8f2; --muted:#9498b3; --accent:#7c86ff; --accent-ink:#aab1ff;
+    --accent2:#34d399; --gold:#e3a548; --danger:#f0685a; --purple:#a78bfa; --radius:14px;
+  }
+  html[data-theme="dark"] p{color:#c7c9dc;}
+  html[data-theme="dark"] th{background:#262a45;}
+  html[data-theme="dark"] tr:nth-child(even) td{background:rgba(255,255,255,0.03);}
+  html[data-theme="dark"] .box.idea{background:#1f2242; border-color:#383d6b;}
+  html[data-theme="dark"] .box.real{background:#16302a; border-color:#1f4a3d;}
+  html[data-theme="dark"] .chapter-num{background:#1f2242;}
+  html[data-theme="dark"] .chapter-card{box-shadow:0 1px 2px rgba(0,0,0,0.25);}
+  html[data-theme="dark"] .chapter-card:hover{border-color:#454a7a; box-shadow:0 16px 32px -20px rgba(0,0,0,0.55);}
+  body, .box, .chapter-card, table{transition:background-color .25s ease, border-color .25s ease, color .25s ease;}
+  #theme-toggle{position:fixed; top:18px; left:18px; z-index:999; width:46px; height:46px; border-radius:50%; border:1px solid var(--border); background:var(--panel); color:var(--text); font-size:19px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px -8px rgba(0,0,0,0.35); transition:transform .15s ease, background-color .25s ease, border-color .25s ease;}
+  #theme-toggle:hover{transform:scale(1.08);}
+  @media (max-width:640px){ #theme-toggle{top:12px; left:12px; width:42px; height:42px; font-size:17px;} }
+
+  .coursenav{position:sticky; top:0; z-index:900; background:rgba(255,254,251,0.85); backdrop-filter:saturate(160%) blur(10px); border-bottom:1px solid var(--border);}
+  .coursenav .inner{max-width:1000px; margin:0 auto; display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px; padding:10px 20px 10px 74px;}
+  .coursenav .brand{font-weight:800; color:var(--accent-ink); margin-inline-end:12px; font-size:.95em; letter-spacing:-.2px;}
+  .coursenav a{color:#3c382f; text-decoration:none; font-weight:600; font-size:.85em; padding:6px 11px; border-radius:999px; transition:background-color .15s, color .15s;}
+  .coursenav a:hover{background:#eef0ff; color:var(--accent-ink);}
+  .coursenav a.active{background:var(--accent); color:#fff;}
+  html[data-theme="dark"] .coursenav{background:rgba(27,30,42,0.85);}
+  html[data-theme="dark"] .coursenav a{color:#c7c9dc;}
+  html[data-theme="dark"] .coursenav a:hover{background:#262a45; color:#aab1ff;}
+  @media print{ .coursenav{display:none;} }
+</style>
+<link rel="stylesheet" href="projector.css">
+</head>
+<body>
+<button id="theme-toggle" aria-label="Toggle light/dark mode" title="Light/Dark mode">
+  <span id="theme-toggle-icon">🌙</span>
+</button>
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html" class="active">Home</a>
+  <a href="syllabus.html">Syllabus</a>
+  <a href="schedule.html">Schedule</a>
+  <a href="assignments.html">Assignments</a>
+  <a href="#lectures">Lectures</a>
+</div></nav>
+<div class="wrap">
+
+  <div class="cover">
+    <div class="kicker">Hands-On Lecture Series &nbsp;·&nbsp; 14 Lectures &nbsp;·&nbsp; ~51 Contact Hours</div>
+    <h1>ROS and Robot Programming</h1>
+    <div class="subtitle">From an empty laptop to a robot you designed yourself — VMware, Ubuntu, and ROS 2 Humble installed on Day 1; a fully autonomous AgileX LIMO surveying and mapping in simulation by Week 10; LIMO's real electronics in your hands by Week 11; and your own ROS 2 robot, built from a bare motor and an empty microSD card, running by Week 14.</div>
+    <div class="meta-row">
+      <div class="chip">14 Lectures · most 3 hours, two extended labs</div>
+      <div class="chip">Robot: AgileX LIMO (diff / Ackermann / Mecanum / tracked)</div>
+      <div class="chip">ROS 2 Humble · Ubuntu 22.04 · Gazebo Classic</div>
+      <div class="chip">Simulation-first, then two real-hardware builds</div>
+    </div>
+    <div class="instructor-row">
+      <img class="instructor-avatar" src="images/Kazim_Photo.png" alt="Dr. Muhammad Kazim">
+      <div>
+        <div class="instructor-name">Dr. Muhammad Kazim</div>
+        <div class="instructor-bio">Assistant Professor, Department of Intelligent Systems, University of Lahore, Pakistan. ROS&nbsp;2 &amp; robotics developer, simulation and hardware-implementation engineer, and research scientist specializing in UAVs (quad, fixed-wing, eVTOL), UGVs, control systems, and computer vision — delivering autonomy solutions for industry.</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>🗂️ Course Information</h2>
+  <div class="chapter-list">
+    <a class="chapter-card" href="syllabus.html">
+      <div class="chapter-num">§</div>
+      <div class="chapter-info">
+        <div class="chapter-title">Syllabus</div>
+        <div class="chapter-desc">Outcomes, grading breakdown, textbooks, and every course policy</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+    </a>
+    <a class="chapter-card" href="schedule.html">
+      <div class="chapter-num">📅</div>
+      <div class="chapter-info">
+        <div class="chapter-title">Schedule</div>
+        <div class="chapter-desc">Week-by-week plan — dates, readings, labs, and deadlines</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+    </a>
+    <a class="chapter-card" href="assignments.html">
+      <div class="chapter-num">✎</div>
+      <div class="chapter-info">
+        <div class="chapter-title">Assignments &amp; Capstone</div>
+        <div class="chapter-desc">A1–A4 with tasks and deliverables, plus the two-part capstone and its rubric</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+    </a>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="figure">
+    <img src="images/Intro_robot.png" alt="Introduction to robotics — comparing a robot's components to a human">
+  </div>
+
+  <div class="figure">
+    <img src="images/Intro_robot_2.png" alt="Introduction to robotics">
+  </div>
+
+  <h2>🤖 Introduction</h2>
+  <p>Welcome to the fantastic world of <strong>ROBOTICS</strong>!</p>
+  <p>First, you must understand what a robot is.</p>
+  <p>
+    <strong>A robot is a programmable machine designed to carry out tasks autonomously or semi-autonomously, often
+    resembling or imitating human or animal actions.</strong>!</p>
+      
+  <p>Robots are equipped with various sensors, actuators, and mechanisms that enable them to perceive their environment, make decisions, and execute actions accordingly.
+    The concept of a robot encompasses a wide range of devices, from simple industrial arms to sophisticated
+    humanoid robots and autonomous vehicles.
+  </p>
+  <p>
+    Robots can be of many shapes and sizes for infinite applications and complexity. However, there are specific
+    components that any robot <strong>MUST HAVE</strong>.
+  </p>
+  <p>To understand it better, you will compare a robot to a human and see the components shared in a robotic form.</p>
+
+  <h2>🌍 Robots Use Cases</h2>
+  <div class="figure">
+    <img src="images/robot_use_cases.png" alt="Robot use cases across different industries and applications">
+  </div>
+
+  <h2>📘 Introduction to ROS2</h2>
+  <p><strong>1.1.1 What is ROS2, when to use it, and Why?</strong></p>
+
+  <p><strong>Code separation and communication tools</strong></p>
+  <p>
+    Let's say, for example, you are programming a mobile robot such as the <strong>LIMO robot</strong> — you can
+    create a program called a <strong>node</strong> for a camera, a navigation algorithm, a hardware driver, a
+    LiDAR, a joystick, etc., as shown in Fig. 1.1. Each of those is an independent block that communicates with
+    the others in a way that is powerful and scalable.
+  </p>
+  <div class="figure">
+    <img src="images/ros2_communication.png" alt="ROS 2 communication — independent nodes for camera, navigation, hardware driver, LiDAR, and joystick communicating with each other">
+    <figcaption>Fig. 1.1 — ROS 2 Communication</figcaption>
+  </div>
+
+  <p><strong>Tools and Plug and play libraries</strong></p>
+  <p>
+    There is a bundle of libraries available — you just need to clone and use that library. Secondly, you can
+    write programs in Python and C++ simultaneously, as shown in Fig. 1.2:
+  </p>
+  <div class="figure">
+    <img src="images/Tools_and_Libraries.png" alt="ROS 2 tools and plug-and-play libraries, with support for writing programs in Python and C++ simultaneously">
+    <figcaption>Fig. 1.2 — Tools and Libraries</figcaption>
+  </div>
+
+  <h2>🎬 Meet the LIMO Robot</h2>
+  <p>
+    A quick look at the AgileX LIMO — the four-in-one mobile robot this whole course is built around.
+    Watch it drive before we open up its software architecture.
+  </p>
+  <div class="figure">
+    <video controls preload="metadata" playsinline poster="images/Limo_robot.png">
+      <source src="Limo_intro.mp4" type="video/mp4">
+      Your browser does not support the video tag —
+      <a href="Limo_intro.mp4">download the LIMO intro video</a> instead.
+    </video>
+    <figcaption>Video 1 — AgileX LIMO introduction</figcaption>
+  </div>
+
+  <h2>🧠 ROS2 Robot Architecture</h2>
+  <div class="figure figure-wide">
+    <img src="images/ros2-robot-architecture.png" alt="ROS 2 robot architecture pipeline tailored to the AgileX LIMO — from limo_description URDF/Xacro through TF2, RViz2, Gazebo Classic, and ros2_control to deployment on the real robot">
+  </div>
+
+  <p>
+    This is a complete, ready-to-teach robotics and ROS&nbsp;2 curriculum built specifically around the
+    <strong>AgileX LIMO</strong> — a four-in-one mobile robot that can switch between differential, Ackermann,
+    Mecanum, and tracked drive bases on the same chassis. It merges three sources into one coherent course:
+  </p>
+  <div class="box idea">
+    <div class="box-title">🧩 What this course is built from</div>
+    <p style="margin-bottom:10px;"><strong>1. Conceptual depth</strong> — the concepts and terminology of the official ROS 2 documentation at <em>docs.ros.org</em> (Nodes → Topics → URDF → TF2 → Gazebo → Nav2 → Behavior Trees), rebuilt line-by-line around LIMO instead of a generic robot.</p>
+    <p style="margin-bottom:10px;"><strong>2. Tested lab exercises</strong> — the real, working package names, launch files, and CLI commands from a university LIMO+ROS2 module's teaching wiki, so every command in this course actually runs.</p>
+    <p style="margin-bottom:10px;"><strong>3. The official AgileX LIMO manual</strong> — Lecture 11's six-subsystem hardware deep-dive (chassis &amp; drive modules, onboard compute, LiDAR, depth camera, IMU, battery/power) is grounded directly in AgileX's own hardware documentation.</p>
+    <p style="margin-bottom:0;"><strong>4. A second, from-scratch build</strong> — Lectures 12-14 close the course by having you build your own ROS 2 robot ("Forge") from a bare motor and an empty microSD card, following The Construct's <em>Build Your First ROS 2 Based Robot</em> (FastBot) reference design end to end: real part numbers, real pin maps, real firmware, the full differential-drive driver node, a CAD-generated URDF, sensor bring-up, a Gazebo digital twin and a 3D-printed cover — applying every skill from Lectures 1-11 to hardware and design decisions that are entirely your own.</p>
+  </div>
+
+  <p>
+    Each lecture is a self-contained session — around 3 hours for Lectures 1-11, and 4-6 hours each for the
+    hands-on build arc in Lectures 12-14: a warm conceptual walkthrough, hands-on terminal work,
+    real code you build and run, a learning checkpoint, and exercises. Lectures build on each other in order —
+    work through them front to back for the full experience, or jump to any single topic you need.
+  </p>
+
+  <h2 id="lectures">📚 Lectures</h2>
+
+  <div class="part-header"><span class="part-title">Part One — Foundations</span><span class="line"></span></div>
+  <div class="chapter-list">
+    <a class="chapter-card" href="01-installation-vmware-ros2-limo-intro.html">
+      <div class="chapter-num">1</div>
+      <div class="chapter-info">
+        <div class="chapter-title">Getting Started — VMware, Ubuntu 22.04 &amp; ROS 2 Humble</div>
+        <div class="chapter-desc">Installing your Linux robotics workstation from zero, plus meeting the LIMO robot and its four drive modes</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+    </a>
+    <a class="chapter-card" href="02-ros2-architecture-first-simulation.html">
+      <div class="chapter-num">2</div>
+      <div class="chapter-info">
+        <div class="chapter-title">ROS 2 Architecture &amp; Your First LIMO Simulation</div>
+        <div class="chapter-desc">Nodes, Topics, Services, Actions, Parameters — turtlesim, terminator, and launching LIMO in Gazebo</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+    </a>
+    <a class="chapter-card" href="03-dev-environment-drive-modes.html">
+      <div class="chapter-num">3</div>
+      <div class="chapter-info">
+        <div class="chapter-title">The ROS 2 Dev Environment &amp; LIMO's Drive Modes</div>
+        <div class="chapter-desc">Workspaces, packages, colcon, your first Python controller node, and differential/Ackermann/Mecanum control</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+    </a>
+  </div>
+
+  <div class="part-header"><span class="part-title">Part Two — Building &amp; Moving LIMO's Body</span><span class="line"></span></div>
+  <div class="chapter-list">
+    <a class="chapter-card" href="04-urdf-xacro-limo-body.html">
+      <div class="chapter-num">4</div>
+      <div class="chapter-info">
+        <div class="chapter-title">LIMO's Body — URDF &amp; Xacro</div>
+        <div class="chapter-desc">Links, joints, wheels, sensors, and the real limo_description package across all four chassis types</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+    </a>
+    <a class="chapter-card" href="05-tf2-frames-rviz.html">
+      <div class="chapter-num">5</div>
+      <div class="chapter-info">
+        <div class="chapter-title">TF2, Coordinate Frames &amp; RViz</div>
+        <div class="chapter-desc">The TF tree, static/dynamic transforms, map→odom→base_link, and watching LIMO live</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+    </a>
+    <a class="chapter-card" href="06-gazebo-ros2-control-path-controllers.html">
+      <div class="chapter-num">6</div>
+      <div class="chapter-info">
+        <div class="chapter-title">Gazebo, ros2_control &amp; Path-Following Controllers</div>
+        <div class="chapter-desc">Physics simulation, controller_manager, and building on/off, proportional, and kinematic path controllers</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+    </a>
+  </div>
+
+  <div class="part-header"><span class="part-title">Part Three — Perception</span><span class="line"></span></div>
+  <div class="chapter-list">
+    <a class="chapter-card" href="07-sensors-lidar-imu-camera-obstacle-avoidance.html">
+      <div class="chapter-num">7</div>
+      <div class="chapter-info">
+        <div class="chapter-title">Sensors — LiDAR, IMU, Depth Camera &amp; Reactive Avoidance</div>
+        <div class="chapter-desc">Reading LaserScan/Imu/Image data, TF-transforming points, and a safe-stop obstacle-avoidance node</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+    </a>
+    <a class="chapter-card" href="08-computer-vision-opencv-object-detection.html">
+      <div class="chapter-num">8</div>
+      <div class="chapter-info">
+        <div class="chapter-title">Robot Perception — OpenCV &amp; Object Detection</div>
+        <div class="chapter-desc">cv_bridge, HSV color/contour detection, Find-Object-2D, and YOLO on LIMO's camera</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+    </a>
+  </div>
+
+  <div class="part-header"><span class="part-title">Part Four — State Estimation &amp; Autonomy</span><span class="line"></span></div>
+  <div class="chapter-list">
+    <a class="chapter-card" href="09-odometry-ekf-amcl-localization.html">
+      <div class="chapter-num">9</div>
+      <div class="chapter-info">
+        <div class="chapter-title">Odometry, Sensor Fusion (EKF) &amp; AMCL Localization</div>
+        <div class="chapter-desc">Extended lab: wheel odometry drift, IMU/scan-matching fusion, robot_localization, the particle filter, and AMCL tuning — from a good relative estimate to knowing exactly where you are on the map</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+    </a>
+    <a class="chapter-card" href="10-slam-nav2-capstone-mission.html">
+      <div class="chapter-num">10</div>
+      <div class="chapter-info">
+        <div class="chapter-title">SLAM, Navigation2 &amp; the Simulated Capstone Mission</div>
+        <div class="chapter-desc">Extended lab: mapping the lab with slam_toolbox, costmaps/planners/behavior trees in Nav2, and a full waypoint-following + frontier-exploration mission — the simulated dress rehearsal for Lecture 14</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+    </a>
+  </div>
+
+  <div class="part-header"><span class="part-title">Part Five — Real Hardware: The LIMO Deep-Dive</span><span class="line"></span></div>
+  <div class="chapter-list">
+    <a class="chapter-card" href="11-limo-hardware-six-systems.html">
+      <div class="chapter-num">11</div>
+      <div class="chapter-info">
+        <div class="chapter-title">LIMO Hardware Deep-Dive — The Six Real Systems</div>
+        <div class="chapter-desc">Straight from the AgileX manual: chassis &amp; the four drive modules, onboard compute, LiDAR, depth camera, IMU, and battery/power — six hands-on subsystem labs on the physical robot</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+    </a>
+  </div>
+
+  <div class="part-header"><span class="part-title">Part Six — Build Your Own ROS 2 Robot</span><span class="line"></span></div>
+  <div class="chapter-list">
+    <a class="chapter-card" href="12-diy-robot-motors-power-compute.html">
+      <div class="chapter-num">12</div>
+      <div class="chapter-info">
+        <div class="chapter-title">Build Your Own Robot I — Motors, Power &amp; Compute</div>
+        <div class="chapter-desc">Meet Forge: choosing gear motors with encoders, wiring the L298N to an Arduino Nano pin by pin, flashing <code>ros_arduino_bridge</code>, spinning the wheels under closed-loop control and calibrating counts-per-revolution, then the power budget, battery sizing, power distribution and a headless Ubuntu Server + ROS 2 Humble install</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+    </a>
+    <a class="chapter-card" href="13-diy-robot-ros2-driver-urdf-lidar-camera.html">
+      <div class="chapter-num">13</div>
+      <div class="chapter-info">
+        <div class="chapter-title">Build Your Own Robot II — ROS 2 Driver, CAD, URDF, LiDAR &amp; Camera</div>
+        <div class="chapter-desc">A nervous system, a body and senses: custom messages, differential-drive kinematics derived by hand then implemented in a full driver node, a bringup launch file, a chassis designed in Onshape and converted to URDF automatically, TF via <code>robot_state_publisher</code>, the udev workflow for any USB sensor, and a real silent-failure camera debugging exercise</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+    </a>
+    <a class="chapter-card" href="14-diy-robot-simulation-3dprint-capstone.html">
+      <div class="chapter-num">14</div>
+      <div class="chapter-info">
+        <div class="chapter-title">Build Your Own Robot III — Simulation, 3D-Printed Cover &amp; Capstone</div>
+        <div class="chapter-desc">URDF to parameterised Xacro, diff-drive/LiDAR/camera Gazebo plugins with the sim-to-real gaps named, the four-file launch hierarchy, publishing your packages to GitHub and driving the digital twin — then designing a self-supporting 3D-printed cover and a final capstone build review</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+    </a>
+  </div>
+
+  <div class="divider"></div>
+
+  <h2>👤 Who This Course Is For</h2>
+  <p>Students, hobbyists, or engineers with basic Python and command-line comfort, working through a full university-style
+  or bootcamp-style module on mobile robotics. No prior ROS or Linux experience is assumed — Lecture 1 starts from a blank Windows/Mac machine.</p>
+
+  <h2>🛠️ What You Need</h2>
+  <table>
+    <tr><th>Requirement</th><th>Notes</th></tr>
+    <tr><td>A laptop/desktop, 8GB+ RAM, 60GB+ free disk</td><td>Windows, macOS, or Linux host — Lecture 1 covers VMware Workstation Pro setup</td></tr>
+    <tr><td>Ubuntu 22.04 LTS (in a VM)</td><td>Free ISO, full install walkthrough in Lecture 1</td></tr>
+    <tr><td>ROS 2 Humble Hawksbill</td><td>Installed in Lecture 1; used throughout</td></tr>
+    <tr><td>An AgileX LIMO robot (optional but recommended)</td><td>Lectures 1-10 work fully in Gazebo simulation; Lecture 11 is a hands-on hardware lab built around a physical LIMO</td></tr>
+    <tr><td>DIY robot parts for Lectures 12-14 (optional)</td><td>A gear motor with encoder, an H-bridge driver, a small MCU board, an SBC, a LiDAR, and a camera — every step also works as a design-only exercise without buying parts</td></tr>
+  </table>
+
+  <div class="box real">
+    <div class="box-title">🌍 Simulation-First, Then Two Real Builds</div>
+    <p style="margin:0;">
+      Lectures 1-10 are designed to run start-to-finish in Gazebo, so a classroom or self-learner never needs to wait
+      for lab time on a physical robot. Where real hardware behaves differently — motor drivers, sensor noise, CAN bus,
+      timing — that gap is called out explicitly throughout. Lecture 11 then puts LIMO's real electronics in your
+      hands, subsystem by subsystem, straight from AgileX's own manual. Lectures 12-14 go a step further: you build
+      a second robot, entirely your own, from a bare motor and an empty microSD card, applying every skill from the
+      first eleven lectures to hardware and design decisions nobody handed you.
+    </p>
+  </div>
+
+  <div class="divider"></div>
+
+  <h2 id="assessment">📄 Exams &amp; Attendance</h2>
+  <div class="chapter-list">
+    <a class="chapter-card" href="midterm.html">
+      <div class="chapter-num">M</div>
+      <div class="chapter-info">
+        <div class="chapter-title">Midterm Exam</div>
+        <div class="chapter-desc">Week 8 · 20 marks · covers Lectures 1–7 — format, sample questions, and how to prepare</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+    </a>
+    <a class="chapter-card" href="final.html">
+      <div class="chapter-num">F</div>
+      <div class="chapter-info">
+        <div class="chapter-title">Final Exam</div>
+        <div class="chapter-desc">Finals week · 40 marks · cumulative written paper plus the live capstone defence</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+    </a>
+    <a class="chapter-card" href="attendance.html">
+      <div class="chapter-num">✓</div>
+      <div class="chapter-info">
+        <div class="chapter-title">Attendance Policy</div>
+        <div class="chapter-desc">Lecture vs mandatory lab attendance, the 75% rule, absences and make-ups</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+    </a>
+  </div>
+
+  <p class="footer-note">ROS and Robot Programming &nbsp;·&nbsp; 14 Lectures &nbsp;·&nbsp; Built on ROS 2 Humble, the AgileX LIMO &amp; a robot you build yourself</p>
+
+</div>
+<script src="annotate.js" defer></script>
+<script>
+(function(){
+  var btn = document.getElementById('theme-toggle');
+  var icon = document.getElementById('theme-toggle-icon');
+  function updateIcon(){
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    icon.textContent = isDark ? '☀️' : '🌙';
+  }
+  updateIcon();
+  btn.addEventListener('click', function(){
+    var cur = document.documentElement.getAttribute('data-theme');
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try{ localStorage.setItem('limo-book-theme', next); }catch(e){}
+    updateIcon();
+  });
+})();
+</script>
+</body>
+</html>

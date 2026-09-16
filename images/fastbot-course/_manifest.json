@@ -1,0 +1,1074 @@
+[
+  {
+    "pdf": "1.1 course intro.pdf",
+    "page": 2,
+    "file": "1-1-course-intro_p02_01.png",
+    "width": 1913,
+    "height": 958,
+    "bytes": 239381
+  },
+  {
+    "pdf": "1.1 course intro.pdf",
+    "page": 2,
+    "file": "1-1-course-intro_p02_02.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "1.2 FastBot Intro.pdf",
+    "page": 2,
+    "file": "1-2-fastbot-intro_p02_01.jpeg",
+    "width": 1520,
+    "height": 722,
+    "bytes": 42436
+  },
+  {
+    "pdf": "1.2 FastBot Intro.pdf",
+    "page": 2,
+    "file": "1-2-fastbot-intro_p02_02.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "1.3 Intro demo.pdf",
+    "page": 2,
+    "file": "1-3-intro-demo_p02_01.png",
+    "width": 1796,
+    "height": 1058,
+    "bytes": 3845912
+  },
+  {
+    "pdf": "1.3 Intro demo.pdf",
+    "page": 3,
+    "file": "1-3-intro-demo_p03_02.png",
+    "width": 371,
+    "height": 333,
+    "bytes": 169162
+  },
+  {
+    "pdf": "1.3 Intro demo.pdf",
+    "page": 4,
+    "file": "1-3-intro-demo_p04_03.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "1.4 course outline.pdf",
+    "page": 2,
+    "file": "1-4-course-outline_p02_01.png",
+    "width": 542,
+    "height": 169,
+    "bytes": 79785
+  },
+  {
+    "pdf": "1.4 course outline.pdf",
+    "page": 3,
+    "file": "1-4-course-outline_p03_02.png",
+    "width": 497,
+    "height": 432,
+    "bytes": 278296
+  },
+  {
+    "pdf": "1.4 course outline.pdf",
+    "page": 4,
+    "file": "1-4-course-outline_p04_03.png",
+    "width": 462,
+    "height": 310,
+    "bytes": 346891
+  },
+  {
+    "pdf": "1.4 course outline.pdf",
+    "page": 5,
+    "file": "1-4-course-outline_p05_04.png",
+    "width": 558,
+    "height": 495,
+    "bytes": 346665
+  },
+  {
+    "pdf": "1.4 course outline.pdf",
+    "page": 6,
+    "file": "1-4-course-outline_p06_05.png",
+    "width": 1649,
+    "height": 848,
+    "bytes": 388403
+  },
+  {
+    "pdf": "1.4 course outline.pdf",
+    "page": 7,
+    "file": "1-4-course-outline_p07_06.png",
+    "width": 371,
+    "height": 333,
+    "bytes": 169162
+  },
+  {
+    "pdf": "1.4 course outline.pdf",
+    "page": 8,
+    "file": "1-4-course-outline_p08_07.png",
+    "width": 401,
+    "height": 363,
+    "bytes": 151588
+  },
+  {
+    "pdf": "1.4 course outline.pdf",
+    "page": 9,
+    "file": "1-4-course-outline_p09_08.png",
+    "width": 679,
+    "height": 652,
+    "bytes": 550349
+  },
+  {
+    "pdf": "1.4 course outline.pdf",
+    "page": 10,
+    "file": "1-4-course-outline_p10_09.png",
+    "width": 468,
+    "height": 452,
+    "bytes": 189015
+  },
+  {
+    "pdf": "1.4 course outline.pdf",
+    "page": 11,
+    "file": "1-4-course-outline_p11_10.png",
+    "width": 1643,
+    "height": 926,
+    "bytes": 455867
+  },
+  {
+    "pdf": "1.4 course outline.pdf",
+    "page": 12,
+    "file": "1-4-course-outline_p12_11.png",
+    "width": 1380,
+    "height": 478,
+    "bytes": 288831
+  },
+  {
+    "pdf": "1.4 course outline.pdf",
+    "page": 12,
+    "file": "1-4-course-outline_p12_12.png",
+    "width": 1368,
+    "height": 408,
+    "bytes": 227134
+  },
+  {
+    "pdf": "1.4 course outline.pdf",
+    "page": 13,
+    "file": "1-4-course-outline_p13_13.png",
+    "width": 1362,
+    "height": 418,
+    "bytes": 267374
+  },
+  {
+    "pdf": "1.4 course outline.pdf",
+    "page": 13,
+    "file": "1-4-course-outline_p13_14.png",
+    "width": 1349,
+    "height": 312,
+    "bytes": 370297
+  },
+  {
+    "pdf": "1.4 course outline.pdf",
+    "page": 13,
+    "file": "1-4-course-outline_p13_15.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "1.5 FastBot Components.pdf",
+    "page": 2,
+    "file": "1-5-fastbot-components_p02_01.jpeg",
+    "width": 3939,
+    "height": 1760,
+    "bytes": 2204780
+  },
+  {
+    "pdf": "1.5 FastBot Components.pdf",
+    "page": 5,
+    "file": "1-5-fastbot-components_p05_02.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "10.1 Robot Simulation Summary.pdf",
+    "page": 2,
+    "file": "10-1-robot-simulation-summary_p02_01.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "10.2 Adapt URDF for Gazebo.pdf",
+    "page": 14,
+    "file": "10-2-adapt-urdf-for-gazebo_p14_01.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "10.3 Gazebo Plugins.pdf",
+    "page": 7,
+    "file": "10-3-gazebo-plugins_p07_01.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "10.4 Simulation Launch Files.pdf",
+    "page": 13,
+    "file": "10-4-simulation-launch-files_p13_01.png",
+    "width": 425,
+    "height": 323,
+    "bytes": 19847
+  },
+  {
+    "pdf": "10.4 Simulation Launch Files.pdf",
+    "page": 15,
+    "file": "10-4-simulation-launch-files_p15_02.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "10.5 Conclusion.pdf",
+    "page": 2,
+    "file": "10-5-conclusion_p02_01.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "11.1 3D printed modes.pdf",
+    "page": 2,
+    "file": "11-1-3d-printed-modes_p02_01.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "11.2 Designing the Cover.pdf",
+    "page": 2,
+    "file": "11-2-designing-the-cover_p02_01.png",
+    "width": 1643,
+    "height": 926,
+    "bytes": 507597
+  },
+  {
+    "pdf": "11.2 Designing the Cover.pdf",
+    "page": 3,
+    "file": "11-2-designing-the-cover_p03_02.png",
+    "width": 1643,
+    "height": 926,
+    "bytes": 332038
+  },
+  {
+    "pdf": "11.2 Designing the Cover.pdf",
+    "page": 4,
+    "file": "11-2-designing-the-cover_p04_03.png",
+    "width": 1643,
+    "height": 926,
+    "bytes": 289244
+  },
+  {
+    "pdf": "11.2 Designing the Cover.pdf",
+    "page": 5,
+    "file": "11-2-designing-the-cover_p05_04.png",
+    "width": 1643,
+    "height": 926,
+    "bytes": 421209
+  },
+  {
+    "pdf": "11.2 Designing the Cover.pdf",
+    "page": 6,
+    "file": "11-2-designing-the-cover_p06_05.png",
+    "width": 1643,
+    "height": 926,
+    "bytes": 368810
+  },
+  {
+    "pdf": "11.2 Designing the Cover.pdf",
+    "page": 7,
+    "file": "11-2-designing-the-cover_p07_06.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "11.3 3D Printing considerations.pdf",
+    "page": 2,
+    "file": "11-3-3d-printing-considerations_p02_01.png",
+    "width": 1643,
+    "height": 926,
+    "bytes": 455867
+  },
+  {
+    "pdf": "11.3 3D Printing considerations.pdf",
+    "page": 3,
+    "file": "11-3-3d-printing-considerations_p03_02.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "11.4 Conclusion.pdf",
+    "page": 2,
+    "file": "11-4-conclusion_p02_01.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "2.2 Motor Specifications.pdf",
+    "page": 3,
+    "file": "2-2-motor-specifications_p03_01.png",
+    "width": 341,
+    "height": 267,
+    "bytes": 49661
+  },
+  {
+    "pdf": "2.2 Motor Specifications.pdf",
+    "page": 4,
+    "file": "2-2-motor-specifications_p04_02.png",
+    "width": 542,
+    "height": 169,
+    "bytes": 79785
+  },
+  {
+    "pdf": "2.3 Motor Control Hardware.pdf",
+    "page": 2,
+    "file": "2-3-motor-control-hardware_p02_01.png",
+    "width": 435,
+    "height": 439,
+    "bytes": 260352
+  },
+  {
+    "pdf": "2.3 Motor Control Hardware.pdf",
+    "page": 3,
+    "file": "2-3-motor-control-hardware_p03_02.png",
+    "width": 485,
+    "height": 433,
+    "bytes": 288311
+  },
+  {
+    "pdf": "2.4 Wiring.pdf",
+    "page": 2,
+    "file": "2-4-wiring_p02_01.png",
+    "width": 408,
+    "height": 450,
+    "bytes": 82097
+  },
+  {
+    "pdf": "2.4 Wiring.pdf",
+    "page": 3,
+    "file": "2-4-wiring_p03_02.jpeg",
+    "width": 2590,
+    "height": 520,
+    "bytes": 234368
+  },
+  {
+    "pdf": "2.4 Wiring.pdf",
+    "page": 5,
+    "file": "2-4-wiring_p05_03.jpeg",
+    "width": 576,
+    "height": 1114,
+    "bytes": 243715
+  },
+  {
+    "pdf": "2.4 Wiring.pdf",
+    "page": 6,
+    "file": "2-4-wiring_p06_04.jpeg",
+    "width": 576,
+    "height": 1114,
+    "bytes": 243715
+  },
+  {
+    "pdf": "2.4 Wiring.pdf",
+    "page": 7,
+    "file": "2-4-wiring_p07_05.png",
+    "width": 1666,
+    "height": 962,
+    "bytes": 78239
+  },
+  {
+    "pdf": "2.4 Wiring.pdf",
+    "page": 8,
+    "file": "2-4-wiring_p08_06.jpeg",
+    "width": 2050,
+    "height": 1150,
+    "bytes": 325719
+  },
+  {
+    "pdf": "2.4 Wiring.pdf",
+    "page": 9,
+    "file": "2-4-wiring_p09_07.jpeg",
+    "width": 4624,
+    "height": 3432,
+    "bytes": 4863127
+  },
+  {
+    "pdf": "2.4 Wiring.pdf",
+    "page": 10,
+    "file": "2-4-wiring_p10_08.jpeg",
+    "width": 605,
+    "height": 2058,
+    "bytes": 193975
+  },
+  {
+    "pdf": "2.4 Wiring.pdf",
+    "page": 12,
+    "file": "2-4-wiring_p12_09.jpeg",
+    "width": 2050,
+    "height": 2281,
+    "bytes": 420517
+  },
+  {
+    "pdf": "2.4 Wiring.pdf",
+    "page": 13,
+    "file": "2-4-wiring_p13_10.jpeg",
+    "width": 2050,
+    "height": 2281,
+    "bytes": 420517
+  },
+  {
+    "pdf": "2.4 Wiring.pdf",
+    "page": 14,
+    "file": "2-4-wiring_p14_11.jpeg",
+    "width": 2015,
+    "height": 2952,
+    "bytes": 2315589
+  },
+  {
+    "pdf": "2.4 Wiring.pdf",
+    "page": 15,
+    "file": "2-4-wiring_p15_12.jpeg",
+    "width": 2015,
+    "height": 2952,
+    "bytes": 2315589
+  },
+  {
+    "pdf": "2.5 Serial Communication.pdf",
+    "page": 3,
+    "file": "2-5-serial-communication_p03_01.png",
+    "width": 497,
+    "height": 594,
+    "bytes": 28300
+  },
+  {
+    "pdf": "2.5 Serial Communication.pdf",
+    "page": 3,
+    "file": "2-5-serial-communication_p03_02.png",
+    "width": 494,
+    "height": 587,
+    "bytes": 29625
+  },
+  {
+    "pdf": "2.5 Serial Communication.pdf",
+    "page": 4,
+    "file": "2-5-serial-communication_p04_03.png",
+    "width": 698,
+    "height": 602,
+    "bytes": 72928
+  },
+  {
+    "pdf": "2.5 Serial Communication.pdf",
+    "page": 5,
+    "file": "2-5-serial-communication_p05_04.png",
+    "width": 698,
+    "height": 602,
+    "bytes": 64347
+  },
+  {
+    "pdf": "2.5 Serial Communication.pdf",
+    "page": 7,
+    "file": "2-5-serial-communication_p07_05.png",
+    "width": 1638,
+    "height": 869,
+    "bytes": 130360
+  },
+  {
+    "pdf": "2.5 Serial Communication.pdf",
+    "page": 8,
+    "file": "2-5-serial-communication_p08_06.png",
+    "width": 1068,
+    "height": 708,
+    "bytes": 63913
+  },
+  {
+    "pdf": "3.1 Battery Unit Summary.pdf",
+    "page": 2,
+    "file": "3-1-battery-unit-summary_p02_01.png",
+    "width": 369,
+    "height": 258,
+    "bytes": 8950
+  },
+  {
+    "pdf": "3.1 Battery Unit Summary.pdf",
+    "page": 3,
+    "file": "3-1-battery-unit-summary_p03_02.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "3.2 Power Consumption Calculation.pdf",
+    "page": 2,
+    "file": "3-2-power-consumption-calculation_p02_01.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "3.3 Battery Selection.pdf",
+    "page": 3,
+    "file": "3-3-battery-selection_p03_01.png",
+    "width": 436,
+    "height": 384,
+    "bytes": 199741
+  },
+  {
+    "pdf": "3.3 Battery Selection.pdf",
+    "page": 4,
+    "file": "3-3-battery-selection_p04_02.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "3.4 connect battery to robot.pdf",
+    "page": 2,
+    "file": "3-4-connect-battery-to-robot_p02_01.png",
+    "width": 497,
+    "height": 432,
+    "bytes": 278296
+  },
+  {
+    "pdf": "3.4 connect battery to robot.pdf",
+    "page": 3,
+    "file": "3-4-connect-battery-to-robot_p03_02.jpeg",
+    "width": 2050,
+    "height": 2281,
+    "bytes": 420517
+  },
+  {
+    "pdf": "3.4 connect battery to robot.pdf",
+    "page": 3,
+    "file": "3-4-connect-battery-to-robot_p03_03.png",
+    "width": 512,
+    "height": 512,
+    "bytes": 12037
+  },
+  {
+    "pdf": "3.4 connect battery to robot.pdf",
+    "page": 4,
+    "file": "3-4-connect-battery-to-robot_p04_04.jpeg",
+    "width": 2057,
+    "height": 2929,
+    "bytes": 653441
+  },
+  {
+    "pdf": "3.4 connect battery to robot.pdf",
+    "page": 5,
+    "file": "3-4-connect-battery-to-robot_p05_05.jpeg",
+    "width": 2186,
+    "height": 3196,
+    "bytes": 2837638
+  },
+  {
+    "pdf": "3.4 connect battery to robot.pdf",
+    "page": 6,
+    "file": "3-4-connect-battery-to-robot_p06_06.jpeg",
+    "width": 2186,
+    "height": 3196,
+    "bytes": 2837638
+  },
+  {
+    "pdf": "3.4 connect battery to robot.pdf",
+    "page": 7,
+    "file": "3-4-connect-battery-to-robot_p07_07.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "3.5 Conclusion.pdf",
+    "page": 2,
+    "file": "3-5-conclusion_p02_01.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "4.1 Computer unit summary.pdf",
+    "page": 2,
+    "file": "4-1-computer-unit-summary_p02_01.png",
+    "width": 558,
+    "height": 495,
+    "bytes": 346665
+  },
+  {
+    "pdf": "4.1 Computer unit summary.pdf",
+    "page": 3,
+    "file": "4-1-computer-unit-summary_p03_02.png",
+    "width": 462,
+    "height": 310,
+    "bytes": 346891
+  },
+  {
+    "pdf": "4.1 Computer unit summary.pdf",
+    "page": 3,
+    "file": "4-1-computer-unit-summary_p03_03.png",
+    "width": 413,
+    "height": 417,
+    "bytes": 76246
+  },
+  {
+    "pdf": "4.1 Computer unit summary.pdf",
+    "page": 4,
+    "file": "4-1-computer-unit-summary_p04_04.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "4.2 Install Ubuntu Server.pdf",
+    "page": 2,
+    "file": "4-2-install-ubuntu-server_p02_01.png",
+    "width": 816,
+    "height": 423,
+    "bytes": 60700
+  },
+  {
+    "pdf": "4.2 Install Ubuntu Server.pdf",
+    "page": 4,
+    "file": "4-2-install-ubuntu-server_p04_02.png",
+    "width": 748,
+    "height": 558,
+    "bytes": 27948
+  },
+  {
+    "pdf": "4.2 Install Ubuntu Server.pdf",
+    "page": 5,
+    "file": "4-2-install-ubuntu-server_p05_03.png",
+    "width": 679,
+    "height": 471,
+    "bytes": 34345
+  },
+  {
+    "pdf": "4.2 Install Ubuntu Server.pdf",
+    "page": 6,
+    "file": "4-2-install-ubuntu-server_p06_04.png",
+    "width": 540,
+    "height": 664,
+    "bytes": 48074
+  },
+  {
+    "pdf": "4.2 Install Ubuntu Server.pdf",
+    "page": 7,
+    "file": "4-2-install-ubuntu-server_p07_05.png",
+    "width": 540,
+    "height": 664,
+    "bytes": 26731
+  },
+  {
+    "pdf": "4.2 Install Ubuntu Server.pdf",
+    "page": 8,
+    "file": "4-2-install-ubuntu-server_p08_06.png",
+    "width": 748,
+    "height": 558,
+    "bytes": 49179
+  },
+  {
+    "pdf": "4.2 Install Ubuntu Server.pdf",
+    "page": 10,
+    "file": "4-2-install-ubuntu-server_p10_07.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "4.3 Install ROS2.pdf",
+    "page": 5,
+    "file": "4-3-install-ros2_p05_01.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "4.4 Connect RPI to DF.pdf",
+    "page": 4,
+    "file": "4-4-connect-rpi-to-df_p04_01.jpeg",
+    "width": 2073,
+    "height": 3063,
+    "bytes": 2436678
+  },
+  {
+    "pdf": "4.4 Connect RPI to DF.pdf",
+    "page": 5,
+    "file": "4-4-connect-rpi-to-df_p05_02.jpeg",
+    "width": 2073,
+    "height": 3063,
+    "bytes": 2436678
+  },
+  {
+    "pdf": "4.4 Connect RPI to DF.pdf",
+    "page": 6,
+    "file": "4-4-connect-rpi-to-df_p06_03.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "4.5 Conclusion.pdf",
+    "page": 2,
+    "file": "4-5-conclusion_p02_01.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "5.1 ROS framework summary.pdf",
+    "page": 2,
+    "file": "5-1-ros-framework-summary_p02_01.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "5.2 ROS 2 workspace.pdf",
+    "page": 3,
+    "file": "5-2-ros-2-workspace_p03_01.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "5.3 ROS 2 Motor Driver Package.pdf",
+    "page": 4,
+    "file": "5-3-ros-2-motor-driver-package_p04_01.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "5.4 Serial Motor Driver Node.pdf",
+    "page": 22,
+    "file": "5-4-serial-motor-driver-node_p22_01.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "5.5 bringup package.pdf",
+    "page": 4,
+    "file": "5-5-bringup-package_p04_01.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "5.6 conclusion.pdf",
+    "page": 2,
+    "file": "5-6-conclusion_p02_01.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "6.1 Physical Structure Design.pdf",
+    "page": 2,
+    "file": "6-1-physical-structure-design_p02_01.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "6.2 Part Creation.pdf",
+    "page": 2,
+    "file": "6-2-part-creation_p02_01.png",
+    "width": 1649,
+    "height": 848,
+    "bytes": 586759
+  },
+  {
+    "pdf": "6.2 Part Creation.pdf",
+    "page": 3,
+    "file": "6-2-part-creation_p03_02.png",
+    "width": 1649,
+    "height": 848,
+    "bytes": 252226
+  },
+  {
+    "pdf": "6.2 Part Creation.pdf",
+    "page": 4,
+    "file": "6-2-part-creation_p04_03.png",
+    "width": 1649,
+    "height": 848,
+    "bytes": 307897
+  },
+  {
+    "pdf": "6.2 Part Creation.pdf",
+    "page": 5,
+    "file": "6-2-part-creation_p05_04.png",
+    "width": 1649,
+    "height": 848,
+    "bytes": 388403
+  },
+  {
+    "pdf": "6.2 Part Creation.pdf",
+    "page": 6,
+    "file": "6-2-part-creation_p06_05.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "6.3 Assembly Creation.pdf",
+    "page": 2,
+    "file": "6-3-assembly-creation_p02_01.png",
+    "width": 1615,
+    "height": 852,
+    "bytes": 314088
+  },
+  {
+    "pdf": "6.3 Assembly Creation.pdf",
+    "page": 3,
+    "file": "6-3-assembly-creation_p03_02.png",
+    "width": 1615,
+    "height": 852,
+    "bytes": 608843
+  },
+  {
+    "pdf": "6.3 Assembly Creation.pdf",
+    "page": 4,
+    "file": "6-3-assembly-creation_p04_03.png",
+    "width": 1615,
+    "height": 852,
+    "bytes": 458016
+  },
+  {
+    "pdf": "6.3 Assembly Creation.pdf",
+    "page": 5,
+    "file": "6-3-assembly-creation_p05_04.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "6.4 Mate Parts in Assembly.pdf",
+    "page": 2,
+    "file": "6-4-mate-parts-in-assembly_p02_01.png",
+    "width": 1615,
+    "height": 852,
+    "bytes": 518130
+  },
+  {
+    "pdf": "6.4 Mate Parts in Assembly.pdf",
+    "page": 3,
+    "file": "6-4-mate-parts-in-assembly_p03_02.png",
+    "width": 1615,
+    "height": 852,
+    "bytes": 385005
+  },
+  {
+    "pdf": "6.4 Mate Parts in Assembly.pdf",
+    "page": 4,
+    "file": "6-4-mate-parts-in-assembly_p04_03.png",
+    "width": 1635,
+    "height": 916,
+    "bytes": 443771
+  },
+  {
+    "pdf": "6.4 Mate Parts in Assembly.pdf",
+    "page": 5,
+    "file": "6-4-mate-parts-in-assembly_p05_04.png",
+    "width": 1635,
+    "height": 916,
+    "bytes": 421233
+  },
+  {
+    "pdf": "6.4 Mate Parts in Assembly.pdf",
+    "page": 6,
+    "file": "6-4-mate-parts-in-assembly_p06_05.png",
+    "width": 1635,
+    "height": 916,
+    "bytes": 624826
+  },
+  {
+    "pdf": "6.4 Mate Parts in Assembly.pdf",
+    "page": 7,
+    "file": "6-4-mate-parts-in-assembly_p07_06.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "6.5 Conclusion.pdf",
+    "page": 2,
+    "file": "6-5-conclusion_p02_01.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "7.1 URDF unit summary.pdf",
+    "page": 2,
+    "file": "7-1-urdf-unit-summary_p02_01.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "7.2 Basic Structure of a URDF File.pdf",
+    "page": 4,
+    "file": "7-2-basic-structure-of-a-urdf-file_p04_01.png",
+    "width": 1913,
+    "height": 958,
+    "bytes": 239381
+  },
+  {
+    "pdf": "7.2 Basic Structure of a URDF File.pdf",
+    "page": 6,
+    "file": "7-2-basic-structure-of-a-urdf-file_p06_02.png",
+    "width": 464,
+    "height": 311,
+    "bytes": 26393
+  },
+  {
+    "pdf": "7.2 Basic Structure of a URDF File.pdf",
+    "page": 7,
+    "file": "7-2-basic-structure-of-a-urdf-file_p07_03.png",
+    "width": 609,
+    "height": 201,
+    "bytes": 13996
+  },
+  {
+    "pdf": "7.2 Basic Structure of a URDF File.pdf",
+    "page": 9,
+    "file": "7-2-basic-structure-of-a-urdf-file_p09_04.png",
+    "width": 1070,
+    "height": 297,
+    "bytes": 37291
+  },
+  {
+    "pdf": "7.2 Basic Structure of a URDF File.pdf",
+    "page": 12,
+    "file": "7-2-basic-structure-of-a-urdf-file_p12_05.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "7.3 Robot State Publisher.pdf",
+    "page": 6,
+    "file": "7-3-robot-state-publisher_p06_01.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "7.4 Conclusion.pdf",
+    "page": 2,
+    "file": "7-4-conclusion_p02_01.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "8.1 LiDAR Unit Summary.pdf",
+    "page": 2,
+    "file": "8-1-lidar-unit-summary_p02_01.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "8.2 LSLiDAR N-10.pdf",
+    "page": 1,
+    "file": "8-2-lslidar-n-10_p01_01.png",
+    "width": 401,
+    "height": 363,
+    "bytes": 151588
+  },
+  {
+    "pdf": "8.2 LSLiDAR N-10.pdf",
+    "page": 2,
+    "file": "8-2-lslidar-n-10_p02_02.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "8.3 Udev Rules.pdf",
+    "page": 4,
+    "file": "8-3-udev-rules_p04_01.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "8.4 ROS 2 Driver.pdf",
+    "page": 7,
+    "file": "8-4-ros-2-driver_p07_01.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "8.5 Conclusion.pdf",
+    "page": 2,
+    "file": "8-5-conclusion_p02_01.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "9.1 Camera Unit Summary.pdf",
+    "page": 2,
+    "file": "9-1-camera-unit-summary_p02_01.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "9.2 Raspicam.pdf",
+    "page": 1,
+    "file": "9-2-raspicam_p01_01.png",
+    "width": 679,
+    "height": 652,
+    "bytes": 550349
+  },
+  {
+    "pdf": "9.2 Raspicam.pdf",
+    "page": 2,
+    "file": "9-2-raspicam_p02_02.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "9.3 ROS 2 Driver.pdf",
+    "page": 5,
+    "file": "9-3-ros-2-driver_p05_01.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "9.4 ros2 v412 camera.pdf",
+    "page": 5,
+    "file": "9-4-ros2-v412-camera_p05_01.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  },
+  {
+    "pdf": "9.5 Conclusion.pdf",
+    "page": 2,
+    "file": "9-5-conclusion_p02_01.png",
+    "width": 1368,
+    "height": 1372,
+    "bytes": 151559
+  }
+]

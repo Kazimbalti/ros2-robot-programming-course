@@ -1,0 +1,1814 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<script>
+(function(){
+  try{
+    var t = localStorage.getItem('limo-book-theme');
+    if(!t){ t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+    document.documentElement.setAttribute('data-theme', t);
+  }catch(e){}
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 14 — Build Your Own Robot III: Simulation, 3D-Printed Cover &amp; Capstone</title>
+<meta name="description" content="Close the course: convert Forge's generated URDF into a parameterised Xacro, add Gazebo differential-drive, LiDAR and camera plugins, build the four-file simulation launch hierarchy, publish the packages to GitHub and run the simulation, design a 3D-printable cover in Onshape around the one rule that governs every print, and present the capstone build review.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<style>
+  :root{
+    --bg:#f6f4ef; --panel:#fffefb; --panel2:#f1efe8; --border:#e6e1d6;
+    --text:#211f1a; --muted:#7a7568; --accent:#3d4bf5; --accent-ink:#2732b8;
+    --accent2:#0e9e6e; --gold:#c8862c; --danger:#d64a3c; --purple:#8b5cf6; --radius:14px;
+  }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--bg); color:var(--text); font-family:'Inter', -apple-system, sans-serif; line-height:1.85; font-size:17.5px; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:880px; margin:0 auto; padding:48px 24px 120px;}
+  .cover{border-radius:28px; background:#12142b; padding:64px 44px; margin-bottom:56px; position:relative; overflow:hidden; isolation:isolate;}
+  .cover::before{content:""; position:absolute; inset:-40%; background:
+      radial-gradient(38% 45% at 15% 20%, rgba(61,75,245,0.55), transparent 70%),
+      radial-gradient(35% 40% at 85% 15%, rgba(139,92,246,0.45), transparent 70%),
+      radial-gradient(45% 50% at 60% 90%, rgba(14,158,110,0.35), transparent 70%);
+    filter:blur(60px); z-index:0;}
+  .cover::after{content:""; position:absolute; inset:0; background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px); background-size: 20px 20px; z-index:0;}
+  .cover > *{position:relative; z-index:1;}
+  .kicker{display:inline-block; color:#c9cdff; font-weight:600; letter-spacing:.4px; font-size:13px; margin-bottom:18px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); padding:6px 14px; border-radius:999px;}
+  .cover h1{font-size:2.7em; margin:0 0 12px; font-weight:800; line-height:1.3; color:#ffffff; letter-spacing:-.5px;}
+  .cover .subtitle{color:#aeb2d6; font-size:1.2em; margin-bottom:30px; font-weight:400;}
+  .meta-row{display:flex; flex-wrap:wrap; gap:10px; margin-top:18px;}
+  .chip{background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.14); color:#d4d7f0; padding:7px 15px; border-radius:999px; font-size:.83em;}
+  h2{font-size:1.9em; font-weight:800; margin:72px 0 22px; display:flex; align-items:center; gap:14px; letter-spacing:-.3px;}
+  h2 .num{display:inline-flex; align-items:center; justify-content:center; min-width:40px; height:40px; padding:0 12px; border-radius:12px; background:var(--accent); box-shadow:0 6px 16px -4px rgba(61,75,245,0.5); color:#ffffff; font-size:.62em; font-weight:800; flex-shrink:0; white-space:nowrap;}
+  h3{font-size:1.3em; font-weight:700; margin:36px 0 14px; color:var(--accent-ink); letter-spacing:-.2px;}
+  h4{font-size:1.08em; font-weight:700; margin:24px 0 10px; color:var(--purple);}
+  p{margin:0 0 16px; color:#3c382f;}
+  strong{color:var(--text); font-weight:700;}
+  a{color:var(--accent);}
+  .box{border-radius:16px; padding:20px 24px; margin:22px 0; border:1px solid var(--border); background:var(--panel); position:relative; box-shadow:0 1px 2px rgba(33,31,26,0.03);}
+  .box-title{font-weight:800; margin-bottom:9px; display:flex; align-items:center; gap:8px; font-size:.96em; letter-spacing:.1px;}
+  .box p:last-child{margin-bottom:0;}
+  .box.idea{background:#eef0ff;border-color:#d6dafc;} .box.idea .box-title{color:var(--accent-ink);}
+  .box.mistake{background:#fdeeec; border-color:#f6d2cd;} .box.mistake .box-title{color:var(--danger);}
+  .box.eng{background:#f4effe; border-color:#e2d6fb;} .box.eng .box-title{color:var(--purple);}
+  .box.real{background:#eafaf3; border-color:#c9eeda;} .box.real .box-title{color:var(--accent2);}
+  .box.def{background:#fdf3e4; border-color:#f2ddb3;} .box.def .box-title{color:var(--gold);}
+  .box.hw{background:#fdeee4; border-color:#f2c9a3;} .box.hw .box-title{color:#c8622c;}
+  .box.think{background:#eafcfb; border-color:#bfeae6;} .box.think .box-title{color:#0e8a7d;}
+  code, pre{font-family:'JetBrains Mono', monospace; direction:ltr; text-align:left;}
+  code{background:#eceaf9; border:1px solid #dcdaf3; border-radius:6px; padding:2px 7px; font-size:.87em; color:var(--accent-ink); display:inline-block;}
+  pre{background:#181a2e; border-radius:16px; padding:18px 20px; overflow-x:auto; margin:18px 0; font-size:.88em; line-height:1.65; box-shadow:0 12px 28px -16px rgba(24,26,46,0.5);}
+  pre code{background:none; border:none; padding:0; color:#d8dcff; display:block;}
+  .filename{display:inline-block; font-family:'JetBrains Mono',monospace; font-size:.78em; font-weight:600; color:var(--muted); background:var(--panel2); border:1px solid var(--border); border-radius:8px 8px 0 0; padding:5px 12px; margin:18px 0 -18px; position:relative; z-index:1;}
+  .filename + pre{border-start-start-radius:0;}
+  table{width:100%; border-collapse:separate; border-spacing:0; margin:22px 0; font-size:.92em; border-radius:14px; overflow:hidden; border:1px solid var(--border);}
+  th, td{border-bottom:1px solid var(--border); padding:12px 15px; text-align:left;}
+  th{background:#eceaf9; color:var(--accent-ink); font-weight:700; font-size:.9em;}
+  tr:last-child td{border-bottom:none;}
+  tr:nth-child(even) td{background:rgba(33,31,26,0.02);}
+  .tw{overflow-x:auto; margin:22px 0;} .tw table{margin:0; min-width:520px;}
+  ul, ol{margin:0 0 16px; padding-inline-start:26px; color:#3c382f;}
+  li{margin-bottom:7px;}
+  .steps{counter-reset:stepc; list-style:none; padding-inline-start:0; margin:24px 0;}
+  .steps > li{counter-increment:stepc; position:relative; padding-inline-start:48px; margin-bottom:18px;}
+  .steps > li::before{content:counter(stepc); position:absolute; inset-inline-start:0; top:2px; width:31px; height:31px; border-radius:10px; background:var(--accent); color:#fff; font-weight:800; font-size:.78em; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px -4px rgba(61,75,245,.5);}
+  .figure{margin:28px 0; text-align:center;}
+  .figure img, .figure svg{max-width:100%; height:auto; background:#fffefb; border:1px solid var(--border); border-radius:16px; box-shadow:0 1px 2px rgba(33,31,26,0.03), 0 16px 32px -20px rgba(33,31,26,0.14);}
+  .figure img{cursor:zoom-in;}
+  .figure figcaption{color:var(--muted); font-size:.87em; margin-top:12px;}
+  .figure figcaption b{color:var(--accent-ink); font-weight:700;}
+  .fig-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:20px; margin:28px 0; align-items:start;}
+  .fig-grid .figure{margin:0;}
+  .mermaid{background:#fffefb; border:1px solid var(--border); border-radius:16px; padding:18px; margin:24px 0; text-align:center; box-shadow:0 1px 2px rgba(33,31,26,0.03), 0 16px 32px -20px rgba(33,31,26,0.14);}
+  .checkpoint{border-radius:16px; padding:22px 24px; margin:26px 0; background:#eafaf3; border:1px solid #c9eeda;}
+  .checkpoint ul{list-style:none; padding:0; margin:0;}
+  .checkpoint li{padding:9px 0; border-bottom:1px solid rgba(33,31,26,0.06); display:flex; gap:10px; align-items:flex-start;}
+  .checkpoint li:last-child{border-bottom:none;}
+  .checkpoint li::before{content:"◻"; color:var(--accent2); font-size:1.2em; line-height:1;}
+  .exercise{border-radius:14px; padding:18px 22px; margin:16px 0; background:var(--panel); border:1px solid var(--border); border-inline-start:4px solid var(--gold);}
+  .exercise .level{font-size:.76em; color:var(--gold); font-weight:800; text-transform:uppercase; letter-spacing:.6px;}
+  .assignment{border-radius:14px; padding:18px 22px; margin:16px 0; background:var(--panel); border:1px solid var(--border); border-inline-start:4px solid var(--accent2);}
+  .assignment .label{font-size:.76em; color:var(--accent2); font-weight:800; text-transform:uppercase; letter-spacing:.6px;}
+  .quiz{border-radius:16px; padding:22px 26px; margin:26px 0; border:1px solid var(--border); background:var(--panel2);}
+  .quiz-title{font-weight:800; margin-bottom:14px; color:var(--purple); font-size:1em;}
+  .quiz-q{margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid var(--border);}
+  .quiz-q:last-child{margin-bottom:0; padding-bottom:0; border-bottom:none;}
+  .quiz-q p{margin-bottom:8px;}
+  .quiz-q details{margin-top:8px;}
+  .quiz-q summary{cursor:pointer; color:var(--accent); font-weight:600; font-size:.9em;}
+  .quiz-q details[open] summary{margin-bottom:8px;}
+  .quiz-q details p{color:var(--muted); margin:0;}
+  .glossary dt{font-weight:800; color:var(--accent-ink); margin-top:16px;}
+  .glossary dd{margin:4px 0 0; color:var(--muted);}
+  .toc{background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:26px 30px;}
+  .toc a{display:block; padding:8px 0; color:#3c382f; text-decoration:none; border-bottom:1px solid rgba(33,31,26,.06); transition:color .15s;}
+  .toc a:last-child{border-bottom:none;}
+  .toc a:hover{color:var(--accent-ink);}
+  .toc a span{color:var(--muted); font-size:.85em; margin-inline-end:10px; font-weight:600;}
+  .divider{height:1px; background:linear-gradient(90deg, transparent, var(--border), transparent); margin:52px 0;}
+  .footer-nav{display:flex; justify-content:space-between; align-items:center; gap:16px; margin-top:64px; padding-top:26px; border-top:1px solid var(--border); color:var(--muted); font-size:.9em;}
+  .footer-nav a{color:var(--text); text-decoration:none; font-weight:600;}
+  .footer-nav a:hover{color:var(--accent-ink);}
+  .badge-project{display:inline-block; background:#fdf3e4; border:1px solid #f2ddb3; color:var(--gold); border-radius:8px; padding:3px 11px; font-size:.78em; font-weight:700;}
+  .term{background:#181a2e; border-radius:16px; overflow:hidden; margin:22px 0; box-shadow:0 12px 28px -16px rgba(24,26,46,0.5);}
+  .term-bar{display:flex; align-items:center; gap:7px; padding:12px 16px; background:#20223a;}
+  .term-dot{width:11px; height:11px; border-radius:50%;}
+  .term-body{padding:16px 20px; font-family:'JetBrains Mono', monospace; direction:ltr; text-align:left; font-size:.87em; line-height:1.75; color:#d8dcff; white-space:pre-wrap;}
+  .term-prompt{color:#7ee7c7;}
+  .term-out{color:#9aa0c8;}
+  #lightbox{position:fixed; inset:0; z-index:2000; background:rgba(10,11,22,.92); display:none; align-items:center; justify-content:center; padding:28px; cursor:zoom-out;}
+  #lightbox.on{display:flex;}
+  #lightbox img{max-width:100%; max-height:100%; border-radius:12px; box-shadow:0 30px 80px -30px #000;}
+  #lightbox .lb-cap{position:absolute; bottom:14px; left:0; right:0; text-align:center; color:#c7c9dc; font-size:.85em; padding:0 24px;}
+  @media print{ body{background:#fff; color:#000;} .figure img{cursor:auto;} }
+  html[data-theme="dark"]{
+    --bg:#12141c; --panel:#1b1e2a; --panel2:#20232f; --border:#2d3142;
+    --text:#e7e8f2; --muted:#9498b3; --accent:#7c86ff; --accent-ink:#aab1ff;
+    --accent2:#34d399; --gold:#e3a548; --danger:#f0685a; --purple:#a78bfa; --radius:14px;
+  }
+  html[data-theme="dark"] p, html[data-theme="dark"] ul, html[data-theme="dark"] ol, html[data-theme="dark"] .toc a{color:#c7c9dc;}
+  html[data-theme="dark"] code{background:#262a45; border-color:#3a3f5c;}
+  html[data-theme="dark"] th{background:#262a45;}
+  html[data-theme="dark"] tr:nth-child(even) td{background:rgba(255,255,255,0.03);}
+  html[data-theme="dark"] .box.idea{background:#1f2242; border-color:#383d6b;}
+  html[data-theme="dark"] .box.mistake{background:#3a2220; border-color:#5c332e;}
+  html[data-theme="dark"] .box.eng{background:#2a2340; border-color:#453a63;}
+  html[data-theme="dark"] .box.real{background:#16302a; border-color:#1f4a3d;}
+  html[data-theme="dark"] .box.def{background:#3a2f18; border-color:#5c4826;}
+  html[data-theme="dark"] .box.hw{background:#3a2618; border-color:#5c3f26;}
+  html[data-theme="dark"] .box.think{background:#0f2e2c; border-color:#1d4a45;}
+  html[data-theme="dark"] .checkpoint{background:#16302a; border-color:#1f4a3d;}
+  html[data-theme="dark"] .checkpoint li{border-bottom-color:rgba(255,255,255,0.08);}
+  html[data-theme="dark"] .badge-project{background:#3a2f18; border-color:#5c4826;}
+  html[data-theme="dark"] .figure img, html[data-theme="dark"] .figure svg{background:#f4f4f8;}
+  body, .box, .exercise, .assignment, .checkpoint, .toc, table, code, th{transition:background-color .25s ease, border-color .25s ease, color .25s ease;}
+  #theme-toggle{position:fixed; top:18px; left:18px; z-index:999; width:46px; height:46px; border-radius:50%; border:1px solid var(--border); background:var(--panel); color:var(--text); font-size:19px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px -8px rgba(0,0,0,0.35); transition:transform .15s ease, background-color .25s ease, border-color .25s ease;}
+  #theme-toggle:hover{transform:scale(1.08);}
+  @media (max-width:640px){ #theme-toggle{top:12px; left:12px; width:42px; height:42px; font-size:17px;} }
+</style>
+<link rel="stylesheet" href="projector.css">
+</head>
+<body>
+<style>
+.coursenav{position:sticky;top:0;z-index:900;background:rgba(255,254,251,0.88);backdrop-filter:saturate(160%) blur(10px);border-bottom:1px solid var(--border);}
+.coursenav .inner{max-width:1000px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;padding:10px 20px 10px 74px;}
+.coursenav .brand{font-weight:800;color:var(--accent-ink);margin-inline-end:12px;font-size:.9em;letter-spacing:-.2px;}
+.coursenav a{color:#3c382f;text-decoration:none;font-weight:600;font-size:.82em;padding:6px 10px;border-radius:999px;transition:background-color .15s,color .15s;}
+.coursenav a:hover{background:#eef0ff;color:var(--accent-ink);}
+.coursenav a.active{background:var(--accent);color:#fff;}
+html[data-theme="dark"] .coursenav{background:rgba(27,30,42,0.9);}
+html[data-theme="dark"] .coursenav a{color:#c7c9dc;}
+html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
+@media print{.coursenav{display:none;}}
+</style>
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html">Home</a>
+  <a href="syllabus.html">Syllabus</a>
+  <a href="schedule.html">Schedule</a>
+  <a href="assignments.html">Assignments</a>
+  <a href="index.html#lectures" class="active">Lectures</a>
+</div></nav>
+<button id="theme-toggle" aria-label="Toggle light/dark mode" title="Light/dark mode">
+  <span id="theme-toggle-icon">🌙</span>
+</button>
+<div id="lightbox" role="dialog" aria-label="Enlarged figure"><img alt=""><div class="lb-cap"></div></div>
+<div class="wrap">
+
+  <div class="cover">
+    <div class="kicker">LIMO Robotics &amp; ROS 2 Lecture &nbsp;·&nbsp; Session 14 of 14 — Course Capstone</div>
+    <h1>Lecture 14: Build Your Own Robot III — Simulation, 3D-Printed Cover &amp; Capstone</h1>
+    <div class="subtitle">Building Forge's digital twin, finishing the physical robot, and closing out the course</div>
+    <div class="meta-row">
+      <div class="chip">Duration: 5-6 hours</div>
+      <div class="chip">Prerequisite: Lecture 13</div>
+      <div class="chip">Project: Forge — your own ROS 2 robot</div>
+      <div class="chip">Deliverable: capstone build review</div>
+    </div>
+  </div>
+
+  <div class="toc">
+    <strong style="color:var(--text)">In this session</strong>
+    <a href="#recap"><span>14.1</span>The road here — and today's goal</a>
+    <a href="#xacro"><span>14.2</span>From URDF to Xacro</a>
+    <a href="#fullxacro"><span>14.3</span>Forge's complete Xacro, block by block</a>
+    <a href="#diffdrive"><span>14.4</span>Gazebo plugins — the differential-drive plugin</a>
+    <a href="#sensors"><span>14.5</span>LiDAR and camera sensor plugins</a>
+    <a href="#launch"><span>14.6</span>The simulation launch hierarchy</a>
+    <a href="#run"><span>14.7</span>Publishing your packages &amp; running the simulation</a>
+    <a href="#compare"><span>14.8</span>Forge's Gazebo vs. LIMO's Gazebo</a>
+    <a href="#cover"><span>14.9</span>Designing the 3D-printed cover</a>
+    <a href="#printing"><span>14.10</span>3D printing considerations</a>
+    <a href="#capstone"><span>14.11</span>The capstone build review</a>
+    <a href="#summary"><span>14.12</span>Summary, checkpoint, quiz &amp; where to go next</a>
+  </div>
+
+  <section id="recap">
+    <h2><span class="num">14.1</span>The road here — and today's goal</h2>
+    <p>
+      This is the last session of the course, and it's worth pausing to see the whole arc before diving back in.
+      Lectures 1-8 built your ROS 2 fundamentals on the AgileX LIMO in simulation — nodes and topics, URDF and
+      TF2, Gazebo and controllers, sensors and computer vision. Lectures 9-10 layered state estimation and autonomy
+      on top: the EKF, AMCL, SLAM and Nav2. Lecture 11 cracked LIMO open for real and made you fluent in its actual
+      electronics. Lectures 12-13 handed you a blank workbench and had you build <strong>Forge</strong> — motors,
+      encoders, an H-bridge, a microcontroller, a power budget, a Linux brain, a ROS 2 driver, a CAD-derived URDF,
+      and two working sensors.
+    </p>
+    <p>
+      Today closes the loop three times over. You'll take the URDF from Lecture 13 and adapt it for Gazebo, so
+      Forge exists in simulation the way LIMO has since Lecture 6 — except every plugin parameter is one you
+      derived yourself rather than one a manufacturer shipped for you. You'll design a 3D-printed cover, the one
+      part of Forge that is purely yours to shape. And then the course ends the way it should: with you presenting
+      the robot you built.
+    </p>
+
+    <div class="box idea">
+      <div class="box-title">🧠 Why simulate a robot you already built?</div>
+      <p>
+        It might seem backwards to simulate Forge <em>after</em> building it, when Lecture 6 simulated LIMO long
+        before you touched real hardware. Both orderings were deliberate. With LIMO, simulation came first because
+        you didn't yet know enough to touch real motors safely. With Forge, you built the hardware first because by
+        Lecture 12 you had that judgement — and simulating it now lets you develop and test navigation behaviours
+        without burning battery cycles or risking a collision on every iteration. It's a good idea to create a
+        simulation for <em>every</em> robot you use: it makes testing and validation dramatically faster. Simulation
+        isn't a rehearsal for reality here; it's a faster, safer sandbox that sits <em>alongside</em> the real Forge
+        on your bench.
+      </p>
+    </div>
+
+    <div class="mermaid">
+flowchart LR
+    REAL["Real Forge<br/>fastbot_bringup<br/>(Lecture 13)"] -- "same topics<br/>same TF tree<br/>same URDF" --> SIM["Simulated Forge<br/>fastbot_gazebo<br/>(today)"]
+    SIM --> DEV["Develop &amp; test<br/>navigation, perception,<br/>Nav2 from Lectures 9-10"]
+    DEV -- "deploy" --> REAL
+    style REAL fill:#fdeee4,stroke:#c8622c
+    style SIM fill:#eef0ff,stroke:#3d4bf5
+    style DEV fill:#eafaf3,stroke:#0e9e6e
+    </div>
+    <p>
+      That loop only works if the simulated robot and the real one present the <em>same interface</em> — the same
+      topic names, the same frame names, the same URDF. Keeping them identical is the design constraint that
+      shapes everything in §14.2-14.6.
+    </p>
+
+    <div class="box def">
+      <div class="box-title">📖 What this session assumes you have</div>
+      <ul style="margin-bottom:0;">
+        <li><code>fastbot_description</code> with a generated <code>robot.urdf</code> and an <code>assets/</code> mesh directory (§13.10)</li>
+        <li>A working <code>robot_state_publisher</code> launch file (§13.11)</li>
+        <li><strong>Gazebo Classic 11</strong> and <code>gazebo_ros_pkgs</code> for ROS 2 Humble, on a machine with a display — your workstation, not the headless Pi</li>
+        <li>Your measured wheel geometry: 65&nbsp;mm diameter, and your own measured wheel separation</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="xacro">
+    <h2><span class="num">14.2</span>From URDF to Xacro</h2>
+    <p>
+      The URDF that <code>onshape-to-robot</code> generated is accurate and complete — and completely static. Every
+      link name is hardcoded, so two Forges in one world would collide on frame names. There are no variables, so
+      retuning a dimension means editing several places. The first step toward simulation is converting it to
+      <strong>Xacro</strong>.
+    </p>
+
+    <div class="box def">
+      <div class="box-title">📖 What Xacro actually is</div>
+      <p style="margin-bottom:10px;">
+        Xacro (XML Macro) is a preprocessor for URDF. ROS reads the Xacro file and expands it into standard URDF at
+        runtime — same purpose, far easier to maintain. It gives you three things:
+      </p>
+      <ul style="margin-bottom:0;">
+        <li><strong>Macros and variables</strong>, which remove redundancy</li>
+        <li><strong>Math expressions</strong>, so you can write <code>${wheel_diameter/2}</code> instead of computing it yourself</li>
+        <li><strong>File inclusion</strong>, for modular designs — which is how the Gazebo plugins in §14.4 stay in a separate file</li>
+      </ul>
+    </div>
+
+    <p>Concretely, a URDF that repeats itself:</p>
+    <pre><code>&lt;link name="wheel_1"&gt;
+  &lt;visual&gt; &lt;geometry&gt; &lt;cylinder length="0.1" radius="0.2"/&gt; &lt;/geometry&gt; &lt;/visual&gt;
+&lt;/link&gt;
+&lt;link name="wheel_2"&gt;
+  &lt;visual&gt; &lt;geometry&gt; &lt;cylinder length="0.1" radius="0.2"/&gt; &lt;/geometry&gt; &lt;/visual&gt;
+&lt;/link&gt;</code></pre>
+    <p>becomes a macro instantiated twice:</p>
+    <pre><code>&lt;xacro:macro name="wheel" params="name"&gt;
+  &lt;link name="${name}"&gt;
+    &lt;visual&gt;
+        &lt;geometry&gt;
+            &lt;cylinder length="0.1" radius="0.2"/&gt;
+        &lt;/geometry&gt;
+    &lt;/visual&gt;
+  &lt;/link&gt;
+&lt;/xacro:macro&gt;
+
+&lt;xacro:wheel name="wheel_1"/&gt;
+&lt;xacro:wheel name="wheel_2"/&gt;</code></pre>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ The bug Xacro structurally prevents</div>
+      <p>
+        This is exactly the class of mistake Xacro exists to eliminate. You decide Forge's wheels are slightly
+        smaller than you first measured, you update the radius in the collision geometry, and you miss the identical
+        number in the visual geometry three lines down. Now the wheel you <em>see</em> in RViz isn't the wheel
+        Gazebo's physics engine collides with, and the robot behaves in a way that makes no visual sense. A single
+        <code>xacro:property</code> makes that impossible — the number lives in one place.
+      </p>
+    </div>
+
+    <h3>The five edits</h3>
+    <p>
+      You don't rewrite the generated file — you make five surgical changes to it. Everything else stays exactly as
+      <code>onshape-to-robot</code> produced it.
+    </p>
+    <ol class="steps">
+      <li>Rename <code>robot.urdf</code> to <code>fastbot.xacro</code>.</li>
+      <li>Add the Xacro XML namespace declaration on the <code>&lt;robot&gt;</code> tag.</li>
+      <li>Add a <code>PI</code> property and open a <code>fastbot_body</code> macro parameterised by <code>robot_name</code>, directly below the robot tag.</li>
+      <li>Close the macro at the bottom of the file, just before <code>&lt;/robot&gt;</code>.</li>
+      <li>Prefix <strong>every</strong> link and joint name with <code>${robot_name}_</code>.</li>
+    </ol>
+
+    <div class="filename">Edits 2 and 3 — the top of fastbot.xacro</div>
+    <pre><code>&lt;robot name="fastbot" xmlns:xacro="http://ros.org/wiki/xacro"&gt;
+  &lt;xacro:property name="PI" value="3.141592653589793" /&gt;
+  &lt;xacro:macro name="fastbot_body" params="robot_name"&gt;</code></pre>
+
+    <div class="filename">Edit 4 — the bottom of fastbot.xacro</div>
+    <pre><code>  &lt;/xacro:macro&gt;
+&lt;/robot&gt;</code></pre>
+
+    <div class="filename">Edit 5 — every link and joint name</div>
+    <pre><code>    &lt;!-- Link base_link --&gt;
+    &lt;link name="${robot_name}_base_link"&gt;
+
+...
+    &lt;!-- Link fastbot_motor --&gt;
+    &lt;link name="${robot_name}_motor_1"&gt;</code></pre>
+
+    <div class="box eng">
+      <div class="box-title">🔧 The <code>${robot_name}</code> pattern, for the third time</div>
+      <p>
+        You met it in Lecture 13's driver launch file, again in <code>robot_state_publisher</code>, and now in the
+        robot description itself. That consistency is the whole point: with the body wrapped in a macro
+        parameterised by <code>robot_name</code>, spawning a second, independently-named Forge — for a classmate, or
+        for a two-robot Gazebo scenario — is a one-argument change, not a find-and-replace across every file in the
+        package. Namespacing decisions you made two sessions ago are still saving you rework today. That's what
+        "designing for scale from day one" looks like in practice, rather than as a slogan.
+      </p>
+    </div>
+
+    <div class="exercise">
+      <div class="level">Exercise · Easy</div>
+      <p>
+        Make all five edits, then verify the file expands cleanly <em>before</em> involving Gazebo:
+      </p>
+      <pre style="margin-bottom:0;"><code>xacro fastbot.xacro robot_name:=fastbot &gt; /tmp/expanded.urdf
+check_urdf /tmp/expanded.urdf</code></pre>
+    </div>
+    <div class="exercise">
+      <div class="level">Exercise · Intermediate</div>
+      <p>
+        Go further than the reference does: find every raw number that appears more than once in your Xacro (wheel
+        radius, wheel separation, plate thickness) and convert each into an <code>xacro:property</code>. Re-run
+        <code>robot_state_publisher</code> and confirm RViz renders Forge identically — a good refactor changes
+        nothing about what you see.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="fullxacro">
+    <h2><span class="num">14.3</span>Forge's complete Xacro, block by block</h2>
+    <p>
+      Here is the whole file after the five edits, so you can check your own against it. Read it as a reference
+      rather than something to type: the geometry, origins and inertials were all machine-generated from the CAD
+      assembly.
+    </p>
+
+    <div class="box hw">
+      <div class="box-title">🔩 About the inertia values below</div>
+      <p>
+        The <code>&lt;inertia&gt;</code> tensors are computed by <code>onshape-to-robot</code> from each part's
+        geometry and assigned material. In the published reference material a few of the longest lines are clipped
+        by the page margin; those are marked <code>…</code> below. <strong>Do not invent values for them</strong> —
+        they come out of your own export, and if a part shows near-zero or placeholder inertia that's the
+        "has no mass" warning from §13.10 telling you to assign it a material in CAD and re-export.
+      </p>
+    </div>
+
+    <div class="filename">fastbot_description/onshape/fastbot.xacro</div>
+    <pre><code>&lt;?xml version="1.0" ?&gt;
+&lt;!-- Generated using onshape-to-robot --&gt;
+&lt;!-- Onshape document_id: 4757b8f98f7afcc7c3655639 --&gt;
+&lt;robot name="fastbot" xmlns:xacro="http://ros.org/wiki/xacro"&gt;
+  &lt;xacro:property name="PI" value="3.141592653589793" /&gt;
+  &lt;xacro:macro name="fastbot_body" params="robot_name"&gt;
+
+    &lt;!-- ============ Link: base_link (the chassis) ============ --&gt;
+    &lt;link name="${robot_name}_base_link"&gt;
+        &lt;inertial&gt;
+            &lt;origin xyz="0 0 0" rpy="0 0 0"/&gt;
+            &lt;mass value="0.24695"/&gt;
+            &lt;inertia ixx="0.000946018" ixy="-8.62213e-08" ixz="-1.4272e-08"
+                     iyy="0.000732103" iyz="…" izz="…"/&gt;
+        &lt;/inertial&gt;
+        &lt;visual&gt;
+            &lt;origin xyz="0.0573343 -0.0691426 0.00134516" rpy="0 -0 3.14159"/&gt;
+            &lt;geometry&gt;
+                &lt;mesh filename="package://fastbot_description/onshape/assets/fastbot_chassis.stl"/&gt;
+            &lt;/geometry&gt;
+            &lt;material name="fastbot_chassis_material"&gt;
+                &lt;color rgba="0.262745 0.282353 0.301961 1.0"/&gt;
+            &lt;/material&gt;
+        &lt;/visual&gt;
+        &lt;collision&gt;
+            &lt;origin xyz="0.0573343 -0.0691426 0.00134516" rpy="0 -0 3.14159"/&gt;
+            &lt;geometry&gt;
+                &lt;mesh filename="package://fastbot_description/onshape/assets/fastbot_chassis.stl"/&gt;
+            &lt;/geometry&gt;
+        &lt;/collision&gt;
+    &lt;/link&gt;
+
+    &lt;!-- ============ Link: motor_1 (right motor body) ============ --&gt;
+    &lt;link name="${robot_name}_motor_1"&gt;
+        &lt;inertial&gt;
+            &lt;origin xyz="0.0067446 0.0085 -0.00855065" rpy="0 0 0"/&gt;
+            &lt;mass value="0.0339689"/&gt;
+            &lt;inertia ixx="2.5517e-06" ixy="-3.26147e-15" ixz="-9.70451e-07"
+                     iyy="1.80062e-05" iyz="…" izz="…"/&gt;
+        &lt;/inertial&gt;
+        &lt;visual&gt;
+            &lt;origin xyz="0.0935 -0.00775 -0.036" rpy="-1.5708 -1.5708 0"/&gt;
+            &lt;geometry&gt;
+                &lt;mesh filename="package://fastbot_description/onshape/assets/fastbot_motor.stl"/&gt;
+            &lt;/geometry&gt;
+            &lt;material name="fastbot_motor_material"&gt;
+                &lt;color rgba="0.129412 0.129412 0.129412 1.0"/&gt;
+            &lt;/material&gt;
+        &lt;/visual&gt;
+        &lt;collision&gt;
+            &lt;origin xyz="0.0935 -0.00775 -0.036" rpy="-1.5708 -1.5708 0"/&gt;
+            &lt;geometry&gt;
+                &lt;mesh filename="package://fastbot_description/onshape/assets/fastbot_motor.stl"/&gt;
+            &lt;/geometry&gt;
+        &lt;/collision&gt;
+    &lt;/link&gt;
+
+    &lt;!-- ============ Link: wheel_right ============ --&gt;
+    &lt;link name="${robot_name}_wheel_right"&gt;
+        &lt;inertial&gt;
+            &lt;origin xyz="0 0 0" rpy="0 0 0"/&gt;
+            &lt;mass value="0.03"/&gt;
+            &lt;inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0002"/&gt;
+        &lt;/inertial&gt;
+        &lt;!-- Part wheel_d65x25_v1 (the rim) --&gt;
+        &lt;visual&gt;
+            &lt;origin xyz="0.1135 0.0162 0.103475" rpy="1.5708 1.5708 0"/&gt;
+            &lt;geometry&gt;
+                &lt;mesh filename="package://fastbot_description/onshape/assets/wheel_d65x25_v1.stl"/&gt;
+            &lt;/geometry&gt;
+            &lt;material name="wheel_d65x25_v1_material"&gt;
+                &lt;color rgba="0.290196 0.290196 0.290196 1.0"/&gt;
+            &lt;/material&gt;
+        &lt;/visual&gt;
+        &lt;collision&gt;
+            &lt;origin xyz="0.1135 0.0162 0.103475" rpy="1.5708 1.5708 0"/&gt;
+            &lt;geometry&gt;
+                &lt;mesh filename="package://fastbot_description/onshape/assets/wheel_d65x25_v1.stl"/&gt;
+            &lt;/geometry&gt;
+        &lt;/collision&gt;
+        &lt;!-- Part wheel_d65x25_v1_2 (the tyre) --&gt;
+        &lt;visual&gt;
+            &lt;origin xyz="0.1135 0.0162 0.1039" rpy="1.5708 1.5708 0"/&gt;
+            &lt;geometry&gt;
+                &lt;mesh filename="package://fastbot_description/onshape/assets/wheel_d65x25_v1__2.stl"/&gt;
+            &lt;/geometry&gt;
+            &lt;material name="wheel_d65x25_v1_2_material"&gt;
+                &lt;color rgba="1 0.933333 0.133333 1.0"/&gt;
+            &lt;/material&gt;
+        &lt;/visual&gt;
+        &lt;collision&gt;
+            &lt;origin xyz="0.1135 0.0162 0.1039" rpy="1.5708 1.5708 0"/&gt;
+            &lt;geometry&gt;
+                &lt;mesh filename="package://fastbot_description/onshape/assets/wheel_d65x25_v1__2.stl"/&gt;
+            &lt;/geometry&gt;
+        &lt;/collision&gt;
+    &lt;/link&gt;
+
+    &lt;!-- Joint: motor_1 -&gt; wheel_right   (THE right drive joint) --&gt;
+    &lt;joint name="${robot_name}_right_wheel" type="continuous"&gt;
+        &lt;origin xyz="-0.02 0.0085 -0.0191" rpy="0 0 0"/&gt;
+        &lt;parent link="${robot_name}_motor_1"/&gt;
+        &lt;child  link="${robot_name}_wheel_right"/&gt;
+        &lt;axis xyz="0 0 1"/&gt;
+    &lt;/joint&gt;
+
+    &lt;!-- Joint: chassis -&gt; motor_1 --&gt;
+    &lt;joint name="${robot_name}_right_motor" type="fixed"&gt;
+        &lt;origin xyz="-0.0266657 0.0243574 0.0260952" rpy="-1.5708 -2.94692e-47 -1.5708"/&gt;
+        &lt;parent link="${robot_name}_base_link"/&gt;
+        &lt;child  link="${robot_name}_motor_1"/&gt;
+        &lt;axis xyz="0 0 1"/&gt;
+    &lt;/joint&gt;
+
+    &lt;!-- ============ Link: motor_2 (left motor body) ============ --&gt;
+    &lt;link name="${robot_name}_motor_2"&gt;
+        &lt;inertial&gt;
+            &lt;origin xyz="0.0067446 -0.0085 -0.00855065" rpy="0 0 0"/&gt;
+            &lt;mass value="0.0339689"/&gt;
+            &lt;inertia ixx="2.5517e-06" ixy="-3.26147e-15" ixz="-9.70451e-07"
+                     iyy="1.80062e-05" iyz="…" izz="…"/&gt;
+        &lt;/inertial&gt;
+        &lt;visual&gt;
+            &lt;origin xyz="0.0935 -0.02475 -0.036" rpy="-1.5708 -1.5708 0"/&gt;
+            &lt;geometry&gt;
+                &lt;mesh filename="package://fastbot_description/onshape/assets/fastbot_motor.stl"/&gt;
+            &lt;/geometry&gt;
+            &lt;material name="fastbot_motor_2_material"&gt;
+                &lt;color rgba="0.129412 0.129412 0.129412 1.0"/&gt;
+            &lt;/material&gt;
+        &lt;/visual&gt;
+        &lt;collision&gt;
+            &lt;origin xyz="0.0935 -0.02475 -0.036" rpy="-1.5708 -1.5708 0"/&gt;
+            &lt;geometry&gt;
+                &lt;mesh filename="package://fastbot_description/onshape/assets/fastbot_motor.stl"/&gt;
+            &lt;/geometry&gt;
+        &lt;/collision&gt;
+    &lt;/link&gt;
+
+    &lt;!-- ============ Link: wheel_left ============ --&gt;
+    &lt;link name="${robot_name}_wheel_left"&gt;
+        &lt;inertial&gt;
+            &lt;origin xyz="0 0 0" rpy="0 0 0"/&gt;
+            &lt;mass value="0.03"/&gt;
+            &lt;inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0002"/&gt;
+        &lt;/inertial&gt;
+        &lt;visual&gt;
+            &lt;origin xyz="0.1135 0.0162 0.1039" rpy="1.5708 1.5708 0"/&gt;
+            &lt;geometry&gt;
+                &lt;mesh filename="package://fastbot_description/onshape/assets/wheel_d65x25_v1__2.stl"/&gt;
+            &lt;/geometry&gt;
+            &lt;material name="wheel_d65x25_v1_3_material"&gt;
+                &lt;color rgba="1 0.933333 0.133333 1.0"/&gt;
+            &lt;/material&gt;
+        &lt;/visual&gt;
+        &lt;collision&gt;
+            &lt;origin xyz="0.1135 0.0162 0.1039" rpy="1.5708 1.5708 0"/&gt;
+            &lt;geometry&gt;
+                &lt;mesh filename="package://fastbot_description/onshape/assets/wheel_d65x25_v1__2.stl"/&gt;
+            &lt;/geometry&gt;
+        &lt;/collision&gt;
+        &lt;visual&gt;
+            &lt;origin xyz="0.1135 0.0162 0.104325" rpy="1.5708 1.5708 0"/&gt;
+            &lt;geometry&gt;
+                &lt;mesh filename="package://fastbot_description/onshape/assets/wheel_d65x25_v1.stl"/&gt;
+            &lt;/geometry&gt;
+            &lt;material name="wheel_d65x25_v1_4_material"&gt;
+                &lt;color rgba="0.290196 0.290196 0.290196 1.0"/&gt;
+            &lt;/material&gt;
+        &lt;/visual&gt;
+        &lt;collision&gt;
+            &lt;origin xyz="0.1135 0.0162 0.104325" rpy="1.5708 1.5708 0"/&gt;
+            &lt;geometry&gt;
+                &lt;mesh filename="package://fastbot_description/onshape/assets/wheel_d65x25_v1.stl"/&gt;
+            &lt;/geometry&gt;
+        &lt;/collision&gt;
+    &lt;/link&gt;
+
+    &lt;!-- Joint: motor_2 -&gt; wheel_left   (THE left drive joint) --&gt;
+    &lt;joint name="${robot_name}_left_wheel" type="continuous"&gt;
+        &lt;origin xyz="-0.02 -0.0085 -0.0191" rpy="0 0 0"/&gt;
+        &lt;parent link="${robot_name}_motor_2"/&gt;
+        &lt;child  link="${robot_name}_wheel_left"/&gt;
+        &lt;axis xyz="0 0 -1"/&gt;
+    &lt;/joint&gt;
+
+    &lt;!-- Joint: chassis -&gt; motor_2 --&gt;
+    &lt;joint name="${robot_name}_left_motor" type="fixed"&gt;
+        &lt;origin xyz="0.0213343 0.0243574 0.0260952" rpy="1.5708 -2.96391e-30 -1.5708"/&gt;
+        &lt;parent link="${robot_name}_base_link"/&gt;
+        &lt;child  link="${robot_name}_motor_2"/&gt;
+        &lt;axis xyz="0 0 1"/&gt;
+    &lt;/joint&gt;
+
+    &lt;!-- ============ Link: LSLiDAR N-10 ============ --&gt;
+    &lt;link name="${robot_name}_n10_v2"&gt;
+        &lt;inertial&gt;
+            &lt;origin xyz="0 0 0" rpy="0 0 0"/&gt;
+            &lt;mass value="0.05"/&gt;
+            &lt;inertia ixx="1e-09" ixy="0" ixz="0" iyy="1e-09" iyz="0" izz="1e-09"/&gt;
+        &lt;/inertial&gt;
+        &lt;visual&gt;
+            &lt;origin xyz="-0.074 -0.06 0.11" rpy="-3.14159 5.94511e-32 -8.90522e-65"/&gt;
+            &lt;geometry&gt;
+                &lt;mesh filename="package://fastbot_description/onshape/assets/lslidar_n10.stl"/&gt;
+            &lt;/geometry&gt;
+            &lt;material name="lslidar_n10_material"&gt;
+                &lt;color rgba="0.0980392 0.0980392 0.0980392 1.0"/&gt;
+            &lt;/material&gt;
+        &lt;/visual&gt;
+        &lt;collision&gt;
+            &lt;origin xyz="-0.074 -0.06 0.11" rpy="-3.14159 5.94511e-32 -8.90522e-65"/&gt;
+            &lt;geometry&gt;
+                &lt;mesh filename="package://fastbot_description/onshape/assets/lslidar_n10.stl"/&gt;
+            &lt;/geometry&gt;
+        &lt;/collision&gt;
+    &lt;/link&gt;
+
+    &lt;joint name="${robot_name}_lidar" type="fixed"&gt;
+        &lt;origin xyz="-0.0166657 -0.00914257 0.111345" rpy="3.14159 1.13983e-46 -3.14159"/&gt;
+        &lt;parent link="${robot_name}_base_link"/&gt;
+        &lt;child  link="${robot_name}_n10_v2"/&gt;
+        &lt;axis xyz="0 0 1"/&gt;
+    &lt;/joint&gt;
+
+    &lt;!-- ============ Link: Raspicam ============ --&gt;
+    &lt;link name="${robot_name}_camera"&gt;
+        &lt;inertial&gt;
+            &lt;origin xyz="0 0 0" rpy="0 0 0"/&gt;
+            &lt;mass value="0.01"/&gt;
+            &lt;inertia ixx="1e-09" ixy="0" ixz="0" iyy="1e-09" iyz="0" izz="1e-09"/&gt;
+        &lt;/inertial&gt;
+        &lt;visual&gt;
+            &lt;origin xyz="-0.0105 0.0125 -0.00212" rpy="3.14159 -3.05067e-31 -1.55575e-61"/&gt;
+            &lt;geometry&gt;
+                &lt;mesh filename="package://fastbot_description/onshape/assets/raspicam.stl"/&gt;
+            &lt;/geometry&gt;
+            &lt;material name="raspicam_material"&gt;
+                &lt;color rgba="0.34902 0.376471 0.4 1.0"/&gt;
+            &lt;/material&gt;
+        &lt;/visual&gt;
+        &lt;collision&gt;
+            &lt;origin xyz="-0.0105 0.0125 -0.00212" rpy="3.14159 -3.05067e-31 -1.55575e-61"/&gt;
+            &lt;geometry&gt;
+                &lt;mesh filename="package://fastbot_description/onshape/assets/raspicam.stl"/&gt;
+            &lt;/geometry&gt;
+        &lt;/collision&gt;
+    &lt;/link&gt;
+
+    &lt;joint name="${robot_name}_camera" type="fixed"&gt;
+        &lt;origin xyz="0.00783428 -0.0661426 0.100995" rpy="-1.5708 1.14468e-45 6.41848e-15"/&gt;
+        &lt;parent link="${robot_name}_base_link"/&gt;
+        &lt;child  link="${robot_name}_camera"/&gt;
+        &lt;axis xyz="0 0 1"/&gt;
+    &lt;/joint&gt;
+
+    &lt;!-- ============ Link: ball caster (third ground contact) ============ --&gt;
+    &lt;link name="${robot_name}_ball_caster"&gt;
+        &lt;inertial&gt;
+            &lt;origin xyz="0 0 0" rpy="0 0 0"/&gt;
+            &lt;mass value="0.01"/&gt;
+            &lt;inertia ixx="1e-09" ixy="0" ixz="0" iyy="1e-09" iyz="0" izz="1e-09"/&gt;
+        &lt;/inertial&gt;
+        &lt;visual&gt;
+            &lt;origin xyz="0.006731 0 -0.0106945" rpy="-1.5708 -0 0"/&gt;
+            &lt;geometry&gt;
+                &lt;mesh filename="package://fastbot_description/onshape/assets/pololu_ball_caster.stl"/&gt;
+            &lt;/geometry&gt;
+            &lt;material name="pololu_ball_caster_material"&gt;
+                &lt;color rgba="0.34902 0.376471 0.4 1.0"/&gt;
+            &lt;/material&gt;
+        &lt;/visual&gt;
+        &lt;collision&gt;
+            &lt;origin xyz="0.006731 0 -0.0106945" rpy="-1.5708 -0 0"/&gt;
+            &lt;geometry&gt;
+                &lt;mesh filename="package://fastbot_description/onshape/assets/pololu_ball_caster.stl"/&gt;
+            &lt;/geometry&gt;
+        &lt;/collision&gt;
+    &lt;/link&gt;
+
+    &lt;joint name="caster" type="fixed"&gt;
+        &lt;origin xyz="-0.0100317 -0.0541426 0.00334516" rpy="0 -0 0"/&gt;
+        &lt;parent link="${robot_name}_base_link"/&gt;
+        &lt;child  link="${robot_name}_ball_caster"/&gt;
+        &lt;axis xyz="0 0 1"/&gt;
+    &lt;/joint&gt;
+
+  &lt;/xacro:macro&gt;
+&lt;/robot&gt;</code></pre>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ Three details in that file worth staring at</div>
+      <ol style="margin-bottom:0;">
+        <li>The two wheel joints have <strong>opposite axis signs</strong>: <code>axis xyz="0 0 1"</code> on the right, <code>"0 0 -1"</code> on the left. That's what makes a positive command spin both wheels the geometrically correct way. Get it wrong and nothing errors — the robot just drives in a slow circle. Lecture 4 warned you about exactly this on LIMO.</li>
+        <li>The <code>caster</code> joint is the <em>only</em> name in the file without a <code>${robot_name}_</code> prefix. That's an oversight in the reference file, and it means two Forges in one world would collide on that one joint name. Fix it in yours.</li>
+        <li>The camera <em>joint</em> and the camera <em>link</em> share the name <code>${robot_name}_camera</code>. URDF tolerates this because links and joints live in separate namespaces, but it makes error messages ambiguous and is worth renaming.</li>
+      </ol>
+    </div>
+
+    <div class="exercise">
+      <div class="level">Exercise · Intermediate</div>
+      <p>
+        Fix all three issues above in your own Xacro, then re-expand and re-run <code>check_urdf</code>. Then, to
+        prove the macro actually works, expand it twice with different names
+        (<code>robot_name:=fastbot_1</code> and <code>robot_name:=fastbot_2</code>) and confirm no link or joint
+        name collides between the two outputs. If one does, you missed a prefix.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="diffdrive">
+    <h2><span class="num">14.4</span>Gazebo plugins — the differential-drive plugin</h2>
+    <p>
+      A URDF describes shape and structure; it says nothing about how a robot behaves. <strong>Gazebo plugins</strong>
+      add that behaviour and tie it into ROS messages — think of them as virtual motors and virtual sensors bolted
+      onto the description. Forge needs three: a differential drive, a LiDAR and a camera.
+    </p>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> cd ~/ros2_ws/src
+<span class="term-prompt">$</span> ros2 pkg create --build-type ament_cmake fastbot_gazebo
+<span class="term-prompt">$</span> mkdir -p ~/ros2_ws/src/fastbot_gazebo/gazebo
+<span class="term-prompt">$</span> touch ~/ros2_ws/src/fastbot_gazebo/gazebo/fastbot_plugins.gazebo</div>
+    </div>
+    <p>
+      Keeping the plugins in a separate file from the body description is the modularity Xacro's file inclusion
+      buys you: the same <code>fastbot.xacro</code> body serves both the real robot (no plugins) and the simulated
+      one (plugins included).
+    </p>
+
+    <div class="filename">fastbot_gazebo/gazebo/fastbot_plugins.gazebo</div>
+    <pre><code>&lt;?xml version="1.0" ?&gt;
+&lt;robot name="fastbot" xmlns:xacro="http://www.ros.org/wiki/xacro"&gt;
+&lt;xacro:macro name="fastbot_plugins" params="robot_name"&gt;
+
+   &lt;!-- Differential drive plugin for Gazebo --&gt;
+   &lt;gazebo&gt;
+       &lt;plugin name='${robot_name}_diff_drive' filename='libgazebo_ros_diff_drive.so'&gt;
+           &lt;ros&gt;
+               &lt;namespace&gt;${robot_name}&lt;/namespace&gt;
+               &lt;argument&gt;--ros-args --remap /cmd_vel:=/${robot_name}/cmd_vel /odom:=/${robot_name}/odom&lt;/argument&gt;
+           &lt;/ros&gt;
+
+           &lt;!-- wheels --&gt;
+           &lt;left_joint&gt;${robot_name}_left_wheel&lt;/left_joint&gt;
+           &lt;right_joint&gt;${robot_name}_right_wheel&lt;/right_joint&gt;
+
+           &lt;!-- kinematics --&gt;
+           &lt;wheel_separation&gt;0.12&lt;/wheel_separation&gt;
+           &lt;wheel_diameter&gt;0.065&lt;/wheel_diameter&gt;
+
+           &lt;!-- limits --&gt;
+           &lt;max_wheel_torque&gt;20&lt;/max_wheel_torque&gt;
+           &lt;max_wheel_acceleration&gt;1.0&lt;/max_wheel_acceleration&gt;
+
+           &lt;!-- output --&gt;
+           &lt;publish_odom&gt;true&lt;/publish_odom&gt;
+           &lt;publish_odom_tf&gt;true&lt;/publish_odom_tf&gt;
+           &lt;publish_wheel_tf&gt;true&lt;/publish_wheel_tf&gt;
+           &lt;odometry_frame&gt;${robot_name}_odom&lt;/odometry_frame&gt;
+           &lt;robot_base_frame&gt;${robot_name}_base_link&lt;/robot_base_frame&gt;
+       &lt;/plugin&gt;
+   &lt;/gazebo&gt;
+
+&lt;/xacro:macro&gt;
+&lt;/robot&gt;</code></pre>
+
+    <div class="tw">
+    <table>
+      <tr><th>Element</th><th>What it does</th></tr>
+      <tr><td><code>libgazebo_ros_diff_drive.so</code></td><td>Gazebo's stock differential-drive plugin — conceptually the same one you studied for LIMO in Lecture 6.</td></tr>
+      <tr><td><code>&lt;namespace&gt;</code> + <code>&lt;argument&gt;</code></td><td>Isolates the subscribed and published topics under the robot name: <code>/fastbot/cmd_vel</code> rather than a bare <code>/cmd_vel</code>. The same isolation the real driver does.</td></tr>
+      <tr><td><code>&lt;left_joint&gt;</code> / <code>&lt;right_joint&gt;</code></td><td>Which URDF joints the plugin actuates. <strong>These names must match the Xacro exactly</strong>, prefix and all.</td></tr>
+      <tr><td><code>&lt;wheel_separation&gt;</code> / <code>&lt;wheel_diameter&gt;</code></td><td>The kinematics: 0.12&nbsp;m apart, 0.065&nbsp;m diameter. Directly analogous to the driver node's parameters in §13.5.</td></tr>
+      <tr><td><code>&lt;publish_odom&gt;</code> / <code>&lt;publish_odom_tf&gt;</code></td><td>Publishes <code>/fastbot/odom</code> and broadcasts the <code>odom → base_link</code> transform, so the simulated robot exposes the same interface as the real one.</td></tr>
+    </table>
+    </div>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ Two numbers that should be properties, not literals</div>
+      <p>
+        <code>0.12</code> and <code>0.065</code> are typed here as raw literals. Worse, that <code>0.12</code>
+        wheel separation disagrees with the <code>0.17</code> default in your <code>motor_driver.py</code> from
+        §13.5 — and if the real robot and the simulated one disagree about their own geometry, they will turn by
+        different amounts for the same <code>/cmd_vel</code>, which quietly destroys the whole point of having a
+        digital twin. Measure your actual wheel separation, define it once as an <code>xacro:property</code>, and
+        reference <code>${wheel_separation}</code> and <code>${wheel_diameter}</code> in <em>both</em> places.
+      </p>
+    </div>
+
+    <div class="box think">
+      <div class="box-title">🤔 Think About It</div>
+      <p>
+        The real robot's odometry comes from encoder counts integrated by <code>motor_driver.py</code>; the
+        simulated robot's comes from Gazebo's physics engine, which knows the ground truth exactly. Which of these
+        will drift, and which won't? What does that mean for testing a localization algorithm — like the AMCL from
+        Lecture 10 — purely in simulation?
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="sensors">
+    <h2><span class="num">14.5</span>LiDAR and camera sensor plugins</h2>
+    <p>
+      Now Forge needs to <em>perceive</em> the simulated world. Add both sensor blocks to the same
+      <code>fastbot_plugins.gazebo</code> file, inside the same macro.
+    </p>
+
+    <h3>The LiDAR — a ray sensor</h3>
+    <div class="filename">fastbot_plugins.gazebo (LiDAR block)</div>
+    <pre><code>   &lt;gazebo reference="${robot_name}_lidar"&gt;
+       &lt;sensor name="${robot_name}_lslidar" type="ray"&gt;
+           &lt;always_on&gt;true&lt;/always_on&gt;
+           &lt;visualize&gt;false&lt;/visualize&gt;
+           &lt;update_rate&gt;10&lt;/update_rate&gt;
+           &lt;ray&gt;
+             &lt;scan&gt;
+               &lt;horizontal&gt;
+                   &lt;samples&gt;270&lt;/samples&gt;
+                   &lt;min_angle&gt;-3.141593&lt;/min_angle&gt;
+                   &lt;max_angle&gt;3.141593&lt;/max_angle&gt;
+               &lt;/horizontal&gt;
+             &lt;/scan&gt;
+             &lt;range&gt;
+               &lt;min&gt;0.05&lt;/min&gt;
+               &lt;max&gt;20.0&lt;/max&gt;
+               &lt;resolution&gt;0.015000&lt;/resolution&gt;
+             &lt;/range&gt;
+             &lt;noise&gt;
+               &lt;type&gt;gaussian&lt;/type&gt;
+               &lt;mean&gt;0.0&lt;/mean&gt;
+               &lt;stddev&gt;0.0&lt;/stddev&gt;
+             &lt;/noise&gt;
+           &lt;/ray&gt;
+           &lt;plugin name="${robot_name}_scan" filename="libgazebo_ros_ray_sensor.so"&gt;
+             &lt;ros&gt;
+               &lt;remapping&gt;~/out:=${robot_name}/scan&lt;/remapping&gt;
+             &lt;/ros&gt;
+             &lt;output_type&gt;sensor_msgs/LaserScan&lt;/output_type&gt;
+             &lt;frame_name&gt;${robot_name}_lidar&lt;/frame_name&gt;
+           &lt;/plugin&gt;
+       &lt;/sensor&gt;
+   &lt;/gazebo&gt;</code></pre>
+
+    <div class="tw">
+    <table>
+      <tr><th>Property</th><th>Value</th><th>Comment</th></tr>
+      <tr><td>Plugin</td><td><code>libgazebo_ros_ray_sensor.so</code></td><td>Gazebo's stock ray/LiDAR plugin</td></tr>
+      <tr><td>Samples</td><td>270 horizontal rays</td><td>The real N-10's angular resolution is 0.48-0.96°, which over 360° is roughly 375-750 points. 270 is coarser.</td></tr>
+      <tr><td>Field of view</td><td>−π to +π (full 360°)</td><td>Matches the real sensor</td></tr>
+      <tr><td>Range</td><td>0.05 - 20.0&nbsp;m</td><td>The real N-10 is 0.2 - 12.0&nbsp;m. The simulation is <em>more</em> capable than the hardware.</td></tr>
+      <tr><td>Noise</td><td>Gaussian, stddev <strong>0.0</strong></td><td>Perfect, noise-free readings</td></tr>
+      <tr><td>Output</td><td><code>sensor_msgs/LaserScan</code> on <code>/${robot_name}/scan</code></td><td>Same message type as the real driver publishes</td></tr>
+    </table>
+    </div>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ A genuine sim-to-real gap, sitting right here in three numbers</div>
+      <p>
+        Look at that table again. The simulated LiDAR is <strong>noise-free</strong> (every range is geometrically
+        exact), reaches <strong>20&nbsp;m</strong> when the real one manages 12, and starts at <strong>5&nbsp;cm</strong>
+        when the real one starts at 20. An obstacle-avoidance or SLAM algorithm tuned against this sensor has never
+        had to cope with a single noisy return, has learned to trust long-range readings the real sensor cannot
+        provide, and may rely on close-range returns the real sensor will simply report as invalid. That is the same
+        sim-to-real gap Lecture 11 raised for LIMO's real sensors versus their Gazebo counterparts. If you plan to
+        run SLAM or AMCL on simulated Forge, set the range limits honestly and add a realistic
+        <code>stddev</code> — the datasheet's ±3&nbsp;cm is a reasonable starting point.
+      </p>
+    </div>
+
+    <h3>The camera</h3>
+    <div class="filename">fastbot_plugins.gazebo (camera block)</div>
+    <pre><code>   &lt;gazebo reference="${robot_name}_camera"&gt;
+       &lt;sensor type="camera" name="${robot_name}_camera"&gt;
+         &lt;update_rate&gt;30.0&lt;/update_rate&gt;
+         &lt;camera name="${robot_name}_head"&gt;
+           &lt;horizontal_fov&gt;1.3962634&lt;/horizontal_fov&gt;
+           &lt;image&gt;
+               &lt;width&gt;800&lt;/width&gt;
+               &lt;height&gt;800&lt;/height&gt;
+               &lt;format&gt;R8G8B8&lt;/format&gt;
+           &lt;/image&gt;
+           &lt;clip&gt;
+               &lt;near&gt;0.02&lt;/near&gt;
+               &lt;far&gt;300&lt;/far&gt;
+           &lt;/clip&gt;
+           &lt;noise&gt;
+               &lt;type&gt;gaussian&lt;/type&gt;
+               &lt;mean&gt;0.0&lt;/mean&gt;
+               &lt;stddev&gt;0.007&lt;/stddev&gt;
+           &lt;/noise&gt;
+         &lt;/camera&gt;
+         &lt;plugin name="${robot_name}_camera_controller" filename="libgazebo_ros_camera.so"&gt;
+           &lt;ros&gt;
+               &lt;namespace&gt;/&lt;/namespace&gt;
+           &lt;/ros&gt;
+           &lt;alwaysOn&gt;true&lt;/alwaysOn&gt;
+           &lt;updateRate&gt;0.0&lt;/updateRate&gt;
+           &lt;imageTopicName&gt;image_raw&lt;/imageTopicName&gt;
+           &lt;cameraInfoTopicName&gt;camera_info&lt;/cameraInfoTopicName&gt;
+           &lt;frameName&gt;${robot_name}_camera&lt;/frameName&gt;
+           &lt;hackBaseline&gt;0.07&lt;/hackBaseline&gt;
+           &lt;distortionK1&gt;0.0&lt;/distortionK1&gt;
+           &lt;distortionK2&gt;0.0&lt;/distortionK2&gt;
+           &lt;distortionK3&gt;0.0&lt;/distortionK3&gt;
+           &lt;distortionT1&gt;0.0&lt;/distortionT1&gt;
+           &lt;distortionT2&gt;0.0&lt;/distortionT2&gt;
+       &lt;/plugin&gt;
+       &lt;/sensor&gt;
+   &lt;/gazebo&gt;</code></pre>
+
+    <div class="tw">
+    <table>
+      <tr><th>Property</th><th>Value</th><th>Comment</th></tr>
+      <tr><td>Plugin</td><td><code>libgazebo_ros_camera.so</code></td><td>Gazebo's stock camera plugin</td></tr>
+      <tr><td>Field of view</td><td>1.3962634&nbsp;rad ≈ 80°</td><td>Roughly matches the Raspicam v2's ~62° horizontal FOV — check yours</td></tr>
+      <tr><td>Resolution</td><td>800 × 800, R8G8B8</td><td>Square, unlike the real 4:3 sensor, and far larger than the 320×240 the real node publishes (§13.14)</td></tr>
+      <tr><td>Clip range</td><td>0.02&nbsp;m near, 300&nbsp;m far</td><td>What the virtual lens can see</td></tr>
+      <tr><td>Noise</td><td>Gaussian, stddev 0.007</td><td>A small amount of pixel noise — unlike the LiDAR block above</td></tr>
+      <tr><td>Output</td><td><code>image_raw</code> and <code>camera_info</code></td><td>Pixels, plus the calibration any downstream vision or Nav2 node needs to interpret them</td></tr>
+    </table>
+    </div>
+    <p>
+      Notice that this block <em>does</em> carry a noise term while the LiDAR block doesn't. That's a useful
+      reminder: "add realistic noise" isn't an all-or-nothing setting for a simulation, it's a per-sensor decision
+      based on how much that sensor's imperfections matter for what you're testing.
+    </p>
+
+    <div class="box hw">
+      <div class="box-title">🔩 Watch the frame names</div>
+      <p>
+        Both sensor blocks use <code>&lt;gazebo reference="${robot_name}_lidar"&gt;</code> and
+        <code>reference="${robot_name}_camera"</code> — but in the Xacro from §14.3, the LiDAR <em>link</em> is
+        called <code>${robot_name}_n10_v2</code> and <code>${robot_name}_lidar</code> is the <em>joint</em> name. A
+        <code>&lt;gazebo reference&gt;</code> attaches to a <strong>link</strong>. If the name doesn't match a link,
+        the sensor silently attaches to nothing and publishes nothing — another clean-launch-no-data failure, the
+        third in this build arc. Make these names agree with your own generated URDF before you run anything.
+      </p>
+    </div>
+
+    <div class="exercise">
+      <div class="level">Exercise · Intermediate</div>
+      <p>
+        Spawn simulated Forge, subscribe to the simulated camera's image topic, and compare a captured frame against
+        one from the real Raspicam in Lecture 13 (same object, similar lighting). List three visible differences —
+        resolution, field of view, noise character, colour — and for each, decide whether it's a simulation
+        limitation worth fixing or one that doesn't matter for your purposes.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="launch">
+    <h2><span class="num">14.6</span>The simulation launch hierarchy</h2>
+    <p>
+      Three plugin blocks don't spawn a robot by themselves. A small tree of launch files has to start Gazebo, load
+      a world, wait for the physics server to be ready, publish the robot description, and then ask Gazebo to spawn
+      an entity from it at a chosen pose.
+    </p>
+
+    <div class="mermaid">
+flowchart TB
+    A["one_fastbot_warehouse.launch.py<br/>top-level entry point"] --> B["botbox_world.launch.xml<br/>starts gzserver + gzclient<br/>loads the world, sets GAZEBO_* paths"]
+    A --> T["TimerAction: 2.0 s delay<br/>let the physics server finish starting"]
+    T --> C["spawn_fastbot.launch.xml<br/>picks the robot name and spawn pose"]
+    C --> D["spawn.launch.xml"]
+    D --> E["robot_state_publisher.launch.py<br/>expands fastbot.xacro to /fastbot_robot_description"]
+    D --> F["spawn_in_gazebo.launch.py<br/>calls spawn_entity.py with x y z R P Y"]
+    E --> G["Forge appears in Gazebo,<br/>publishing /odom /scan /image_raw + TF"]
+    F --> G
+    style A fill:#eef0ff,stroke:#3d4bf5
+    style C fill:#f4effe,stroke:#8b5cf6
+    style G fill:#eafaf3,stroke:#0e9e6e
+    </div>
+
+    <h3>1 — The top-level launch file</h3>
+    <div class="filename">fastbot_gazebo/launch/one_fastbot_warehouse.launch.py</div>
+    <pre><code>import os
+from launch import LaunchDescription
+from launch.actions import IncludeLaunchDescription, TimerAction
+from launch.launch_description_sources import AnyLaunchDescriptionSource
+from launch.substitutions import (
+    LaunchConfiguration,
+    ThisLaunchFileDir,
+    PathJoinSubstitution,
+)
+
+
+def generate_launch_description():
+    # Resolve the paths to the XML launch files.
+    dir_path = ThisLaunchFileDir()
+    launch_first_path = PathJoinSubstitution([dir_path, "botbox_world.launch.xml"])
+    launch_second_path = PathJoinSubstitution([dir_path, "spawn_fastbot.launch.xml"])
+
+    launch_first_action = IncludeLaunchDescription(
+        AnyLaunchDescriptionSource(launch_first_path),
+        launch_arguments={"arg": "value"}.items(),
+    )
+    launch_second_action = IncludeLaunchDescription(
+        AnyLaunchDescriptionSource(launch_second_path),
+        launch_arguments={"arg": "value"}.items(),
+    )
+
+    # Delay the robot spawn so the physics server has time to come up.
+    delay_second_launch = TimerAction(
+        period=2.0, actions=[launch_second_action]
+    )
+
+    return LaunchDescription([launch_first_action, delay_second_launch])</code></pre>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ That 2-second delay is load-bearing</div>
+      <p>
+        Spawning an entity before <code>gzserver</code> has fully finished starting is a classic source of a flaky,
+        intermittent "the robot never appeared" failure — it works on your machine and fails on a slower one, or
+        fails one run in five. If your spawn fails sporadically, <strong>check this delay before you go hunting for
+        a bug in your URDF</strong>. Two seconds is a heuristic, not a guarantee; on a loaded machine you may need
+        more.
+      </p>
+    </div>
+
+    <h3>2 — The world</h3>
+    <div class="filename">fastbot_gazebo/launch/botbox_world.launch.xml</div>
+    <pre><code>&lt;?xml version='1.0' ?&gt;
+&lt;launch&gt;
+  &lt;arg name="map_package"    default="fastbot_description" description="Name of the map package" /&gt;
+  &lt;arg name="map_name"       default="botbox_warehouse"    description="Name of the world to simulate" /&gt;
+  &lt;arg name="headless"       default='0'/&gt;
+  &lt;arg name="gazebo_version" default="11"/&gt;
+
+  &lt;let name="world_path"    value="$(find-pkg-share fastbot_gazebo)/worlds/$(var map_name).world" /&gt;
+  &lt;let name="model_path"    value="$(find-pkg-share fastbot_gazebo)/models:/usr/share/gazebo-$(var gazebo_version)/models" /&gt;
+  &lt;let name="resource_path" value="/usr/share/gazebo-$(var gazebo_version)" /&gt;
+  &lt;let name="plugin_path"   value="/usr/share/gazebo-$(var gazebo_version)" /&gt;
+
+  &lt;executable cmd="gzserver --verbose -s libgazebo_ros_factory.so -s libgazebo_ros_init.so $(var world_path)"
+              output="both"&gt;
+    &lt;env name="GAZEBO_MODEL_PATH"          value="$(var model_path)" /&gt;
+    &lt;env name="GAZEBO_RESOURCE_PATH"       value="$(var resource_path)" /&gt;
+    &lt;env name="GAZEBO_PLUGIN_PATH"         value="$(var plugin_path)" /&gt;
+    &lt;env name="GAZEBO_MODEL_DATABASE_URI"  value="" /&gt;
+  &lt;/executable&gt;
+
+  &lt;group unless="$(var headless)"&gt;
+    &lt;executable cmd="gzclient --verbose $(var world_path)" output="both"&gt;
+      &lt;env name="GAZEBO_MODEL_PATH"    value="$(var model_path)" /&gt;
+      &lt;env name="GAZEBO_RESOURCE_PATH" value="$(var resource_path)" /&gt;
+      &lt;env name="GAZEBO_PLUGIN_PATH"   value="$(var plugin_path)" /&gt;
+    &lt;/executable&gt;
+  &lt;/group&gt;
+&lt;/launch&gt;</code></pre>
+
+    <div class="box idea">
+      <div class="box-title">💡 Why <code>gzserver</code> and <code>gzclient</code> are separate</div>
+      <p>
+        <code>gzserver</code> is the headless physics engine; <code>gzclient</code> is the 3D viewer. Splitting them
+        means you can run the simulation with <code>headless:=1</code> on a machine with no display — a CI runner, a
+        remote box, an automated test suite — and attach a viewer only when a human wants to watch. The two
+        <code>libgazebo_ros_*</code> plugins loaded with <code>-s</code> are what let ROS 2 spawn entities into the
+        world and share its clock. The reference file also carries optional crowd-simulation arguments, which Forge
+        doesn't use and which are omitted here.
+      </p>
+    </div>
+
+    <h3>3 — Choosing the robot and its spawn pose</h3>
+    <div class="filename">fastbot_gazebo/launch/spawn_fastbot.launch.xml</div>
+    <pre><code>&lt;?xml version='1.0' ?&gt;
+&lt;launch&gt;
+    &lt;include file="$(find-pkg-share fastbot_gazebo)/launch/spawn.launch.xml"&gt;
+        &lt;arg name="robot_name"  value="fastbot"/&gt;
+        &lt;arg name="robot_file"  value="fastbot_multi_sim.xacro"/&gt;
+        &lt;arg name="x_spawn"     value="0.5"/&gt;
+        &lt;arg name="y_spawn"     value="-0.75"/&gt;
+        &lt;arg name="z_spawn"     value="0.1"/&gt;
+        &lt;arg name="roll_spawn"  value="0.0"/&gt;
+        &lt;arg name="pitch_spawn" value="0.0"/&gt;
+        &lt;arg name="yaw_spawn"   value="1.52"/&gt;
+    &lt;/include&gt;
+&lt;/launch&gt;</code></pre>
+
+    <div class="filename">fastbot_gazebo/launch/spawn.launch.xml</div>
+    <pre><code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;launch&gt;
+    &lt;arg name="robot_name"  default="fastbot"/&gt;
+    &lt;arg name="robot_file"  default="fastbot_multi_sim.xacro"/&gt;
+    &lt;arg name="x_spawn"     default="2.8162"/&gt;
+    &lt;arg name="y_spawn"     default="-1.04"/&gt;
+    &lt;arg name="z_spawn"     default="0.0"/&gt;
+    &lt;arg name="roll_spawn"  default="0.0"/&gt;
+    &lt;arg name="pitch_spawn" default="0.0"/&gt;
+    &lt;arg name="yaw_spawn"   default="0.0"/&gt;
+
+    &lt;include file="$(find-pkg-share fastbot_description)/launch/robot_state_publisher.launch.py"&gt;
+        &lt;arg name="robot_name" value="$(var robot_name)"/&gt;
+        &lt;arg name="robot_file" value="$(var robot_file)"/&gt;
+    &lt;/include&gt;
+
+    &lt;include file="$(find-pkg-share fastbot_gazebo)/launch/spawn_in_gazebo.launch.py"&gt;
+        &lt;arg name="robot_name"  value="$(var robot_name)"/&gt;
+        &lt;arg name="x_spawn"     value="$(var x_spawn)"/&gt;
+        &lt;arg name="y_spawn"     value="$(var y_spawn)"/&gt;
+        &lt;arg name="z_spawn"     value="$(var z_spawn)"/&gt;
+        &lt;arg name="roll_spawn"  value="$(var roll_spawn)"/&gt;
+        &lt;arg name="pitch_spawn" value="$(var pitch_spawn)"/&gt;
+        &lt;arg name="yaw_spawn"   value="$(var yaw_spawn)"/&gt;
+    &lt;/include&gt;
+&lt;/launch&gt;</code></pre>
+
+    <div class="box hw">
+      <div class="box-title">🔩 <code>z_spawn</code> is not zero, deliberately</div>
+      <p>
+        Spawning at <code>z = 0.1</code> drops Forge from 10&nbsp;cm above the floor rather than starting it exactly
+        on the ground. That small drop avoids the physics engine finding the wheels already interpenetrating the
+        ground plane, which produces a violent initial correction — a robot that launches itself across the world on
+        the first timestep. If your robot does exactly that on spawn, raise this number.
+      </p>
+    </div>
+
+    <h3>4 — The simulation's robot state publisher</h3>
+    <p>
+      This is the same file as §13.11 with one difference: the description path points at
+      <code>models/urdf/</code> rather than <code>onshape/</code>, because the simulation version of the Xacro
+      (<code>fastbot_multi_sim.xacro</code>) includes the plugin file. It belongs in
+      <code>fastbot_description/launch</code> alongside the hardware version.
+    </p>
+    <div class="filename">fastbot_description/launch/robot_state_publisher.launch.py (simulation variant)</div>
+    <pre><code>import os
+from ament_index_python.packages import get_package_share_directory
+from launch import LaunchDescription
+from launch_ros.actions import Node
+import xacro
+from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.substitutions import LaunchConfiguration
+
+
+def launch_setup(context, *args, **kwargs):
+
+    ####### DATA INPUT ##########
+    robot_name = LaunchConfiguration("robot_name").perform(context)
+    robot_file = LaunchConfiguration("robot_file").perform(context)
+
+    robot_description_topic_name = "/" + robot_name + "_robot_description"
+    robot_state_publisher_name = robot_name + "_robot_state_publisher"
+    joint_state_topic_name = "/" + robot_name + "/joint_states"
+
+    package_description = "fastbot_description"
+    robot_desc_path = os.path.join(
+        get_package_share_directory(package_description), "models/urdf/", robot_file
+    )
+
+    # Load the XACRO file with arguments.
+    robot_desc = xacro.process_file(
+        robot_desc_path, mappings={"robot_name": robot_name}
+    )
+    xml = robot_desc.toxml()
+
+    robot_state_publisher_node = Node(
+        package="robot_state_publisher",
+        executable="robot_state_publisher",
+        name=robot_state_publisher_name,
+        emulate_tty=True,
+        parameters=[{"use_sim_time": True, "robot_description": xml}],
+        remappings=[
+            ("/robot_description", robot_description_topic_name),
+            ("/joint_states", joint_state_topic_name),
+        ],
+        output="screen",
+    )
+
+    return [robot_state_publisher_node]
+
+
+def generate_launch_description():
+    robot_name_arg = DeclareLaunchArgument("robot_name", default_value="fastbot")
+    robot_file_arg = DeclareLaunchArgument(
+        "robot_file", default_value="fastbot_multi_sim.xacro"
+    )
+
+    return LaunchDescription(
+        [robot_name_arg, robot_file_arg, OpaqueFunction(function=launch_setup)]
+    )</code></pre>
+    <p>
+      Here <code>use_sim_time: True</code> is <em>correct</em> — Gazebo publishes <code>/clock</code>, and every node
+      in the simulation must use it. That's exactly why §13.11 flagged the same line as a bug on real hardware: the
+      right value depends on which world the node is living in, which is why it should be an argument rather than a
+      constant.
+    </p>
+
+    <div class="filename">fastbot_description/models/urdf/fastbot_multi_sim.xacro</div>
+    <pre><code>&lt;?xml version="1.0" ?&gt;
+&lt;robot name="fastbot" xmlns:xacro="http://www.ros.org/wiki/xacro"&gt;
+
+  &lt;xacro:arg name="robot_name" default="fastbot"/&gt;
+
+  &lt;!-- The body, from Section 14.3 --&gt;
+  &lt;xacro:include filename="$(find fastbot_description)/onshape/fastbot.xacro"/&gt;
+  &lt;!-- The Gazebo plugins, from Sections 14.4-14.5 --&gt;
+  &lt;xacro:include filename="$(find fastbot_gazebo)/gazebo/fastbot_plugins.gazebo"/&gt;
+
+  &lt;xacro:fastbot_body    robot_name="$(arg robot_name)"/&gt;
+  &lt;xacro:fastbot_plugins robot_name="$(arg robot_name)"/&gt;
+
+&lt;/robot&gt;</code></pre>
+    <p>
+      This tiny file is where the modularity pays off: the hardware description
+      (<code>robot.urdf</code>/<code>fastbot.xacro</code>) and the simulation behaviours
+      (<code>fastbot_plugins.gazebo</code>) are composed here, and nowhere else. The real robot loads the body alone;
+      the simulation loads body plus plugins. One source of geometric truth, two consumers.
+    </p>
+
+    <h3>5 — Spawning the entity</h3>
+    <div class="filename">fastbot_gazebo/launch/spawn_in_gazebo.launch.py</div>
+    <pre><code>import os
+from launch import LaunchDescription
+from launch_ros.actions import Node
+from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.substitutions import LaunchConfiguration
+
+
+def launch_setup(context, *args, **kwargs):
+    entity_name = LaunchConfiguration('robot_name').perform(context)
+    x_spawn     = LaunchConfiguration('x_spawn').perform(context)
+    y_spawn     = LaunchConfiguration('y_spawn').perform(context)
+    z_spawn     = LaunchConfiguration('z_spawn').perform(context)
+    roll_spawn  = LaunchConfiguration('roll_spawn').perform(context)
+    pitch_spawn = LaunchConfiguration('pitch_spawn').perform(context)
+    yaw_spawn   = LaunchConfiguration('yaw_spawn').perform(context)
+
+    position    = [x_spawn, y_spawn, z_spawn]              # [X, Y, Z]
+    orientation = [roll_spawn, pitch_spawn, yaw_spawn]     # [Roll, Pitch, Yaw]
+
+    robot_description_topic_name = "/" + entity_name + "_robot_description"
+    robot_state_publisher_name   = entity_name + "_robot_state_publisher"
+    spawn_node_name              = entity_name + "_spawn_entity"
+
+    spawn_robot = Node(
+        package='gazebo_ros',
+        executable='spawn_entity.py',
+        name=spawn_node_name,
+        output='screen',
+        emulate_tty=True,
+        arguments=[
+            '-entity', entity_name,
+            '-x', str(position[0]), '-y', str(position[1]), '-z', str(position[2]),
+            '-R', str(orientation[0]), '-P', str(orientation[1]), '-Y', str(orientation[2]),
+            '-topic', robot_description_topic_name,
+        ],
+        remappings=[("/robot_state_publisher", robot_state_publisher_name)],
+    )
+
+    return [spawn_robot]
+
+
+def generate_launch_description():
+    robot_name_arg  = DeclareLaunchArgument('robot_name',  default_value='fastbot')
+    x_spawn_arg     = DeclareLaunchArgument('x_spawn',     default_value='0.0')
+    y_spawn_arg     = DeclareLaunchArgument('y_spawn',     default_value='0.0')
+    z_spawn_arg     = DeclareLaunchArgument('z_spawn',     default_value='0.0')
+    roll_spawn_arg  = DeclareLaunchArgument('roll_spawn',  default_value='0.0')
+    pitch_spawn_arg = DeclareLaunchArgument('pitch_spawn', default_value='0.0')
+    yaw_spawn_arg   = DeclareLaunchArgument('yaw_spawn',   default_value='0.0')
+
+    return LaunchDescription([
+        robot_name_arg,
+        x_spawn_arg,
+        y_spawn_arg,
+        z_spawn_arg,
+        roll_spawn_arg,
+        pitch_spawn_arg,
+        yaw_spawn_arg,
+        OpaqueFunction(function=launch_setup),
+    ])</code></pre>
+    <p>
+      Note <code>-topic</code> rather than <code>-file</code>: <code>spawn_entity.py</code> reads the robot
+      description from the namespaced ROS topic that <code>robot_state_publisher</code> just published, rather than
+      from a file on disk. That's what keeps one Xacro serving both the visualization and the physics, and what
+      makes the <code>${robot_name}</code> plumbing from §14.2 pay off.
+    </p>
+
+    <div class="box def">
+      <div class="box-title">📖 Want to go deeper on Gazebo?</div>
+      <p>
+        This section covers what Forge needs, not everything Gazebo can do. Worlds, models, physics tuning, custom
+        plugins and sensor modelling are a whole subject in their own right — Lecture 6 of this course is the
+        starting point, and The Construct's <a href="https://www.theconstruct.ai/robotigniteacademy_learnros/ros-courses-library/mastering-gazebo-simulator-online-course/">Mastering Gazebo Simulator</a>
+        goes considerably further.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="run">
+    <h2><span class="num">14.7</span>Publishing your packages &amp; running the simulation</h2>
+    <p>
+      One practical wrinkle: the simulation needs a machine with a display and a decent GPU, and Forge's Pi has
+      neither. Your packages live on the Pi; the simulation runs on your workstation (or a cloud dev environment).
+      Getting the code from one to the other is a job for <strong>git</strong> — and doing it properly is a genuine
+      professional skill, not an inconvenience.
+    </p>
+
+    <h3>Initialise and push</h3>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-out"># --- on the Pi ---</span>
+<span class="term-prompt">$</span> cd ~/ros2_ws/src/fastbot_description
+<span class="term-prompt">$</span> git init
+<span class="term-prompt">$</span> cd ~/ros2_ws/src/fastbot_gazebo
+<span class="term-prompt">$</span> git init</div>
+    </div>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ Before your first commit: check the <code>.gitignore</code></div>
+      <p>
+        <code>fastbot_description/onshape/api-keys.sh</code> holds your Onshape access and secret keys (§13.10). If
+        you push it, treat those keys as compromised and rotate them immediately. Confirm before committing:
+      </p>
+      <pre style="margin-bottom:0;"><code>cat .gitignore              # should list onshape/api-keys.sh
+git status --porcelain      # api-keys.sh must NOT appear</code></pre>
+    </div>
+
+    <p>
+      Create two repositories on <a href="https://github.com/">GitHub</a> named <code>fastbot_description</code> and
+      <code>fastbot_gazebo</code>. ⚠️ Leave <em>Add a README</em> unchecked and the <code>.gitignore</code> template
+      set to <em>None</em> — either one creates an initial commit that your local history doesn't share, and your
+      first push will be rejected.
+    </p>
+    <p>Copy each repository's HTTPS URL from the green <strong>Code</strong> button:</p>
+    <figure class="figure">
+      <img loading="lazy" src="images/fastbot-course/10-4-simulation-launch-files_p13_01.png" alt="GitHub repository Code dropdown open on the Local tab, showing the HTTPS clone URL with a copy button and a Download ZIP option">
+      <figcaption><b>Figure 14.1</b> — GitHub's <strong>Code → HTTPS</strong> clone URL. Copy it for each of the two repositories.</figcaption>
+    </figure>
+
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-out"># --- on the Pi ---</span>
+<span class="term-prompt">$</span> cd ~/ros2_ws/src/fastbot_description
+<span class="term-prompt">$</span> git add . &amp;&amp; git commit -m "FastBot description: xacro, meshes, launch"
+<span class="term-prompt">$</span> git remote add origin https://github.com/YOUR-USER/fastbot_description.git
+<span class="term-prompt">$</span> git push -u origin main
+
+<span class="term-prompt">$</span> cd ~/ros2_ws/src/fastbot_gazebo
+<span class="term-prompt">$</span> git add . &amp;&amp; git commit -m "FastBot Gazebo: plugins, worlds, launch hierarchy"
+<span class="term-prompt">$</span> git remote add origin https://github.com/YOUR-USER/fastbot_gazebo.git
+<span class="term-prompt">$</span> git push -u origin main</div>
+    </div>
+    <p>🌐✅ Your packages are on GitHub. Check the website — your code should be there.</p>
+
+    <h3>Clone, build and launch on the simulation machine</h3>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-out"># --- on the workstation / simulation environment ---</span>
+<span class="term-prompt">$</span> cd ~/ros2_ws/src
+<span class="term-prompt">$</span> git clone https://github.com/YOUR-USER/fastbot_description.git
+<span class="term-prompt">$</span> git clone https://github.com/YOUR-USER/fastbot_gazebo.git
+
+<span class="term-prompt">$</span> cd ~/ros2_ws/ &amp;&amp; colcon build &amp;&amp; source install/setup.bash
+
+<span class="term-prompt">$</span> ros2 launch fastbot_gazebo one_fastbot_warehouse.launch.py
+<span class="term-out">[gzserver-1] Msg Connected to gazebo master
+[gzserver-1] [Msg] Real time factor: 0.98
+[spawn_entity.py-3] [INFO] [fastbot_spawn_entity]: Spawn status: SpawnEntity: Successfully spawned entity [fastbot]
+[robot_state_publisher-2] [INFO]: Robot initialized</span></div>
+    </div>
+    <p>✅ Forge should appear in the Gazebo window.</p>
+
+    <h3>Verify — the same discipline as the real robot</h3>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> ros2 topic list | grep fastbot
+<span class="term-out">/fastbot/cmd_vel
+/fastbot/odom
+/fastbot/scan
+/fastbot/joint_states</span>
+
+<span class="term-prompt">$</span> ros2 topic hz /fastbot/scan
+<span class="term-out">average rate: 10.002   min: 0.099s max: 0.101s std dev: 0.00042s window: 30</span>
+
+<span class="term-prompt">$</span> ros2 run teleop_twist_keyboard teleop_twist_keyboard \
+       --ros-args --remap cmd_vel:=/fastbot/cmd_vel</div>
+    </div>
+    <p>
+      Follow the on-screen instructions to drive Forge around its environment — <code>i</code> forward,
+      <code>,</code> back, <code>j</code>/<code>l</code> to turn, <code>k</code> to stop, <code>q</code>/<code>z</code>
+      to scale speed. This is the <em>identical</em> command you used on the real robot in §13.6, differing only in
+      which machine it's pointed at. That interchangeability is the payoff of every naming decision in this build
+      arc.
+    </p>
+
+    <div class="exercise">
+      <div class="level">Exercise · Harder — measure the twin</div>
+      <p>
+        Run the same manoeuvre on both robots: drive straight forward for 5 seconds at the same commanded velocity,
+        first in Gazebo and then on the real Forge. Record the final <code>/odom</code> pose in each case, and
+        measure the real robot's actual displacement with a tape. Then repeat with a pure rotation of about 90°.
+        Which of the three numbers disagrees most — straight-line distance, turn angle, or simulated-versus-real
+        drift? What does that tell you about which parameter (<code>wheel_diameter</code>,
+        <code>wheel_separation</code>, or <code>encoder_cpr</code>) is furthest from the truth?
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="compare">
+    <h2><span class="num">14.8</span>Forge's Gazebo vs. LIMO's Gazebo</h2>
+    <p>
+      It's worth naming explicitly what's the same and what's different between what you just built and LIMO's
+      simulation from Lecture 6 — because the differences are the entire point of Lectures 12-14.
+    </p>
+    <div class="tw">
+    <table>
+      <tr><th></th><th>LIMO in Gazebo (Lecture 6)</th><th>Forge in Gazebo (today)</th></tr>
+      <tr><td>Underlying mechanism</td><td><code>gazebo_ros</code> diff-drive plugin</td><td>The same plugin family</td></tr>
+      <tr><td>Wheel separation / diameter</td><td>AgileX's published values, already in the package you installed</td><td>Your own measured values, from your own build</td></tr>
+      <tr><td>URDF / Xacro</td><td>Pre-written by AgileX (<code>limo_description</code>)</td><td>Generated from a CAD assembly you designed</td></tr>
+      <tr><td>Sensor plugins</td><td>Pre-configured for LIMO's real sensor models</td><td>You chose every parameter — sample count, FOV, noise</td></tr>
+      <tr><td>Sim-to-real gap</td><td>Someone else's calibration to trust</td><td>Yours to measure and close (§14.7's exercise)</td></tr>
+      <tr><td>What breaks if wrong</td><td>Someone else's bug to report</td><td>Yours to trace through your own URDF and plugin config</td></tr>
+    </table>
+    </div>
+    <div class="box real">
+      <div class="box-title">🌍 The point of building your own</div>
+      <p>
+        Simulating a robot someone else built teaches you to <em>use</em> ROS 2 tools. Simulating a robot you built
+        yourself teaches you to <em>own</em> them — when Forge's simulated turning radius doesn't match what you
+        expect, there's no vendor package to suspect first. The bug is in a URDF or a plugin block you wrote, and
+        tracing it is exactly the debugging skill every real robotics job eventually demands.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="cover">
+    <h2><span class="num">14.9</span>Designing the 3D-printed cover</h2>
+    <p>
+      Forge's structural chassis is laser-cut sheet — fast, cheap, and needing no 3D printer at all. But the top
+      cover, the part that gives Forge its finished look and protects the electronics underneath, is a natural fit
+      for 3D printing: its curved, sloped shape is exactly what a laser cutter, which only cuts flat sheets, cannot
+      produce.
+    </p>
+    <p>
+      3D printing services are widely available and inexpensive, so you don't need to own a printer to do this
+      section — design it, and send the file to a print bureau.
+    </p>
+
+    <figure class="figure">
+      <img loading="lazy" src="images/fastbot-course/11-2-designing-the-cover_p02_01.png" alt="Onshape 3D view of the finished robot cover: a curved shell with a swept front bumper and a large central opening">
+      <figcaption><b>Figure 14.2</b> — The finished cover, shown first so you know what you're building toward.</figcaption>
+    </figure>
+
+    <h3>The workflow</h3>
+    <ol class="steps">
+      <li><strong>Copy the top plate sketch</strong> from your chassis document into a new cover document. Reusing the existing sketch guarantees the cover's mounting holes line up with the plate underneath — a far better idea than re-measuring.</li>
+      <li><strong>Extrude the middle section</strong> with 2&nbsp;mm thick walls. Thin enough to print quickly and stay light; thick enough not to flex.</li>
+      <li><strong>Draw the side profile</strong> using Forge's total assembled height, so the cover clears the LiDAR and the tallest components with a little margin.</li>
+      <li><strong>Mirror the extruded features</strong> so the two sides are guaranteed identical rather than hand-matched.</li>
+    </ol>
+
+    <div class="fig-grid">
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/11-2-designing-the-cover_p03_02.png" alt="Onshape sketch view showing the copied top plate outline being used as the cover's boundary sketch">
+        <figcaption><b>Figure 14.3</b> — Step 1: the top plate's sketch, copied in and reused as the cover boundary.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/11-2-designing-the-cover_p04_03.png" alt="Onshape 3D view of the cover's middle section extruded with thin walls">
+        <figcaption><b>Figure 14.4</b> — Step 2: the middle section extruded with 2&nbsp;mm walls.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/11-2-designing-the-cover_p05_04.png" alt="Onshape showing a dimensioned side profile sketch being extruded to form the sloped side of the cover">
+        <figcaption><b>Figure 14.5</b> — Step 3: the side profile, driven by Forge's total height.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/11-2-designing-the-cover_p06_05.png" alt="Onshape mirror feature dialog with an orange mirror plane shown through the cover geometry">
+        <figcaption><b>Figure 14.6</b> — Step 4: mirroring the extruded features across the centre plane.</figcaption>
+      </figure>
+    </div>
+
+    <div class="box eng">
+      <div class="box-title">🔧 Design for access, not just for looks</div>
+      <p>
+        A cover that has to come off to reach the battery is a cover you'll stop fitting after a week. Use the PVC
+        plates as your dimensional reference in CAD so mounting holes, sensor cutouts and wire passages line up
+        exactly; then design for <strong>modularity</strong> — snap-fit, screw-on or sliding panels that give you
+        access to the battery, the Pi and the motors without a full disassembly. Combining laser-cut precision with
+        3D-printed flexibility gives you a cover that's durable, functional, and actually gets used.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="printing">
+    <h2><span class="num">14.10</span>3D printing considerations</h2>
+
+    <div class="box def">
+      <div class="box-title">📖 The one rule that governs every 3D-print design decision</div>
+      <p>
+        A 3D printer builds an object one thin horizontal layer at a time, and <strong>a printer cannot print onto
+        thin air</strong> — every new layer must be supported by the one beneath it. Geometry that overhangs too far
+        past the layer below either sags, prints stringy and wrong, or forces the slicer to generate throwaway
+        support material underneath it. Every other 3D-printing decision in this section is that one rule, applied
+        to a specific shape.
+      </p>
+    </div>
+
+    <p>
+      Forge's cover has a sloped side profile — precisely the kind of shape that would need heavy support if printed
+      right-side up. The fix: <strong>orient the part upside down for printing</strong>. Flipped over, the slope that
+      would have overhung empty air instead builds upward from the print bed, and the gradual slope of the side
+      profile gives each layer enough material overlap with the one below to prevent sagging or outright failure.
+    </p>
+
+    <figure class="figure">
+      <img loading="lazy" src="images/fastbot-course/11-3-3d-printing-considerations_p02_01.png" alt="Onshape 3D view of the cover oriented upside down, with its opening facing upward and the sloped walls rising from the flat top surface">
+      <figcaption><b>Figure 14.7</b> — The cover, oriented upside down for printing. What was an overhang is now self-supporting.</figcaption>
+    </figure>
+
+    <div class="mermaid">
+flowchart LR
+    A["Cover, right-side up<br/>on the print bed"] -->|"sloped side overhangs empty air"| B["Needs heavy support material<br/>more filament · more cleanup · worse finish"]
+    C["Same cover, flipped<br/>upside-down on the bed"] -->|"slope now builds up from the bed"| D["Self-supporting<br/>little or no support needed"]
+    style B fill:#fdeeec,stroke:#d64a3c,color:#211f1a
+    style D fill:#eafaf3,stroke:#0e9e6e,color:#211f1a
+    </div>
+
+    <h3>What about the front bumper?</h3>
+    <p>
+      Even after flipping, the front "bumper" lip still carries a significant overhang. That's a common challenge,
+      and sometimes unavoidable. Three things are worth knowing:
+    </p>
+    <ul>
+      <li>Most printers handle it by <strong>generating support structures</strong> — temporary scaffolding that gives the overhanging layers a foundation and is broken off afterwards.</li>
+      <li>Many modern printers manage moderate overhangs with no noticeable quality loss at all, depending on calibration, material and part cooling. Judging which is which is a skill that comes from experience and experimentation.</li>
+      <li>If you send the design to a professional print shop, technicians will usually review your model, flag problematic features and suggest design tweaks or a different orientation. That's a normal part of the process, not a sign you designed it wrong.</li>
+    </ul>
+
+    <div class="box think">
+      <div class="box-title">🤔 Think About It</div>
+      <p>
+        What would you actually change about Forge — power budget, sensor placement, URDF, chassis material, cover
+        design — if the goal shifted from "drive a simple path" to "run Nav2 autonomously for an hour in a cluttered
+        room," using everything you learned about costmaps, localization and mapping in Lectures 9 and 10?
+      </p>
+    </div>
+
+    <div class="exercise">
+      <div class="level">Exercise · Harder</div>
+      <p>
+        Sketch Forge's cover in two orientations — right-side up and upside down. For each, mark every surface that
+        overhangs more than roughly 45° from vertical. Which orientation has fewer marked surfaces? Does that match
+        the orientation this section recommends? Then load your STL into a slicer (Cura, PrusaSlicer, whatever you
+        have), enable support generation, and compare the estimated filament use and print time between the two
+        orientations. The number will be more persuasive than the sketch.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="capstone">
+    <h2><span class="num">14.11</span>The capstone build review</h2>
+    <p>
+      This is the course's final deliverable. Individually or in small groups, demo Forge — physically if you built
+      the real hardware, or in Gazebo if hardware access was limited — driving a path of your choosing. A straight
+      line, a square, or a short waypoint sequence under teleop is entirely sufficient. Then present the design
+      decisions that got Forge there, tracing each one back to the lecture where you made it:
+    </p>
+    <div class="tw">
+    <table>
+      <tr><th>Strand</th><th>What to present</th></tr>
+      <tr><td><strong>Motors &amp; control</strong><br/>(W12)</td><td>Why you chose 12&nbsp;V motors with encoders; your L298N/Nano pin map; your measured <code>encoder_cpr</code> and the counts-per-loop derivation; the difference you observed between open- and closed-loop control.</td></tr>
+      <tr><td><strong>Power</strong><br/>(W12)</td><td>Your P=V×I budget table, the pack you selected against both energy and C-rating, the runtime you calculated — and what you actually measured.</td></tr>
+      <tr><td><strong>Compute &amp; software</strong><br/>(W12-13)</td><td>Your OS and ROS 2 install, your driver node, your bringup file, and any bugs you hit and fixed. (The Humble/Jazzy <code>.bashrc</code> mismatch is a great story if it bit you.)</td></tr>
+      <tr><td><strong>Body</strong><br/>(W13)</td><td>Your CAD workflow, the mate names that became joint names, your URDF's real link masses and joint types, and what the "no mass" warnings cost you in Gazebo if you ignored them.</td></tr>
+      <tr><td><strong>Senses</strong><br/>(W13)</td><td>The udev workflow and why it beats a hardcoded path; how you verified each sensor with <code>ros2 topic hz</code>; the camera silent-failure debug, if you hit it.</td></tr>
+      <tr><td><strong>Simulation &amp; finishing</strong><br/>(W14)</td><td>Your Gazebo plugin parameters, the sim-to-real gaps you measured in §14.7's exercise, and your cover's print orientation and reasoning.</td></tr>
+    </table>
+    </div>
+
+    <h3>Rubric</h3>
+    <div class="tw">
+    <table>
+      <tr><th>Area</th><th>What "good" looks like</th></tr>
+      <tr><td>Design justification</td><td>Every major choice — battery size, sensor selection, wheel geometry, encoder constant — is backed by a number or a measurement, not a guess.</td></tr>
+      <tr><td>Working demo</td><td>Forge drives a simple path, live or in simulation, without last-minute rescue intervention.</td></tr>
+      <tr><td>Verification discipline</td><td>You can show, for each subsystem, the specific command that proves it works — not just that it launched without errors.</td></tr>
+      <tr><td>Debugging narrative</td><td>At least one real problem encountered and diagnosed, described accurately. A clean, bug-free build story is rarer, and far less instructive, than an honest one.</td></tr>
+      <tr><td>Cross-session connections</td><td>The presentation explicitly ties choices back to earlier lectures, the way the table above does.</td></tr>
+      <tr><td>Sim-to-real awareness</td><td>You can name at least two concrete ways your simulated Forge differs from the real one, and say whether each matters.</td></tr>
+    </table>
+    </div>
+
+    <div class="assignment">
+      <div class="label">Assignment — design reflection</div>
+      <p>
+        Write a roughly one-page design reflection for Forge: the power and motor decisions from Lecture 12, the
+        sensor and URDF decisions from Lecture 13, the simulation decisions from today, one thing you'd redesign if
+        you built Forge again from scratch, and — using what you know from Lectures 9-10 — a concrete first step
+        toward adding autonomous navigation.
+      </p>
+      <p style="margin-bottom:0;">
+        Be specific. "The battery lasted less time than calculated" is a start; "the battery lasted 14 minutes
+        against a calculated 22 because I under-budgeted the LiDAR's continuous draw and the power module's own
+        conversion losses" is the kind of numbers-backed reflection this is asking for.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="summary">
+    <h2><span class="num">14.12</span>Summary, checkpoint, quiz &amp; where to go next</h2>
+    <p>
+      You closed the loop on Forge: a parameterised Xacro built from a CAD-generated URDF, three Gazebo plugins
+      configured with your own measured values, a launch hierarchy that spawns your robot on demand, packages
+      published to GitHub and running on a second machine, a 3D-printed cover designed around a single governing
+      principle, and a capstone tying the whole 12-14 build back to the decisions you made and the bugs you fixed.
+    </p>
+    <p>
+      More broadly, this closes the entire course. You started at Lecture 1 not knowing what a ROS 2 node was.
+      You're ending it having designed, wired, programmed, debugged, driven and simulated a mobile robot of your
+      own, from first principles — and having built the habits that make the next one easier: measure rather than
+      assume, verify data rather than absence of errors, and keep one source of truth for every number.
+    </p>
+
+    <div class="checkpoint">
+      <strong style="color:var(--text); display:block; margin-bottom:10px;">✅ Lecture 14 &amp; course checkpoint</strong>
+      <ul>
+        <li>I converted the generated URDF into a Xacro with the five edits, and validated it with <code>xacro</code> + <code>check_urdf</code>.</li>
+        <li>I converted repeated raw numbers into <code>xacro:property</code> values and confirmed RViz renders identically afterward.</li>
+        <li>I found the three naming and sign issues in the generated Xacro (wheel axis signs, the unprefixed caster joint, the link/joint name clash) and fixed them.</li>
+        <li>I can explain what each of Forge's three Gazebo plugins publishes, and which parameters I chose myself versus inherited from a template.</li>
+        <li>I noticed that the plugin's <code>wheel_separation</code> disagreed with the driver node's, and made them agree with a measured value.</li>
+        <li>I can name at least two concrete sim-to-real gaps in the LiDAR sensor block, and say what each would cost a SLAM or Nav2 algorithm.</li>
+        <li>I can trace the full launch hierarchy from "start the world" to "Forge is spawned and publishing," and I know why the delay between them matters.</li>
+        <li>I published my packages to GitHub without leaking my API keys, and ran the simulation on a second machine.</li>
+        <li>I drove the simulated robot with the same teleop command as the real one, and measured how their odometry differs.</li>
+        <li>I can state in one sentence why a 3D printer can't print onto thin air, and how that drove the cover being printed upside down.</li>
+        <li>I completed a capstone demo and can justify every major design decision with a number, a measurement or a specific debugging story.</li>
+      </ul>
+    </div>
+
+    <div class="quiz">
+      <div class="quiz-title">🧠 Quick Quiz — Session 14</div>
+      <div class="quiz-q">
+        <p><strong>Q1.</strong> Why convert repeated raw numbers into <code>xacro:property</code> values before simulating?</p>
+        <details><summary>Reveal answer</summary><p>So each number lives in exactly one place. Retuning wheel separation, sensor noise or mass distribution then updates every reference at once, instead of risking the visual robot and the physics robot silently drifting apart after a partial edit.</p></details>
+      </div>
+      <div class="quiz-q">
+        <p><strong>Q2.</strong> Forge's two wheel joints have <code>axis xyz="0 0 1"</code> and <code>"0 0 -1"</code>. What happens if you make them the same?</p>
+        <details><summary>Reveal answer</summary><p>Nothing errors — the URDF still parses. The robot just drives in a slow circle instead of a straight line, because a positive command spins one wheel the geometrically wrong way. It's one of the hardest URDF bugs to trace precisely because it's silent.</p></details>
+      </div>
+      <div class="quiz-q">
+        <p><strong>Q3.</strong> The simulated LiDAR has <code>stddev 0.0</code> and a 20&nbsp;m range; the real one is ±3&nbsp;cm and 12&nbsp;m. What's the risk?</p>
+        <details><summary>Reveal answer</summary><p>An algorithm tuned only against the simulation becomes quietly overconfident: it has never coped with a noisy return, and it may rely on long-range readings the real sensor cannot provide. That's a textbook sim-to-real gap, the same one Lecture 11 raised for LIMO.</p></details>
+      </div>
+      <div class="quiz-q">
+        <p><strong>Q4.</strong> Why does a <code>TimerAction</code> delay sit between starting the world and spawning Forge?</p>
+        <details><summary>Reveal answer</summary><p>Spawning an entity before <code>gzserver</code> has finished starting causes a flaky, intermittent "robot never appeared" failure. The delay gives the physics server time to be ready. If spawning fails sporadically, check this before suspecting the URDF.</p></details>
+      </div>
+      <div class="quiz-q">
+        <p><strong>Q5.</strong> <code>spawn_entity.py</code> is called with <code>-topic</code>, not <code>-file</code>. Why does that matter?</p>
+        <details><summary>Reveal answer</summary><p>It takes the description from the namespaced topic that <code>robot_state_publisher</code> just published, so the visualization and the physics come from one expanded Xacro. That's what makes the <code>${robot_name}</code> parameterisation work end to end and lets two robots spawn from the same file.</p></details>
+      </div>
+      <div class="quiz-q">
+        <p><strong>Q6.</strong> <code>use_sim_time: True</code> is correct here but was flagged as a bug in Lecture 13. Why both?</p>
+        <details><summary>Reveal answer</summary><p>It tells a node to take its clock from <code>/clock</code>, which only Gazebo publishes. Correct in simulation; on real hardware there is no <code>/clock</code>, so timestamps stall and TF lookups fail with extrapolation errors. It should be a launch argument, not a hardcoded constant.</p></details>
+      </div>
+      <div class="quiz-q">
+        <p><strong>Q7.</strong> What's the one governing rule behind every 3D-printing decision in this session?</p>
+        <details><summary>Reveal answer</summary><p>A printer can't print onto thin air — every layer needs the layer directly below it to exist as something solid to bond to. Every overhang, support and orientation decision is that rule applied to a specific shape.</p></details>
+      </div>
+      <div class="quiz-q">
+        <p><strong>Q8. (Gotcha)</strong> A Gazebo sensor block uses <code>&lt;gazebo reference="fastbot_lidar"&gt;</code>, but <code>fastbot_lidar</code> is a joint name, not a link name. What happens?</p>
+        <details><summary>Reveal answer</summary><p>Nothing visible. <code>&lt;gazebo reference&gt;</code> attaches to a link; pointed at a non-link it silently attaches to nothing and the sensor never publishes. Clean launch, zero data — the third instance of that failure mode in this build arc, after the commented-out odometry and the camera stack mismatch.</p></details>
+      </div>
+    </div>
+
+    <h3>Glossary</h3>
+    <dl class="glossary">
+      <dt>Xacro property / macro</dt><dd>A named value or reusable parameterised block in a Xacro file, letting a number or repeated structure live in one place instead of many.</dd>
+      <dt>Gazebo plugin</dt><dd>A shared library that gives a simulated model behaviour and ties it to ROS messages — virtual motors and virtual sensors.</dd>
+      <dt>Diff-drive plugin</dt><dd>Converts <code>/cmd_vel</code> into simulated wheel motion and reports <code>/odom</code> plus TF, with no separate hardware interface layer.</dd>
+      <dt>Ray sensor</dt><dd>Gazebo's simulated LiDAR: casts a fan of virtual rays each timestep and reports the distance to whatever they intersect.</dd>
+      <dt>Sim-to-real gap</dt><dd>The set of real-world imperfections — sensor noise, wear, timing jitter, range limits — a simulation may not model. Introduced for real LIMO hardware in Lecture 11 and measured for Forge in §14.7.</dd>
+      <dt><code>gzserver</code> / <code>gzclient</code></dt><dd>Gazebo's headless physics engine and its 3D viewer, launched separately so simulation can run without a display.</dd>
+      <dt><code>use_sim_time</code></dt><dd>Tells a node to take its clock from the <code>/clock</code> topic. True in simulation, false on hardware.</dd>
+      <dt>Digital twin</dt><dd>A simulation that presents the same interface as the real robot — same topics, frames and description — so software developed against one runs unchanged on the other.</dd>
+      <dt>Self-supporting geometry</dt><dd>A print design shaped so each layer's overhang is small enough to bond to the layer below without generated support.</dd>
+      <dt>Overhang</dt><dd>Any part of a printed model extending outward faster than the layer beneath can support, risking sag or requiring support material.</dd>
+    </dl>
+
+    <h3>Common mistakes</h3>
+    <ul>
+      <li>Hardcoding a plugin's <code>wheel_separation</code>/<code>wheel_diameter</code> as raw literals instead of shared Xacro properties, letting the simulated and real robots disagree about their own geometry.</li>
+      <li>Leaving the generated wheel-axis signs unchecked, then debugging a robot that curves for no visible reason.</li>
+      <li>Missing a <code>${robot_name}_</code> prefix on one joint, then finding two robots can't coexist in one world.</li>
+      <li>Pointing <code>&lt;gazebo reference&gt;</code> at a joint name instead of a link name — clean launch, no sensor data.</li>
+      <li>Spawning before the physics server is ready, then hunting a phantom URDF bug.</li>
+      <li>Spawning at <code>z = 0</code> and watching the physics engine fling the robot across the world.</li>
+      <li>Trusting a noise-free, over-ranged simulated LiDAR as a proxy for the real sensor's performance.</li>
+      <li>Pushing <code>api-keys.sh</code> to GitHub along with the packages.</li>
+      <li>Creating the GitHub repositories with a README or <code>.gitignore</code> template, then fighting a rejected first push.</li>
+      <li>Designing a print right-side-up out of habit, generating heavy support for a shape that would be nearly self-supporting if simply flipped.</li>
+      <li>Presenting a capstone build story with no bugs in it — a sign the story has been polished past usefulness, not that the build went perfectly.</li>
+    </ul>
+
+    <h3>Where to go next</h3>
+    <p>
+      This course ends here, but a robot you built yourself doesn't have to stop developing. Four realistic next
+      steps, in roughly increasing scope:
+    </p>
+    <ul>
+      <li><strong>Close the sim-to-real gap properly.</strong> Add realistic LiDAR noise, correct the range limits, reconcile the wheel geometry between plugin and driver, and re-run §14.7's measurement exercise until the two agree.</li>
+      <li><strong>Give Forge full autonomy.</strong> Bring the Nav2 stack from Lectures 9-10 onto your own robot: SLAM a map of your room, run AMCL against it, and send navigation goals. Everything Forge publishes is already the right message type.</li>
+      <li><strong>Enter a student robotics competition.</strong> A hard external deadline is one of the fastest ways to keep improving, and Forge is a legitimate starting platform.</li>
+      <li><strong>Contribute back.</strong> You relied on <code>ros_arduino_bridge</code>, the LSLiDAR driver, <code>ros2_v4l2_camera</code>, <code>onshape-to-robot</code>, Nav2 and Gazebo across these fourteen lectures — every one of them open source, and every one of them improved by exactly the kind of hands-on grounding you now have. You found real inconsistencies in published material during this build arc. Report them.</li>
+    </ul>
+    <p style="margin-top:24px;">
+      <strong>🎉 You designed, built, wired, programmed, debugged, drove and simulated your own ROS 2 robot. That's
+      the whole course.</strong>
+    </p>
+  </section>
+
+  <div class="footer-nav">
+    <a href="13-diy-robot-ros2-driver-urdf-lidar-camera.html">&larr; Lecture 13: Build Your Own Robot II</a>
+    <a href="index.html">Table of Contents &nbsp;·&nbsp; Course Complete 🎉</a>
+  </div>
+
+</div>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      background: '#f1efe8', primaryColor: '#eef0ff', primaryTextColor: '#211f1a',
+      primaryBorderColor: '#3d4bf5', lineColor: '#0e9e6e', secondaryColor: '#f1efe8',
+      tertiaryColor: '#fffefb', textColor: '#211f1a', fontFamily: 'Inter, -apple-system, sans-serif'
+    },
+    flowchart: { curve: 'basis' },
+    securityLevel: 'loose'
+  });
+</script>
+<script>
+(function(){
+  var btn = document.getElementById('theme-toggle');
+  var icon = document.getElementById('theme-toggle-icon');
+  function updateIcon(){
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    icon.textContent = isDark ? '☀️' : '🌙';
+  }
+  updateIcon();
+  btn.addEventListener('click', function(){
+    var cur = document.documentElement.getAttribute('data-theme');
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try{ localStorage.setItem('limo-book-theme', next); }catch(e){}
+    updateIcon();
+  });
+})();
+</script>
+<script>
+(function(){
+  var lb = document.getElementById('lightbox');
+  var lbImg = lb.querySelector('img');
+  var lbCap = lb.querySelector('.lb-cap');
+  document.querySelectorAll('.figure img').forEach(function(img){
+    img.addEventListener('click', function(){
+      lbImg.src = img.currentSrc || img.src;
+      lbImg.alt = img.alt || '';
+      var cap = img.parentElement.querySelector('figcaption');
+      lbCap.textContent = cap ? cap.textContent : (img.alt || '');
+      lb.classList.add('on');
+    });
+  });
+  function close(){ lb.classList.remove('on'); lbImg.src = ''; }
+  lb.addEventListener('click', close);
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') close(); });
+})();
+</script>
+<script src="annotate.js" defer></script>
+</body>
+</html>

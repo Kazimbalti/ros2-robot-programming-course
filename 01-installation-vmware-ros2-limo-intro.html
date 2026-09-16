@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<script>
+(function(){
+  try{
+    var t = localStorage.getItem('limo-book-theme');
+    if(!t){ t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+    document.documentElement.setAttribute('data-theme', t);
+  }catch(e){}
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 1 — Getting Started: VMware, Ubuntu 22.04 &amp; ROS 2 Humble</title>
+<meta name="description" content="Install VMware, Ubuntu 22.04 LTS, and ROS 2 Humble from scratch, build a LIMO ROS 2 workspace with colcon, then launch and drive the AgileX LIMO in Gazebo for the first time.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<style>
+  :root{
+    --bg:#f6f4ef; --panel:#fffefb; --panel2:#f1efe8; --border:#e6e1d6;
+    --text:#211f1a; --muted:#7a7568; --accent:#3d4bf5; --accent-ink:#2732b8;
+    --accent2:#0e9e6e; --gold:#c8862c; --danger:#d64a3c; --purple:#8b5cf6; --radius:14px;
+  }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--bg); color:var(--text); font-family:'Inter', -apple-system, sans-serif; line-height:1.85; font-size:17.5px; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:880px; margin:0 auto; padding:48px 24px 120px;}
+  .cover{border-radius:28px; background:#12142b; padding:64px 44px; margin-bottom:56px; position:relative; overflow:hidden; isolation:isolate;}
+  .cover::before{content:""; position:absolute; inset:-40%; background:
+      radial-gradient(38% 45% at 15% 20%, rgba(61,75,245,0.55), transparent 70%),
+      radial-gradient(35% 40% at 85% 15%, rgba(139,92,246,0.45), transparent 70%),
+      radial-gradient(45% 50% at 60% 90%, rgba(14,158,110,0.35), transparent 70%);
+    filter:blur(60px); z-index:0;}
+  .cover::after{content:""; position:absolute; inset:0; background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px); background-size: 20px 20px; z-index:0;}
+  .cover > *{position:relative; z-index:1;}
+  .kicker{display:inline-block; color:#c9cdff; font-weight:600; letter-spacing:.4px; font-size:13px; margin-bottom:18px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); padding:6px 14px; border-radius:999px;}
+  .cover h1{font-size:2.7em; margin:0 0 12px; font-weight:800; line-height:1.3; color:#ffffff; letter-spacing:-.5px;}
+  .cover .subtitle{color:#aeb2d6; font-size:1.2em; margin-bottom:30px; font-weight:400;}
+  .meta-row{display:flex; flex-wrap:wrap; gap:10px; margin-top:18px;}
+  .chip{background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.14); color:#d4d7f0; padding:7px 15px; border-radius:999px; font-size:.83em;}
+  h2{font-size:1.9em; font-weight:800; margin:72px 0 22px; display:flex; align-items:center; gap:14px; letter-spacing:-.3px;}
+  h2 .num{display:inline-flex; align-items:center; justify-content:center; min-width:40px; height:40px; padding:0 12px; border-radius:12px; background:var(--accent); box-shadow:0 6px 16px -4px rgba(61,75,245,0.5); color:#ffffff; font-size:.62em; font-weight:800; flex-shrink:0; white-space:nowrap;}
+  h3{font-size:1.3em; font-weight:700; margin:36px 0 14px; color:var(--accent-ink); letter-spacing:-.2px;}
+  h4{font-size:1.08em; font-weight:700; margin:24px 0 10px; color:var(--purple);}
+  p{margin:0 0 16px; color:#3c382f;}
+  strong{color:var(--text); font-weight:700;}
+  a{color:var(--accent);}
+  .box{border-radius:16px; padding:20px 24px; margin:22px 0; border:1px solid var(--border); background:var(--panel); position:relative; box-shadow:0 1px 2px rgba(33,31,26,0.03);}
+  .box-title{font-weight:800; margin-bottom:9px; display:flex; align-items:center; gap:8px; font-size:.96em; letter-spacing:.1px;}
+  .box p:last-child{margin-bottom:0;}
+  .box.idea{background:#eef0ff;border-color:#d6dafc;} .box.idea .box-title{color:var(--accent-ink);}
+  .box.mistake{background:#fdeeec; border-color:#f6d2cd;} .box.mistake .box-title{color:var(--danger);}
+  .box.eng{background:#f4effe; border-color:#e2d6fb;} .box.eng .box-title{color:var(--purple);}
+  .box.real{background:#eafaf3; border-color:#c9eeda;} .box.real .box-title{color:var(--accent2);}
+  .box.def{background:#fdf3e4; border-color:#f2ddb3;} .box.def .box-title{color:var(--gold);}
+  .box.hw{background:#fdeee4; border-color:#f2c9a3;} .box.hw .box-title{color:#c8622c;}
+  code, pre{font-family:'JetBrains Mono', monospace; direction:ltr; text-align:left;}
+  code{background:#eceaf9; border:1px solid #dcdaf3; border-radius:6px; padding:2px 7px; font-size:.87em; color:var(--accent-ink); display:inline-block;}
+  pre{background:#181a2e; border-radius:16px; padding:18px 20px; overflow-x:auto; margin:18px 0; font-size:.88em; line-height:1.65; box-shadow:0 12px 28px -16px rgba(24,26,46,0.5);}
+  pre code{background:none; border:none; padding:0; color:#d8dcff; display:block;}
+  table{width:100%; border-collapse:separate; border-spacing:0; margin:22px 0; font-size:.92em; border-radius:14px; overflow:hidden; border:1px solid var(--border);}
+  th, td{border-bottom:1px solid var(--border); padding:12px 15px; text-align:left;}
+  th{background:#eceaf9; color:var(--accent-ink); font-weight:700; font-size:.9em;}
+  tr:last-child td{border-bottom:none;}
+  tr:nth-child(even) td{background:rgba(33,31,26,0.02);}
+  ul, ol{margin:0 0 16px; padding-inline-start:26px; color:#3c382f;}
+  li{margin-bottom:7px;}
+  .figure{margin:28px 0; text-align:center;}
+  .figure img, .figure svg{max-width:100%; height:auto; background:#fffefb; border:1px solid var(--border); border-radius:16px; box-shadow:0 1px 2px rgba(33,31,26,0.03), 0 16px 32px -20px rgba(33,31,26,0.14);}
+  .figure figcaption{color:var(--muted); font-size:.87em; margin-top:12px;}
+  .mermaid{background:#fffefb; border:1px solid var(--border); border-radius:16px; padding:18px; margin:24px 0; text-align:center; box-shadow:0 1px 2px rgba(33,31,26,0.03), 0 16px 32px -20px rgba(33,31,26,0.14);}
+  .checkpoint{border-radius:16px; padding:22px 24px; margin:26px 0; background:#eafaf3; border:1px solid #c9eeda;}
+  .checkpoint ul{list-style:none; padding:0; margin:0;}
+  .checkpoint li{padding:9px 0; border-bottom:1px solid rgba(33,31,26,0.06); display:flex; gap:10px; align-items:flex-start;}
+  .checkpoint li:last-child{border-bottom:none;}
+  .checkpoint li::before{content:"◻"; color:var(--accent2); font-size:1.2em; line-height:1;}
+  .exercise{border-radius:14px; padding:18px 22px; margin:16px 0; background:var(--panel); border:1px solid var(--border); border-inline-start:4px solid var(--gold);}
+  .exercise .level{font-size:.76em; color:var(--gold); font-weight:800; text-transform:uppercase; letter-spacing:.6px;}
+  .glossary dt{font-weight:800; color:var(--accent-ink); margin-top:16px;}
+  .glossary dd{margin:4px 0 0; color:var(--muted);}
+  .toc{background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:26px 30px;}
+  .toc a{display:block; padding:8px 0; color:#3c382f; text-decoration:none; border-bottom:1px solid rgba(33,31,26,.06); transition:color .15s;}
+  .toc a:last-child{border-bottom:none;}
+  .toc a:hover{color:var(--accent-ink);}
+  .toc a span{color:var(--muted); font-size:.85em; margin-inline-end:10px; font-weight:600;}
+  .divider{height:1px; background:linear-gradient(90deg, transparent, var(--border), transparent); margin:52px 0;}
+  .footer-nav{display:flex; justify-content:space-between; align-items:center; gap:16px; margin-top:64px; padding-top:26px; border-top:1px solid var(--border); color:var(--muted); font-size:.9em;}
+  .footer-nav a{color:var(--text); text-decoration:none; font-weight:600;}
+  .footer-nav a:hover{color:var(--accent-ink);}
+  .badge-project{display:inline-block; background:#fdf3e4; border:1px solid #f2ddb3; color:var(--gold); border-radius:8px; padding:3px 11px; font-size:.78em; font-weight:700;}
+  .term{background:#181a2e; border-radius:16px; overflow:hidden; margin:22px 0; box-shadow:0 12px 28px -16px rgba(24,26,46,0.5);}
+  .term-bar{display:flex; align-items:center; gap:7px; padding:12px 16px; background:#20223a;}
+  .term-dot{width:11px; height:11px; border-radius:50%;}
+  .term-body{padding:16px 20px; font-family:'JetBrains Mono', monospace; direction:ltr; text-align:left; font-size:.87em; line-height:1.75; color:#d8dcff; white-space:pre-wrap;}
+  .term-prompt{color:#7ee7c7;}
+  .term-out{color:#9aa0c8;}
+  @media print{ body{background:#fff; color:#000;} }
+  html[data-theme="dark"]{
+    --bg:#12141c; --panel:#1b1e2a; --panel2:#20232f; --border:#2d3142;
+    --text:#e7e8f2; --muted:#9498b3; --accent:#7c86ff; --accent-ink:#aab1ff;
+    --accent2:#34d399; --gold:#e3a548; --danger:#f0685a; --purple:#a78bfa; --radius:14px;
+  }
+  html[data-theme="dark"] p, html[data-theme="dark"] ul, html[data-theme="dark"] ol, html[data-theme="dark"] .toc a{color:#c7c9dc;}
+  html[data-theme="dark"] code{background:#262a45; border-color:#3a3f5c;}
+  html[data-theme="dark"] th{background:#262a45;}
+  html[data-theme="dark"] tr:nth-child(even) td{background:rgba(255,255,255,0.03);}
+  html[data-theme="dark"] .box.idea{background:#1f2242; border-color:#383d6b;}
+  html[data-theme="dark"] .box.mistake{background:#3a2220; border-color:#5c332e;}
+  html[data-theme="dark"] .box.eng{background:#2a2340; border-color:#453a63;}
+  html[data-theme="dark"] .box.real{background:#16302a; border-color:#1f4a3d;}
+  html[data-theme="dark"] .box.def{background:#3a2f18; border-color:#5c4826;}
+  html[data-theme="dark"] .box.hw{background:#3a2618; border-color:#5c3f26;}
+  html[data-theme="dark"] .checkpoint{background:#16302a; border-color:#1f4a3d;}
+  html[data-theme="dark"] .checkpoint li{border-bottom-color:rgba(255,255,255,0.08);}
+  html[data-theme="dark"] .badge-project{background:#3a2f18; border-color:#5c4826;}
+  html[data-theme="dark"] .chapter-num{background:#1f2242;}
+  html[data-theme="dark"] .chapter-card{box-shadow:0 1px 2px rgba(0,0,0,0.25);}
+  html[data-theme="dark"] .chapter-card:hover{border-color:#454a7a; box-shadow:0 16px 32px -20px rgba(0,0,0,0.55);}
+  body, .box, .chapter-card, .exercise, .checkpoint, .toc, table, code, th{transition:background-color .25s ease, border-color .25s ease, color .25s ease;}
+  #theme-toggle{position:fixed; top:18px; left:18px; z-index:999; width:46px; height:46px; border-radius:50%; border:1px solid var(--border); background:var(--panel); color:var(--text); font-size:19px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px -8px rgba(0,0,0,0.35); transition:transform .15s ease, background-color .25s ease, border-color .25s ease;}
+  #theme-toggle:hover{transform:scale(1.08);}
+  @media (max-width:640px){ #theme-toggle{top:12px; left:12px; width:42px; height:42px; font-size:17px;} }
+</style>
+<link rel="stylesheet" href="projector.css">
+</head>
+<body>
+<style>
+.coursenav{position:sticky;top:0;z-index:900;background:rgba(255,254,251,0.88);backdrop-filter:saturate(160%) blur(10px);border-bottom:1px solid var(--border);}
+.coursenav .inner{max-width:1000px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;padding:10px 20px 10px 74px;}
+.coursenav .brand{font-weight:800;color:var(--accent-ink);margin-inline-end:12px;font-size:.9em;letter-spacing:-.2px;}
+.coursenav a{color:#3c382f;text-decoration:none;font-weight:600;font-size:.82em;padding:6px 10px;border-radius:999px;transition:background-color .15s,color .15s;}
+.coursenav a:hover{background:#eef0ff;color:var(--accent-ink);}
+.coursenav a.active{background:var(--accent);color:#fff;}
+html[data-theme="dark"] .coursenav{background:rgba(27,30,42,0.9);}
+html[data-theme="dark"] .coursenav a{color:#c7c9dc;}
+html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
+@media print{.coursenav{display:none;}}
+</style>
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html">Home</a>
+  <a href="syllabus.html">Syllabus</a>
+  <a href="schedule.html">Schedule</a>
+  <a href="assignments.html">Assignments</a>
+  <a href="index.html#lectures" class="active">Lectures</a>
+</div></nav>
+<button id="theme-toggle" aria-label="Toggle light/dark mode" title="Light/dark mode">
+  <span id="theme-toggle-icon">🌙</span>
+</button>
+<div class="wrap">
+
+  <div class="cover">
+    <div class="kicker">LIMO Robotics &amp; ROS 2 Lecture &nbsp;·&nbsp; Session 1 of 14</div>
+    <h1>Lecture 1: Getting Started — VMware, Ubuntu 22.04 &amp; ROS 2 Humble</h1>
+    <div class="subtitle">Installing your Linux robotics workstation from zero, then meeting the AgileX LIMO.</div>
+    <div class="meta-row">
+      <div class="chip">Duration: 3 hours</div>
+      <div class="chip">Prerequisite: None — start here</div>
+      <div class="chip">You'll leave with: a working ROS 2 Humble desktop + LIMO simulator</div>
+    </div>
+  </div>
+
+  <div class="toc">
+    <strong style="color:var(--text)">In this session</strong>
+    <a href="#sec0"><span>1.0</span>The big picture: how it all connects</a>
+    <a href="#sec1"><span>1.1</span>Why a virtual machine?</a>
+    <a href="#sec2"><span>1.2</span>Installing VMware Workstation Pro / Fusion Pro</a>
+    <a href="#sec3"><span>1.3</span>Creating the virtual machine</a>
+    <a href="#sec4"><span>1.4</span>Installing Ubuntu 22.04 LTS and VMware Tools</a>
+    <a href="#sec5"><span>1.5</span>Installing ROS 2 Humble</a>
+    <a href="#sec6"><span>1.6</span>Verifying the install</a>
+    <a href="#sec7"><span>1.7</span>Programming tools</a>
+    <a href="#sec8"><span>1.8</span>Setting up the LIMO workspace</a>
+    <a href="#sec9"><span>1.9</span>Meet the LIMO</a>
+    <a href="#sec10"><span>1.10</span>First smoke test: LIMO in Gazebo</a>
+    <a href="#sec11"><span>1.11</span>Summary, checkpoint &amp; glossary</a>
+  </div>
+
+  <section id="sec0">
+    <h2><span class="num">1.0</span>The Big Picture: How It All Connects</h2>
+    <p>
+      Before you install anything, it helps to have a mental model of <strong>how everything inside a robot is
+      connected with one another</strong> — which pieces you're about to install today, and how they relate to the
+      hardware pieces you'll meet in later lectures. The whole stack is easier to hold in your head as a single
+      running analogy: <strong>a parcel-delivery company</strong>.
+    </p>
+
+    <div class="box idea">
+      <div class="box-title">🧠 The Analogy in One Line</div>
+      <p>
+        A robot's software stack is a delivery company. The <strong>city and its roads</strong> are the operating
+        system everything drives on. The <strong>company rulebook</strong> for how drivers hand off parcels and talk
+        to each other is ROS 2. The <strong>language</strong> the dispatchers write instructions in is C++ (or
+        Python), typed into a <strong>text editor</strong>, VS Code. The <strong>vehicles</strong> that carry the
+        parcels are the compute boards, and the <strong>walkie-talkie</strong> they use to stay in sync is the
+        hardware interface.
+      </p>
+    </div>
+
+    <h3>Layer 1 — The operating system: the city itself</h3>
+    <p>
+      Every delivery happens somewhere: on roads, between neighborhoods, past intersections. That "somewhere" is the
+      <strong>operating system</strong> — the ground every other piece runs on. In this course the OS is
+      <strong>Ubuntu 22.04 LTS</strong>. It manages the disk, memory, networking, and processes so that everything
+      above it can just assume those things work. Sections 1.1–1.4 are entirely about getting this layer in place
+      inside a virtual machine.
+    </p>
+
+    <h3>Layer 2 — ROS 2: the company rulebook</h3>
+    <p>
+      A delivery company with no shared procedure is chaos — drivers can't hand parcels to each other and nobody
+      knows who is carrying what. <strong>ROS 2</strong> is that shared procedure: the guideline that tells
+      independent programs how to pass data ("packages") around and how to talk to one another, without each one
+      needing to know the others' internal details. It's the middleware layer, and Section 1.5 installs it.
+    </p>
+
+    <div class="figure">
+      <img src="images/analogy_1_os_ros2.png" alt="Delivery-company analogy: Ubuntu is the operating system (the city and roads), ROS 2 is the guideline telling delivery drivers how to pass packages and talk to each other">
+      <figcaption>Figure 1.1 — The OS (Ubuntu) is the city everything drives on; ROS 2 is the rulebook that lets the drivers hand off packages and talk to each other.</figcaption>
+    </div>
+
+    <h3>Layer 3 — Language and editor: how instructions get written</h3>
+    <p>
+      Someone has to actually write the delivery instructions. The <strong>language</strong> they're written in is
+      <strong>C++</strong> (this course also uses Python), and the <strong>text editor</strong> they're typed into is
+      <strong>VS Code</strong>. The rulebook (ROS 2) defines <em>how</em> messages move; the language is <em>what</em>
+      you use to spell out the behavior. Section 1.7 installs these tools.
+    </p>
+
+    <div class="figure">
+      <img src="images/analogy_2_language.png" alt="Delivery-company analogy extended: C++ is the language the team uses to give instructions, and VS Code is the editor for writing those instructions">
+      <figcaption>Figure 1.2 — C++ is the language instructions are written in; VS Code is where you write them.</figcaption>
+    </div>
+
+    <h3>Layer 4 — The hardware: vehicles that carry the load</h3>
+    <p>
+      The instructions still need vehicles to run on. In the analogy, a <strong>delivery van</strong> is a
+      <strong>Raspberry Pi 4</strong> — the capable main onboard computer that does the heavy lifting — and a
+      <strong>delivery bike</strong> is an <strong>ESP-32</strong>, a small microcontroller sitting right next to the
+      motors and sensors doing fast, simple work. You won't touch these today; they're the focus of the hardware
+      lectures later in the course.
+    </p>
+
+    <div class="figure">
+      <img src="images/analogy_3_hardware.png" alt="Delivery-company analogy extended: the delivery van is a Raspberry Pi 4 and the delivery bike is an ESP-32 as hardware components">
+      <figcaption>Figure 1.3 — The hardware components: the van is a Raspberry Pi 4, the bike is an ESP-32.</figcaption>
+    </div>
+
+    <h3>Layer 5 — The hardware interface: the walkie-talkie</h3>
+    <p>
+      The van and the bike constantly need to chat and share updates — where each one is, what it's carrying, what
+      changed. The <strong>walkie-talkie</strong> that lets them do that is the <strong>hardware interface</strong>:
+      the physical link (USB, serial, CAN) plus the driver layer that carries messages between the big computer and
+      the little microcontroller so the rest of the stack sees them as one system.
+    </p>
+
+    <div class="figure">
+      <img src="images/analogy_4_interface.png" alt="Delivery-company analogy complete: a walkie-talkie represents the hardware interface that lets the van and bike chat and share updates">
+      <figcaption>Figure 1.4 — The hardware interface is the walkie-talkie: how the van and bike chat and share updates.</figcaption>
+    </div>
+
+    <div class="box def">
+      <div class="box-title">📖 The Whole Stack at a Glance</div>
+      <table>
+        <tr><th>Delivery-company piece</th><th>Robot stack piece</th><th>In this course</th></tr>
+        <tr><td>The city, roads, neighborhoods</td><td>Operating system</td><td>Ubuntu 22.04 LTS — Sections 1.1–1.4</td></tr>
+        <tr><td>The company rulebook for handing off parcels</td><td>Communication middleware</td><td>ROS 2 Humble — Section 1.5</td></tr>
+        <tr><td>The language instructions are written in</td><td>Programming language</td><td>C++ / Python — Section 1.7</td></tr>
+        <tr><td>The editor instructions are typed into</td><td>Code editor / IDE</td><td>VS Code — Section 1.7</td></tr>
+        <tr><td>Delivery van</td><td>Main onboard computer</td><td>Raspberry Pi 4 — hardware lectures</td></tr>
+        <tr><td>Delivery bike</td><td>Microcontroller near motors/sensors</td><td>ESP-32 — hardware lectures</td></tr>
+        <tr><td>Walkie-talkie between van and bike</td><td>Hardware interface (link + driver)</td><td>USB / serial / CAN — hardware lectures</td></tr>
+      </table>
+    </div>
+
+    <p>
+      Everything from Section 1.1 onward builds the top of this stack — the OS, ROS 2, and the language tools — on a
+      virtual machine, so you have a place to learn it safely before any of it touches a real Raspberry Pi, ESP-32,
+      or LIMO.
+    </p>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="sec1">
+    <h2><span class="num">1.1</span>Why a Virtual Machine?</h2>
+    <p>
+      Every lecture in this course runs on Ubuntu 22.04 LTS with ROS 2 Humble. Most of you are not sitting in front
+      of a Linux machine right now — you're on Windows, macOS, or a Linux laptop that's already configured for
+      something else entirely. Before we touch a single ROS 2 command, we need a place to safely learn Linux without
+      risking the computer you're reading this on. That place is a <strong>virtual machine (VM)</strong>.
+    </p>
+    <p>
+      A VM is a complete, isolated computer that runs as a program inside your real computer. It has its own virtual
+      hard disk, its own virtual network card, its own virtual CPU allocation — and critically, its own operating
+      system, completely separate from your host OS. If you delete a file you shouldn't have, misconfigure the
+      network, or run <code>sudo rm -rf</code> on the wrong path (it happens), the damage is contained entirely
+      inside the VM. Your host machine — your email, your photos, your other work — is untouched.
+    </p>
+
+    <div class="box idea">
+      <div class="box-title">🧠 Why This Matters for a Beginner Specifically</div>
+      <p>
+        The single biggest advantage of a VM for this course is the <strong>snapshot</strong>. Before you install
+        ROS 2, or before you try something risky in a later lecture, you can take a snapshot — a saved freeze-frame
+        of the entire VM's disk and memory state. If anything goes wrong, you revert to the snapshot in under a
+        minute and you're back to a known-good machine. No reinstalling Ubuntu from scratch, no lost afternoon.
+        This turns "I'm afraid to break something" into "let's just try it and see."
+      </p>
+    </div>
+
+    <p>A VM also solves three practical problems at once for a classroom of mixed hardware:</p>
+    <table>
+      <tr><th>Problem</th><th>How the VM solves it</th></tr>
+      <tr><td>Everyone has different hardware/OS</td><td>The VM is identical Ubuntu 22.04 for every learner, regardless of whether the host is Windows, macOS, or Linux</td></tr>
+      <tr><td>Fear of breaking the host machine</td><td>The VM is fully isolated; worst case, you delete it and create a new one</td></tr>
+      <tr><td>Mistakes are part of learning Linux</td><td>Snapshots let you roll back instantly instead of treating every command as high-stakes</td></tr>
+    </table>
+
+    <h3>What about dual-boot or WSL2?</h3>
+    <p>
+      You may have heard of two alternatives, and it's worth knowing why this course doesn't use them:
+    </p>
+    <ul>
+      <li>
+        <strong>Dual-boot</strong> (installing Ubuntu alongside Windows on real partitions) gives you native
+        performance, which matters for demanding 3D simulation — but it also means repartitioning your real disk,
+        picking the wrong partition during setup can destroy your Windows installation, and there is no easy
+        snapshot/rollback. It's a fine choice once you're confident with Linux, not on day one.
+      </li>
+      <li>
+        <strong>WSL2</strong> (Windows Subsystem for Linux) runs a real Linux kernel inside Windows and is excellent
+        for command-line ROS 2 work, but graphical 3D tools like Gazebo and RViz2 need extra configuration
+        (WSLg / an X server) to display reliably, and behavior varies noticeably between Windows builds and GPU
+        drivers — exactly the kind of inconsistency an instructor cannot debug for fifteen different laptops at once.
+      </li>
+    </ul>
+    <p>
+      This course standardizes on <strong>VMware</strong> specifically because it behaves identically across
+      Windows, macOS, and Linux hosts. Whatever laptop you brought, the instructions in every future lecture —
+      screenshots, keyboard shortcuts, file paths — will match exactly what's on your screen.
+    </p>
+
+    <div class="mermaid">
+flowchart TD
+    A["Your host laptop<br/>Windows / macOS / Linux"] --> B{"How to run Ubuntu?"}
+    B -->|"Repartition real disk"| C["Dual-boot<br/>fast, but risky and no rollback"]
+    B -->|"Linux kernel inside Windows"| D["WSL2<br/>great for CLI, fiddly for 3D graphics"]
+    B -->|"Isolated virtual computer"| E["VMware VM<br/>identical for everyone, snapshot-safe"]
+    E --> F["This course's path"]
+    style E fill:#eef0ff,stroke:#3d4bf5,color:#211f1a
+    style F fill:#eafaf3,stroke:#0e9e6e,color:#211f1a,font-weight:bold
+    </div>
+
+    <div class="box real">
+      <div class="box-title">🌍 In Industry</div>
+      <p>
+        This isn't just a teaching crutch — professional robotics teams routinely develop inside VMs or containers
+        for exactly the same reasons: reproducibility across engineers' machines, and the ability to snapshot a
+        known-working environment before an update that might break things. The habits you build this session are
+        the same ones used on real robotics teams.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="sec2">
+    <h2><span class="num">1.2</span>Installing VMware Workstation Pro / Fusion Pro</h2>
+    <p>
+      VMware's desktop hypervisor is free for personal use. Which product you install depends on
+      your host operating system:
+    </p>
+    <table>
+      <tr><th>Host OS</th><th>Product to install</th></tr>
+      <tr><td>Windows</td><td>VMware Workstation Pro (free for personal use)</td></tr>
+      <tr><td>Linux</td><td>VMware Workstation Pro (free for personal use)</td></tr>
+      <tr><td>macOS</td><td>VMware Fusion Pro (free for personal use)</td></tr>
+    </table>
+
+    <ol>
+      <li>Go to the <a href="https://www.vmware.com/products/desktop-hypervisor/workstation-and-fusion" target="_blank" rel="noopener">official VMware website</a> and navigate to the Workstation Player (Windows/Linux) or Fusion (macOS) download page or go to here <a href="https://drive.google.com/file/d/1zb3xL23KDlW-i1gQw6HHYkfTDKej2f8-/view?usp=drive_link" target="_blank" rel="noopener">VMware Workstation Pro</a>.</li>
+      <li>Download the installer for your host operating system.</li>
+      <li>Run the installer and accept all the default options — you do not need to change any settings for this course.</li>
+      <li>If prompted about a license key, choose the free/personal-use path rather than entering a commercial key.</li>
+      <li>Restart your host machine if the installer asks you to.</li>
+    </ol>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ If the Installer Warns About Hyper-V or WSL</div>
+      <p>
+        On some Windows machines, especially ones that previously had WSL2 or Hyper-V enabled, VMware may warn that
+        it cannot run alongside those features, or the VM may boot extremely slowly. If this happens, open
+        <strong>Turn Windows features on or off</strong> and disable <em>Hyper-V</em>, <em>Virtual Machine
+        Platform</em>, and <em>Windows Subsystem for Linux</em>, then restart. VMware and Hyper-V-based
+        virtualization generally cannot both claim the CPU's virtualization extensions at the same time.
+      </p>
+    </div>
+
+    <p>
+      Once installed, open VMware Workstation Pro or Fusion Pro once just to confirm it launches. You should see an
+      empty library with a "Create a New Virtual Machine" option don't click it yet, we'll do that carefully in
+      the next section.
+    </p>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="sec3">
+    <h2><span class="num">1.3</span>Creating the Virtual Machine</h2>
+    <p>
+      Now we build the empty computer that Ubuntu will live inside. Open VMware and click
+      <strong>Create a New Virtual Machine</strong>. This launches the New Virtual Machine Wizard.
+    </p>
+
+    <ol>
+      <li>
+        <strong>Installer disc image:</strong> choose <strong>"I will install the operating system later"</strong>.
+        We haven't downloaded the Ubuntu ISO yet, and doing this step separately gives us more control over the
+        install process.
+      </li>
+      <li>
+        <strong>Guest operating system:</strong> select <strong>Linux</strong>, and for the version choose
+        <strong>Ubuntu 64-bit</strong> (on some VMware versions this appears as "Ubuntu" under a Linux kernel
+        version list — pick the closest modern Ubuntu 64-bit entry).
+      </li>
+      <li>
+        <strong>Name the virtual machine:</strong> something memorable, e.g. <code>LIMO-ROS2-Ubuntu</code>, and note
+        where it will be stored on disk.
+      </li>
+      <li>
+        <strong>Disk capacity:</strong> allocate at least <strong>60 GB</strong>. Choose
+        <strong>"Store virtual disk as a single file"</strong> rather than splitting it into multiple files — a
+        single file performs noticeably better for the disk-heavy workloads we'll run (colcon builds, Gazebo asset
+        loading, apt upgrades).
+      </li>
+      <li>
+        Click <strong>Customize Hardware</strong> before finishing, and raise the defaults — VMware's out-of-the-box
+        suggestion (often 1 core / 2 GB RAM) is not enough for ROS 2 and Gazebo.
+      </li>
+    </ol>
+
+    <table>
+      <tr><th>Resource</th><th>VMware default</th><th>Recommended minimum for this course</th></tr>
+      <tr><td>CPU cores</td><td>1</td><td>4 or more (leave 1–2 cores free for the host)</td></tr>
+      <tr><td>RAM</td><td>~2 GB</td><td>8 GB or more</td></tr>
+      <tr><td>Disk</td><td>20 GB</td><td>60 GB or more, single file</td></tr>
+      <tr><td>Display / 3D acceleration</td><td>Off</td><td>Enable "Accelerate 3D graphics" if offered</td></tr>
+    </table>
+
+    <div class="box hw">
+      <div class="box-title">🔩 If the VM Refuses to Power On</div>
+      <p>
+        If VMware shows an error like <em>"This host supports Intel VT-x, but Intel VT-x is disabled"</em>, the VM
+        cannot start because your host machine's CPU virtualization extensions (<strong>Intel VT-x</strong> on Intel
+        CPUs, <strong>AMD-V</strong> on AMD CPUs) are turned off in the BIOS/UEFI. To fix it:
+      </p>
+      <ol>
+        <li>Restart your host computer and enter the BIOS/UEFI setup (commonly by pressing <code>F2</code>, <code>Del</code>, <code>Esc</code>, or <code>F10</code> during boot — the exact key depends on your laptop manufacturer).</li>
+        <li>Find the setting named <em>Intel Virtualization Technology</em>, <em>VT-x</em>, <em>AMD-V</em>, or <em>SVM Mode</em> — usually under a CPU or Advanced/Security menu.</li>
+        <li>Enable it, save changes, and reboot.</li>
+        <li>Power on the VM again.</li>
+      </ol>
+      <p>This is the single most common reason a brand-new VM fails to start, especially on corporate or newly-purchased laptops where virtualization ships disabled by default.</p>
+    </div>
+
+    <div class="exercise">
+      <div class="level">Easy Exercise</div>
+      <p>
+        Create the VM as described above, but do not power it on yet. Open the VM's settings afterward and confirm:
+        it has at least 4 CPU cores, at least 8 GB of RAM, and a single-file virtual disk of at least 60 GB. Write
+        down the exact numbers you chose — you'll want them if you ever need to explain your setup to an instructor.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="sec4">
+    <h2><span class="num">1.4</span>Installing Ubuntu 22.04 LTS Inside the VM</h2>
+    <p>
+      With the empty VM created, we now need an operating system to put inside it. This course uses
+      <strong>Ubuntu 22.04 LTS ("Jammy Jellyfish")</strong> specifically, because it's the officially supported
+      platform for ROS 2 Humble. A newer Ubuntu version will not work correctly with Humble's binary packages —
+      don't be tempted to grab the latest Ubuntu release.
+    </p>
+
+    <h3>Step 1 — Download the ISO</h3>
+    <ol>
+      <li>On your host machine's browser, go to <strong>ubuntu.com/download/desktop</strong>.</li> or download from here <a href="https://drive.google.com/file/d/1CKV0ScWRPglf0b3SXX_Si_faGvNHm_aN/view?usp=sharing" target="_blank" rel="noopener">Ubuntu 22.04 LTS ISO</a>.</li>
+      <li>Find <strong>Ubuntu 22.04.x LTS</strong> in the list of releases (it may be labeled "Jammy Jellyfish") and download the desktop ISO image. It's roughly 4–5 GB, so this can take a while depending on your connection.</li>
+    </ol>
+
+    <h3>Step 2 — Mount the ISO in the VM</h3>
+    <ol>
+      <li>In VMware, open your new VM's settings (do not power it on yet).</li>
+      <li>Select the <strong>CD/DVD</strong> device.</li>
+      <li>Choose <strong>"Use ISO image file"</strong> and browse to the Ubuntu ISO you just downloaded.</li>
+      <li>Make sure <strong>"Connect at power on"</strong> is checked.</li>
+      <li>Power on the VM. It should boot from the virtual disc into the Ubuntu installer.</li>
+    </ol>
+
+    <h3>Step 3 — Run the installer</h3>
+    <ol>
+      <li>Click <strong>Install Ubuntu</strong>.</li>
+      <li>Choose your keyboard layout and click Continue.</li>
+      <li>On the "Updates and other software" screen, select <strong>Normal installation</strong>, and check both
+        <strong>"Download updates while installing Ubuntu"</strong> and
+        <strong>"Install third-party software for graphics and Wi-Fi hardware and additional media formats"</strong>.
+      </li>
+      <li>On the "Installation type" screen, choose <strong>"Erase disk and install Ubuntu"</strong>.</li>
+    </ol>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ "Erase Disk" Is Safe Here — Read This Before You Panic</div>
+      <p>
+        The words "erase disk" are alarming, but remember: this disk is the <em>virtual</em> disk file we created
+        inside VMware in the previous section, not your host machine's real hard drive. Nothing on your Windows,
+        macOS, or host Linux install is touched. If you're ever unsure whether you're inside the VM, look for the
+        VMware window border and the VM's own taskbar/desktop — that's your visual confirmation.
+      </p>
+    </div>
+
+    <ol start="5">
+      <li>Continue, set your timezone, and create your account: a full name, a computer name, a username, and a password. <strong>Remember this password</strong> — you'll type it constantly with <code>sudo</code> throughout this course.</li>
+      <li>Let the installer run. This typically takes 10–20 minutes inside a VM.</li>
+      <li>When prompted, click <strong>Restart Now</strong>.</li>
+      <li>During reboot, Ubuntu will ask you to remove the installation medium. In VMware, go back to the VM's CD/DVD settings and disconnect/uncheck the ISO, then press Enter to continue the reboot.</li>
+    </ol>
+
+    <p>You should land on the Ubuntu desktop and log in with the password you set.</p>
+
+    <h3>Step 4 — Install VMware Tools (open-vm-tools)</h3>
+    <p>
+      Right now the VM's display is small, the mouse may feel sluggish crossing the window edge, and copy-paste
+      between your host and the VM doesn't work. All of this is fixed by installing the guest tools. Open a
+      terminal inside the Ubuntu VM (<code>Ctrl+Alt+T</code>) and run:
+    </p>
+
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dot" style="background:#ff5f57;"></div>
+        <div class="term-dot" style="background:#febc2e;"></div>
+        <div class="term-dot" style="background:#28c840;"></div>
+      </div>
+      <div class="term-body">
+<span class="term-prompt">you@ubuntu-vm:~$</span> sudo apt update
+<span class="term-out">Hit:1 http://archive.ubuntu.com/ubuntu jammy InRelease
+Reading package lists... Done</span>
+<span class="term-prompt">you@ubuntu-vm:~$</span> sudo apt install open-vm-tools open-vm-tools-desktop -y
+<span class="term-out">Reading package lists... Done
+Building dependency tree... Done
+The following NEW packages will be installed:
+  open-vm-tools open-vm-tools-desktop ...
+Setting up open-vm-tools-desktop (2:12.x.x-1) ...
+Processing triggers for man-db ...</span>
+<span class="term-prompt">you@ubuntu-vm:~$</span> sudo reboot</span>
+      </div>
+    </div>
+
+    <div class="box eng">
+      <div class="box-title">🔧 Why This Step Isn't Optional</div>
+      <p>
+        <code>open-vm-tools</code> and <code>open-vm-tools-desktop</code> give the VM proper video drivers, shared
+        clipboard, drag-and-drop, automatic display resizing, and — most importantly for this course —
+        significantly better 3D graphics passthrough. Gazebo and RViz2 render live 3D scenes constantly; without
+        VMware Tools installed, they can drop to a slideshow of a couple of frames per second, even on a powerful
+        host machine. If a later lecture's simulation feels unusably slow, this is almost always the first thing
+        to check.
+      </p>
+    </div>
+
+    <p>After the reboot, try resizing the VMware window — the Ubuntu desktop resolution should now follow it automatically, and copying text between host and guest should work in both directions.</p>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="sec5">
+    <h2><span class="num">1.5</span>Installing ROS 2 Humble</h2>
+    <p>
+      With Ubuntu 22.04 running smoothly, we can now install ROS 2 Humble Hawksbill — the middleware that every
+      remaining lecture in this course builds on. We'll follow the official, currently documented Debian package
+      install path. Open a terminal and work through each step in order; don't skip ahead, since later steps depend
+      on earlier ones succeeding.
+    </p>
+
+    <h3>Step 1 — Set the locale to UTF-8</h3>
+    <p>ROS 2's command-line tools assume a UTF-8 locale. Most fresh Ubuntu installs already have this, but we set it explicitly to be safe:</p>
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dot" style="background:#ff5f57;"></div>
+        <div class="term-dot" style="background:#febc2e;"></div>
+        <div class="term-dot" style="background:#28c840;"></div>
+      </div>
+      <div class="term-body">
+<span class="term-prompt">you@ubuntu-vm:~$</span> locale  # check current locale
+<span class="term-prompt">you@ubuntu-vm:~$</span> sudo apt update && sudo apt install locales -y
+<span class="term-prompt">you@ubuntu-vm:~$</span> sudo locale-gen en_US en_US.UTF-8
+<span class="term-prompt">you@ubuntu-vm:~$</span> sudo update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+<span class="term-prompt">you@ubuntu-vm:~$</span> export LANG=en_US.UTF-8
+<span class="term-prompt">you@ubuntu-vm:~$</span> locale  # verify: everything should now say UTF-8
+<span class="term-out">LANG=en_US.UTF-8
+LC_CTYPE="en_US.UTF-8"
+LC_ALL=en_US.UTF-8</span>
+      </div>
+    </div>
+
+    <h3>Step 2 — Enable the Universe repository</h3>
+    <p>ROS 2's dependencies live partly in Ubuntu's Universe repository, which isn't always enabled by default:</p>
+    <pre><code>sudo apt install software-properties-common -y
+sudo add-apt-repository universe</code></pre>
+
+    <h3>Step 3 — Add the ROS 2 apt repository and GPG key</h3>
+    <p>
+      ROS 2 packages aren't in Ubuntu's default repositories, so we add ROS's own apt source. The current
+      recommended method installs a small <code>.deb</code> package (from the <code>ros2/ros2-apt-source</code>
+      releases on GitHub) that registers the correct repository and signing key for your exact Ubuntu codename
+      automatically:
+    </p>
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dot" style="background:#ff5f57;"></div>
+        <div class="term-dot" style="background:#febc2e;"></div>
+        <div class="term-dot" style="background:#28c840;"></div>
+      </div>
+      <div class="term-body">
+<span class="term-prompt">you@ubuntu-vm:~$</span> sudo apt update && sudo apt install curl -y
+<span class="term-prompt">you@ubuntu-vm:~$</span> export ROS_APT_SOURCE_VERSION=$(curl -s https://api.github.com/repos/ros2/ros2-apt-source/releases/latest | grep -F "tag_name" | awk -F\" '{print $4}')
+<span class="term-prompt">you@ubuntu-vm:~$</span> curl -L -o /tmp/ros2-apt-source.deb "https://github.com/ros2/ros2-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.$(. /etc/os-release && echo $VERSION_CODENAME)_all.deb"
+<span class="term-prompt">you@ubuntu-vm:~$</span> sudo apt install /tmp/ros2-apt-source.deb
+<span class="term-out">Selecting previously unselected package ros2-apt-source.
+Setting up ros2-apt-source (1.x.x-1) ...</span>
+      </div>
+    </div>
+
+    <div class="box def">
+      <div class="box-title">📖 What Just Happened?</div>
+      <p>
+        That <code>.deb</code> file didn't install any robotics software itself — it only dropped an entry into
+        <code>/etc/apt/sources.list.d/</code> pointing at ROS 2's package server, plus the GPG signing key apt uses
+        to verify those packages haven't been tampered with. This is the same mechanism Ubuntu itself uses for
+        third-party software like Docker or VS Code: register a trusted source once, then <code>apt install</code>
+        works normally afterward.
+      </p>
+    </div>
+
+    <h3>Step 4 — Install ROS 2 Humble</h3>
+    <pre><code>sudo apt update
+sudo apt upgrade -y
+sudo apt install ros-humble-desktop -y
+sudo apt install ros-dev-tools -y</code></pre>
+    <p>
+      This will download a substantial amount of software (well over a gigabyte) — RViz2, demo nodes, simulation
+      bridges, rqt tools, and the full client libraries. Expect this step to take 15–30 minutes depending on your
+      connection and the VM's allocated resources.
+    </p>
+
+    <table>
+      <tr><th>Package</th><th>Contains</th><th>When to use it</th></tr>
+      <tr><td><code>ros-humble-desktop</code></td><td>Core ROS 2, RViz2, demos, rqt, common simulation tooling</td><td>Development machines, this course, anywhere with a display</td></tr>
+      <tr><td><code>ros-base</code> <em>(<code>ros-humble-ros-base</code>)</em></td><td>Core ROS 2 client libraries and CLI tools only — no GUI tools</td><td>Headless robots, embedded computers, production deployments</td></tr>
+      <tr><td><code>ros-dev-tools</code></td><td><code>colcon</code>, <code>rosdep</code>, testing and linting utilities</td><td>Anywhere you build ROS 2 packages from source, like this course</td></tr>
+    </table>
+
+    <p>
+      We install the full <code>desktop</code> variant because this course leans heavily on visual tools — Gazebo
+      simulation, RViz2 visualization, rqt graphs. A real LIMO robot's onboard computer, by contrast, often runs the
+      slimmer headless <code>base</code> variant, since it has no monitor attached and every megabyte of RAM matters.
+    </p>
+
+    <p>
+      While we're installing packages, grab two more you'll need starting in Lecture 4 to move LIMO's joints by
+      hand in RViz2 and inspect its URDF — <code>joint-state-publisher</code> and its GUI slider companion:
+    </p>
+    <pre><code>sudo apt update
+sudo apt install ros-humble-joint-state-publisher ros-humble-joint-state-publisher-gui -y</code></pre>
+
+    <h3>Step 5 — Source ROS 2 automatically in every new terminal</h3>
+    <p>
+      ROS 2's commands aren't on your <code>PATH</code> until you "source" its setup script. Doing this by hand in
+      every terminal gets old fast, so we append it to your shell's startup file, <code>~/.bashrc</code>, so it runs
+      automatically:
+    </p>
+    <pre><code>echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
+source ~/.bashrc</code></pre>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ Don't Just Run <code>source</code> Once</div>
+      <p>
+        Running <code>source /opt/ros/humble/setup.bash</code> by itself only affects the <em>current</em> terminal
+        window. Close it, open a new one, and ROS 2 commands vanish again ("command not found: ros2"). The
+        <code>echo ... >> ~/.bashrc</code> line above is what makes it permanent — it writes that source command
+        into the file bash reads every time a new terminal starts.
+      </p>
+    </div>
+
+    <div class="exercise">
+      <div class="level">Intermediate Exercise</div>
+      <p>
+        Open a brand-new terminal window (not one left over from earlier) and run <code>tail -n 3 ~/.bashrc</code>.
+        Confirm you can see the <code>source /opt/ros/humble/setup.bash</code> line at the bottom. Then run
+        <code>which ros2</code> and note the file path it prints.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="sec6">
+    <h2><span class="num">1.6</span>Verifying the Install</h2>
+    <p>
+      Before we build anything of our own, let's prove ROS 2 itself actually works end-to-end using two of its
+      built-in demo nodes: a C++ <strong>talker</strong> that publishes a counting message, and a Python
+      <strong>listener</strong> that receives it. If two independent processes, written in two different languages,
+      can find each other and exchange messages with zero configuration, the install is healthy.
+    </p>
+
+    <p>Open <strong>two</strong> separate terminal windows.</p>
+
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dot" style="background:#ff5f57;"></div>
+        <div class="term-dot" style="background:#febc2e;"></div>
+        <div class="term-dot" style="background:#28c840;"></div>
+      </div>
+      <div class="term-body">
+<span class="term-out">--- Terminal 1 ---</span>
+<span class="term-prompt">you@ubuntu-vm:~$</span> ros2 run demo_nodes_cpp talker
+<span class="term-out">[INFO] [1755000000.123456] [talker]: Publishing: 'Hello World: 1'
+[INFO] [1755000001.123456] [talker]: Publishing: 'Hello World: 2'
+[INFO] [1755000002.123456] [talker]: Publishing: 'Hello World: 3'</span>
+      </div>
+    </div>
+
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dot" style="background:#ff5f57;"></div>
+        <div class="term-dot" style="background:#febc2e;"></div>
+        <div class="term-dot" style="background:#28c840;"></div>
+      </div>
+      <div class="term-body">
+<span class="term-out">--- Terminal 2 ---</span>
+<span class="term-prompt">you@ubuntu-vm:~$</span> ros2 run demo_nodes_py listener
+<span class="term-out">[INFO] [1755000001.130001] [listener]: I heard: [Hello World: 2]
+[INFO] [1755000002.130001] [listener]: I heard: [Hello World: 3]</span>
+      </div>
+    </div>
+
+    <p>
+      If Terminal 2 is printing "I heard" for each message Terminal 1 publishes, ROS 2's discovery and messaging
+      layer is working correctly — the two nodes found each other automatically over the network layer with no IP
+      addresses or ports configured by hand. Press <code>Ctrl+C</code> in both terminals to stop them.
+    </p>
+
+    <div class="box real">
+      <div class="box-title">🌍 Two More Sanity Checks</div>
+      <p>Two additional one-line commands are worth keeping in your back pocket for the rest of this course:</p>
+      <pre><code>printenv ROS_DISTRO
+# should print: humble
+
+ros2 doctor
+# runs a battery of environment checks and reports warnings/errors</code></pre>
+      <p>
+        <code>ros2 doctor</code> is especially useful weeks from now if something that used to work suddenly
+        doesn't — run it first before deep-diving into a mystery bug.
+      </p>
+    </div>
+
+    <div class="mermaid">
+flowchart LR
+    T["Terminal 1<br/>ros2 run demo_nodes_cpp talker"] -- "DDS discovery + /chatter topic" --> L["Terminal 2<br/>ros2 run demo_nodes_py listener"]
+    T -.->|"ros2 doctor / ROS_DISTUR check"| S["Healthy ROS 2 install confirmed"]
+    L -.-> S
+    style S fill:#eafaf3,stroke:#0e9e6e,color:#211f1a,font-weight:bold
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="sec7">
+    <h2><span class="num">1.7</span>Programming Tools</h2>
+    <p>
+      Before setting up the workspace, let's install the terminal, Python tooling, and code editor you'll use for
+      the rest of this course.
+    </p>
+
+    <h3>Terminal — Terminator</h3>
+    <p>
+      Terminator lets you split a single window into multiple panes — handy for running a <code>talker</code> and
+      <code>listener</code>, a launch file, and <code>ros2 topic echo</code> side by side without juggling separate
+      windows.
+    </p>
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dot" style="background:#ff5f57;"></div>
+        <div class="term-dot" style="background:#febc2e;"></div>
+        <div class="term-dot" style="background:#28c840;"></div>
+      </div>
+      <div class="term-body">
+<span class="term-prompt">you@ubuntu-vm:~$</span> sudo apt install terminator
+      </div>
+    </div>
+
+    <h3>Python Package Manager — pip</h3>
+    <p>
+      Several tools and exercises in this course install Python packages with <code>pip</code>, so let's get it in
+      place now.
+    </p>
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dot" style="background:#ff5f57;"></div>
+        <div class="term-dot" style="background:#febc2e;"></div>
+        <div class="term-dot" style="background:#28c840;"></div>
+      </div>
+      <div class="term-body">
+<span class="term-prompt">you@ubuntu-vm:~$</span> sudo apt install python3-pip
+      </div>
+    </div>
+
+    <h3>IDE — Visual Studio Code</h3>
+    <p>Install VS Code via its official snap package:</p>
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dot" style="background:#ff5f57;"></div>
+        <div class="term-dot" style="background:#febc2e;"></div>
+        <div class="term-dot" style="background:#28c840;"></div>
+      </div>
+      <div class="term-body">
+<span class="term-prompt">you@ubuntu-vm:~$</span> sudo snap install --classic code
+      </div>
+    </div>
+    <p>
+      Then open VS Code, go to the Extensions panel (<code>Ctrl+Shift+X</code>), and install these three extensions:
+    </p>
+    <ul>
+      <li><strong>C/C++</strong> (Microsoft) — IntelliSense, debugging, and code navigation for ROS 2's C++ nodes</li>
+      <li><strong>CMake</strong> — syntax highlighting and build support for <code>CMakeLists.txt</code>, which every ROS 2 C++ package uses</li>
+      <li><strong>Python</strong> (Microsoft) — IntelliSense, linting, and debugging for ROS 2's Python nodes</li>
+    </ul>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="sec8">
+    <h2><span class="num">1.8</span>Setting Up the LIMO Workspace</h2>
+    <p>
+      ROS 2 itself is installed system-wide under <code>/opt/ros/humble</code>, but the code we write and build for
+      this course — including LIMO's own packages — lives in a separate <strong>workspace</strong> we control. Let's
+      set that up now, along with the tools that build and manage it.
+    </p>
+
+    <h3>Step 1 — Install colcon and rosdep</h3>
+    <pre><code>sudo apt install python3-colcon-common-extensions python3-rosdep -y
+sudo rosdep init
+rosdep update</code></pre>
+    <p>
+      <code>colcon</code> is the build tool that compiles every ROS 2 package in a workspace. <code>rosdep</code>
+      is a dependency resolver — it reads each package's declared dependencies and installs the matching system
+      packages (drivers, libraries, other ROS packages) automatically instead of you hunting them down one by one.
+    </p>
+
+    <h3>Step 2 — Create the workspace and clone the course code</h3>
+    <pre><code>mkdir -p ~/limo_ws/src
+cd ~/limo_ws/src
+git clone &lt;course-workspace-url-from-your-instructor&gt; .</code></pre>
+    <p>
+      Your instructor will provide the exact repository URL for this course's LIMO packages (simulation models,
+      description files, teleop configs, and the lecture exercise packages you'll extend in later sessions). Clone
+      it directly into <code>~/limo_ws/src</code>.
+    </p>
+
+    <h3>Step 3 — Install the workspace's dependencies</h3>
+    <pre><code>cd ~/limo_ws
+rosdep install --from-paths src --ignore-src -r -y</code></pre>
+    <p>
+      This one command reads every package in <code>src/</code> and installs whatever it needs system-wide —
+      typically including <code>gazebo_ros</code>, <code>gazebo_plugins</code>, <code>xacro</code>,
+      <code>rviz2</code>, <code>joint-state-publisher</code>, <code>joint-state-publisher-gui</code>, and
+      <code>teleop-twist-keyboard</code> for a LIMO workspace. Depending on what's already installed, this can take
+      anywhere from a few seconds to several minutes.
+    </p>
+
+    <h3>Step 4 — Build the workspace</h3>
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dot" style="background:#ff5f57;"></div>
+        <div class="term-dot" style="background:#febc2e;"></div>
+        <div class="term-dot" style="background:#28c840;"></div>
+      </div>
+      <div class="term-body">
+<span class="term-prompt">you@ubuntu-vm:~/limo_ws$</span> colcon build --symlink-install
+<span class="term-out">Starting >>> limo_description
+Starting >>> limo_gazebosim
+Starting >>> limo_bringup
+Finished &lt;&lt;&lt; limo_description [4.1s]
+Finished &lt;&lt;&lt; limo_gazebosim [6.7s]
+Finished &lt;&lt;&lt; limo_bringup [3.2s]
+
+Summary: 3 packages finished [7.8s]</span>
+<span class="term-prompt">you@ubuntu-vm:~/limo_ws$</span> source install/setup.bash</span>
+      </div>
+    </div>
+    <p>
+      The <code>--symlink-install</code> flag is worth using by habit: instead of copying every file into
+      <code>install/</code>, it links back to your <code>src/</code> files where possible, so editing a Python
+      script or a launch file often takes effect immediately without a full rebuild.
+    </p>
+
+    <h3>Step 5 — Source the workspace automatically too</h3>
+    <p>
+      Just like with <code>/opt/ros/humble/setup.bash</code>, we want <code>~/limo_ws</code> sourced in every new
+      terminal — but guarded, so it doesn't error out on a machine where the workspace hasn't been built yet:
+    </p>
+    <pre><code>echo 'if [ -f ~/limo_ws/install/setup.bash ]; then source ~/limo_ws/install/setup.bash; fi' >> ~/.bashrc
+source ~/.bashrc</code></pre>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ Order Matters in ~/.bashrc</div>
+      <p>
+        Your workspace's source line must come <em>after</em> the <code>/opt/ros/humble/setup.bash</code> line you
+        added in Section 1.5. ROS 2's package overlay system expects the base install to be sourced first, then your
+        workspace layered on top of it. If you run <code>tail -n 5 ~/.bashrc</code> and the order looks reversed,
+        edit the file (e.g. <code>nano ~/.bashrc</code>) and fix it by hand.
+      </p>
+    </div>
+
+    <div class="exercise">
+      <div class="level">Easy Exercise</div>
+      <p>
+        Run <code>colcon build --symlink-install</code> a second time from <code>~/limo_ws</code> with nothing
+        changed. Notice it finishes much faster than the first build. Then run <code>ros2 pkg list | grep limo</code>
+        and confirm your cloned LIMO packages appear in the list.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="sec9">
+    <h2><span class="num">1.9</span>Meet the LIMO</h2>
+    <p>
+      With the software side working, let's finally talk about the hardware this entire course revolves around: the
+      <strong>AgileX LIMO</strong>.
+    </p>
+
+    <div class="box def">
+      <div class="box-title">📖 The "Four-in-One" Robot</div>
+      <p>
+        LIMO's defining feature is that it isn't locked into one drivetrain. The same chassis and electronics
+        accept four interchangeable drive modules, swapped by unbolting one motion base and bolting on another.
+        Each later lecture in this course explores one of these in depth:
+      </p>
+    </div>
+
+    <table>
+      <tr><th>Drive mode</th><th>How it moves</th><th>Typical use case</th></tr>
+      <tr><td>Differential</td><td>Two independently driven wheels, skid-steers like a typical mobile robot</td><td>Indoor navigation, the default mode used in this lecture's smoke test</td></tr>
+      <tr><td>Ackermann</td><td>Car-like front-wheel steering with rear drive</td><td>Simulating road-vehicle behavior, outdoor/vehicle-style navigation</td></tr>
+      <tr><td>Mecanum</td><td>Four Mecanum wheels, can strafe sideways and rotate in place</td><td>Tight warehouse-style maneuvering</td></tr>
+      <tr><td>Tracked</td><td>Rubber tracks instead of wheels</td><td>Rough or uneven terrain, higher traction</td></tr>
+    </table>
+
+    <p>Regardless of which drive module is attached, every LIMO carries the same core sensor and compute suite:</p>
+    <ul>
+      <li>A <strong>2D LiDAR</strong> for obstacle detection and mapping</li>
+      <li>An <strong>RGB-D depth camera</strong> for vision and 3D perception</li>
+      <li>An <strong>IMU</strong> (inertial measurement unit) for orientation and acceleration</li>
+      <li>Wheel encoders feeding an embedded motion controller, which reports the robot's health and mode over ROS 2</li>
+    </ul>
+
+    <p>
+      That embedded controller publishes its status as a <code>limo_msgs/LimoStatus</code> message — this is your
+      first look at a custom ROS 2 message type, something we'll build our own versions of in a later lecture:
+    </p>
+    <pre><code>std_msgs/Header header
+uint8 vehicle_state
+uint8 control_mode
+float32 battery_voltage
+uint8 error_code
+uint8 motion_mode</code></pre>
+    <table>
+      <tr><th>Field</th><th>Meaning</th></tr>
+      <tr><td><code>header</code></td><td>Standard ROS 2 timestamp and frame metadata</td></tr>
+      <tr><td><code>vehicle_state</code></td><td>Whether the robot is currently enabled/movable</td></tr>
+      <tr><td><code>control_mode</code></td><td>Whether commands are coming from remote control, ROS, or the app</td></tr>
+      <tr><td><code>battery_voltage</code></td><td>Live pack voltage — the number to watch so you never deep-discharge the battery</td></tr>
+      <tr><td><code>error_code</code></td><td>Non-zero when the onboard controller has flagged a fault</td></tr>
+      <tr><td><code>motion_mode</code></td><td>Which of the four drive modules is currently active</td></tr>
+    </table>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ Safety Basics — Read Before You Touch a Real LIMO</div>
+      <p>These apply once you're working with the physical robot in a hands-on session, not the simulator:</p>
+      <ul>
+        <li>Always know where the physical <strong>E-stop / power switch</strong> is before powering LIMO on, and keep a hand near it during first tests.</li>
+        <li>Don't let the battery deep-discharge — watch <code>battery_voltage</code> and recharge well before it bottoms out; lithium packs degrade badly if run flat repeatedly.</li>
+        <li>Run first tests on a clear floor or a table with real clearance on all sides, never near an edge the robot could drive off.</li>
+        <li>Keep cables, straps, and loose clothing clear of the wheels — a spinning drive module will happily wind up anything it catches.</li>
+        <li>Just like every other lecture in this course: prove behavior in Gazebo simulation first, and only move to the real robot once the simulated version does what you expect.</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="sec10">
+    <h2><span class="num">1.10</span>First Smoke Test: LIMO in Gazebo</h2>
+    <p>
+      Let's finish this session by seeing LIMO move — in simulation, using the differential-drive model. You don't
+      need to understand every piece of this yet; Lecture 2 walks through ROS 2's architecture and this exact
+      launch file in full detail. For now, this is just proof that everything you installed today actually works
+      together.
+    </p>
+
+    <h3>Step 1 — Launch the simulator</h3>
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dot" style="background:#ff5f57;"></div>
+        <div class="term-dot" style="background:#febc2e;"></div>
+        <div class="term-dot" style="background:#28c840;"></div>
+      </div>
+      <div class="term-body">
+<span class="term-prompt">you@ubuntu-vm:~$</span> ros2 launch limo_gazebosim limo_gazebo_diff.launch.py
+<span class="term-out">[INFO] [launch]: All log files can be found below /home/you/.ros/log/...
+[INFO] [gzserver-1]: process started with pid [4821]
+[INFO] [gzclient-2]: process started with pid [4823]
+[INFO] [robot_state_publisher-3]: process started with pid [4825]
+[gzserver-1] [Msg] Loading world file [/opt/.../limo_diff.world]
+[gzclient-2] [Msg] Connected to gazebo master</span>
+      </div>
+    </div>
+    <p>
+      Gazebo should open a window showing an empty world with the LIMO model — a small four-wheeled robot with a
+      LiDAR puck and camera mounted up front — sitting in the middle. Leave this terminal running.
+    </p>
+
+    <h3>Step 2 — Confirm it's alive from a second terminal</h3>
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dot" style="background:#ff5f57;"></div>
+        <div class="term-dot" style="background:#febc2e;"></div>
+        <div class="term-dot" style="background:#28c840;"></div>
+      </div>
+      <div class="term-body">
+<span class="term-prompt">you@ubuntu-vm:~$</span> ros2 node list
+<span class="term-out">/gazebo
+/robot_state_publisher
+/limo_status_publisher</span>
+<span class="term-prompt">you@ubuntu-vm:~$</span> ros2 topic list
+<span class="term-out">/cmd_vel
+/odom
+/scan
+/imu
+/camera/color/image_raw
+/limo_status
+/tf</span>
+      </div>
+    </div>
+    <p>
+      Seeing <code>/cmd_vel</code> (velocity commands in), <code>/odom</code> (odometry out), and
+      <code>/scan</code> (LiDAR data) confirms the simulated robot is fully wired into ROS 2, just like a physical
+      LIMO would be.
+    </p>
+
+    <h3>Step 3 — Drive it (a preview of Lecture 2)</h3>
+    <pre><code>ros2 run teleop_twist_keyboard teleop_twist_keyboard</code></pre>
+    <p>
+      This opens an interactive keyboard controller in the terminal — the on-screen legend maps keys like
+      <code>i</code>, <code>,</code>, <code>j</code>, <code>l</code> to forward, backward, and turning. Try driving
+      LIMO a small circle in the Gazebo window and watch it respond. Press <code>k</code> to stop, then
+      <code>Ctrl+C</code> to exit the teleop node, and <code>Ctrl+C</code> in the launch terminal to close Gazebo.
+    </p>
+
+    <div class="mermaid">
+flowchart LR
+    A["ros2 launch limo_gazebosim<br/>limo_gazebo_diff.launch.py"] --> B["Gazebo opens with<br/>the LIMO model loaded"]
+    B --> C["ros2 node list / ros2 topic list<br/>confirms it's alive on the ROS 2 graph"]
+    C --> D["ros2 run teleop_twist_keyboard<br/>teleop_twist_keyboard"]
+    D --> E["LIMO drives in simulation"]
+    E --> F["Lecture 2: what all of this<br/>actually means, explained properly"]
+    style E fill:#eafaf3,stroke:#0e9e6e,color:#211f1a
+    style F fill:#eef0ff,stroke:#3d4bf5,color:#211f1a,font-weight:bold
+    </div>
+
+    <div class="exercise">
+      <div class="level">Harder Exercise</div>
+      <p>
+        With Gazebo and teleop both running, open a third terminal (or a third Terminator pane) and run
+        <code>ros2 topic echo /odom</code> while you drive LIMO forward a short distance with the keyboard. Watch
+        the position values change in the message stream, then stop and note roughly how far the position field
+        moved for a few seconds of "forward" key presses.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="sec11">
+    <h2><span class="num">1.11</span>Summary, Checkpoint &amp; Glossary</h2>
+    <p>
+      In one session, you went from a bare host laptop to a fully working Linux robotics workstation: a VMware
+      virtual machine running Ubuntu 22.04 LTS, ROS 2 Humble installed and sourced automatically, a colcon-built
+      LIMO workspace, and — as proof it all works — a simulated LIMO you drove around in Gazebo. Every lecture from
+      here on assumes this exact environment is ready to go.
+    </p>
+
+    <div class="checkpoint">
+      <strong style="color:var(--text); display:block; margin-bottom:10px;">✅ Learning Checkpoint</strong>
+      <ul>
+        <li>I can create and configure a VM (CPU, RAM, disk, and virtualization enabled in BIOS/UEFI).</li>
+        <li>I have Ubuntu 22.04 installed, updated, and running with open-vm-tools for smooth graphics.</li>
+        <li>I have ROS 2 Humble installed and it is sourced automatically in every new terminal.</li>
+        <li>I can build a ROS 2 workspace with colcon and source its overlay.</li>
+        <li>I launched LIMO in Gazebo and drove it with the keyboard teleop node.</li>
+      </ul>
+    </div>
+
+    <h3>Connection to the course</h3>
+    <p>
+      Everything downstream depends on this environment being solid. Lecture 2 opens by explaining exactly what
+      you just launched — nodes, topics, and the ROS 2 computation graph — using the very <code>talker</code>/
+      <code>listener</code> pair and LIMO Gazebo session from this lecture as its running examples. If any step in
+      this session felt shaky, it's worth repeating before moving on; a wobbly foundation here makes every later
+      lecture harder to debug.
+    </p>
+
+    <h3>Glossary</h3>
+    <dl class="glossary">
+      <dt>Hypervisor</dt><dd>Software that creates and runs virtual machines by sharing a host's CPU, RAM, and disk into isolated virtual computers. VMware Workstation Pro/Fusion Pro is a hypervisor.</dd>
+      <dt>ISO</dt><dd>A single file that's a byte-for-byte image of an installation disc — used here to boot the Ubuntu installer inside the VM's virtual CD/DVD drive.</dd>
+      <dt>VM (Virtual Machine)</dt><dd>An isolated, software-defined computer running inside your real machine, with its own OS, disk, and network interface.</dd>
+      <dt>Ubuntu LTS</dt><dd>A "Long Term Support" Ubuntu release, supported with updates for five years — the stability target that ROS 2 distros are built and tested against.</dd>
+      <dt>apt</dt><dd>Ubuntu/Debian's package manager, used to install, update, and remove software from the command line via <code>apt install</code>, <code>apt update</code>, and <code>apt upgrade</code>.</dd>
+      <dt>ROS 2 distro</dt><dd>A named, versioned release of ROS 2 (e.g. Humble Hawksbill) tied to specific supported Ubuntu versions and a support timeline.</dd>
+      <dt>Workspace</dt><dd>A folder (like <code>~/limo_ws</code>) containing a <code>src/</code> directory of ROS 2 packages plus the <code>build/</code>, <code>install/</code>, and <code>log/</code> folders colcon generates.</dd>
+      <dt>colcon</dt><dd>The standard ROS 2 build tool that compiles every package in a workspace's <code>src/</code> folder.</dd>
+      <dt>rosdep</dt><dd>A dependency-resolution tool that reads each package's declared dependencies and installs the matching system packages automatically.</dd>
+      <dt>Sourcing</dt><dd>Running a setup script (e.g. <code>source /opt/ros/humble/setup.bash</code>) so the current shell knows where ROS 2 commands and packages live; must happen in every new terminal unless added to <code>~/.bashrc</code>.</dd>
+    </dl>
+
+    <h3>Common Mistakes</h3>
+    <ul>
+      <li>Forgetting to enable Intel VT-x / AMD-V virtualization in the host BIOS/UEFI, so the VM refuses to power on.</li>
+      <li>Installing the wrong Ubuntu version (not 22.04 LTS / Jammy) and finding ROS 2 Humble packages don't install cleanly.</li>
+      <li>Forgetting to source <code>setup.bash</code> in a new terminal, then being confused why <code>ros2</code> commands "stopped working" — always check with <code>echo $ROS_DISTRO</code> first.</li>
+      <li>Skipping the UTF-8 locale setup, which can produce garbled or broken output from ROS 2's CLI tools.</li>
+      <li>Allocating too small a virtual disk (under 60 GB), then running out of space partway through a <code>ros-humble-desktop</code> install or a colcon build.</li>
+      <li>Skipping <code>open-vm-tools</code>, then wondering why Gazebo crawls along at two or three frames per second.</li>
+    </ul>
+  </section>
+
+  <div class="footer-nav">
+    <a href="index.html">&larr; Table of Contents</a>
+    <a href="02-ros2-architecture-first-simulation.html">Lecture 2: ROS 2 Architecture &rarr;</a>
+  </div>
+
+</div>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      background: '#f1efe8', primaryColor: '#eef0ff', primaryTextColor: '#211f1a',
+      primaryBorderColor: '#3d4bf5', lineColor: '#0e9e6e', secondaryColor: '#f1efe8',
+      tertiaryColor: '#fffefb', textColor: '#211f1a', fontFamily: 'Inter, -apple-system, sans-serif'
+    },
+    flowchart: { curve: 'basis' },
+    securityLevel: 'loose'
+  });
+</script>
+<script>
+(function(){
+  var btn = document.getElementById('theme-toggle');
+  var icon = document.getElementById('theme-toggle-icon');
+  function updateIcon(){
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    icon.textContent = isDark ? '☀️' : '🌙';
+  }
+  updateIcon();
+  btn.addEventListener('click', function(){
+    var cur = document.documentElement.getAttribute('data-theme');
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try{ localStorage.setItem('limo-book-theme', next); }catch(e){}
+    updateIcon();
+  });
+})();
+</script>
+<script src="annotate.js" defer></script>
+</body>
+</html>

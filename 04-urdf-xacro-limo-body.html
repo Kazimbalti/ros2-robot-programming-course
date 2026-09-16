@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<script>
+(function(){
+  try{
+    var t = localStorage.getItem('limo-book-theme');
+    if(!t){ t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+    document.documentElement.setAttribute('data-theme', t);
+  }catch(e){}
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 4 — LIMO's Body: URDF &amp; Xacro</title>
+<meta name="description" content="How the AgileX LIMO's URDF description is built from reusable Xacro macros — links, joints, the wheel/sensor macros, the Ackermann steering hinge, and the four drive-mode variants.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<style>
+  :root{
+    --bg:#f6f4ef; --panel:#fffefb; --panel2:#f1efe8; --border:#e6e1d6;
+    --text:#211f1a; --muted:#7a7568; --accent:#3d4bf5; --accent-ink:#2732b8;
+    --accent2:#0e9e6e; --gold:#c8862c; --danger:#d64a3c; --purple:#8b5cf6; --radius:14px;
+  }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--bg); color:var(--text); font-family:'Inter', -apple-system, sans-serif; line-height:1.85; font-size:17.5px; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:880px; margin:0 auto; padding:48px 24px 120px;}
+  .cover{border-radius:28px; background:#12142b; padding:64px 44px; margin-bottom:56px; position:relative; overflow:hidden; isolation:isolate;}
+  .cover::before{content:""; position:absolute; inset:-40%; background:
+      radial-gradient(38% 45% at 15% 20%, rgba(61,75,245,0.55), transparent 70%),
+      radial-gradient(35% 40% at 85% 15%, rgba(139,92,246,0.45), transparent 70%),
+      radial-gradient(45% 50% at 60% 90%, rgba(14,158,110,0.35), transparent 70%);
+    filter:blur(60px); z-index:0;}
+  .cover::after{content:""; position:absolute; inset:0; background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px); background-size: 20px 20px; z-index:0;}
+  .cover > *{position:relative; z-index:1;}
+  .kicker{display:inline-block; color:#c9cdff; font-weight:600; letter-spacing:.4px; font-size:13px; margin-bottom:18px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); padding:6px 14px; border-radius:999px;}
+  .cover h1{font-size:2.7em; margin:0 0 12px; font-weight:800; line-height:1.3; color:#ffffff; letter-spacing:-.5px;}
+  .cover .subtitle{color:#aeb2d6; font-size:1.2em; margin-bottom:30px; font-weight:400;}
+  .meta-row{display:flex; flex-wrap:wrap; gap:10px; margin-top:18px;}
+  .chip{background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.14); color:#d4d7f0; padding:7px 15px; border-radius:999px; font-size:.83em;}
+  h2{font-size:1.9em; font-weight:800; margin:72px 0 22px; display:flex; align-items:center; gap:14px; letter-spacing:-.3px;}
+  h2 .num{display:inline-flex; align-items:center; justify-content:center; min-width:40px; height:40px; padding:0 12px; border-radius:12px; background:var(--accent); box-shadow:0 6px 16px -4px rgba(61,75,245,0.5); color:#ffffff; font-size:.62em; font-weight:800; flex-shrink:0; white-space:nowrap;}
+  h3{font-size:1.3em; font-weight:700; margin:36px 0 14px; color:var(--accent-ink); letter-spacing:-.2px;}
+  h4{font-size:1.08em; font-weight:700; margin:24px 0 10px; color:var(--purple);}
+  p{margin:0 0 16px; color:#3c382f;}
+  strong{color:var(--text); font-weight:700;}
+  a{color:var(--accent);}
+  .box{border-radius:16px; padding:20px 24px; margin:22px 0; border:1px solid var(--border); background:var(--panel); position:relative; box-shadow:0 1px 2px rgba(33,31,26,0.03);}
+  .box-title{font-weight:800; margin-bottom:9px; display:flex; align-items:center; gap:8px; font-size:.96em; letter-spacing:.1px;}
+  .box p:last-child{margin-bottom:0;}
+  .box.idea{background:#eef0ff;border-color:#d6dafc;} .box.idea .box-title{color:var(--accent-ink);}
+  .box.mistake{background:#fdeeec; border-color:#f6d2cd;} .box.mistake .box-title{color:var(--danger);}
+  .box.eng{background:#f4effe; border-color:#e2d6fb;} .box.eng .box-title{color:var(--purple);}
+  .box.real{background:#eafaf3; border-color:#c9eeda;} .box.real .box-title{color:var(--accent2);}
+  .box.def{background:#fdf3e4; border-color:#f2ddb3;} .box.def .box-title{color:var(--gold);}
+  .box.hw{background:#fdeee4; border-color:#f2c9a3;} .box.hw .box-title{color:#c8622c;}
+  code, pre{font-family:'JetBrains Mono', monospace; direction:ltr; text-align:left;}
+  code{background:#eceaf9; border:1px solid #dcdaf3; border-radius:6px; padding:2px 7px; font-size:.87em; color:var(--accent-ink); display:inline-block;}
+  pre{background:#181a2e; border-radius:16px; padding:18px 20px; overflow-x:auto; margin:18px 0; font-size:.88em; line-height:1.65; box-shadow:0 12px 28px -16px rgba(24,26,46,0.5);}
+  pre code{background:none; border:none; padding:0; color:#d8dcff; display:block;}
+  table{width:100%; border-collapse:separate; border-spacing:0; margin:22px 0; font-size:.92em; border-radius:14px; overflow:hidden; border:1px solid var(--border);}
+  th, td{border-bottom:1px solid var(--border); padding:12px 15px; text-align:left;}
+  th{background:#eceaf9; color:var(--accent-ink); font-weight:700; font-size:.9em;}
+  tr:last-child td{border-bottom:none;}
+  tr:nth-child(even) td{background:rgba(33,31,26,0.02);}
+  ul, ol{margin:0 0 16px; padding-inline-start:26px; color:#3c382f;}
+  li{margin-bottom:7px;}
+  .figure{margin:28px 0; text-align:center;}
+  .figure img, .figure svg{max-width:100%; height:auto; background:#fffefb; border:1px solid var(--border); border-radius:16px; box-shadow:0 1px 2px rgba(33,31,26,0.03), 0 16px 32px -20px rgba(33,31,26,0.14);}
+  .figure figcaption{color:var(--muted); font-size:.87em; margin-top:12px;}
+  .mermaid{background:#fffefb; border:1px solid var(--border); border-radius:16px; padding:18px; margin:24px 0; text-align:center; box-shadow:0 1px 2px rgba(33,31,26,0.03), 0 16px 32px -20px rgba(33,31,26,0.14);}
+  .checkpoint{border-radius:16px; padding:22px 24px; margin:26px 0; background:#eafaf3; border:1px solid #c9eeda;}
+  .checkpoint ul{list-style:none; padding:0; margin:0;}
+  .checkpoint li{padding:9px 0; border-bottom:1px solid rgba(33,31,26,0.06); display:flex; gap:10px; align-items:flex-start;}
+  .checkpoint li:last-child{border-bottom:none;}
+  .checkpoint li::before{content:"◻"; color:var(--accent2); font-size:1.2em; line-height:1;}
+  .exercise{border-radius:14px; padding:18px 22px; margin:16px 0; background:var(--panel); border:1px solid var(--border); border-inline-start:4px solid var(--gold);}
+  .exercise .level{font-size:.76em; color:var(--gold); font-weight:800; text-transform:uppercase; letter-spacing:.6px;}
+  .glossary dt{font-weight:800; color:var(--accent-ink); margin-top:16px;}
+  .glossary dd{margin:4px 0 0; color:var(--muted);}
+  .toc{background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:26px 30px;}
+  .toc a{display:block; padding:8px 0; color:#3c382f; text-decoration:none; border-bottom:1px solid rgba(33,31,26,.06); transition:color .15s;}
+  .toc a:last-child{border-bottom:none;}
+  .toc a:hover{color:var(--accent-ink);}
+  .toc a span{color:var(--muted); font-size:.85em; margin-inline-end:10px; font-weight:600;}
+  .divider{height:1px; background:linear-gradient(90deg, transparent, var(--border), transparent); margin:52px 0;}
+  .footer-nav{display:flex; justify-content:space-between; align-items:center; gap:16px; margin-top:64px; padding-top:26px; border-top:1px solid var(--border); color:var(--muted); font-size:.9em;}
+  .footer-nav a{color:var(--text); text-decoration:none; font-weight:600;}
+  .footer-nav a:hover{color:var(--accent-ink);}
+  .badge-project{display:inline-block; background:#fdf3e4; border:1px solid #f2ddb3; color:var(--gold); border-radius:8px; padding:3px 11px; font-size:.78em; font-weight:700;}
+  .term{background:#181a2e; border-radius:16px; overflow:hidden; margin:22px 0; box-shadow:0 12px 28px -16px rgba(24,26,46,0.5);}
+  .term-bar{display:flex; align-items:center; gap:7px; padding:12px 16px; background:#20223a;}
+  .term-dot{width:11px; height:11px; border-radius:50%;}
+  .term-body{padding:16px 20px; font-family:'JetBrains Mono', monospace; direction:ltr; text-align:left; font-size:.87em; line-height:1.75; color:#d8dcff; white-space:pre-wrap;}
+  .term-prompt{color:#7ee7c7;}
+  .term-out{color:#9aa0c8;}
+  @media print{ body{background:#fff; color:#000;} }
+  html[data-theme="dark"]{
+    --bg:#12141c; --panel:#1b1e2a; --panel2:#20232f; --border:#2d3142;
+    --text:#e7e8f2; --muted:#9498b3; --accent:#7c86ff; --accent-ink:#aab1ff;
+    --accent2:#34d399; --gold:#e3a548; --danger:#f0685a; --purple:#a78bfa; --radius:14px;
+  }
+  html[data-theme="dark"] p, html[data-theme="dark"] ul, html[data-theme="dark"] ol, html[data-theme="dark"] .toc a{color:#c7c9dc;}
+  html[data-theme="dark"] code{background:#262a45; border-color:#3a3f5c;}
+  html[data-theme="dark"] th{background:#262a45;}
+  html[data-theme="dark"] tr:nth-child(even) td{background:rgba(255,255,255,0.03);}
+  html[data-theme="dark"] .box.idea{background:#1f2242; border-color:#383d6b;}
+  html[data-theme="dark"] .box.mistake{background:#3a2220; border-color:#5c332e;}
+  html[data-theme="dark"] .box.eng{background:#2a2340; border-color:#453a63;}
+  html[data-theme="dark"] .box.real{background:#16302a; border-color:#1f4a3d;}
+  html[data-theme="dark"] .box.def{background:#3a2f18; border-color:#5c4826;}
+  html[data-theme="dark"] .box.hw{background:#3a2618; border-color:#5c3f26;}
+  html[data-theme="dark"] .checkpoint{background:#16302a; border-color:#1f4a3d;}
+  html[data-theme="dark"] .checkpoint li{border-bottom-color:rgba(255,255,255,0.08);}
+  html[data-theme="dark"] .badge-project{background:#3a2f18; border-color:#5c4826;}
+  html[data-theme="dark"] .chapter-num{background:#1f2242;}
+  html[data-theme="dark"] .chapter-card{box-shadow:0 1px 2px rgba(0,0,0,0.25);}
+  html[data-theme="dark"] .chapter-card:hover{border-color:#454a7a; box-shadow:0 16px 32px -20px rgba(0,0,0,0.55);}
+  body, .box, .chapter-card, .exercise, .checkpoint, .toc, table, code, th{transition:background-color .25s ease, border-color .25s ease, color .25s ease;}
+  #theme-toggle{position:fixed; top:18px; left:18px; z-index:999; width:46px; height:46px; border-radius:50%; border:1px solid var(--border); background:var(--panel); color:var(--text); font-size:19px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px -8px rgba(0,0,0,0.35); transition:transform .15s ease, background-color .25s ease, border-color .25s ease;}
+  #theme-toggle:hover{transform:scale(1.08);}
+  @media (max-width:640px){ #theme-toggle{top:12px; left:12px; width:42px; height:42px; font-size:17px;} }
+</style>
+<link rel="stylesheet" href="projector.css">
+</head>
+<body>
+<style>
+.coursenav{position:sticky;top:0;z-index:900;background:rgba(255,254,251,0.88);backdrop-filter:saturate(160%) blur(10px);border-bottom:1px solid var(--border);}
+.coursenav .inner{max-width:1000px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;padding:10px 20px 10px 74px;}
+.coursenav .brand{font-weight:800;color:var(--accent-ink);margin-inline-end:12px;font-size:.9em;letter-spacing:-.2px;}
+.coursenav a{color:#3c382f;text-decoration:none;font-weight:600;font-size:.82em;padding:6px 10px;border-radius:999px;transition:background-color .15s,color .15s;}
+.coursenav a:hover{background:#eef0ff;color:var(--accent-ink);}
+.coursenav a.active{background:var(--accent);color:#fff;}
+html[data-theme="dark"] .coursenav{background:rgba(27,30,42,0.9);}
+html[data-theme="dark"] .coursenav a{color:#c7c9dc;}
+html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
+@media print{.coursenav{display:none;}}
+</style>
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html">Home</a>
+  <a href="syllabus.html">Syllabus</a>
+  <a href="schedule.html">Schedule</a>
+  <a href="assignments.html">Assignments</a>
+  <a href="index.html#lectures" class="active">Lectures</a>
+</div></nav>
+<button id="theme-toggle" aria-label="Toggle light/dark mode" title="Light/dark mode">
+  <span id="theme-toggle-icon">🌙</span>
+</button>
+<div class="wrap">
+
+  <div class="cover">
+    <div class="kicker">LIMO Robotics &amp; ROS 2 Lecture &nbsp;·&nbsp; Session 4 of 14</div>
+    <h1>Lecture 4: LIMO's Body — URDF &amp; Xacro</h1>
+    <div class="subtitle">From four near-identical wheel blocks to one reusable macro — how the real limo_description package builds a robot model.</div>
+    <div class="meta-row">
+      <div class="chip">Duration: 3 hours</div>
+      <div class="chip">Prerequisite: Lecture 3</div>
+      <div class="chip">Package: limo_description</div>
+    </div>
+  </div>
+
+  <div class="toc">
+    <strong style="color:var(--text)">In this session</strong>
+    <a href="#sec1"><span>4.1</span>What URDF describes, and why Xacro exists</a>
+    <a href="#sec2"><span>4.2</span>Links and joints — the fundamentals</a>
+    <a href="#sec3"><span>4.3</span>Anatomy of a link — inside <code>limo_wheel</code></a>
+    <a href="#sec4"><span>4.4</span>The Ackermann steering hinge, joint by joint</a>
+    <a href="#sec5"><span>4.5</span>Sensors as their own tiny links</a>
+    <a href="#sec6"><span>4.6</span>Four drive modes, one set of macros</a>
+    <a href="#sec7"><span>4.7</span>Seeing it move — RViz without Gazebo</a>
+    <a href="#sec8"><span>4.8</span>Summary, checkpoint &amp; glossary</a>
+  </div>
+
+  <section id="sec1">
+    <h2><span class="num">4.1</span>What URDF describes, and why Xacro exists</h2>
+    <p>Every ROS 2 robot that shows up in RViz or Gazebo needs a machine-readable description of its own body: how many rigid parts it has, how big they are, how those parts connect, and where the sensors sit. That description is the <strong>URDF</strong> — the Unified Robot Description Format, an XML dialect built around exactly two element types. A <code>&lt;link&gt;</code> is a rigid body: it has mass and an inertia tensor (<code>&lt;inertial&gt;</code>), a shape or mesh for rendering (<code>&lt;visual&gt;</code>), and a — usually simplified — shape for physics and collision checks (<code>&lt;collision&gt;</code>). A <code>&lt;joint&gt;</code> connects exactly two links, a <code>parent</code> and a <code>child</code>, and declares how the child is allowed to move relative to the parent. Chain enough links and joints together and you get a kinematic tree — which is precisely what LIMO's URDF is.</p>
+    <p>For the AgileX LIMO, that tree starts at <code>base_link</code> (the chassis) and fans out to four wheel links, a laser link, a depth-camera link, and an IMU link. Nothing in that description is wildly different between one wheel and the next — same mass, same inertia, same collision cylinder, same joint type — only the position and the left/right mirroring differ. Writing that out four times in raw XML is tedious and, worse, error-prone: fix a typo in the collision radius for one wheel and you now have three correct wheels and one wrong one.</p>
+    <p><strong>Xacro</strong> (XML macros) solves exactly this. It's a preprocessor that runs over your URDF-flavoured XML before the parser ever sees it, expanding <code>&lt;xacro:property&gt;</code> constants, <code>&lt;xacro:macro&gt;</code> templates, <code>&lt;xacro:if&gt;</code>/<code>&lt;xacro:unless&gt;</code> conditionals, and <code>&lt;xacro:insert_block&gt;</code> parameter blocks into plain, boring, verbose URDF. You write the wheel once as a macro; you call it four times with different arguments. The <code>limo_description</code> package leans on this everywhere — one file, <code>limo_properties.xacro</code>, defines every reusable macro (wheels, steering hinges, sensors), and each drive-mode file just calls them.</p>
+    <div class="box def">
+      <div class="box-title">📘 Definition — URDF vs. Xacro</div>
+      <p><strong>URDF</strong> is the target format: plain XML describing links and joints that <code>robot_state_publisher</code>, RViz, and Gazebo all understand natively. <strong>Xacro</strong> is not a different format — it's URDF plus macro syntax. Running a file through the <code>xacro</code> tool always produces plain URDF as output; the robot never sees a macro, only the expanded result.</p>
+    </div>
+    <div class="figure">
+      <img src="./images/gazebo_limo.jpg" alt="AgileX LIMO robot model">
+      <figcaption>The physical shape this whole chapter's XML is describing: chassis, four wheels, roof-mounted 2D laser, front depth camera.</figcaption>
+    </div>
+    <h3>Package layout</h3>
+    <p>Before diving into any single macro, it's worth knowing where everything lives inside the real <code>limo_description</code> package, since you'll be moving between these files constantly this session:</p>
+    <pre><code>limo_description/
+├── CMakeLists.txt
+├── package.xml
+├── launch/
+│   └── display_models_diff.launch.py
+├── meshes/                    # .dae mesh files referenced by every &lt;mesh filename=.../&gt;
+├── rviz/                      # saved RViz configs for each drive mode
+└── urdf/
+    ├── limo_properties.xacro  # shared macros: wheels, steering hinges, sensors
+    ├── limo_gazebo.xacro      # shared Gazebo plugin wiring
+    ├── limo_diff/
+    │   ├── limo_diff.xacro
+    │   └── limo_diff.gazebo
+    ├── limo_ackerman/
+    │   ├── limo_ackerman.xacro
+    │   └── limo_ackerman.gazebo
+    ├── limo_mecanum/
+    │   ├── limo_mecanum.xacro
+    │   └── limo_mecanum.gazebo
+    └── limo_track/
+        ├── limo_track.xacro
+        └── limo_track.gazebo</code></pre>
+    <p>Notice the pattern repeats at the package level, not just inside the XML: <code>limo_properties.xacro</code> sits once at the top of <code>urdf/</code>, while each drive mode gets its own subfolder holding exactly two files — the robot-description Xacro and its Gazebo counterpart. You'll spend most of this session in <code>limo_properties.xacro</code> and <code>limo_ackerman.xacro</code>, since Ackermann steering is the richest example of joint composition on offer.</p>
+    <p>Every <code>&lt;mesh filename="..."/&gt;</code> element you'll read this session points into the same <code>meshes/</code> folder, resolved through the <code>$(find limo_description)</code> substitution rather than a hard-coded path — so the whole package stays relocatable on disk. The main meshes referenced by the macros in this chapter:</p>
+    <table>
+      <tr><th>Mesh file</th><th>Used by</th></tr>
+      <tr><td><code>limo_wheel_lite.dae</code></td><td><code>limo_wheel</code> when <code>model_lite</code> is true; also both Ackermann steering-hinge macros</td></tr>
+      <tr><td><code>limo_wheel.dae</code></td><td><code>limo_wheel</code> when <code>model_lite</code> is false (full-trim wheel)</td></tr>
+      <tr><td><code>mec_wheel_front_left.dae</code></td><td><code>limo_mecanum_wheel_1</code></td></tr>
+      <tr><td><code>mec_wheel_front_right.dae</code></td><td><code>limo_mecanum_wheel_2</code></td></tr>
+      <tr><td><code>limo_base_lite.dae</code></td><td>The <code>base_link</code> visual in <code>limo_ackerman.xacro</code></td></tr>
+    </table>
+    <h3>The kinematic tree</h3>
+    <p>Here is the link/joint tree that <code>limo_diff.xacro</code> (the differential-drive variant) produces once fully expanded. Every arrow is a joint; every box is a link.</p>
+    <div class="mermaid">
+flowchart TD
+  BL["base_link<br/>(chassis)"] -->|continuous<br/>front_left_wheel| FLW[front_left_wheel_link]
+  BL -->|continuous<br/>front_right_wheel| FRW[front_right_wheel_link]
+  BL -->|continuous<br/>rear_left_wheel| RLW[rear_left_wheel_link]
+  BL -->|continuous<br/>rear_right_wheel| RRW[rear_right_wheel_link]
+  BL -->|fixed<br/>laser_joint| LL[laser_link]
+  BL -->|fixed<br/>depth_camera_joint| DCL[depth_camera_link]
+  DCL -->|fixed<br/>depth_camera_to_camera_joint| DL["depth_link<br/>(optical frame)"]
+  BL -->|fixed<br/>imu_joint| IL[imu_link]
+    </div>
+    <p>Four of those eight joints are the <em>same macro call</em> (<code>limo_wheel</code>) with different <code>wheel_prefix</code>/<code>reflect</code> arguments, and three more are the sensor macros. Only <code>base_link</code> itself is written by hand in each drive-mode file — the tree is wide, but the source is short, and that gap between "how much XML exists" and "how much XML you wrote" is the entire point of Xacro.</p>
+    <p>It's worth being precise about what Xacro is <em>not</em>. It has no concept of physics, kinematics, or simulation — it never looks at what a <code>&lt;joint&gt;</code> or <code>&lt;link&gt;</code> element means. It is a purely textual/structural macro expander: substitute properties, evaluate the arithmetic inside <code>${...}</code> expressions, resolve conditionals, splice in block parameters, and emit XML. All of the physical meaning — what a revolute joint does, how an inertia tensor is used — belongs entirely to whatever consumes the resulting URDF: <code>robot_state_publisher</code>, RViz, or a physics engine. Keeping that separation in your head early avoids a common confusion: a Xacro file that expands cleanly with no errors can still describe a physically nonsensical robot, because <code>xacro</code> never checked the physics — only the parsers and simulators downstream do that.</p>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="sec2">
+    <h2><span class="num">4.2</span>Links and joints — the fundamentals</h2>
+    <p>A joint's <code>type</code> attribute is the single most important thing about it — it decides what degree of freedom, if any, exists between parent and child. URDF defines six types; LIMO's description only ever needs three of them.</p>
+    <table>
+      <tr><th>Joint type</th><th>Degrees of freedom</th><th>Used on LIMO for</th></tr>
+      <tr><td><code>fixed</code></td><td>None — welded together</td><td>Every sensor: <code>laser_joint</code>, <code>depth_camera_joint</code>, <code>imu_joint</code>, plus the internal <code>base_joint</code>/<code>inertial_joint</code></td></tr>
+      <tr><td><code>continuous</code></td><td>1 rotational, unbounded</td><td>Every drive wheel — <code>front_left_wheel</code>, <code>rear_right_wheel</code>, etc. A wheel has no reason to stop spinning at some angle</td></tr>
+      <tr><td><code>revolute</code></td><td>1 rotational, bounded by <code>&lt;limit&gt;</code></td><td>The Ackermann model's front <code>*_steering</code> joints only — the hinge can turn left/right but not spin forever</td></tr>
+      <tr><td><code>prismatic</code></td><td>1 translational, bounded</td><td><em>Not used anywhere in limo_description</em> — LIMO has no sliding joints</td></tr>
+    </table>
+    <p>Every <code>&lt;link&gt;</code> that actually exists in the physical world (as opposed to a bookkeeping frame like <code>base_footprint</code>) carries up to three child elements:</p>
+    <ul>
+      <li><code>&lt;inertial&gt;</code> — mass in kilograms and a 3×3 inertia tensor (<code>ixx iyy izz</code> plus the off-diagonal terms, usually zero for symmetric parts). This is what the physics engine uses; it is invisible in RViz.</li>
+      <li><code>&lt;visual&gt;</code> — what gets rendered. LIMO's real parts use imported COLLADA meshes (<code>.dae</code> files in <code>meshes/</code>) for a faithful appearance.</li>
+      <li><code>&lt;collision&gt;</code> — the shape used for contact/overlap checks. Almost always a simplified primitive (a cylinder, a box) rather than the detailed mesh, because collision checking against a high-poly mesh is expensive.</li>
+    </ul>
+    <p>None of the three sub-blocks is strictly required by the parser — a link can legally have zero, one, two, or all three. <code>base_footprint</code>, which shows up in <code>limo_ackerman.xacro</code> as <code>&lt;link name="base_footprint"/&gt;</code>, is the extreme case: an empty link with no inertial, visual, or collision at all. It exists purely as a named, addressable point in the tree — a projection of the chassis origin straight down to ground level — that other tools (like a 2D navigation stack) can use as a stable reference frame without caring about the chassis's actual 3D shape.</p>
+    <p>Not every link comes out of a macro, either. <code>base_link</code> itself is written by hand, directly in <code>limo_ackerman.xacro</code>, because it's the one part of the robot that genuinely differs between drive modes:</p>
+    <pre><code>&lt;link name="base_link"&gt;
+    &lt;visual&gt;
+        &lt;origin xyz="0 0 -0.15" rpy="0 0 1.57" /&gt;
+        &lt;geometry&gt;
+             &lt;mesh filename="file://$(find limo_description)/meshes/limo_base_lite.dae" scale="1 1 1"/&gt;
+        &lt;/geometry&gt;
+    &lt;/visual&gt;
+    &lt;collision&gt;
+        &lt;origin xyz="0 0 0" rpy="0 0 0" /&gt;
+        &lt;geometry&gt;
+            &lt;box size="${base_x_size} ${base_y_size} ${base_z_size}"/&gt;
+        &lt;/geometry&gt;
+    &lt;/collision&gt;
+&lt;/link&gt;</code></pre>
+    <p>A few things pop out by comparison with the macro-generated wheel link. There's no <code>&lt;inertial&gt;</code> block here at all — that's deliberately split out into the separate <code>inertial_link</code> you'll meet shortly. The visual mesh's <code>&lt;origin&gt;</code> is non-zero (<code>xyz="0 0 -0.15"</code>, <code>rpy="0 0 1.57"</code>) because the imported <code>limo_base_lite.dae</code> mesh's own internal origin doesn't line up with where the URDF wants <code>base_link</code>'s origin to sit, so the visual is nudged into place rather than the mesh being re-exported. And the collision geometry is a plain box sized from <code>base_x_size</code>/<code>base_y_size</code>/<code>base_z_size</code> properties — the same "detailed mesh for looks, simple primitive for physics" split you already saw on the wheel.</p>
+    <p><code>base_footprint</code> is attached back to this hand-written <code>base_link</code> by an equally hand-written joint, not a macro — the last piece of chassis wiring before every remaining link in the tree comes from a macro call:</p>
+    <pre><code>&lt;joint name="base_joint" type="fixed"&gt;
+    &lt;parent link="base_link"/&gt;
+    &lt;child link="base_footprint"/&gt;
+    &lt;origin xyz="0.0 0.0 0.15" rpy="0 0 0"/&gt;
+&lt;/joint&gt;</code></pre>
+    <p>The <code>+0.15</code> m here exactly cancels the <code>-0.15</code> m used in <code>base_link</code>'s visual origin above — together they place <code>base_footprint</code> at ground level directly beneath the chassis's geometric center, regardless of where the imported mesh's own coordinate origin happened to be.</p>
+    <div class="box eng">
+      <div class="box-title">🔧 Engineering note — why simplify collision geometry?</div>
+      <p>A wheel's visual mesh might have thousands of triangles for tread detail. Its collision geometry in <code>limo_properties.xacro</code> is just a <code>&lt;cylinder length="${wheel_length}" radius="${wheel_radius}"/&gt;</code>. Contact physics only needs an approximate outer envelope — spending CPU on tread-level collision would slow simulation for zero practical benefit.</p>
+    </div>
+    <p>Axis vectors deserve a second look too. Every <code>continuous</code>, <code>revolute</code>, or <code>prismatic</code> joint carries an <code>&lt;axis xyz="..."/&gt;</code> element declaring, in the <em>parent</em> link's local frame, which direction the motion happens around (for rotation) or along (for translation). Get this wrong and the joint is still perfectly valid URDF — it will parse, load, and simulate — it will just rotate or slide the wrong way, which is a much harder bug to spot than a parse error because nothing complains until you watch the robot move incorrectly.</p>
+    <h3>Reading a joint's &lt;origin&gt;</h3>
+    <p>Every joint also carries an <code>&lt;origin xyz="x y z" rpy="roll pitch yaw"/&gt;</code>, which is easy to misread as "where the child link is in space" — it isn't. It's the fixed transform from the <em>parent</em> link's frame to the joint's frame, applied once, before any joint motion happens. For a <code>fixed</code> joint that's the whole story. For a moving joint, the child's actual pose at any instant is that fixed offset <em>composed with</em> whatever the current joint angle contributes around the declared <code>axis</code>. This is exactly why LIMO's sensor placements read as simple, static numbers: <code>&lt;origin xyz="0.103 0 -0.034" rpy="0 0 0"/&gt;</code> on <code>laser_joint</code> means "10.3&nbsp;cm forward, 3.4&nbsp;cm down from base_link, no rotation" — full stop, because the joint is fixed and there is no additional motion term to account for.</p>
+    <table>
+      <tr><th>Origin field</th><th>Units</th><th>What it offsets</th></tr>
+      <tr><td><code>xyz</code></td><td>metres</td><td>Translation from the parent frame to the joint frame — forward/left/up in that frame's convention</td></tr>
+      <tr><td><code>rpy</code></td><td>radians</td><td>Roll, pitch, yaw rotation applied in that order, before the joint's own motion is layered on top</td></tr>
+    </table>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="sec3">
+    <h2><span class="num">4.3</span>Anatomy of a link — inside <code>limo_wheel</code></h2>
+    <p>Rather than invent a toy example, let's read the actual macro that builds every non-steered wheel on the real robot. This is <code>limo_wheel</code>, from <code>urdf/limo_properties.xacro</code>, trimmed only of comments:</p>
+    <pre><code>&lt;xacro:macro name="limo_wheel" params="parent_prefix wheel_prefix reflect model_lite *joint_pose visual_on:=true fixed_on:=false"&gt;
+    &lt;link name="${wheel_prefix}_wheel_link"&gt;
+        &lt;inertial&gt;
+            &lt;origin xyz="0 0 0" /&gt;
+            &lt;mass value="0.5" /&gt;
+            &lt;inertia ixx="0.01055" ixy="0" ixz="0" iyy="0.00075" iyz="0" izz="0.01055" /&gt;
+        &lt;/inertial&gt;
+        &lt;visual&gt;
+            &lt;origin xyz="0 0 0" rpy="0 0 0" /&gt;
+            &lt;geometry&gt;
+                &lt;xacro:if value="${model_lite}"&gt;
+                    &lt;mesh filename="file://$(find limo_description)/meshes/limo_wheel_lite.dae"/&gt;
+                &lt;/xacro:if&gt;
+                &lt;xacro:unless value="${model_lite}"&gt;
+                    &lt;mesh filename="file://$(find limo_description)/meshes/limo_wheel.dae"/&gt;
+                &lt;/xacro:unless&gt;
+            &lt;/geometry&gt;
+        &lt;/visual&gt;
+        &lt;collision&gt;
+          &lt;origin xyz="0 ${wheel_length/2} 0" rpy="1.57 0 0" /&gt;
+          &lt;geometry&gt;
+              &lt;cylinder length="${wheel_length}" radius="${wheel_radius}" /&gt;
+          &lt;/geometry&gt;
+        &lt;/collision&gt;
+    &lt;/link&gt;
+
+    &lt;joint name="${wheel_prefix}_wheel" type="continuous"&gt;
+        &lt;parent link="${parent_prefix}"/&gt;
+        &lt;child link="${wheel_prefix}_wheel_link"/&gt;
+        &lt;xacro:insert_block name="joint_pose"/&gt;
+        &lt;axis xyz="0 ${reflect*1} 0"/&gt;
+    &lt;/joint&gt;
+&lt;/xacro:macro&gt;</code></pre>
+    <p>Reading it top to bottom:</p>
+    <ul>
+      <li><strong>The macro signature.</strong> <code>params="parent_prefix wheel_prefix reflect model_lite *joint_pose visual_on:=true fixed_on:=false"</code> — four required arguments, one <em>block</em> argument (the leading <code>*</code> on <code>joint_pose</code> means "insert an entire XML element here, not a string"), and two arguments with defaults (<code>:=true</code> / <code>:=false</code>) that the caller can omit.</li>
+      <li><strong>Inertial block.</strong> Mass is 0.5&nbsp;kg for every wheel. The inertia tensor is deliberately anisotropic — <code>iyy="0.00075"</code> is far smaller than <code>ixx</code>/<code>izz</code> at <code>0.01055</code> — because Y is the wheel's spin axis. A thin disk has much less rotational inertia about the axis it spins on than about the axes perpendicular to it; the numbers reflect real wheel geometry, not a copy-paste placeholder.</li>
+      <li><strong>Visual block — the <code>model_lite</code> switch.</strong> <code>&lt;xacro:if value="${model_lite}"&gt;</code> / <code>&lt;xacro:unless&gt;</code> is Xacro's conditional pair — exactly one branch survives expansion. LIMO ships in a "lite" trim and a full trim with visually different wheels, so the macro picks the correct mesh (<code>limo_wheel_lite.dae</code> vs. <code>limo_wheel.dae</code>) from a single boolean argument instead of needing two separate macros.</li>
+      <li><strong>Collision block.</strong> A plain cylinder, <code>wheel_radius</code> and <code>wheel_length</code> coming from <code>&lt;xacro:property&gt;</code> values set once in the drive-mode file (e.g. <code>wheel_radius="0.045"</code> in <code>limo_ackerman.xacro</code>) — change the property once, every wheel updates.</li>
+      <li><strong>The joint.</strong> <code>type="continuous"</code>, parented to whatever link the caller passes as <code>parent_prefix</code> (normally <code>base_link</code>), with its position coming from the inserted <code>joint_pose</code> block. <code>axis xyz="0 ${reflect*1} 0"</code> is the spin axis — always Y, with <code>reflect</code> flipping sign so left-side and right-side wheels spin the geometrically correct way for the same positive wheel velocity.</li>
+    </ul>
+    <p>A call site looks like this (from <code>limo_ackerman.xacro</code>, building the rear-left wheel):</p>
+    <pre><code>&lt;xacro:limo_wheel parent_prefix="base_link" wheel_prefix="rear_left" reflect="1" model_lite="$(arg model_lite)"&gt;
+    &lt;origin xyz="${-wheelbase/2} ${track/2} ${wheel_vertical_offset}" rpy="0 0 0" /&gt;
+&lt;/xacro:limo_wheel&gt;</code></pre>
+    <p>One macro, one call, and you get a fully-formed link plus joint — inertial, visual with the correct mesh, collision, and a correctly-signed drive axis — without a single line of duplicated XML.</p>
+    <p>Notice that call site writes <code>model_lite="$(arg model_lite)"</code>, not <code>model_lite="${model_lite}"</code> — two different substitution syntaxes doing two different jobs. <code>limo_ackerman.xacro</code> declares <code>&lt;xacro:arg name="model_lite" default="true" /&gt;</code> near its top; a <code>xacro:arg</code> is a value that can be overridden from <em>outside</em> the file, typically from a launch file passing <code>xacro:model_lite:=false</code> on the command line, and it's read back with <code>$(arg name)</code> syntax. A <code>xacro:property</code>, by contrast — like <code>wheel_radius</code> or <code>wheelbase</code> below — is purely internal to the Xacro file and read back with <code>${name}</code>. The macro parameter itself is just called <code>model_lite</code>; whether the value flowing into it came from a launch-time argument or an internal property is invisible to the macro — it only ever sees the final boolean.</p>
+    <p>The numbers plugged into that call site come from <code>&lt;xacro:property&gt;</code> declarations near the top of <code>limo_ackerman.xacro</code>, not from anything hard-coded in the macro itself:</p>
+    <table>
+      <tr><th>Property</th><th>Value</th><th>Meaning</th></tr>
+      <tr><td><code>wheelbase</code></td><td>0.2 m</td><td>Front-to-rear distance between axle centerlines</td></tr>
+      <tr><td><code>track</code></td><td>0.13 m</td><td>Left-to-right distance between wheel centerlines</td></tr>
+      <tr><td><code>wheel_vertical_offset</code></td><td>-0.10 m</td><td>How far below the chassis origin the axles sit</td></tr>
+      <tr><td><code>wheel_radius</code></td><td>0.045 m</td><td>Used by every wheel's collision cylinder</td></tr>
+      <tr><td><code>wheel_length</code></td><td>0.001 m</td><td>Collision cylinder thickness — deliberately thin; the file's own comment shows a more realistic <code>0.045</code> was tried and left disabled</td></tr>
+      <tr><td><code>base_mass</code></td><td>2.1557 kg</td><td>Mass assigned to the separate <code>inertial_link</code>, not to <code>base_link</code> itself</td></tr>
+    </table>
+    <p>That last row is a small but real subtlety worth flagging: <code>limo_ackerman.xacro</code> splits the chassis into two links, <code>base_link</code> (visual + collision only) and <code>inertial_link</code> (inertial only, connected back to <code>base_link</code> by a zero-offset <code>fixed</code> joint called <code>inertial_joint</code>). Functionally the physics engine treats them as one rigid body — a fixed joint doesn't add a degree of freedom — but splitting mass properties from visual/collision geometry into separate links is a pattern you'll see in other ROS 2 robot descriptions too, usually so the mass/inertia numbers can be tuned independently without touching the chassis mesh.</p>
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dot" style="background:#ef5350"></div>
+        <div class="term-dot" style="background:#f6c744"></div>
+        <div class="term-dot" style="background:#57c785"></div>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> ros2 run xacro xacro limo_ackerman.xacro > /tmp/limo_expanded.urdf
+<span class="term-out">(no output — success. xacro only prints on error)</span>
+
+<span class="term-prompt">$</span> grep -c "wheel_link" /tmp/limo_expanded.urdf
+<span class="term-out">4</span>
+
+<span class="term-prompt">$</span> check_urdf /tmp/limo_expanded.urdf
+<span class="term-out">robot name is: limo_ackerman
+---------- Successfully Parsed XML ---------------
+root Link: base_link has 6 child(ren)
+    child(1):  base_footprint
+    child(2):  inertial_link
+    child(3):  laser_link
+    child(4):  depth_camera_link
+    child(5):  imu_link
+    child(6):  front_left
+        child(1):  front_left_wheel_link
+    ...</span></div>
+    </div>
+    <div class="box mistake">
+      <div class="box-title">⚠️ Common trap — silent default arguments</div>
+      <p><code>visual_on:=true fixed_on:=false</code> means a call site that omits these two arguments still compiles and still produces a wheel — just always with a visual, and always as a moving joint. If you ever needed a placeholder wheel with no mesh, or a wheel that's rigidly fixed for a locked-axle test rig, forgetting to pass <code>visual_on="false"</code> or <code>fixed_on="true"</code> won't error; it will just silently give you the default behaviour.</p>
+    </div>
+    <div class="exercise">
+      <div class="level">Exercise · Easy</div>
+      <p>Open <code>urdf/limo_properties.xacro</code> and find the <code>limo_wheel</code> macro. Change the collision cylinder's radius by adding <code>+ 0.01</code> to <code>${wheel_radius}</code> for a quick experiment, re-run <code>ros2 run xacro xacro limo_diff.xacro | check_urdf /dev/stdin</code>, and confirm the parser still accepts it. Then revert your change.</p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="sec4">
+    <h2><span class="num">4.4</span>The Ackermann steering hinge, joint by joint</h2>
+    <p>The differential-drive model's front wheels only ever spin — steering happens by driving the left and right sides at different speeds. The <strong>Ackermann</strong> model is different: it has genuine front-wheel steering, like a car. That means each front wheel needs <em>two</em> degrees of freedom stacked in series: it must be able to turn left/right (steer) <em>and</em>, independently, spin forward/backward (drive). URDF joints are strictly one-DOF each, so the only way to model this is two joints, one link apart.</p>
+    <p><code>limo_left_steering_hinge</code> (and its mirror, <code>limo_right_steering_hinge</code>) builds exactly that chain: a small hinge link, connected to the chassis by a <code>revolute</code> joint, which then carries a full wheel link connected to <em>it</em> by a <code>continuous</code> joint.</p>
+    <div class="mermaid">
+flowchart LR
+  BL[base_link] -->|revolute<br/>front_left_steering<br/>±0.5236 rad| FL["front_left<br/>(hinge link, near-massless)"]
+  FL -->|continuous<br/>front_left_wheel| FLW[front_left_wheel_link]
+    </div>
+    <p>Here's the hinge link and its steering joint, straight from <code>limo_left_steering_hinge</code> in <code>limo_properties.xacro</code>:</p>
+    <pre><code>&lt;link name="${wheel_prefix}"&gt;
+    &lt;inertial&gt;
+      &lt;mass value="0.25" /&gt;
+      &lt;inertia ixx="0.00525" ixy="0" ixz="0" iyy="0.00035" iyz="0" izz="0.00525" /&gt;
+      &lt;origin xyz="0 0 0" /&gt;
+    &lt;/inertial&gt;
+    &lt;visual&gt;
+        &lt;origin xyz="0 0 0" rpy="0 0 0" /&gt;
+        &lt;geometry&gt;
+          &lt;cylinder length="0.0001" radius="0.0001" /&gt;
+        &lt;/geometry&gt;
+    &lt;/visual&gt;
+&lt;/link&gt;
+
+&lt;joint name="${wheel_prefix}_steering" type="revolute"&gt;
+    &lt;parent link="${parent_prefix}"/&gt;
+    &lt;child link="${wheel_prefix}"/&gt;
+    &lt;xacro:insert_block name="joint_pose"/&gt;
+    &lt;axis xyz="0 0 1" /&gt;
+    &lt;limit lower="-0.523598767" upper="0.523598767" effort="1000" velocity="1.0" /&gt;
+    &lt;dynamics damping="0.0" friction="2.0"/&gt;
+&lt;/joint&gt;</code></pre>
+    <p>Then the same macro attaches an ordinary wheel link as the <em>child of the hinge</em> — not the child of <code>base_link</code> — with a second, <code>continuous</code> joint whose axis is the wheel's spin axis:</p>
+    <pre><code>&lt;joint name="${wheel_prefix}_wheel" type="continuous"&gt;
+    &lt;parent link="${wheel_prefix}"/&gt;
+    &lt;child link="${wheel_prefix}_wheel_link"/&gt;
+    &lt;origin xyz="0 0 0" rpy="0 0 0" /&gt;
+    &lt;axis xyz="0 1 0"/&gt;
+    &lt;limit effort="100.0" velocity="10.0"/&gt;
+&lt;/joint&gt;</code></pre>
+    <p>The right-side macro is the mirror image with one important sign flip: its steering joint uses <code>axis xyz="0 0 -1"</code> instead of <code>"0 0 1"</code>. Because the right hinge is also rotated 180° about X in its parent joint's <code>rpy</code> (to face the correct way), flipping the axis sign keeps "positive steering command" meaning the same physical direction (turn left) on both sides.</p>
+    <table>
+      <tr><th>Steering joint field</th><th>Value</th><th>Meaning</th></tr>
+      <tr><td><code>lower</code> / <code>upper</code></td><td>±0.523598767 rad</td><td>±30° — the physical steering range of the real Ackermann servo linkage</td></tr>
+      <tr><td><code>effort</code></td><td>1000</td><td>Maximum torque (N·m) the joint can exert — set high so the simulated actuator is never the limiting factor</td></tr>
+      <tr><td><code>velocity</code></td><td>1.0</td><td>Maximum angular speed (rad/s) the steering hinge can turn at</td></tr>
+      <tr><td><code>damping</code></td><td>0.0</td><td>Viscous resistance proportional to joint velocity — zero here, so no artificial "drag" on the steering</td></tr>
+      <tr><td><code>friction</code></td><td>2.0</td><td>Static/Coulomb friction the joint must overcome to start moving — a small resistance to prevent the hinge chattering at rest</td></tr>
+    </table>
+    <div class="box real">
+      <div class="box-title">✅ Reality check</div>
+      <p>0.523598767 rad × (180/π) ≈ 30.0000°. That's not a rounding accident — it's <code>π/6</code> encoded to nine decimal places, matching the real servo linkage's mechanical steering limit on the physical LIMO chassis. When you command a steering angle beyond ±30° in code, the joint simply won't go there — same as the real robot.</p>
+    </div>
+    <p>It's also worth contrasting the two joints' limits directly, because the difference tells you something about intent. The steering joint's <code>&lt;limit&gt;</code> carries a real <code>lower</code>/<code>upper</code> — physically meaningful, since a steering hinge that spun forever would tear the tie-rod linkage apart. The drive joint immediately below it, <code>${wheel_prefix}_wheel</code>, is declared <code>type="continuous"</code> and its <code>&lt;limit effort="100.0" velocity="10.0"/&gt;</code> has no <code>lower</code>/<code>upper</code> at all — URDF's schema simply doesn't require them for a continuous joint, since "how far can it turn" is meaningless when the joint is allowed to spin forever. The hinge link itself is built the same near-massless way as a sensor link (mass 0.25&nbsp;kg, a 0.1&nbsp;mm placeholder cylinder, no collision geometry at all) — it exists only to carry the second joint, not to be seen or collided with, which is why its inertia values echo the same pattern you saw on <code>limo_wheel</code>'s inertial block, just scaled down.</p>
+    <div class="exercise">
+      <div class="level">Exercise · Intermediate</div>
+      <p>The differential-drive model has no steering joints at all — it turns by wheel-speed differential. Sketch (on paper or in a comment) what would need to change in <code>limo_diff.xacro</code> if you wanted to retrofit Ackermann-style front steering onto it: which macro calls would you swap, and which two new joint names would appear in the tree?</p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="sec5">
+    <h2><span class="num">4.5</span>Sensors as their own tiny links</h2>
+    <p>It would be simpler, structurally, to just draw the laser scanner or the IMU as extra geometry glued onto <code>base_link</code>'s existing visual mesh. LIMO's description deliberately does not do this — every sensor gets its own link, connected to the chassis by a <code>fixed</code> joint.</p>
+    <ul>
+      <li><strong>TF addressability.</strong> <code>robot_state_publisher</code> broadcasts a TF frame for every link. Give the laser its own <code>laser_link</code>, and every other node in the system (RViz, a LaserScan filter, SLAM) can ask TF "where is the laser, right now, relative to the chassis or the map" — impossible if the laser's geometry is buried inside <code>base_link</code>.</li>
+      <li><strong>Independent visual/collision.</strong> The sensor can have its own simplified collision shape (a small cylinder for the laser, a small box for the camera) instead of inheriting the chassis's collision geometry.</li>
+      <li><strong>One-line repositioning.</strong> Move a sensor by editing a single <code>&lt;origin&gt;</code> in its joint — no remodelling of the chassis mesh required.</li>
+    </ul>
+    <p>The laser (<code>limo_laser</code> macro) is the simplest case — one link, one fixed joint:</p>
+    <pre><code>&lt;xacro:macro name="limo_laser" params="parent_prefix frame_prefix *joint_pose"&gt;
+    &lt;link name='${frame_prefix}_link'&gt;
+        &lt;inertial&gt;
+            &lt;mass value="0.1"/&gt;
+            &lt;inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6"/&gt;
+        &lt;/inertial&gt;
+        &lt;visual&gt;
+            &lt;geometry&gt;&lt;cylinder radius="0.02" length="0.01"/&gt;&lt;/geometry&gt;
+        &lt;/visual&gt;
+        &lt;collision&gt;
+            &lt;geometry&gt;&lt;cylinder radius="0.032" length="0.016"/&gt;&lt;/geometry&gt;
+        &lt;/collision&gt;
+    &lt;/link&gt;
+    &lt;joint type="fixed" name="laser_joint"&gt;
+        &lt;xacro:insert_block name="joint_pose"/&gt;
+        &lt;child link="${frame_prefix}_link"/&gt;
+        &lt;parent link="${parent_prefix}"/&gt;
+    &lt;/joint&gt;
+    &lt;gazebo reference="${frame_prefix}_link"&gt;&lt;material&gt;Gazebo/Yellow&lt;/material&gt;&lt;/gazebo&gt;
+&lt;/xacro:macro&gt;</code></pre>
+    <p>Called in <code>limo_ackerman.xacro</code> as <code>&lt;xacro:limo_laser parent_prefix="base_link" frame_prefix="laser"&gt;&lt;origin xyz="0.103 0 -0.034" rpy="0 0 0"/&gt;&lt;/xacro:limo_laser&gt;</code> — mounted 10.3&nbsp;cm forward and 3.4&nbsp;cm below the chassis origin.</p>
+    <p>The depth camera (<code>limo_depth_camera</code>) is where it gets interesting: it defines <em>two</em> links and <em>two</em> fixed joints, not one.</p>
+    <pre><code>&lt;link name='${frame_prefix}_link'&gt; ... &lt;/link&gt;   &lt;!-- physical mount, box 0.02 x 0.06 x 0.015 --&gt;
+
+&lt;joint type="fixed" name="depth_camera_joint"&gt;
+    &lt;xacro:insert_block name="joint_pose"/&gt;
+    &lt;child link="${frame_prefix}_link"/&gt;
+    &lt;parent link="${parent_prefix}"/&gt;
+&lt;/joint&gt;
+
+&lt;link name="depth_link"&gt;&lt;/link&gt;   &lt;!-- zero-size: the optical frame --&gt;
+
+&lt;joint name="${frame_prefix}_to_camera_joint" type="fixed"&gt;
+    &lt;origin xyz="0 0 0" rpy="${-M_PI/2} 0 ${-M_PI/2}"/&gt;
+    &lt;parent link="${frame_prefix}_link"/&gt;
+    &lt;child link="depth_link"/&gt;
+&lt;/joint&gt;</code></pre>
+    <div class="box def">
+      <div class="box-title">📘 Definition — why the second rotation exists</div>
+      <p>ROS convention (REP-103) says every physical mount frame has X pointing forward, Y pointing left, Z pointing up. But camera <em>driver</em> conventions — inherited from decades of computer-vision and OpenCV tooling — instead expect an <strong>optical frame</strong> with Z pointing forward (out of the lens), X pointing right, and Y pointing down. These two conventions disagree by a fixed 90°/90° rotation, not a robot-specific calibration. <code>depth_camera_link</code> is the REP-103-style mount frame you'd use to reason about "where is the camera on the chassis"; <code>depth_link</code> is the same physical point rotated into the convention the depth image driver actually publishes against. <code>rpy="${-M_PI/2} 0 ${-M_PI/2}"</code> is that fixed reconciliation, baked in once so nobody downstream has to think about it again.</p>
+    </div>
+    <p>The IMU (<code>limo_imu</code>) follows the same one-link, one-fixed-joint pattern as the laser, just smaller — mass 0.01&nbsp;kg, a 1&nbsp;mm cube for visual/collision, mounted via <code>imu_joint</code>. Its link exists purely so IMU readings can be published in a frame TF knows about, not because a 1&nbsp;mm cube meaningfully affects physics.</p>
+    <p>The practical symptom of getting the two camera frames mixed up is easy to recognise once you've seen it once: if you subscribe to a depth image topic and try to transform its points using <code>depth_camera_link</code> instead of <code>depth_link</code>, the resulting point cloud appears rotated 90° in two axes at once — "sideways and pointing at the floor" is the classic description of it. Depth and RGB image data are published in the optical convention by the underlying camera driver, so any transform involving that image data needs to go through <code>depth_link</code>, never the mount link. All three sensor macros share one more property worth naming explicitly: each one's <code>&lt;gazebo reference="${frame_prefix}_link"&gt;&lt;material&gt;Gazebo/Yellow&lt;/material&gt;&lt;/gazebo&gt;</code> block is a Gazebo-only annotation, invisible to RViz and to <code>robot_state_publisher</code> — it colors the sensor yellow purely so it's visually distinguishable from the chassis when you do eventually load the model into simulation.</p>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="sec6">
+    <h2><span class="num">4.6</span>Four drive modes, one set of macros</h2>
+    <p>LIMO physically reconfigures between four drive modes, and <code>limo_description</code> mirrors that with four top-level Xacro files: <code>limo_diff.xacro</code>, <code>limo_ackerman/limo_ackerman.xacro</code>, <code>limo_mecanum/limo_mecanum.xacro</code>, and <code>limo_track/limo_track.xacro</code>. Every one of them starts the same way — including the same two files:</p>
+    <pre><code>&lt;xacro:include filename="$(find limo_description)/urdf/limo_properties.xacro" /&gt;
+&lt;xacro:include filename="$(find limo_description)/urdf/limo_ackerman/limo_ackerman.gazebo" /&gt;</code></pre>
+    <p>(the second include swaps to that mode's own <code>.gazebo</code> file — e.g. <code>limo_diff.gazebo</code> for the diff variant — which wires up <code>gazebo_ros</code> plugins for the simulated drivetrain). Each file then hand-writes its own <code>base_link</code> chassis link and calls the shared wheel/sensor macros from <code>limo_properties.xacro</code> in a pattern specific to that drivetrain:</p>
+    <p>Compare the <code>limo_wheel</code> call site you already read against a real Mecanum call site — same macro-composition idea, visibly different visual placement because the roller geometry is asymmetric:</p>
+    <pre><code>&lt;!-- limo_mecanum_wheel_1, front-left roller mesh --&gt;
+&lt;visual&gt;
+    &lt;origin xyz="0.01 -0.064 0.064" rpy="0 0 -1.57" /&gt;
+    &lt;geometry&gt;
+        &lt;mesh filename="file://$(find limo_description)/meshes/mec_wheel_front_left.dae" /&gt;
+    &lt;/geometry&gt;
+&lt;/visual&gt;</code></pre>
+    <p>Notice the visual <code>&lt;origin&gt;</code> is non-zero here, unlike <code>limo_wheel</code>'s <code>xyz="0 0 0"</code> — the Mecanum mesh's own internal origin doesn't line up with the joint's rotation axis the way the simple wheel mesh does, so the macro compensates with an explicit offset and a -90° yaw. The joint block underneath it, though, is identical in shape to <code>limo_wheel</code>'s — same <code>continuous</code> type, same <code>axis xyz="0 ${reflect*1} 0"</code> pattern — which is exactly why it's fair to call this "the same macro-composition idea": the visual geometry changed, but the joint semantics didn't.</p>
+    <table>
+      <tr><th>Mode</th><th>Wheel macro(s) used</th><th>Front steering?</th><th>Holonomic?</th></tr>
+      <tr><td><code>limo_diff</code></td><td><code>limo_wheel</code> × 4 (all continuous)</td><td>No</td><td>No — differential drive</td></tr>
+      <tr><td><code>limo_ackerman</code></td><td><code>limo_left_steering_hinge</code> / <code>limo_right_steering_hinge</code> (front) + <code>limo_wheel</code> × 2 (rear)</td><td>Yes — ±30° revolute hinges</td><td>No</td></tr>
+      <tr><td><code>limo_mecanum</code></td><td><code>limo_mecanum_wheel_1</code> / <code>limo_mecanum_wheel_2</code> × 4, direction-specific meshes</td><td>No</td><td>Yes — omni rollers allow sideways/diagonal motion</td></tr>
+      <tr><td><code>limo_track</code></td><td>Not wheel macros — continuous track-belt links following the same macro-composition pattern</td><td>No</td><td>No</td></tr>
+    </table>
+    <p>Three details worth pulling out of that table. First, the Mecanum macros are split into <code>_1</code> and <code>_2</code> rather than sharing one macro with a mirrored mesh, because Mecanum wheels have their roller direction baked directly into the mesh geometry — a front-left wheel and a front-right wheel are not mirror images of the same mesh, they're genuinely different meshes (<code>mec_wheel_front_left.dae</code> vs. <code>mec_wheel_front_right.dae</code>), so a single-macro-plus-<code>reflect</code> approach (which works fine for the plain cylindrical diff/Ackermann wheels) doesn't apply. That's also the mechanical reason Mecanum is the only holonomic mode in the table: each wheel's angled rollers convert a spin into a force with both a forward and a sideways component, and combining four independently-driven wheels like that is what lets the chassis translate sideways or diagonally without turning — something no arrangement of plain cylindrical wheels, however they're steered, can do.</p>
+    <p>Second, <code>limo_track</code> doesn't have wheel links or drive-wheel joints at all — it replaces the wheel section of the file with a pair of continuous track-belt links (one per side), each attached to <code>base_link</code> by its own continuous joint, following exactly the same idea as <code>limo_wheel</code>: one macro-shaped block of inertial/visual/collision/joint per side, called twice with a <code>reflect</code>-style argument for left vs. right. Steering on a tracked vehicle comes from driving the two belts at different speeds, the same differential principle as <code>limo_diff</code>, which is why the table marks it as non-holonomic with no front steering, despite looking mechanically nothing like the wheeled variants.</p>
+    <p>Third, <code>limo_ackerman.xacro</code> also declares a <code>main_steering_link</code> and <code>main_steering</code> joint that isn't part of either steering-hinge macro — a separate revolute joint representing the physical steering rack's mechanical center, present so that a single actuator command can be mapped to both front wheels' independent hinges by a controller, mirroring how the real chassis has one steering servo driving a linkage to both wheels.</p>
+    <p>Every drive-mode file ends up short — a chassis link plus a handful of macro calls — precisely because none of them re-implement wheel or sensor geometry. All of that complexity lives exactly once, inside <code>limo_properties.xacro</code>. Add a fifth drive mode tomorrow (say, a swerve-drive variant) and you would still call the unmodified <code>limo_laser</code>, <code>limo_depth_camera</code>, and <code>limo_imu</code> macros — only the wheel section of the file would need new logic. This is also why, when something is wrong with a sensor's position or a wheel's inertia on <em>every</em> drive mode simultaneously, the bug almost always lives in <code>limo_properties.xacro</code> rather than in any one of the four drive-mode files — fix it once there and all four variants inherit the fix the next time they're expanded.</p>
+    <div class="exercise">
+      <div class="level">Exercise · Harder</div>
+      <p>Compare <code>limo_diff.xacro</code> and <code>limo_ackerman.xacro</code> side by side (both call <code>limo_laser</code>, <code>limo_depth_camera</code>, and <code>limo_imu</code> with near-identical arguments). Identify every joint name that exists in the Ackermann tree but has no equivalent in the diff tree, and explain in one sentence each why the diff model doesn't need it.</p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="sec7">
+    <h2><span class="num">4.7</span>Seeing it move — RViz without Gazebo</h2>
+    <p>You don't need a physics simulator to sanity-check a URDF/Xacro model — you just need two ROS 2 nodes and RViz. <code>robot_state_publisher</code> reads the robot's description (expanded from Xacro) and, for every joint, listens for its current position; using the kinematic tree, it then computes and broadcasts a TF transform for <em>every single link</em>, fixed or moving. <code>joint_state_publisher_gui</code> is the other half — for every non-fixed joint in the model, it puts up a slider, and publishes whatever the sliders currently read on <code>/joint_states</code>.</p>
+    <p>The <code>limo_description</code> package wires both of these together in a ready-made launch file:</p>
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dot" style="background:#ef5350"></div>
+        <div class="term-dot" style="background:#f6c744"></div>
+        <div class="term-dot" style="background:#57c785"></div>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> ros2 launch limo_description display_models_diff.launch.py
+<span class="term-out">[INFO] [robot_state_publisher-1]: process started with pid [21344]
+[INFO] [joint_state_publisher_gui-2]: process started with pid [21346]
+[INFO] [rviz2-3]: process started with pid [21348]
+[robot_state_publisher-1] Link base_link had 6 children
+[robot_state_publisher-1] Link front_left had 1 children
+[joint_state_publisher_gui-2] joint_state_publisher_gui: publishing 4 joints</span></div>
+    </div>
+    <p>Drag any wheel's slider in the GUI and you'll see it spin in RViz — but nothing on the chassis or sensors moves, because those joints are <code>fixed</code> and never appear as sliders at all. This is a genuinely useful check: if a joint you expect to be movable doesn't show up as a slider, its <code>type</code> in the Xacro is probably wrong (or defaulted to <code>fixed</code> somewhere you didn't intend).</p>
+    <p>It's worth naming the three processes this launch file actually starts, and what each one is responsible for — you'll be reasoning about this exact trio for the rest of the course whenever something in RViz looks wrong:</p>
+    <table>
+      <tr><th>Process</th><th>Reads</th><th>Publishes</th></tr>
+      <tr><td><code>joint_state_publisher_gui</code></td><td>Slider positions you drag by hand</td><td><code>/joint_states</code> — one position value per non-fixed joint</td></tr>
+      <tr><td><code>robot_state_publisher</code></td><td>The expanded URDF (via <code>robot_description</code> parameter) + <code>/joint_states</code></td><td>The full TF tree — a transform for <em>every</em> link, fixed and moving</td></tr>
+      <tr><td><code>rviz2</code></td><td>TF tree + the URDF's visual meshes/materials</td><td>Nothing — it's a viewer, purely a subscriber</td></tr>
+    </table>
+    <p>The dependency runs in one direction only: <code>joint_state_publisher_gui</code> knows nothing about geometry, only joint names and limits pulled from the URDF; <code>robot_state_publisher</code> knows nothing about sliders, only the current joint angles it's told and the fixed geometric relationships baked into every joint's <code>&lt;origin&gt;</code>; RViz knows nothing about either — it just draws whatever frames and meshes currently exist in TF. This is exactly the separation Lecture 5 builds on, where you'll start publishing joint states from real code instead of GUI sliders, without robot_state_publisher or RViz needing to change at all.</p>
+    <div class="figure">
+      <img src="./images/rviz_plugin.png" alt="RViz showing the LIMO model alongside the joint_state_publisher_gui slider panel">
+      <figcaption>RViz2 rendering the expanded URDF, with joint_state_publisher_gui's sliders driving each continuous/revolute joint live.</figcaption>
+    </div>
+    <div class="box hw">
+      <div class="box-title">🔌 On the real robot</div>
+      <p>This exact workflow — no Gazebo, no hardware — is how you'll debug TF and joint-naming problems fastest. If a frame is missing or a wheel spins around the wrong axis, you'll find it here in seconds rather than after a slow Gazebo world load. Lecture 5 picks this up directly: once TF is being published correctly by <code>robot_state_publisher</code>, you'll learn to read and query the transform tree it builds.</p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="sec8">
+    <h2><span class="num">4.8</span>Summary, checkpoint &amp; glossary</h2>
+    <p>URDF describes LIMO's body as a tree of rigid <code>&lt;link&gt;</code> elements connected by typed <code>&lt;joint&gt;</code> elements; Xacro is the macro layer that lets <code>limo_properties.xacro</code> define each recurring part — wheel, steering hinge, laser, depth camera, IMU — exactly once and reuse it across four different drive-mode files. You've now read the real macros that build every link on the robot, traced why Ackermann steering needs two joints in series, and seen why sensors get their own links instead of being drawn onto the chassis mesh.</p>
+    <p>None of this required Gazebo, ros2_control, or a single line of Python — every artifact in this lecture was static XML plus the <code>xacro</code> and <code>check_urdf</code> command-line tools. That's intentional: a URDF/Xacro description is a standalone contract about the robot's shape, and it's worth being able to read, expand, and validate entirely on its own before any simulator or controller framework gets layered on top.</p>
+    <div class="checkpoint">
+      <strong style="color:var(--text)">Checkpoint — you should now be able to:</strong>
+      <ul>
+        <li>Explain the difference between a URDF <code>&lt;link&gt;</code> and a <code>&lt;joint&gt;</code>, and name all four joint types LIMO's description actually uses (or doesn't).</li>
+        <li>Read a Xacro macro definition and identify its required params, its block param (<code>*joint_pose</code>), and its defaulted params.</li>
+        <li>Trace the <code>limo_wheel</code> macro from call site to expanded inertial/visual/collision/joint output.</li>
+        <li>Explain why the Ackermann front wheels need two joints (revolute + continuous) instead of one, and what ±0.523598767 rad means physically.</li>
+        <li>Explain why <code>depth_camera_link</code> and <code>depth_link</code> are two different frames, and which one image data actually publishes against.</li>
+        <li>Compare how <code>limo_diff</code>, <code>limo_ackerman</code>, <code>limo_mecanum</code>, and <code>limo_track</code> reuse the same macros differently.</li>
+        <li>Launch <code>display_models_diff.launch.py</code> and use the joint state sliders to verify a model's joints move as expected.</li>
+        <li>Explain the three-process relationship between <code>joint_state_publisher_gui</code>, <code>robot_state_publisher</code>, and RViz — and where in that chain a broken frame or wrong axis would first become visible.</li>
+        <li>Locate every file inside <code>limo_description/urdf/</code> and state, without opening it, roughly what it contains.</li>
+      </ul>
+    </div>
+    <p><strong>Connection to the course.</strong> Everything in this lecture is scaffolding for Lecture 5: TF2 &amp; RViz. The link/joint tree you've been reading as static XML is exactly what <code>robot_state_publisher</code> turns into a live TF tree at runtime — every link name you've seen here (<code>base_link</code>, <code>front_left_wheel_link</code>, <code>depth_link</code>, <code>imu_link</code>) becomes a TF frame you'll query, broadcast to, and reason about for the rest of the course, from sensor fusion through navigation.</p>
+    <dl class="glossary">
+      <dt>URDF</dt>
+      <dd>Unified Robot Description Format — an XML dialect describing a robot as links connected by joints.</dd>
+      <dt>Xacro</dt>
+      <dd>XML macros for URDF; a preprocessor that expands properties, macros, and conditionals into plain URDF.</dd>
+      <dt>Link</dt>
+      <dd>A rigid body in the model, described by up to three blocks: inertial, visual, collision.</dd>
+      <dt>Joint</dt>
+      <dd>A typed connection between exactly one parent link and one child link, defining their allowed relative motion.</dd>
+      <dt>continuous / revolute / fixed</dt>
+      <dd>Joint types: unbounded rotation (wheels), bounded rotation with a <code>&lt;limit&gt;</code> (steering hinges), and no motion at all (sensors, structural welds).</dd>
+      <dt>Inertial / visual / collision</dt>
+      <dd>The three optional sub-blocks of a link: mass/inertia for physics, appearance geometry for rendering, and simplified geometry for contact checks.</dd>
+      <dt>Macro</dt>
+      <dd>A Xacro <code>&lt;xacro:macro&gt;</code> template — parametrized XML that can be instantiated multiple times with different arguments.</dd>
+      <dt>Optical frame</dt>
+      <dd>A camera-specific coordinate convention (Z-forward, X-right, Y-down) used by image drivers, distinct from REP-103's robot convention (X-forward, Y-left, Z-up).</dd>
+      <dt>xacro:property</dt>
+      <dd>A named constant (e.g. <code>wheel_radius</code>, <code>wheelbase</code>) declared once and referenced via <code>${...}</code> arithmetic expressions throughout a Xacro file.</dd>
+      <dt>REP-103</dt>
+      <dd>The ROS Enhancement Proposal defining standard coordinate conventions — X-forward, Y-left, Z-up — that every physical mount frame in a well-formed robot description should follow.</dd>
+    </dl>
+    <h3>Common mistakes</h3>
+    <ul>
+      <li><strong>Swapping parent/child in a joint.</strong> A joint's <code>&lt;parent&gt;</code>/<code>&lt;child&gt;</code> order defines which way the kinematic tree flows — get it backwards and the whole subtree attaches in the wrong place (or the model fails to parse if it creates a cycle).</li>
+      <li><strong>Mesh filename case-sensitivity.</strong> <code>limo_wheel_lite.dae</code> works fine on the filesystem you tested on, but Linux filesystems are case-sensitive — <code>Limo_Wheel_Lite.dae</code> in the URDF against <code>limo_wheel_lite.dae</code> on disk will fail to load, often silently in some tools and loudly in others.</li>
+      <li><strong>Trusting defaulted macro arguments.</strong> <code>visual_on:=true fixed_on:=false</code> on <code>limo_wheel</code> means omitting them doesn't error — it silently gives you the default behaviour, which may not be what a given call site actually needs.</li>
+      <li><strong>Flipping the steering axis sign.</strong> The left hinge uses <code>axis xyz="0 0 1"</code> and the right uses <code>"0 0 -1"</code> — copy one macro call into the other side without checking which macro (and axis) you're calling, and "steer left" ends up steering the two front wheels in opposite directions.</li>
+    </ul>
+  </section>
+
+  <div class="footer-nav">
+    <a href="03-dev-environment-drive-modes.html">&larr; Lecture 3: Dev Environment &amp; Drive Modes</a>
+    <a href="index.html">Table of Contents</a>
+    <a href="05-tf2-frames-rviz.html">Lecture 5: TF2 &amp; RViz &rarr;</a>
+  </div>
+
+</div>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      background: '#f1efe8', primaryColor: '#eef0ff', primaryTextColor: '#211f1a',
+      primaryBorderColor: '#3d4bf5', lineColor: '#0e9e6e', secondaryColor: '#f1efe8',
+      tertiaryColor: '#fffefb', textColor: '#211f1a', fontFamily: 'Inter, -apple-system, sans-serif'
+    },
+    flowchart: { curve: 'basis' },
+    securityLevel: 'loose'
+  });
+</script>
+<script>
+(function(){
+  var btn = document.getElementById('theme-toggle');
+  var icon = document.getElementById('theme-toggle-icon');
+  function updateIcon(){
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    icon.textContent = isDark ? '☀️' : '🌙';
+  }
+  updateIcon();
+  btn.addEventListener('click', function(){
+    var cur = document.documentElement.getAttribute('data-theme');
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try{ localStorage.setItem('limo-book-theme', next); }catch(e){}
+    updateIcon();
+  });
+})();
+</script>
+<script src="annotate.js" defer></script>
+</body>
+</html>

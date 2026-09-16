@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<script>
+(function(){
+  try{
+    var t = localStorage.getItem('limo-book-theme');
+    if(!t){ t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+    document.documentElement.setAttribute('data-theme', t);
+  }catch(e){}
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 9 — Odometry, Sensor Fusion (EKF) &amp; AMCL Localization</title>
+<meta name="description" content="From drifting wheel odometry to a Kalman-fused estimate, to knowing exactly where LIMO is on a known map: noisy_odometry.py, laser scan matching, IMU fusion, robot_localization's EKF, and AMCL's particle filter, all in one extended lab.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<style>
+  :root{
+    --bg:#f6f4ef; --panel:#fffefb; --panel2:#f1efe8; --border:#e6e1d6;
+    --text:#211f1a; --muted:#7a7568; --accent:#3d4bf5; --accent-ink:#2732b8;
+    --accent2:#0e9e6e; --gold:#c8862c; --danger:#d64a3c; --purple:#8b5cf6; --radius:14px;
+  }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--bg); color:var(--text); font-family:'Inter', -apple-system, sans-serif; line-height:1.85; font-size:17.5px; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:880px; margin:0 auto; padding:48px 24px 120px;}
+  .cover{border-radius:28px; background:#12142b; padding:64px 44px; margin-bottom:56px; position:relative; overflow:hidden; isolation:isolate;}
+  .cover::before{content:""; position:absolute; inset:-40%; background:
+      radial-gradient(38% 45% at 15% 20%, rgba(61,75,245,0.55), transparent 70%),
+      radial-gradient(35% 40% at 85% 15%, rgba(139,92,246,0.45), transparent 70%),
+      radial-gradient(45% 50% at 60% 90%, rgba(14,158,110,0.35), transparent 70%);
+    filter:blur(60px); z-index:0;}
+  .cover::after{content:""; position:absolute; inset:0; background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px); background-size: 20px 20px; z-index:0;}
+  .cover > *{position:relative; z-index:1;}
+  .kicker{display:inline-block; color:#c9cdff; font-weight:600; letter-spacing:.4px; font-size:13px; margin-bottom:18px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); padding:6px 14px; border-radius:999px;}
+  .cover h1{font-size:2.7em; margin:0 0 12px; font-weight:800; line-height:1.3; color:#ffffff; letter-spacing:-.5px;}
+  .cover .subtitle{color:#aeb2d6; font-size:1.2em; margin-bottom:30px; font-weight:400;}
+  .meta-row{display:flex; flex-wrap:wrap; gap:10px; margin-top:18px;}
+  .chip{background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.14); color:#d4d7f0; padding:7px 15px; border-radius:999px; font-size:.83em;}
+  h2{font-size:1.9em; font-weight:800; margin:72px 0 22px; display:flex; align-items:center; gap:14px; letter-spacing:-.3px;}
+  h2 .num{display:inline-flex; align-items:center; justify-content:center; min-width:40px; height:40px; padding:0 12px; border-radius:12px; background:var(--accent); box-shadow:0 6px 16px -4px rgba(61,75,245,0.5); color:#ffffff; font-size:.62em; font-weight:800; flex-shrink:0; white-space:nowrap;}
+  h3{font-size:1.3em; font-weight:700; margin:36px 0 14px; color:var(--accent-ink); letter-spacing:-.2px;}
+  h4{font-size:1.08em; font-weight:700; margin:24px 0 10px; color:var(--purple);}
+  p{margin:0 0 16px; color:#3c382f;}
+  strong{color:var(--text); font-weight:700;}
+  a{color:var(--accent);}
+  .box{border-radius:16px; padding:20px 24px; margin:22px 0; border:1px solid var(--border); background:var(--panel); position:relative; box-shadow:0 1px 2px rgba(33,31,26,0.03);}
+  .box-title{font-weight:800; margin-bottom:9px; display:flex; align-items:center; gap:8px; font-size:.96em; letter-spacing:.1px;}
+  .box p:last-child{margin-bottom:0;}
+  .box.idea{background:#eef0ff;border-color:#d6dafc;} .box.idea .box-title{color:var(--accent-ink);}
+  .box.mistake{background:#fdeeec; border-color:#f6d2cd;} .box.mistake .box-title{color:var(--danger);}
+  .box.eng{background:#f4effe; border-color:#e2d6fb;} .box.eng .box-title{color:var(--purple);}
+  .box.real{background:#eafaf3; border-color:#c9eeda;} .box.real .box-title{color:var(--accent2);}
+  .box.def{background:#fdf3e4; border-color:#f2ddb3;} .box.def .box-title{color:var(--gold);}
+  .box.hw{background:#fdeee4; border-color:#f2c9a3;} .box.hw .box-title{color:#c8622c;}
+  .box.think{background:#eafcfb; border-color:#bfeae6;} .box.think .box-title{color:#0e8a7d;}
+  code, pre{font-family:'JetBrains Mono', monospace; direction:ltr; text-align:left;}
+  code{background:#eceaf9; border:1px solid #dcdaf3; border-radius:6px; padding:2px 7px; font-size:.87em; color:var(--accent-ink); display:inline-block;}
+  pre{background:#181a2e; border-radius:16px; padding:18px 20px; overflow-x:auto; margin:18px 0; font-size:.88em; line-height:1.65; box-shadow:0 12px 28px -16px rgba(24,26,46,0.5);}
+  pre code{background:none; border:none; padding:0; color:#d8dcff; display:block;}
+  table{width:100%; border-collapse:separate; border-spacing:0; margin:22px 0; font-size:.92em; border-radius:14px; overflow:hidden; border:1px solid var(--border);}
+  th, td{border-bottom:1px solid var(--border); padding:12px 15px; text-align:left;}
+  th{background:#eceaf9; color:var(--accent-ink); font-weight:700; font-size:.9em;}
+  tr:last-child td{border-bottom:none;}
+  tr:nth-child(even) td{background:rgba(33,31,26,0.02);}
+  ul, ol{margin:0 0 16px; padding-inline-start:26px; color:#3c382f;}
+  li{margin-bottom:7px;}
+  .figure{margin:28px 0; text-align:center;}
+  .figure img, .figure svg{max-width:100%; height:auto; background:#fffefb; border:1px solid var(--border); border-radius:16px; box-shadow:0 1px 2px rgba(33,31,26,0.03), 0 16px 32px -20px rgba(33,31,26,0.14);}
+  .figure figcaption{color:var(--muted); font-size:.87em; margin-top:12px;}
+  .mermaid{background:#fffefb; border:1px solid var(--border); border-radius:16px; padding:18px; margin:24px 0; text-align:center; box-shadow:0 1px 2px rgba(33,31,26,0.03), 0 16px 32px -20px rgba(33,31,26,0.14);}
+  .checkpoint{border-radius:16px; padding:22px 24px; margin:26px 0; background:#eafaf3; border:1px solid #c9eeda;}
+  .checkpoint ul{list-style:none; padding:0; margin:0;}
+  .checkpoint li{padding:9px 0; border-bottom:1px solid rgba(33,31,26,0.06); display:flex; gap:10px; align-items:flex-start;}
+  .checkpoint li:last-child{border-bottom:none;}
+  .checkpoint li::before{content:"◻"; color:var(--accent2); font-size:1.2em; line-height:1;}
+  .exercise{border-radius:14px; padding:18px 22px; margin:16px 0; background:var(--panel); border:1px solid var(--border); border-inline-start:4px solid var(--gold);}
+  .exercise .level{font-size:.76em; color:var(--gold); font-weight:800; text-transform:uppercase; letter-spacing:.6px;}
+  .assignment{border-radius:14px; padding:18px 22px; margin:16px 0; background:var(--panel); border:1px solid var(--border); border-inline-start:4px solid var(--accent2);}
+  .assignment .label{font-size:.76em; color:var(--accent2); font-weight:800; text-transform:uppercase; letter-spacing:.6px;}
+  .glossary dt{font-weight:800; color:var(--accent-ink); margin-top:16px;}
+  .glossary dd{margin:4px 0 0; color:var(--muted);}
+  .toc{background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:26px 30px;}
+  .toc a{display:block; padding:8px 0; color:#3c382f; text-decoration:none; border-bottom:1px solid rgba(33,31,26,.06); transition:color .15s;}
+  .toc a:last-child{border-bottom:none;}
+  .toc a:hover{color:var(--accent-ink);}
+  .toc a span{color:var(--muted); font-size:.85em; margin-inline-end:10px; font-weight:600;}
+  .divider{height:1px; background:linear-gradient(90deg, transparent, var(--border), transparent); margin:52px 0;}
+  .footer-nav{display:flex; justify-content:space-between; align-items:center; gap:16px; margin-top:64px; padding-top:26px; border-top:1px solid var(--border); color:var(--muted); font-size:.9em;}
+  .footer-nav a{color:var(--text); text-decoration:none; font-weight:600;}
+  .footer-nav a:hover{color:var(--accent-ink);}
+  .badge-project{display:inline-block; background:#fdf3e4; border:1px solid #f2ddb3; color:var(--gold); border-radius:8px; padding:3px 11px; font-size:.78em; font-weight:700;}
+  .term{background:#181a2e; border-radius:16px; overflow:hidden; margin:22px 0; box-shadow:0 12px 28px -16px rgba(24,26,46,0.5);}
+  .term-bar{display:flex; align-items:center; gap:7px; padding:12px 16px; background:#20223a;}
+  .term-dot{width:11px; height:11px; border-radius:50%;}
+  .term-body{padding:16px 20px; font-family:'JetBrains Mono', monospace; direction:ltr; text-align:left; font-size:.87em; line-height:1.75; color:#d8dcff; white-space:pre-wrap;}
+  .term-prompt{color:#7ee7c7;}
+  .term-out{color:#9aa0c8;}
+  @media print{ body{background:#fff; color:#000;} }
+  html[data-theme="dark"]{
+    --bg:#12141c; --panel:#1b1e2a; --panel2:#20232f; --border:#2d3142;
+    --text:#e7e8f2; --muted:#9498b3; --accent:#7c86ff; --accent-ink:#aab1ff;
+    --accent2:#34d399; --gold:#e3a548; --danger:#f0685a; --purple:#a78bfa; --radius:14px;
+  }
+  html[data-theme="dark"] p, html[data-theme="dark"] ul, html[data-theme="dark"] ol, html[data-theme="dark"] .toc a{color:#c7c9dc;}
+  html[data-theme="dark"] code{background:#262a45; border-color:#3a3f5c;}
+  html[data-theme="dark"] th{background:#262a45;}
+  html[data-theme="dark"] tr:nth-child(even) td{background:rgba(255,255,255,0.03);}
+  html[data-theme="dark"] .box.idea{background:#1f2242; border-color:#383d6b;}
+  html[data-theme="dark"] .box.mistake{background:#3a2220; border-color:#5c332e;}
+  html[data-theme="dark"] .box.eng{background:#2a2340; border-color:#453a63;}
+  html[data-theme="dark"] .box.real{background:#16302a; border-color:#1f4a3d;}
+  html[data-theme="dark"] .box.def{background:#3a2f18; border-color:#5c4826;}
+  html[data-theme="dark"] .box.hw{background:#3a2618; border-color:#5c3f26;}
+  html[data-theme="dark"] .box.think{background:#0f2e2c; border-color:#1d4a45;}
+  html[data-theme="dark"] .checkpoint{background:#16302a; border-color:#1f4a3d;}
+  html[data-theme="dark"] .checkpoint li{border-bottom-color:rgba(255,255,255,0.08);}
+  html[data-theme="dark"] .badge-project{background:#3a2f18; border-color:#5c4826;}
+  html[data-theme="dark"] .chapter-num{background:#1f2242;}
+  html[data-theme="dark"] .chapter-card{box-shadow:0 1px 2px rgba(0,0,0,0.25);}
+  html[data-theme="dark"] .chapter-card:hover{border-color:#454a7a; box-shadow:0 16px 32px -20px rgba(0,0,0,0.55);}
+  body, .box, .chapter-card, .exercise, .assignment, .checkpoint, .toc, table, code, th{transition:background-color .25s ease, border-color .25s ease, color .25s ease;}
+  #theme-toggle{position:fixed; top:18px; left:18px; z-index:999; width:46px; height:46px; border-radius:50%; border:1px solid var(--border); background:var(--panel); color:var(--text); font-size:19px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px -8px rgba(0,0,0,0.35); transition:transform .15s ease, background-color .25s ease, border-color .25s ease;}
+  #theme-toggle:hover{transform:scale(1.08);}
+  @media (max-width:640px){ #theme-toggle{top:12px; left:12px; width:42px; height:42px; font-size:17px;} }
+</style>
+<link rel="stylesheet" href="projector.css">
+</head>
+<body>
+<style>
+.coursenav{position:sticky;top:0;z-index:900;background:rgba(255,254,251,0.88);backdrop-filter:saturate(160%) blur(10px);border-bottom:1px solid var(--border);}
+.coursenav .inner{max-width:1000px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;padding:10px 20px 10px 74px;}
+.coursenav .brand{font-weight:800;color:var(--accent-ink);margin-inline-end:12px;font-size:.9em;letter-spacing:-.2px;}
+.coursenav a{color:#3c382f;text-decoration:none;font-weight:600;font-size:.82em;padding:6px 10px;border-radius:999px;transition:background-color .15s,color .15s;}
+.coursenav a:hover{background:#eef0ff;color:var(--accent-ink);}
+.coursenav a.active{background:var(--accent);color:#fff;}
+html[data-theme="dark"] .coursenav{background:rgba(27,30,42,0.9);}
+html[data-theme="dark"] .coursenav a{color:#c7c9dc;}
+html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
+@media print{.coursenav{display:none;}}
+</style>
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html">Home</a>
+  <a href="syllabus.html">Syllabus</a>
+  <a href="schedule.html">Schedule</a>
+  <a href="assignments.html">Assignments</a>
+  <a href="index.html#lectures" class="active">Lectures</a>
+</div></nav>
+<button id="theme-toggle" aria-label="Toggle light/dark mode" title="Light/dark mode">
+  <span id="theme-toggle-icon">🌙</span>
+</button>
+<div class="wrap">
+
+  <div class="cover">
+    <div class="kicker">LIMO Robotics &amp; ROS 2 Lecture &nbsp;·&nbsp; Session 9 of 14</div>
+    <h1>Lecture 9: Odometry, Sensor Fusion (EKF) &amp; AMCL Localization</h1>
+    <div class="subtitle">From raw wheel ticks and drifting odometry to a Kalman-fused estimate — and finally, knowing exactly where you are on the map</div>
+    <div class="meta-row">
+      <div class="chip">Duration: ~5 hours (extended lab session)</div>
+      <div class="chip">Prerequisite: Lecture 8</div>
+      <div class="chip">Focus: state estimation &amp; localization</div>
+    </div>
+  </div>
+
+  <div class="toc">
+    <strong style="color:var(--text)">In this session</strong>
+    <a href="#s1"><span>9.1</span>Why wheel odometry alone isn't enough</a>
+    <a href="#s2"><span>9.2</span>Making the problem realistic: noisy_odometry.py</a>
+    <a href="#s3"><span>9.3</span>A second independent estimate: laser scan matching</a>
+    <a href="#s4"><span>9.4</span>IMU as a third, complementary source</a>
+    <a href="#s5"><span>9.5</span>The Extended Kalman Filter, conceptually</a>
+    <a href="#s6"><span>9.6</span>robot_localization in practice</a>
+    <a href="#s7"><span>9.7</span>Seeing it work: comparing four trajectories</a>
+    <a href="#s8"><span>9.8</span>Exercises: tuning the fusion</a>
+    <a href="#s9"><span>9.9</span>From relative motion to a place on the map</a>
+    <a href="#s10"><span>9.10</span>Map format deep-dive: .pgm + .yaml</a>
+    <a href="#s11"><span>9.11</span>The particle filter, conceptually</a>
+    <a href="#s12"><span>9.12</span>AMCL's real parameters</a>
+    <a href="#s13"><span>9.13</span>Bringing AMCL up</a>
+    <a href="#s14"><span>9.14</span>Giving AMCL a starting guess</a>
+    <a href="#s15"><span>9.15</span>Live tuning with rqt_reconfigure</a>
+    <a href="#s16"><span>9.16</span>Stress-testing AMCL</a>
+    <a href="#s17"><span>9.17</span>Summary, checkpoint, assignment &amp; glossary</a>
+  </div>
+
+  <section id="s1">
+    <h2><span class="num">9.1</span>Why wheel odometry alone isn't enough</h2>
+    <p style="color:var(--muted); font-size:.95em;">
+      <em>A note on length: this session runs longer than the others because it deliberately absorbs what
+      used to be two separate 3-hour sessions — sensor fusion and AMCL localization are really two halves of
+      the same "where am I?" problem, and walking through them back-to-back is what makes the connection
+      between them click. That's intentional, not scope creep — but it's also completely fine to split this
+      into two lab meetings. Section 9.8 (end of the fusion half) is a natural break point before the
+      localization half begins in Section 9.9.</em>
+    </p>
+    <p>
+      Since Lecture 5 you've trusted the <code>odom → base_link</code> transform to tell RViz (and every
+      downstream node) where LIMO is. That transform is built entirely from <strong>wheel odometry</strong>:
+      encoder ticks converted to distance travelled, integrated over time into an (x, y, θ) pose. It's cheap,
+      fast, and updates at a high rate. It is also, on its own, not a source of ground truth — and
+      understanding exactly why is the foundation for everything else in this lecture.
+    </p>
+    <p>
+      Recall the encoder math from Lecture 9's hardware theory (now folded into Lecture 11's real-hardware
+      lab): distance per tick = 2πR / N, where R is the wheel radius and N is the number of ticks per
+      revolution. That formula already hints at the problem — it assumes the wheel's actual rolling contact
+      with the ground perfectly matches its commanded rotation. In the real world it never quite does:
+    </p>
+    <table>
+      <tr><th>Drift source</th><th>What happens</th></tr>
+      <tr><td>Wheel slip</td><td>The wheel spins (or skids) without the corresponding amount of true ground travel — common on smooth tile, loose gravel, or during sharp turns.</td></tr>
+      <tr><td>Encoder quantization</td><td>Ticks are discrete. A tick count of N per revolution means the smallest distance LIMO can "notice" is 2πR/N — anything smaller is silently rounded away, tick after tick.</td></tr>
+      <tr><td>Uneven terrain</td><td>Small bumps, floor transitions, or cable ramps change the effective rolling radius moment to moment, which the encoder math never accounts for.</td></tr>
+      <tr><td>Accumulated numerical error</td><td>Odometry is <em>dead reckoning</em> — each new pose is the old pose plus a small increment. Every increment carries a little error, and integration means those errors never cancel out; they accumulate.</td></tr>
+    </table>
+    <div class="box idea">
+      <div class="box-title">💡 The core framing</div>
+      <p>
+        Wheel odometry is <strong>locally smooth but not globally trustworthy forever</strong>. Over one
+        second it is excellent — practically noise-free. Over ten minutes of driving, the accumulated error
+        can be large enough that the "you are here" marker in RViz is meters away from reality, even though
+        the short-term motion still looks perfectly continuous. Error grows roughly with distance and time
+        travelled, not with a fixed ceiling.
+      </p>
+    </div>
+    <div class="figure">
+      <img src="images/wheel_odom_verify.png" alt="Verifying LIMO's raw wheel odometry trajectory against a known path">
+      <figcaption>Fig. 9.1 — Raw wheel odometry plotted against a known driven path. Short segments track well; the endpoint has visibly drifted.</figcaption>
+    </div>
+    <div class="figure">
+      <img src="images/odometry_motion model.png" alt="Differential-drive odometry motion model diagram">
+      <figcaption>Fig. 9.2 — The differential-drive motion model: left/right wheel distances combine into linear and angular displacement, which is then integrated into (x, y, θ).</figcaption>
+    </div>
+    <div class="box mistake">
+      <div class="box-title">⚠️ A trap students fall into</div>
+      <p>
+        "My odometry looked perfect in the 30-second demo, so it must be fine." Drift is a function of
+        distance and time, not a bug that shows up immediately. Always evaluate odometry quality over a run
+        long enough to actually see it, not just the first few seconds.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="s2">
+    <h2><span class="num">9.2</span>Making the problem realistic: <code>noisy_odometry.py</code></h2>
+    <p>
+      Here's an inconvenient truth about learning sensor fusion in simulation: Gazebo's default wheel
+      odometry plugin is often <strong>too clean</strong>. Running an EKF against a near-perfect signal
+      "fuses" it with an almost-as-good signal — a pipeline that runs without errors but never visibly earns
+      its keep, because there was barely any drift to correct in the first place.
+    </p>
+    <p>
+      This course's <code>example_codes</code> package includes <code>noisy_odometry.py</code> specifically
+      to fix that pedagogical gap. It subscribes to a clean simulated odometry topic, injects calibrated
+      Gaussian noise into the position and orientation fields, and republishes the result — deliberately
+      degrading a perfect signal into something that behaves like a real robot's wheel odometry: small
+      per-step errors that compound into visible long-run drift.
+    </p>
+    <div class="term">
+      <div class="term-bar"><div class="term-dot" style="background:#ff5f57;"></div><div class="term-dot" style="background:#febc2e;"></div><div class="term-dot" style="background:#28c840;"></div></div>
+      <div class="term-body"><span class="term-prompt">student@limo:~$</span> ros2 run example_codes noisy_odometry
+<span class="term-out">[INFO] [noisy_odometry]: Subscribed to /odom (clean)
+[INFO] [noisy_odometry]: Publishing noisy odometry on /odom/noisy
+[INFO] [noisy_odometry]: position noise sigma=0.02 m, yaw noise sigma=0.01 rad</span>
+<span class="term-prompt">student@limo:~$</span> ros2 topic hz /odom/noisy
+<span class="term-out">average rate: 30.021
+        min: 0.031s max: 0.035s std dev: 0.00092s window: 30</span></div>
+    </div>
+    <div class="box real">
+      <div class="box-title">🌍 Why this matters pedagogically</div>
+      <p>
+        You cannot appreciate what a filter is correcting if there's nothing meaningfully wrong to correct.
+        Injecting realistic Gaussian noise gives you an odometry source that behaves like a real LIMO on a
+        real floor, so that when you later see <code>/odometry/filtered</code> tracking closer to ground
+        truth than <code>/odom/noisy</code> did, the improvement is real and visible, not a rounding artifact.
+      </p>
+    </div>
+    <p>
+      From here on, treat <code>/odom/noisy</code> as "the wheel odometry LIMO would actually give you" —
+      it's the input the rest of this lecture's fusion pipeline is built to handle.
+    </p>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="s3">
+    <h2><span class="num">9.3</span>A second independent estimate: laser scan matching</h2>
+    <p>
+      If wheel odometry's weakness is that it never looks outside the robot's own wheels, the fix is to add
+      a source of motion estimation that doesn't touch the wheels at all. LIMO's 2D LiDAR gives us exactly
+      that, via <strong>laser scan matching</strong>: comparing two consecutive LiDAR scans and estimating
+      how much the robot must have moved and rotated to explain the difference between them.
+    </p>
+    <div class="box def">
+      <div class="box-title">📖 The ICP intuition</div>
+      <p>
+        Scan matching is conceptually similar to <strong>ICP (Iterative Closest Point)</strong>: take the
+        point cloud from scan <em>t</em>, take the point cloud from scan <em>t+1</em>, and search for the
+        rigid transform (translation + rotation) that best aligns one onto the other. Whatever transform
+        best explains the shift in the surrounding walls and obstacles <em>is</em> the estimated motion —
+        no wheels, no encoders, no ticks involved.
+      </p>
+    </div>
+    <p>This course uses the <code>ros2_laser_scan_matcher</code> package to run this in real time:</p>
+    <div class="term">
+      <div class="term-bar"><div class="term-dot" style="background:#ff5f57;"></div><div class="term-dot" style="background:#febc2e;"></div><div class="term-dot" style="background:#28c840;"></div></div>
+      <div class="term-body"><span class="term-prompt">student@limo:~$</span> ros2 run ros2_laser_scan_matcher laser_scan_matcher --ros-args -p publish_odom:=/odom/laser
+<span class="term-out">[INFO] [laser_scan_matcher]: Subscribing to /scan
+[INFO] [laser_scan_matcher]: Publishing scan-matched odometry on /odom/laser
+[INFO] [laser_scan_matcher]: Initial alignment found, tracking...</span></div>
+    </div>
+    <p>
+      Because this estimate comes from the environment's geometry rather than the drivetrain, it fails in a
+      completely different way than wheel odometry does — which is exactly why it's valuable as a second,
+      independent source.
+    </p>
+    <table>
+      <tr><th>Source</th><th>Fails when...</th></tr>
+      <tr><td>Wheel odometry</td><td>Wheels slip, terrain is uneven, or floor friction is inconsistent — the drivetrain doesn't reflect true motion.</td></tr>
+      <tr><td>Laser scan matching</td><td>The environment lacks geometric structure — a long straight corridor with featureless walls, or an open field with nothing in LiDAR range gives the matcher nothing to lock onto, so its alignment (and therefore its motion estimate) becomes unreliable.</td></tr>
+    </table>
+    <div class="box mistake">
+      <div class="box-title">⚠️ "It worked in the lab, why not here?"</div>
+      <p>
+        Scan matching that performs beautifully in a cluttered lab room can degrade sharply the moment LIMO
+        enters a long, empty, feature-poor hallway — there simply isn't enough distinguishing shape in
+        consecutive scans to align confidently. This is a real, expected failure mode, not a bug in the
+        matcher.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="s4">
+    <h2><span class="num">9.4</span>IMU as a third, complementary source</h2>
+    <p>
+      LIMO's onboard IMU adds a third perspective, and it is good at precisely the things wheel and laser
+      odometry are weakest at: very short-term, high-frequency motion. The IMU publishes at a high update
+      rate and its <code>angular_velocity</code> field is an excellent, low-latency measure of how fast the
+      robot is rotating right now — far more immediate than inferring rotation from wheel speed differences
+      or from comparing two whole LiDAR scans.
+    </p>
+    <div class="box eng">
+      <div class="box-title">🔧 What the IMU is NOT good for</div>
+      <p>
+        It is tempting to think "the IMU measures acceleration, so I can integrate acceleration twice and
+        get position." In practice this fails fast. <code>linear_acceleration</code> carries small bias and
+        noise, and double-integrating it into velocity and then position lets that bias compound
+        continuously — position estimates from raw IMU integration alone can drift wildly within seconds,
+        not minutes. The IMU is a complementary signal, never a standalone position source.
+      </p>
+    </div>
+    <table>
+      <tr><th>Source</th><th>Best at</th><th>Weak at</th></tr>
+      <tr><td>Wheel odometry</td><td>Steady, continuous short-term position/velocity</td><td>Long-run drift from slip and terrain</td></tr>
+      <tr><td>Laser scan matching</td><td>Environment-referenced motion, immune to wheel slip</td><td>Featureless/open environments</td></tr>
+      <tr><td>IMU</td><td>High-rate, low-latency rotation and short-term dynamics</td><td>Integrating linear acceleration into position over any real duration</td></tr>
+    </table>
+    <p>
+      None of these three is trustworthy alone across the full range of conditions LIMO will encounter. That
+      is exactly the setup sensor fusion exists to solve.
+    </p>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="s5">
+    <h2><span class="num">9.5</span>The Extended Kalman Filter, conceptually</h2>
+    <p>
+      An <strong>Extended Kalman Filter (EKF)</strong> is a recursive algorithm that maintains a running
+      best estimate of the robot's state — typically <code>x</code>, <code>y</code>, <code>θ</code> (and
+      often their velocities) — and continuously improves that estimate as new measurements arrive. It runs
+      in a tight two-step loop, forever, at whatever rate you configure it to run at.
+    </p>
+    <div class="mermaid">
+flowchart LR
+    S["Current state estimate<br/>x, y, θ (+ uncertainty)"] --> P["PREDICT<br/>propagate with motion model<br/>uncertainty grows"]
+    P --> U["UPDATE<br/>correct with new measurement<br/>(wheel odom / laser odom / IMU)<br/>uncertainty shrinks"]
+    U --> S
+    U --> O["/odometry/filtered"]
+    style P fill:#eef0ff,stroke:#3d4bf5,color:#211f1a,font-weight:bold
+    style U fill:#eafaf3,stroke:#0e9e6e,color:#211f1a,font-weight:bold
+    style O fill:#fdf3e4,stroke:#c8862c,color:#211f1a
+    </div>
+    <ul>
+      <li><strong>Predict:</strong> using the motion model, the filter propagates the current state estimate
+        forward in time — "given the last known state and velocity, where should the robot be now?" Because
+        no new measurement has been consulted yet, uncertainty (covariance) grows during this step.</li>
+      <li><strong>Update:</strong> when a measurement arrives from one of the fused sources (wheel odom,
+        laser odom, or IMU), the filter compares the prediction to that measurement and pulls the estimate
+        toward it — weighted by how much that source is trusted (its covariance). Uncertainty shrinks during
+        this step.</li>
+    </ul>
+    <div class="box def">
+      <div class="box-title">📖 Why "Extended"?</div>
+      <p>
+        A plain, linear Kalman Filter assumes the motion model is a straightforward linear equation. A mobile
+        robot's motion model is not linear — updating heading involves <code>sin(θ)</code> and
+        <code>cos(θ)</code> terms, since moving "forward" points in a different world-frame direction
+        depending on current heading. The EKF handles this by <strong>linearizing</strong> the nonlinear
+        model around the current state estimate at every single predict step, then applying standard
+        Kalman-Filter math to that local linear approximation. That's the "Extended" in Extended Kalman
+        Filter.
+      </p>
+    </div>
+    <div class="box idea">
+      <div class="box-title">💡 The intuition to keep</div>
+      <p>
+        Think of predict/update as "guess, then get corrected, then guess again." Between measurements, the
+        filter's confidence erodes a little (predict). The instant a new measurement lands, confidence
+        snaps back up in proportion to how much that source is trusted (update). A source you've told the
+        filter to distrust barely nudges the estimate; a source you've told it to trust heavily can pull the
+        estimate substantially. This weighting is exactly what the covariance settings in the next section
+        control.
+      </p>
+    </div>
+    <div class="box think">
+      <div class="box-title">🤔 Think About It</div>
+      <p>
+        An EKF fuses estimates using a <em>motion model</em> that predicts where the robot should be before
+        any sensor reading arrives. What actually happens to the fused estimate if that motion model itself
+        is wrong — say, it assumes LIMO always drives in perfect straight lines and arcs, but a real wheel is
+        slipping? Does the filter fail loudly, or something worse?
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="s6">
+    <h2><span class="num">9.6</span><code>robot_localization</code> in practice</h2>
+    <p>
+      <code>robot_localization</code> is the standard, battle-tested ROS 2 implementation of the EKF loop
+      just described. It's not part of a default ROS 2 install, so the first step is building it from source
+      alongside your workspace:
+    </p>
+    <div class="term">
+      <div class="term-bar"><div class="term-dot" style="background:#ff5f57;"></div><div class="term-dot" style="background:#febc2e;"></div><div class="term-dot" style="background:#28c840;"></div></div>
+      <div class="term-body"><span class="term-prompt">student@limo:~/limo_ws/src$</span> git clone -b humble-devel https://github.com/cra-ros-pkg/robot_localization.git
+<span class="term-prompt">student@limo:~/limo_ws$</span> colcon build --packages-select robot_localization
+<span class="term-out">Starting >>> robot_localization
+Finished <<< robot_localization [42.6s]
+Summary: 1 package finished [43.1s]</span>
+<span class="term-prompt">student@limo:~/limo_ws$</span> source install/setup.bash
+<span class="term-prompt">student@limo:~/limo_ws$</span> ros2 launch robot_localization ekf.launch.py</span></div>
+    </div>
+    <p>
+      What the EKF actually fuses, and how much it trusts each input, is entirely defined in a config file —
+      this course's version is <code>ekf_limo.yaml</code>. Each odometry/IMU source gets its own entry, and
+      the key idea is a <strong>fusion mask</strong>: a set of booleans, one per state variable, saying which
+      fields <em>that particular source</em> is allowed to contribute to the fused estimate.
+    </p>
+    <pre><code># ekf_limo.yaml (excerpt)
+ekf_filter_node:
+  ros__parameters:
+    use_sim_time: true
+    frequency: 30.0
+    two_d_mode: true
+    publish_tf: true
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_link
+    world_frame: odom
+
+    odom0: /odom/noisy
+    odom0_config: [true,  true,  false,
+                   false, false, true,
+                   false, false, false,
+                   false, false, false,
+                   false, false, false]
+
+    odom1: /odom/laser
+    odom1_config: [true,  true,  false,
+                   false, false, true,
+                   false, false, false,
+                   false, false, false,
+                   false, false, false]
+
+    imu0: /imu/data
+    imu0_config: [false, false, false,
+                  false, false, false,
+                  false, false, false,
+                  false, false, true,
+                  false, false, false]
+    imu0_remove_gravitational_acceleration: true</code></pre>
+    <div class="box def">
+      <div class="box-title">📖 Reading the fusion mask</div>
+      <p>
+        Every <code>_config</code> array has fifteen entries, in fixed order:
+        <code>x, y, z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az</code>.
+        <code>true</code> means "this source is allowed to contribute to this state field." In the excerpt
+        above, wheel odometry (<code>odom0</code>) and laser-matched odometry (<code>odom1</code>) both
+        contribute <code>x</code>, <code>y</code>, and <code>yaw</code> — but the IMU (<code>imu0</code>)
+        contributes only <code>vyaw</code> (fine-grained yaw <em>rate</em>), not position and not even the
+        absolute yaw angle. That's a deliberate design choice: the IMU is the best source in this fleet for
+        instantaneous rotational rate, so that's the one field it's trusted with, while position stays the
+        job of the two odometry sources.
+      </p>
+    </div>
+    <div class="box eng">
+      <div class="box-title">🔧 imu0_remove_gravitational_acceleration</div>
+      <p>
+        Even a perfectly stationary IMU still measures Earth's gravity along its vertical axis. Leaving this
+        flag off makes the filter believe the robot is constantly accelerating — a classic cause of a
+        parked LIMO slowly "drifting" in RViz for no apparent reason. Set it <code>true</code> whenever you
+        fuse raw IMU acceleration.
+      </p>
+    </div>
+    <p>The fused output is published on a single, standard topic:</p>
+    <div class="term">
+      <div class="term-bar"><div class="term-dot" style="background:#ff5f57;"></div><div class="term-dot" style="background:#febc2e;"></div><div class="term-dot" style="background:#28c840;"></div></div>
+      <div class="term-body"><span class="term-prompt">student@limo:~$</span> ros2 topic echo /odometry/filtered --once
+<span class="term-out">pose:
+  pose:
+    position: {x: 2.014, y: 0.087, z: 0.0}
+    orientation: {z: 0.041, w: 0.999}
+  covariance: [0.0021, 0, 0, ...]
+twist:
+  twist:
+    linear: {x: 0.28, y: 0.0, z: 0.0}
+    angular: {z: 0.015}</span></div>
+    </div>
+    <div class="figure">
+      <img src="images/ekf_rosgraph.png" alt="ROS 2 node graph showing ekf_filter_node subscribing to multiple odometry and IMU topics">
+      <figcaption>Fig. 9.3 — rqt_graph view of <code>ekf_filter_node</code> subscribing to <code>/odom/noisy</code>, <code>/odom/laser</code>, and <code>/imu/data</code>, publishing <code>/odometry/filtered</code> and the <code>odom → base_link</code> transform.</figcaption>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="s7">
+    <h2><span class="num">9.7</span>Seeing it work: comparing four trajectories</h2>
+    <p>
+      Configuration on paper is not proof. The real payoff of this lecture is watching all four estimates
+      of LIMO's motion — raw wheel odometry, the noisy version, laser-matched odometry, and the EKF-fused
+      output — plotted on top of each other while LIMO drives a real path.
+    </p>
+    <p>Drive a clean, repeatable test loop. A GUI is often easier than keyboard teleop for this:</p>
+    <div class="term">
+      <div class="term-bar"><div class="term-dot" style="background:#ff5f57;"></div><div class="term-dot" style="background:#febc2e;"></div><div class="term-dot" style="background:#28c840;"></div></div>
+      <div class="term-body"><span class="term-prompt">student@limo:~$</span> ros2 run rqt_robot_steering rqt_robot_steering
+<span class="term-out">[INFO] rqt_robot_steering: publishing to /cmd_vel</span></div>
+    </div>
+    <p>While driving, launch PlotJuggler to subscribe to all four odometry topics simultaneously:</p>
+    <div class="term">
+      <div class="term-bar"><div class="term-dot" style="background:#ff5f57;"></div><div class="term-dot" style="background:#febc2e;"></div><div class="term-dot" style="background:#28c840;"></div></div>
+      <div class="term-body"><span class="term-prompt">student@limo:~$</span> ros2 run plotjuggler plotjuggler
+<span class="term-out">[INFO] PlotJuggler: waiting for topic subscriptions...</span></div>
+    </div>
+    <div class="figure">
+      <img src="images/juggler.png" alt="PlotJuggler main window with ROS 2 topics loaded">
+      <figcaption>Fig. 9.4 — PlotJuggler's main window after connecting to the running ROS 2 session.</figcaption>
+    </div>
+    <div class="figure">
+      <img src="images/juggler_topics.png" alt="PlotJuggler topic subscription list showing four odometry sources">
+      <figcaption>Fig. 9.5 — Subscribing to <code>/odom</code>, <code>/odom/noisy</code>, <code>/odom/laser</code>, and <code>/odometry/filtered</code> together.</figcaption>
+    </div>
+    <p>
+      Drag each source's <code>pose.pose.position.x</code> against <code>position.y</code> into an XY plot
+      to overlay all four trajectories on the same axes:
+    </p>
+    <div class="figure">
+      <img src="images/juggler_xy_plot.png" alt="PlotJuggler XY plot overlaying four odometry trajectories">
+      <figcaption>Fig. 9.6 — Overlaid XY trajectories: noisy wheel odometry visibly wanders off the driven path, laser-matched odometry stays closer to it, and the EKF-fused trajectory tracks the true path most closely.</figcaption>
+    </div>
+    <div class="figure">
+      <img src="images/ekf_plot.png" alt="Time-series plot comparing EKF fused output covariance shrinking over successive updates">
+      <figcaption>Fig. 9.7 — Covariance on <code>/odometry/filtered</code> over time: it dips each time a trusted measurement arrives, then creeps back up during predict-only intervals.</figcaption>
+    </div>
+    <div class="box real">
+      <div class="box-title">🌍 What you should actually see</div>
+      <p>
+        On a loop that returns LIMO to its starting point, raw <code>/odom/noisy</code> typically ends
+        several centimeters to tens of centimeters off from the true start. <code>/odom/laser</code>, in a
+        feature-rich room, tracks much closer to the true path but may wobble in open stretches.
+        <code>/odometry/filtered</code> should end up closest of all to the true starting point — visible,
+        measurable proof that the fusion is doing real work, not just relabeling one of the inputs.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="s8">
+    <h2><span class="num">9.8</span>Exercises: tuning the fusion</h2>
+    <div class="exercise">
+      <div class="level">Easy</div>
+      <p>Run <code>noisy_odometry.py</code> and <code>ros2 topic echo /odom/noisy</code> side by side with the clean <code>/odom</code> topic. Drive LIMO in a straight line for 5 seconds and compare the reported <code>x</code> position between the two — note how small the difference is at first.</p>
+    </div>
+    <div class="exercise">
+      <div class="level">Intermediate</div>
+      <p>Edit <code>ekf_limo.yaml</code> to also let <code>imu0</code> contribute absolute <code>yaw</code> (not just <code>vyaw</code>) at the same time <code>odom0</code> already does. Relaunch the EKF, drive a loop, and see whether <code>/odometry/filtered</code>'s heading becomes noticeably jumpier — this demonstrates the "two authorities, one field" mistake from Section 9.17's common mistakes.</p>
+    </div>
+    <div class="exercise">
+      <div class="level">Harder</div>
+      <p>Drive LIMO down a long, feature-poor corridor (or a stretch of simulated open field) with <code>ros2_laser_scan_matcher</code> running. Overlay <code>/odom/laser</code> against <code>/odometry/filtered</code> in PlotJuggler and identify the point where the laser-matched trajectory starts to diverge from the fused (and true) path. Then explain, in your own words, why the EKF's fusion mask protects the overall estimate even when one input source is failing.</p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="s9">
+    <h2><span class="num">9.9</span>From relative motion to a place on the map</h2>
+    <p>
+      Everything so far in this lecture tells the robot how far it has moved <em>relative to where it
+      started</em>. None of it tells the robot where it actually is inside a building. If you carried LIMO
+      across the room while it was powered off, its odometry would swear it never moved — fused or not.
+    </p>
+    <p>
+      The rest of this session assumes you already have a <strong>map</strong> — a picture of the room the
+      robot operates in, built ahead of time. Given that map and a live laser scan, how does the robot
+      figure out which point on the map it is currently standing at, and which way it is facing? That is the
+      <strong>localization problem</strong>, and the tool that solves it in Nav2 is <strong>AMCL —
+      Adaptive Monte Carlo Localization</strong>.
+    </p>
+    <div class="box idea">
+      <div class="box-title">🧠 Why localization comes before SLAM</div>
+      <p>
+        You might expect a course to teach map-<em>building</em> (SLAM) before map-<em>using</em>
+        (localization). We deliberately flip that order. Localizing on a map that already exists is a
+        strictly easier problem than SLAM: SLAM has to solve "where am I?" and "what does the world look
+        like?" <em>simultaneously</em>, each one feeding uncertainty into the other. AMCL only has to solve
+        the first question, because the map is a known, fixed, trusted quantity. Learning to reason about
+        pose estimation in isolation — with the hardest variable held constant — builds the intuition you'll
+        need to understand why SLAM (Lecture 10) is harder.
+      </p>
+    </div>
+    <p>
+      For the labs in this section we'll assume a map called <code>limo_room.yaml</code> /
+      <code>limo_room.pgm</code> already exists — either one supplied with the course materials, or one
+      you'll build in Lecture 10 and reuse here afterward. The pipeline itself does not care how the map
+      was made.
+    </p>
+    <table>
+      <tr><th>Question</th><th>Answered by</th></tr>
+      <tr><td>What does the room look like?</td><td><code>map_server</code>, reading a saved <code>.pgm</code>/<code>.yaml</code> pair</td></tr>
+      <tr><td>Where is the robot on that map, right now?</td><td><code>amcl</code>, fusing <code>/scan</code> against the map</td></tr>
+      <tr><td>How was the map built in the first place?</td><td>SLAM — Lecture 10</td></tr>
+    </table>
+    <div class="box def">
+      <div class="box-title">📖 Where AMCL's output goes</div>
+      <p>
+        AMCL continuously publishes the transform from the <code>map</code> frame to the <code>odom</code>
+        frame. Combined with the EKF's already-continuous <code>odom → base_link</code> transform from
+        earlier in this lecture, this completes the full TF chain <code>map → odom → base_link</code> —
+        the exact chain Nav2's planner and costmaps depend on in Lecture 10.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="s10">
+    <h2><span class="num">9.10</span>Map format deep-dive: .pgm + .yaml</h2>
+    <p>
+      A ROS 2 map is stored as two files that must sit side by side and share a base name:
+    </p>
+    <ul>
+      <li><strong><code>limo_room.pgm</code></strong> — a grayscale image (Portable Gray Map format) that IS the occupancy grid.
+        Each pixel is one grid cell.</li>
+      <li><strong><code>limo_room.yaml</code></strong> — metadata that tells <code>map_server</code> how to interpret the image.</li>
+    </ul>
+    <h3>Occupancy grid pixel semantics</h3>
+    <table>
+      <tr><th>Pixel shade</th><th>Meaning</th></tr>
+      <tr><td>White</td><td>Free space — the robot may travel here</td></tr>
+      <tr><td>Black</td><td>Occupied — a wall or obstacle was observed here</td></tr>
+      <tr><td>Gray</td><td>Unknown — never observed; no claim is made either way</td></tr>
+    </table>
+    <p>Here is a representative <code>limo_room.yaml</code>:</p>
+    <pre><code>image: limo_room.pgm
+resolution: 0.05
+origin: [-5.20, -4.80, 0.0]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.25</code></pre>
+    <table>
+      <tr><th>Field</th><th>Meaning</th></tr>
+      <tr><td><code>image</code></td><td>Filename of the paired .pgm, relative to the .yaml</td></tr>
+      <tr><td><code>resolution</code></td><td>Meters per pixel — <code>0.05</code> means each pixel covers a 5 cm × 5 cm patch of floor</td></tr>
+      <tr><td><code>origin</code></td><td><code>[x, y, theta]</code> — the map-frame pose of the image's <strong>bottom-left</strong> pixel</td></tr>
+      <tr><td><code>negate</code></td><td>If <code>1</code>, inverts the black/white meaning (rare — most maps leave this at <code>0</code>)</td></tr>
+      <tr><td><code>occupied_thresh</code></td><td>Pixels darker than this (as a 0-1 occupancy probability) are classified occupied</td></tr>
+      <tr><td><code>free_thresh</code></td><td>Pixels lighter than this are classified free; anything between the two thresholds is unknown</td></tr>
+    </table>
+    <div class="box eng">
+      <div class="box-title">🔧 Why two thresholds, not one</div>
+      <p>
+        A single cutoff would force every pixel to be labeled free or occupied, wiping out the "unknown"
+        category. Real maps always have unmapped territory — the far side of a door that was never opened
+        during mapping, say. The gap between <code>free_thresh</code> and <code>occupied_thresh</code> is
+        exactly that gray zone, and AMCL treats unknown cells differently from confirmed free space when
+        scoring particles against the map.
+      </p>
+    </div>
+    <div class="figure">
+      <img src="./images/rviz_map.png" alt="A LIMO room map loaded in RViz2, showing white free space, black walls, and gray unknown regions">
+      <figcaption>A <code>limo_room</code> map loaded via <code>map_server</code> and viewed in RViz2 — white corridors, black walls, gray unmapped fringe.</figcaption>
+    </div>
+    <div class="box mistake">
+      <div class="box-title">⚠️ Resolution mismatch is a silent killer</div>
+      <p>
+        If you hand-edit a <code>.yaml</code> file and get <code>resolution</code> wrong relative to the
+        actual <code>.pgm</code> pixel grid, every distance on the map is silently scaled. The map will
+        <em>load</em> without any error — RViz will just show a room that is the wrong physical size, and
+        AMCL's particle weighting against real laser ranges will never converge cleanly. Always leave
+        <code>resolution</code> exactly as SLAM wrote it unless you know precisely why you're changing it.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="s11">
+    <h2><span class="num">9.11</span>The particle filter, conceptually</h2>
+    <p>
+      AMCL stands for <strong>Adaptive Monte Carlo Localization</strong>. "Monte Carlo" is a hint that this
+      algorithm works by random sampling rather than by solving an equation directly. Instead of computing
+      one single "best guess" pose, AMCL maintains a whole <strong>population of guesses</strong> — a cloud
+      of <strong>particles</strong>, where each particle is a complete hypothesis: "the robot might be at
+      this exact (x, y, θ)."
+    </p>
+    <div class="box idea">
+      <div class="box-title">🧠 An intuitive analogy: a room full of guessers</div>
+      <p>
+        Imagine 300 people scattered around a floor plan of the building, each one guessing "I bet the robot
+        is standing right here, facing this way." Each guesser hears the robot's wheels turn (odometry) and
+        shuffles their guess accordingly — but nobody's ears are perfect, so they each shuffle a slightly
+        different amount. Then everyone looks at what the robot's laser scanner actually reported and asks
+        themselves: "if I were really standing where I guessed, would my walls line up with what the laser
+        just saw?" People whose guess matches the scan well shout loudly; people whose guess makes no sense
+        against the walls go quiet. Now we ask the quiet guessers to sit down and let the loud guessers spawn
+        new guessers near themselves. Repeat this hundreds of times per second, and the crowd — initially
+        scattered everywhere — clumps tighter and tighter around the true position.
+      </p>
+    </div>
+    <p>That crowd behavior is exactly AMCL's three-step cycle, run every time a new laser scan arrives:</p>
+    <div class="mermaid">
+flowchart LR
+    A["1. PREDICT<br/>move every particle by<br/>the odometry motion,<br/>plus injected noise"] --> B["2. WEIGHT<br/>score each particle:<br/>does /scan match what THIS<br/>pose would expect to see?"]
+    B --> C["3. RESAMPLE<br/>keep high-weight particles,<br/>discard low-weight ones"]
+    C -->|next /scan arrives| A
+    style A fill:#eef0ff,stroke:#3d4bf5
+    style B fill:#f4effe,stroke:#8b5cf6
+    style C fill:#eafaf3,stroke:#0e9e6e
+    </div>
+    <table>
+      <tr><th>Step</th><th>What happens</th><th>Why</th></tr>
+      <tr>
+        <td><strong>Predict</strong></td>
+        <td>Every particle is nudged by the same odometry delta the EKF reported, then jittered with random noise</td>
+        <td>Odometry is never exact — the noise spreads the cloud to represent that uncertainty honestly. A big, uncertain
+          motion (e.g. a fast spin) spreads particles more than a small, confident one.</td>
+      </tr>
+      <tr>
+        <td><strong>Weight</strong></td>
+        <td>For each particle's hypothesized pose, AMCL predicts what the laser <em>should</em> see against the stored map, and
+          compares that prediction to the real <code>/scan</code> message</td>
+        <td>A particle sitting where the real scan makes no sense (e.g. "hypothesized" wall 2 m away, but the real laser sees a
+          wall 20 cm away) gets a low score. A particle whose predicted walls line up with reality gets a high score.</td>
+      </tr>
+      <tr>
+        <td><strong>Resample</strong></td>
+        <td>Particles are redrawn probabilistically in proportion to their weight — high-weight particles get duplicated,
+          low-weight ones vanish</td>
+        <td>Over many cycles the population concentrates on the poses that keep matching sensor evidence, and the "wrong"
+          hypotheses starve out.</td>
+      </tr>
+    </table>
+    <div class="box def">
+      <div class="box-title">📖 Why "Adaptive"</div>
+      <p>
+        Plain Monte Carlo localization uses a fixed particle count. AMCL is <em>adaptive</em>: it lets the population size
+        grow and shrink between a configured minimum and maximum, based on how spread out (uncertain) the current belief is. A
+        confused robot right after startup needs many particles to cover a wide hypothesis space; a robot that has converged
+        tightly around one pose doesn't need to keep spending CPU on hundreds of near-duplicate guesses.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="s12">
+    <h2><span class="num">9.12</span>AMCL's real parameters</h2>
+    <p>
+      Everything AMCL does is governed by a YAML block loaded at node startup. Below is the parameter set used in this course's
+      lab configuration for the LIMO, with every field explained by <em>why</em> it matters, not just what it is.
+    </p>
+    <pre><code># amcl.yaml
+amcl:
+  ros__parameters:
+    min_particles: 50
+    max_particles: 500
+    alpha1: 0.2
+    alpha2: 0.2
+    alpha3: 0.2
+    alpha4: 0.2
+    alpha5: 0.2
+    laser_max_range: 12.0
+    max_beams: 60
+    base_frame_id: "base_link"
+    global_frame_id: "map"
+    odom_frame_id: "odom"
+    scan_topic: "scan"</code></pre>
+    <table>
+      <tr><th>Parameter</th><th>Value</th><th>Why it matters</th></tr>
+      <tr>
+        <td><code>min_particles</code></td><td>50</td>
+        <td>Floor on the population size. Even once AMCL is very confident, it keeps at least this many particles so a
+          converged cloud never gets so thin that it can't represent residual uncertainty.</td>
+      </tr>
+      <tr>
+        <td><code>max_particles</code></td><td>500</td>
+        <td>Ceiling on the population size. More particles cover the hypothesis space better — useful right after a bad
+          initial guess — but every particle costs a ray-cast against the map each cycle, so this bounds the worst-case CPU
+          load per scan.</td>
+      </tr>
+      <tr>
+        <td><code>alpha1</code></td><td>0.2</td>
+        <td>Rotational noise <em>caused by rotational motion</em>. How much extra heading uncertainty to inject per radian the
+          robot turns.</td>
+      </tr>
+      <tr>
+        <td><code>alpha2</code></td><td>0.2</td>
+        <td>Rotational noise <em>caused by translational motion</em>. Driving straight isn't perfectly straight — wheel slip
+          adds a little unplanned turning.</td>
+      </tr>
+      <tr>
+        <td><code>alpha3</code></td><td>0.2</td>
+        <td>Translational noise <em>caused by translational motion</em>. How much extra position uncertainty to inject per
+          meter driven.</td>
+      </tr>
+      <tr>
+        <td><code>alpha4</code></td><td>0.2</td>
+        <td>Translational noise <em>caused by rotational motion</em>. Spinning in place isn't perfectly in place — it can
+          introduce a small unplanned drift.</td>
+      </tr>
+      <tr>
+        <td><code>alpha5</code></td><td>0.2</td>
+        <td>An additional noise term used by some odometry motion models to capture correlations the other four
+          coefficients don't fully cover.</td>
+      </tr>
+      <tr>
+        <td><code>laser_max_range</code></td><td>12.0</td>
+        <td>Scan returns beyond this range (meters) are ignored/clipped when scoring particles, matching the LIMO's LiDAR's
+          reliable sensing distance.</td>
+      </tr>
+      <tr>
+        <td><code>max_beams</code></td><td>60</td>
+        <td>Subsamples the full ~360-beam scan down to this many evenly-spaced beams per weighting pass. You don't need every
+          beam to score a pose well, and fewer beams means faster weighting per particle per cycle.</td>
+      </tr>
+      <tr>
+        <td><code>base_frame_id</code></td><td>"base_link"</td>
+        <td>Which TF frame represents the robot body that AMCL is localizing.</td>
+      </tr>
+      <tr>
+        <td><code>global_frame_id</code></td><td>"map"</td>
+        <td>Which TF frame AMCL publishes its pose estimate into — this is the frame the map itself is defined in.</td>
+      </tr>
+    </table>
+    <div class="box mistake">
+      <div class="box-title">⚠️ The alpha coefficients are a trust dial, not a magic constant</div>
+      <p>
+        Conceptually, <code>alpha1</code>-<code>alpha5</code> tell AMCL how much to <em>trust</em> odometry between sensor
+        updates. Set them too low and the filter becomes overconfident: it assumes odometry is nearly perfect, so when real
+        wheel slip or drift occurs, the particle cloud doesn't spread enough to cover the true pose and localization can
+        diverge outright. Set them too high and the cloud never tightens — every cycle re-injects so much noise that AMCL
+        stays diffuse even when the sensor evidence is unambiguous. These values should reflect your <em>actual</em> robot's
+        odometry noise characteristics, not be copied blindly from another platform's config.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="s13">
+    <h2><span class="num">9.13</span>Bringing AMCL up</h2>
+    <p>Start by creating a package to hold this session's launch and config files:</p>
+    <pre><code>ros2 pkg create --build-type ament_python limo_localisation --dependencies rclpy</code></pre>
+    <p>Install Nav2, which provides both <code>map_server</code> and <code>amcl</code>:</p>
+    <pre><code>sudo apt install ros-humble-navigation2 ros-humble-nav2-rviz-plugins</code></pre>
+    <p>Build and source as usual:</p>
+    <pre><code>colcon build
+source install/setup.bash</code></pre>
+    <div class="box def">
+      <div class="box-title">📖 Lifecycle nodes</div>
+      <p>
+        Both <code>map_server</code> and <code>amcl</code> are <strong>lifecycle nodes</strong> (built on
+        <code>rclcpp_lifecycle</code>). Unlike an ordinary node that starts doing its job the instant it launches, a lifecycle
+        node starts in the <strong>Unconfigured</strong> state and does nothing until it is explicitly told to
+        <strong>Configure</strong> (allocate resources, read parameters, load the map file) and then
+        <strong>Activate</strong> (begin actually publishing/processing). This gives external tooling fine-grained control
+        over startup order — useful when one node's output (the map) must exist before another node (AMCL) can meaningfully
+        start.
+      </p>
+    </div>
+    <div class="mermaid">
+stateDiagram-v2
+    [*] --> Unconfigured
+    Unconfigured --> Inactive: configure
+    Inactive --> Active: activate
+    Active --> Inactive: deactivate
+    Inactive --> Unconfigured: cleanup
+    Active --> [*]: shutdown
+    </div>
+    <p>
+      You could drive these transitions by hand with <code>ros2 lifecycle set /map_server configure</code> and so on, but in
+      practice this course lets <code>nav2_lifecycle_manager</code> do it automatically, bringing up <code>map_server</code>
+      and <code>amcl</code> in the correct order with a single managed node:
+    </p>
+    <pre><code># lifecycle_manager section of the launch config
+lifecycle_manager:
+  ros__parameters:
+    autostart: true
+    node_names:
+      - map_server
+      - amcl</code></pre>
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dot" style="background:#f66;"></div>
+        <div class="term-dot" style="background:#fc5;"></div>
+        <div class="term-dot" style="background:#6c6;"></div>
+      </div>
+      <div class="term-body"><span class="term-prompt">dev@limo:~$</span> ros2 launch limo_localisation localization.launch.py map:=./maps/limo_room.yaml
+<span class="term-out">[lifecycle_manager]: Configuring map_server
+[lifecycle_manager]: Activating map_server
+[lifecycle_manager]: Configuring amcl
+[lifecycle_manager]: Activating amcl
+[lifecycle_manager]: Managed nodes are active</span>
+<span class="term-prompt">dev@limo:~$</span> ros2 lifecycle get /amcl
+<span class="term-out">active [3]</span>
+<span class="term-prompt">dev@limo:~$</span> ros2 topic echo /amcl_pose --once
+<span class="term-out">header:
+  frame_id: map
+pose:
+  pose:
+    position: {x: 0.02, y: -0.01, z: 0.0}
+    orientation: {z: 0.0, w: 1.0}</span></div>
+    </div>
+    <div class="box mistake">
+      <div class="box-title">⚠️ AMCL configured but the map never loaded</div>
+      <p>
+        If <code>map_server</code> never reaches Active (check with <code>ros2 lifecycle get /map_server</code>), AMCL has
+        nothing to match scans against and will silently fail to converge, no matter how good your initial pose guess is.
+        Always confirm the map is active before spending time debugging AMCL parameters.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="s14">
+    <h2><span class="num">9.14</span>Giving AMCL a starting guess</h2>
+    <p>
+      A freshly-launched AMCL knows nothing — its particle cloud is uniformly (or near-uniformly) scattered across the whole
+      map, because every location is an equally plausible guess for where the robot woke up. You speed convergence up
+      enormously by telling it roughly where to start looking.
+    </p>
+    <ol>
+      <li>Launch the Gazebo simulation with the LIMO spawned at a known location.</li>
+      <li>Launch <code>map_server</code> + <code>amcl</code> against your pre-built <code>limo_room.yaml</code>.</li>
+      <li>Open RViz2 and add a <strong>PoseArray</strong> display subscribed to AMCL's particle cloud topic (<code>/particle_cloud</code>) so you can watch the population directly.</li>
+      <li>Click RViz's <strong>2D Pose Estimate</strong> tool in the toolbar, then click-and-drag on the map at approximately
+        where the robot really is — the click sets position, the drag direction sets heading.</li>
+      <li>Drive the robot a short distance and watch.</li>
+    </ol>
+    <p>
+      Immediately after the estimate, the particle cloud spreads in a tight ellipse around your click — AMCL re-seeds all its
+      particles as a Gaussian around the pose you gave it. As the robot drives and gathers fresh scan evidence each cycle, the
+      cloud visibly shrinks and locks onto the true pose.
+    </p>
+    <div class="figure">
+      <img src="./images/amcl-run.gif" alt="Animated GIF of RViz showing an AMCL particle cloud initially spread around a 2D Pose Estimate click, then converging tightly as the LIMO drives">
+      <figcaption>RViz2: particle cloud (arrows) spreading around a fresh 2D Pose Estimate, then tightening as the LIMO drives and accumulates scan evidence.</figcaption>
+    </div>
+    <div class="box real">
+      <div class="box-title">🌍 What "convergence" looks like in practice</div>
+      <p>
+        Watch <code>/amcl_pose</code>'s covariance, not just the particle arrows. A converged AMCL reports a small position
+        and orientation covariance; a still-uncertain AMCL reports large covariance values even if the mean pose happens to
+        look reasonable. Don't trust the mean alone — a wide, diffuse cloud can have a mean that looks fine by coincidence
+        while individual particles still disagree wildly.
+      </p>
+    </div>
+    <div class="box mistake">
+      <div class="box-title">⚠️ Skipping the initial pose entirely</div>
+      <p>
+        If you never issue a 2D Pose Estimate, AMCL starts from a uniform (or very wide) prior across the whole map. It can
+        eventually converge purely from driving and matching scans, but on a large or geometrically ambiguous map (long
+        symmetric corridors, repeated room layouts) this can take a very long time, or settle on the wrong symmetric location
+        entirely. Always give AMCL a rough starting guess when you can.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="s15">
+    <h2><span class="num">9.15</span>Live tuning with rqt_reconfigure</h2>
+    <p>
+      Rather than editing <code>amcl.yaml</code>, restarting the node, and re-running your whole test each time you want to
+      try a different value, use <code>rqt_reconfigure</code> to adjust AMCL's parameters live and watch the particle cloud
+      react in real time:
+    </p>
+    <pre><code>ros2 run rqt_reconfigure rqt_reconfigure</code></pre>
+    <p>Select <code>/amcl</code> from the node list on the left, and you'll see sliders and fields for every parameter from
+      Section 9.12 — <code>min_particles</code>, <code>max_particles</code>, the <code>alpha</code> coefficients,
+      <code>laser_max_range</code>, <code>max_beams</code>, and more.</p>
+    <div class="figure">
+      <img src="./images/amcl_reconfigure.png" alt="rqt_reconfigure window showing live AMCL parameter sliders for particle counts and alpha noise coefficients">
+      <figcaption>rqt_reconfigure exposing AMCL's live parameters — drag <code>alpha3</code> up and watch the particle cloud in RViz spread out on the very next cycle.</figcaption>
+    </div>
+    <div class="exercise">
+      <div class="level">Exercise · Easy</div>
+      <p>With the LIMO stationary and AMCL already converged to a tight cloud, open <code>rqt_reconfigure</code> and raise
+        <code>alpha3</code> (translational noise from translational motion) from 0.2 to 0.8. Drive forward a meter and observe
+        how much wider the particle cloud spreads compared to before the change. Put it back to 0.2 afterward.</p>
+    </div>
+    <div class="box eng">
+      <div class="box-title">🔧 Why live-tune instead of just reading the docs</div>
+      <p>
+        Motion-model noise is a property of your specific robot and floor surface, not a universal constant. The LIMO's wheel
+        encoders and the friction of your lecture's floor tiles produce a different real-world noise profile than a different
+        robot on carpet. Watching the particle cloud's actual behavior in response to a parameter change is the fastest way to
+        find values that match your hardware, rather than trusting numbers copied from an unrelated robot's config.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="s16">
+    <h2><span class="num">9.16</span>Stress-testing AMCL</h2>
+    <h3>Test 1 — A wrong initial pose</h3>
+    <p>
+      Deliberately give AMCL a 2D Pose Estimate that is off by 1-2 meters from the LIMO's real position, then drive around and
+      watch what happens. You'll typically see one of two outcomes:
+    </p>
+    <ul>
+      <li><strong>Recovery</strong> — as scans keep disagreeing with the wrong hypothesis, weighting suppresses it and the
+        cloud gradually walks toward (and eventually converges on) the true pose.</li>
+      <li><strong>Failure to recover</strong> — in a room with repeating geometry, the wrong pose can look
+        <em>locally consistent</em> with nearby scans (a corner that looks like another corner elsewhere in the map), and AMCL
+        confidently converges on the <strong>wrong</strong> pose.</li>
+    </ul>
+    <div class="box idea">
+      <div class="box-title">🧠 A good discussion point: the limits of local search</div>
+      <p>
+        Resampling only ever concentrates the <em>existing</em> particle population — it never invents a wholly new hypothesis
+        out of nowhere. If every surviving particle after a few cycles happens to sit near the wrong-but-plausible location, no
+        amount of further driving will spontaneously produce a particle back at the true pose to compete with them. This is a
+        structural limitation of particle filters, not a bug: they perform local refinement of a population, not a global
+        search, once that population has narrowed.
+      </p>
+    </div>
+    <h3>Test 2 — The kidnapped robot problem</h3>
+    <p>
+      Let AMCL converge normally. Then, without telling AMCL, physically pick the LIMO up and set it down somewhere else on the
+      map (in Gazebo, this is a model-teleport command that repositions the robot without publishing any corresponding
+      motion). This is the classic <strong>kidnapped robot problem</strong>.
+    </p>
+    <div class="figure">
+      <img src="./images/kidnapped-robot.gif" alt="Animated GIF showing a robot being teleported to a new location on the map while its converged AMCL particle cloud stays clustered at the old location">
+      <figcaption>A "kidnapped" LIMO: teleported to a new room, while a normally-configured AMCL's particle cloud stays stubbornly clustered at the old, now-wrong location.</figcaption>
+    </div>
+    <p>
+      With a standard AMCL configuration, the particle cloud does <strong>not</strong> automatically detect the teleport and
+      relocate. Every surviving particle is still near the old pose; the next scan disagrees badly with all of them, but
+      resampling has no new hypotheses anywhere near the robot's actual new position to promote. The filter can get "stuck"
+      confidently reporting a pose that is now simply wrong.
+    </p>
+    <div class="box hw">
+      <div class="box-title">🛠️ The recovery concept: global localization</div>
+      <p>
+        The manual fix is <strong>global localization</strong> — a full re-spread of particles across the <em>entire</em> map,
+        effectively resetting AMCL back to "I have no idea where I am" and letting it re-search from scratch using fresh scans.
+        This is invoked as a service call rather than a parameter change:
+      </p>
+      <pre><code>ros2 service call /reinitialize_global_localization std_srvs/srv/Empty {}</code></pre>
+      <p>
+        After calling it, expect the particle cloud to briefly blanket the whole map again before re-converging on the robot's
+        true new position as it drives and gathers scans.</p>
+    </div>
+    <div class="exercise">
+      <div class="level">Exercise · Intermediate</div>
+      <p>Reproduce the kidnapped robot scenario in Gazebo: let AMCL converge, teleport the LIMO model to a different room via
+        the simulator, and confirm the particle cloud stays put. Then call
+        <code>/reinitialize_global_localization</code> and drive the robot a few meters, recording how many seconds it takes
+        for <code>/amcl_pose</code>'s covariance to drop back to a converged level.</p>
+    </div>
+    <div class="exercise">
+      <div class="level">Exercise · Harder</div>
+      <p>Write a small rclpy node that subscribes to <code>/amcl_pose</code>, tracks the reported covariance over time, and
+        automatically calls the global localization service if the covariance has been above a threshold for more than N
+        seconds — a crude but workable "AMCL watchdog" that reacts to a suspected kidnapping without a human in the loop.</p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="s17">
+    <h2><span class="num">9.17</span>Summary, checkpoint, assignment &amp; glossary</h2>
+    <p>
+      This extended session took LIMO from "I know how far I've moved since I started" to "I know exactly where I am on a
+      known map." Three independent motion estimates — wheel odometry, laser scan matching, and IMU rotation — were combined
+      by an EKF's continuous predict/update loop into a single trustworthy <code>/odometry/filtered</code> stream. That fused
+      estimate then became the input a particle filter (AMCL) uses to anchor the robot to a pre-built occupancy grid, weighting
+      hundreds of pose hypotheses against real laser evidence until they converge on the truth — and you pushed that
+      convergence to its breaking point with the kidnapped robot problem.
+    </p>
+    <div class="box real">
+      <div class="box-title">🌍 Connection to the course</div>
+      <p>
+        This lecture closes the loop that started in Lecture 5's TF chain: <code>odom → base_link</code> is no longer
+        populated by raw, drifting wheel encoder math, and <code>map → odom</code> is no longer missing entirely. The full
+        chain <code>map → odom → base_link</code> is now live and trustworthy. Lecture 10 flips the map-building side of the
+        problem around — instead of using a map someone handed you, you'll build one yourself with SLAM, then hand it straight
+        to Nav2 and a full autonomous mission. Lecture 11 onward puts all of this to work on the real, physical robot.
+      </p>
+    </div>
+    <div class="assignment">
+      <div class="label">Assignment</div>
+      <p>
+        Deliberately give AMCL a wrong initial pose — off by at least 2 meters or 90 degrees from the truth —
+        using the same tape-measure-style thinking from Lecture 11. Drive the robot around under teleop and
+        time how long it takes AMCL's particle cloud to converge back to the correct pose (if it does at
+        all). Write up what you changed about <code>initial_pose_a_cov</code>/<code>initial_pose_yaw_cov</code>
+        or the recovery behaviors to make convergence faster, and what you'd do differently if this were a
+        real timed competition run.
+      </p>
+    </div>
+    <div class="checkpoint">
+      <strong style="color:var(--text); display:block; margin-bottom:10px;">✅ Lecture 9 Checkpoint</strong>
+      <ul>
+        <li><code>noisy_odometry.py</code> is running and publishing a visibly imperfect <code>/odom/noisy</code>.</li>
+        <li><code>ros2_laser_scan_matcher</code> is running and publishing <code>/odom/laser</code>.</li>
+        <li><code>robot_localization</code> is built, and <code>ekf_limo.yaml</code> lists distinct, non-overlapping fusion masks for each source.</li>
+        <li><code>/odometry/filtered</code> publishes at a stable rate with the <code>odom → base_link</code> transform populated.</li>
+        <li>In PlotJuggler, the fused XY trajectory visibly tracks the true driven path more closely than any single raw source.</li>
+        <li>I can explain what a .pgm/.yaml map pair contains and what each YAML field controls.</li>
+        <li>I can describe AMCL's predict/weight/resample cycle in my own words, without jargon.</li>
+        <li>I can explain what the alpha1-alpha5 coefficients represent and what happens if they're set too low or too high.</li>
+        <li>I understand why map_server and amcl are lifecycle nodes, and how lifecycle_manager automates their bringup.</li>
+        <li>I can give AMCL an initial pose in RViz and recognize converged vs. diffuse particle clouds.</li>
+        <li>I can explain why the kidnapped robot problem defeats normal AMCL, and what global localization does about it.</li>
+      </ul>
+    </div>
+    <h3>Glossary</h3>
+    <dl class="glossary">
+      <dt>Dead reckoning</dt>
+      <dd>Estimating current position by integrating a sequence of small motion increments from a known starting point, without reference to external landmarks.</dd>
+      <dt>EKF (Extended Kalman Filter)</dt>
+      <dd>A recursive state estimator that fuses noisy measurements using a linearized nonlinear motion model, weighted by each source's covariance.</dd>
+      <dt>Predict/update</dt>
+      <dd>The EKF's two-step cycle: predict propagates the state forward with the motion model (uncertainty grows); update corrects it against a new measurement (uncertainty shrinks).</dd>
+      <dt>Covariance</dt>
+      <dd>A numerical measure of how much uncertainty (or trust) is associated with a given measurement or estimate; smaller means more confident.</dd>
+      <dt>Fusion mask</dt>
+      <dd>The per-source boolean array in a robot_localization config that specifies exactly which state fields (x, y, z, roll, pitch, yaw, and their derivatives) that source is allowed to contribute.</dd>
+      <dt>ICP (Iterative Closest Point)</dt>
+      <dd>An algorithm for finding the rigid transform that best aligns two point sets, used conceptually in laser scan matching.</dd>
+      <dt>Scan matching</dt>
+      <dd>Estimating robot motion by aligning consecutive LiDAR scans against each other rather than relying on wheel encoders.</dd>
+      <dt>Particle filter</dt><dd>An algorithm that represents a probability distribution (here, robot pose) as a weighted population of discrete samples, refined over time by prediction and evidence.</dd>
+      <dt>AMCL</dt><dd>Adaptive Monte Carlo Localization — the ROS 2 Nav2 node that runs a particle filter to estimate robot pose against a known map.</dd>
+      <dt>Occupancy grid</dt><dd>A 2D grid map where each cell records the probability that space is occupied, free, or unknown.</dd>
+      <dt>Lifecycle node</dt><dd>A ROS 2 node with a managed state machine (Unconfigured → Inactive → Active → ...) that must be explicitly configured and activated before it does its job.</dd>
+      <dt>Global localization</dt><dd>A recovery action that re-spreads particles across the entire map, discarding the current converged belief so AMCL can re-search from scratch.</dd>
+      <dt>Motion model noise</dt><dd>The alpha coefficients that tell AMCL how much positional/rotational uncertainty to inject into particles per unit of commanded motion, reflecting real odometry imprecision.</dd>
+    </dl>
+    <h3>Common Mistakes</h3>
+    <ul>
+      <li><strong>Mismatched or untrusted covariance settings.</strong> Fusing a source whose covariance doesn't reflect its actual noise (too confident or not confident enough) can produce a fused estimate <em>worse</em> than either source alone — the filter ends up over-trusting a bad input.</li>
+      <li><strong>Forgetting <code>use_sim_time: true</code> against Gazebo.</strong> If <code>ekf_filter_node</code> isn't on the same simulated clock as every other node, timestamps desync and you'll see TF extrapolation errors or a filter that silently stalls.</li>
+      <li><strong>Letting two sources both claim authority over the same state field.</strong> If both <code>odom0</code> and <code>imu0</code> are set <code>true</code> for absolute <code>yaw</code>, the filter has no clean way to reconcile disagreement between them — assign each field to exactly one authoritative source per your trust model.</li>
+      <li><strong>Testing scan matching in a feature-poor environment and being surprised it fails.</strong> A long, blank corridor or open field gives <code>ros2_laser_scan_matcher</code> nothing to align against — this is expected behavior, not a bug.</li>
+      <li>Using too few particles (<code>max_particles</code> too low) for a large or geometrically ambiguous map — the filter can't cover enough hypothesis space to find the right pose.</li>
+      <li>Copying alpha coefficients from another robot's config instead of tuning them to your own LIMO's actual odometry noise characteristics.</li>
+      <li>Never giving AMCL an initial pose via 2D Pose Estimate, then wondering why the particle cloud stays diffuse for far longer than expected.</li>
+      <li>Confusing the <code>map</code> frame with the <code>odom</code> frame when writing code that consumes AMCL's output — <code>odom</code> is continuous but drifts; <code>map</code> is globally correct but can jump slightly on each AMCL correction.</li>
+    </ul>
+  </section>
+
+  <div class="footer-nav">
+    <a href="08-computer-vision-opencv-object-detection.html">&larr; Lecture 8: Computer Vision</a>
+    <a href="index.html">Table of Contents</a>
+    <a href="10-slam-nav2-capstone-mission.html">Lecture 10: SLAM, Navigation2 &amp; Capstone &rarr;</a>
+  </div>
+
+</div>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      background: '#f1efe8', primaryColor: '#eef0ff', primaryTextColor: '#211f1a',
+      primaryBorderColor: '#3d4bf5', lineColor: '#0e9e6e', secondaryColor: '#f1efe8',
+      tertiaryColor: '#fffefb', textColor: '#211f1a', fontFamily: 'Inter, -apple-system, sans-serif'
+    },
+    flowchart: { curve: 'basis' },
+    securityLevel: 'loose'
+  });
+</script>
+<script>
+(function(){
+  var btn = document.getElementById('theme-toggle');
+  var icon = document.getElementById('theme-toggle-icon');
+  function updateIcon(){
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    icon.textContent = isDark ? '☀️' : '🌙';
+  }
+  updateIcon();
+  btn.addEventListener('click', function(){
+    var cur = document.documentElement.getAttribute('data-theme');
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try{ localStorage.setItem('limo-book-theme', next); }catch(e){}
+    updateIcon();
+  });
+})();
+</script>
+<script src="annotate.js" defer></script>
+</body>
+</html>

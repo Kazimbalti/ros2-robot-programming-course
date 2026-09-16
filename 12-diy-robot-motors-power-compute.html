@@ -1,0 +1,1688 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<script>
+(function(){
+  try{
+    var t = localStorage.getItem('limo-book-theme');
+    if(!t){ t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+    document.documentElement.setAttribute('data-theme', t);
+  }catch(e){}
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 12 — Build Your Own Robot I: Motors, Power &amp; Compute</title>
+<meta name="description" content="Meet Forge: choosing gear motors with encoders, wiring an L298N H-bridge to an Arduino Nano, flashing ros_arduino_bridge firmware, calibrating encoder counts-per-revolution, building a real power budget, sizing a LiPo pack, adding a power-distribution module, and standing up Ubuntu Server + ROS 2 Humble on a Raspberry Pi 4 from a blank microSD card.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<style>
+  :root{
+    --bg:#f6f4ef; --panel:#fffefb; --panel2:#f1efe8; --border:#e6e1d6;
+    --text:#211f1a; --muted:#7a7568; --accent:#3d4bf5; --accent-ink:#2732b8;
+    --accent2:#0e9e6e; --gold:#c8862c; --danger:#d64a3c; --purple:#8b5cf6; --radius:14px;
+  }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--bg); color:var(--text); font-family:'Inter', -apple-system, sans-serif; line-height:1.85; font-size:17.5px; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:880px; margin:0 auto; padding:48px 24px 120px;}
+  .cover{border-radius:28px; background:#12142b; padding:64px 44px; margin-bottom:56px; position:relative; overflow:hidden; isolation:isolate;}
+  .cover::before{content:""; position:absolute; inset:-40%; background:
+      radial-gradient(38% 45% at 15% 20%, rgba(61,75,245,0.55), transparent 70%),
+      radial-gradient(35% 40% at 85% 15%, rgba(139,92,246,0.45), transparent 70%),
+      radial-gradient(45% 50% at 60% 90%, rgba(14,158,110,0.35), transparent 70%);
+    filter:blur(60px); z-index:0;}
+  .cover::after{content:""; position:absolute; inset:0; background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px); background-size: 20px 20px; z-index:0;}
+  .cover > *{position:relative; z-index:1;}
+  .kicker{display:inline-block; color:#c9cdff; font-weight:600; letter-spacing:.4px; font-size:13px; margin-bottom:18px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); padding:6px 14px; border-radius:999px;}
+  .cover h1{font-size:2.7em; margin:0 0 12px; font-weight:800; line-height:1.3; color:#ffffff; letter-spacing:-.5px;}
+  .cover .subtitle{color:#aeb2d6; font-size:1.2em; margin-bottom:30px; font-weight:400;}
+  .meta-row{display:flex; flex-wrap:wrap; gap:10px; margin-top:18px;}
+  .chip{background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.14); color:#d4d7f0; padding:7px 15px; border-radius:999px; font-size:.83em;}
+  h2{font-size:1.9em; font-weight:800; margin:72px 0 22px; display:flex; align-items:center; gap:14px; letter-spacing:-.3px;}
+  h2 .num{display:inline-flex; align-items:center; justify-content:center; min-width:40px; height:40px; padding:0 12px; border-radius:12px; background:var(--accent); box-shadow:0 6px 16px -4px rgba(61,75,245,0.5); color:#ffffff; font-size:.62em; font-weight:800; flex-shrink:0; white-space:nowrap;}
+  h3{font-size:1.3em; font-weight:700; margin:36px 0 14px; color:var(--accent-ink); letter-spacing:-.2px;}
+  h4{font-size:1.08em; font-weight:700; margin:24px 0 10px; color:var(--purple);}
+  p{margin:0 0 16px; color:#3c382f;}
+  strong{color:var(--text); font-weight:700;}
+  a{color:var(--accent);}
+  .box{border-radius:16px; padding:20px 24px; margin:22px 0; border:1px solid var(--border); background:var(--panel); position:relative; box-shadow:0 1px 2px rgba(33,31,26,0.03);}
+  .box-title{font-weight:800; margin-bottom:9px; display:flex; align-items:center; gap:8px; font-size:.96em; letter-spacing:.1px;}
+  .box p:last-child{margin-bottom:0;}
+  .box.idea{background:#eef0ff;border-color:#d6dafc;} .box.idea .box-title{color:var(--accent-ink);}
+  .box.mistake{background:#fdeeec; border-color:#f6d2cd;} .box.mistake .box-title{color:var(--danger);}
+  .box.eng{background:#f4effe; border-color:#e2d6fb;} .box.eng .box-title{color:var(--purple);}
+  .box.real{background:#eafaf3; border-color:#c9eeda;} .box.real .box-title{color:var(--accent2);}
+  .box.def{background:#fdf3e4; border-color:#f2ddb3;} .box.def .box-title{color:var(--gold);}
+  .box.hw{background:#fdeee4; border-color:#f2c9a3;} .box.hw .box-title{color:#c8622c;}
+  .box.think{background:#eafcfb; border-color:#bfeae6;} .box.think .box-title{color:#0e8a7d;}
+  code, pre{font-family:'JetBrains Mono', monospace; direction:ltr; text-align:left;}
+  code{background:#eceaf9; border:1px solid #dcdaf3; border-radius:6px; padding:2px 7px; font-size:.87em; color:var(--accent-ink); display:inline-block;}
+  pre{background:#181a2e; border-radius:16px; padding:18px 20px; overflow-x:auto; margin:18px 0; font-size:.88em; line-height:1.65; box-shadow:0 12px 28px -16px rgba(24,26,46,0.5);}
+  pre code{background:none; border:none; padding:0; color:#d8dcff; display:block;}
+  .filename{display:inline-block; font-family:'JetBrains Mono',monospace; font-size:.78em; font-weight:600; color:var(--muted); background:var(--panel2); border:1px solid var(--border); border-radius:8px 8px 0 0; padding:5px 12px; margin:18px 0 -18px; position:relative; z-index:1;}
+  .filename + pre{border-start-start-radius:0;}
+  table{width:100%; border-collapse:separate; border-spacing:0; margin:22px 0; font-size:.92em; border-radius:14px; overflow:hidden; border:1px solid var(--border);}
+  th, td{border-bottom:1px solid var(--border); padding:12px 15px; text-align:left;}
+  th{background:#eceaf9; color:var(--accent-ink); font-weight:700; font-size:.9em;}
+  tr:last-child td{border-bottom:none;}
+  tr:nth-child(even) td{background:rgba(33,31,26,0.02);}
+  .tw{overflow-x:auto; margin:22px 0;} .tw table{margin:0; min-width:520px;}
+  ul, ol{margin:0 0 16px; padding-inline-start:26px; color:#3c382f;}
+  li{margin-bottom:7px;}
+  .steps{counter-reset:stepc; list-style:none; padding-inline-start:0; margin:24px 0;}
+  .steps > li{counter-increment:stepc; position:relative; padding-inline-start:48px; margin-bottom:18px;}
+  .steps > li::before{content:counter(stepc); position:absolute; inset-inline-start:0; top:2px; width:31px; height:31px; border-radius:10px; background:var(--accent); color:#fff; font-weight:800; font-size:.78em; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px -4px rgba(61,75,245,.5);}
+  .figure{margin:28px 0; text-align:center;}
+  .figure img, .figure svg{max-width:100%; height:auto; background:#fffefb; border:1px solid var(--border); border-radius:16px; box-shadow:0 1px 2px rgba(33,31,26,0.03), 0 16px 32px -20px rgba(33,31,26,0.14);}
+  .figure img{cursor:zoom-in;}
+  .figure figcaption{color:var(--muted); font-size:.87em; margin-top:12px;}
+  .figure figcaption b{color:var(--accent-ink); font-weight:700;}
+  .fig-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:20px; margin:28px 0; align-items:start;}
+  .fig-grid .figure{margin:0;}
+  .mermaid{background:#fffefb; border:1px solid var(--border); border-radius:16px; padding:18px; margin:24px 0; text-align:center; box-shadow:0 1px 2px rgba(33,31,26,0.03), 0 16px 32px -20px rgba(33,31,26,0.14);}
+  .checkpoint{border-radius:16px; padding:22px 24px; margin:26px 0; background:#eafaf3; border:1px solid #c9eeda;}
+  .checkpoint ul{list-style:none; padding:0; margin:0;}
+  .checkpoint li{padding:9px 0; border-bottom:1px solid rgba(33,31,26,0.06); display:flex; gap:10px; align-items:flex-start;}
+  .checkpoint li:last-child{border-bottom:none;}
+  .checkpoint li::before{content:"◻"; color:var(--accent2); font-size:1.2em; line-height:1;}
+  .exercise{border-radius:14px; padding:18px 22px; margin:16px 0; background:var(--panel); border:1px solid var(--border); border-inline-start:4px solid var(--gold);}
+  .exercise .level{font-size:.76em; color:var(--gold); font-weight:800; text-transform:uppercase; letter-spacing:.6px;}
+  .assignment{border-radius:14px; padding:18px 22px; margin:16px 0; background:var(--panel); border:1px solid var(--border); border-inline-start:4px solid var(--accent2);}
+  .assignment .label{font-size:.76em; color:var(--accent2); font-weight:800; text-transform:uppercase; letter-spacing:.6px;}
+  .quiz{border-radius:16px; padding:22px 26px; margin:26px 0; border:1px solid var(--border); background:var(--panel2);}
+  .quiz-title{font-weight:800; margin-bottom:14px; color:var(--purple); font-size:1em;}
+  .quiz-q{margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid var(--border);}
+  .quiz-q:last-child{margin-bottom:0; padding-bottom:0; border-bottom:none;}
+  .quiz-q p{margin-bottom:8px;}
+  .quiz-q details{margin-top:8px;}
+  .quiz-q summary{cursor:pointer; color:var(--accent); font-weight:600; font-size:.9em;}
+  .quiz-q details[open] summary{margin-bottom:8px;}
+  .quiz-q details p{color:var(--muted); margin:0;}
+  .glossary dt{font-weight:800; color:var(--accent-ink); margin-top:16px;}
+  .glossary dd{margin:4px 0 0; color:var(--muted);}
+  .toc{background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:26px 30px;}
+  .toc a{display:block; padding:8px 0; color:#3c382f; text-decoration:none; border-bottom:1px solid rgba(33,31,26,.06); transition:color .15s;}
+  .toc a:last-child{border-bottom:none;}
+  .toc a:hover{color:var(--accent-ink);}
+  .toc a span{color:var(--muted); font-size:.85em; margin-inline-end:10px; font-weight:600;}
+  .divider{height:1px; background:linear-gradient(90deg, transparent, var(--border), transparent); margin:52px 0;}
+  .footer-nav{display:flex; justify-content:space-between; align-items:center; gap:16px; margin-top:64px; padding-top:26px; border-top:1px solid var(--border); color:var(--muted); font-size:.9em;}
+  .footer-nav a{color:var(--text); text-decoration:none; font-weight:600;}
+  .footer-nav a:hover{color:var(--accent-ink);}
+  .badge-project{display:inline-block; background:#fdf3e4; border:1px solid #f2ddb3; color:var(--gold); border-radius:8px; padding:3px 11px; font-size:.78em; font-weight:700;}
+  .term{background:#181a2e; border-radius:16px; overflow:hidden; margin:22px 0; box-shadow:0 12px 28px -16px rgba(24,26,46,0.5);}
+  .term-bar{display:flex; align-items:center; gap:7px; padding:12px 16px; background:#20223a;}
+  .term-dot{width:11px; height:11px; border-radius:50%;}
+  .term-body{padding:16px 20px; font-family:'JetBrains Mono', monospace; direction:ltr; text-align:left; font-size:.87em; line-height:1.75; color:#d8dcff; white-space:pre-wrap;}
+  .term-prompt{color:#7ee7c7;}
+  .term-out{color:#9aa0c8;}
+  #lightbox{position:fixed; inset:0; z-index:2000; background:rgba(10,11,22,.92); display:none; align-items:center; justify-content:center; padding:28px; cursor:zoom-out;}
+  #lightbox.on{display:flex;}
+  #lightbox img{max-width:100%; max-height:100%; border-radius:12px; box-shadow:0 30px 80px -30px #000;}
+  #lightbox .lb-cap{position:absolute; bottom:14px; left:0; right:0; text-align:center; color:#c7c9dc; font-size:.85em; padding:0 24px;}
+  @media print{ body{background:#fff; color:#000;} .figure img{cursor:auto;} }
+  html[data-theme="dark"]{
+    --bg:#12141c; --panel:#1b1e2a; --panel2:#20232f; --border:#2d3142;
+    --text:#e7e8f2; --muted:#9498b3; --accent:#7c86ff; --accent-ink:#aab1ff;
+    --accent2:#34d399; --gold:#e3a548; --danger:#f0685a; --purple:#a78bfa; --radius:14px;
+  }
+  html[data-theme="dark"] p, html[data-theme="dark"] ul, html[data-theme="dark"] ol, html[data-theme="dark"] .toc a{color:#c7c9dc;}
+  html[data-theme="dark"] code{background:#262a45; border-color:#3a3f5c;}
+  html[data-theme="dark"] th{background:#262a45;}
+  html[data-theme="dark"] tr:nth-child(even) td{background:rgba(255,255,255,0.03);}
+  html[data-theme="dark"] .box.idea{background:#1f2242; border-color:#383d6b;}
+  html[data-theme="dark"] .box.mistake{background:#3a2220; border-color:#5c332e;}
+  html[data-theme="dark"] .box.eng{background:#2a2340; border-color:#453a63;}
+  html[data-theme="dark"] .box.real{background:#16302a; border-color:#1f4a3d;}
+  html[data-theme="dark"] .box.def{background:#3a2f18; border-color:#5c4826;}
+  html[data-theme="dark"] .box.hw{background:#3a2618; border-color:#5c3f26;}
+  html[data-theme="dark"] .box.think{background:#0f2e2c; border-color:#1d4a45;}
+  html[data-theme="dark"] .checkpoint{background:#16302a; border-color:#1f4a3d;}
+  html[data-theme="dark"] .checkpoint li{border-bottom-color:rgba(255,255,255,0.08);}
+  html[data-theme="dark"] .badge-project{background:#3a2f18; border-color:#5c4826;}
+  html[data-theme="dark"] .figure img, html[data-theme="dark"] .figure svg{background:#f4f4f8;}
+  html[data-theme="dark"] .chapter-num{background:#1f2242;}
+  html[data-theme="dark"] .chapter-card{box-shadow:0 1px 2px rgba(0,0,0,0.25);}
+  html[data-theme="dark"] .chapter-card:hover{border-color:#454a7a; box-shadow:0 16px 32px -20px rgba(0,0,0,0.55);}
+  body, .box, .chapter-card, .exercise, .assignment, .checkpoint, .toc, table, code, th{transition:background-color .25s ease, border-color .25s ease, color .25s ease;}
+  #theme-toggle{position:fixed; top:18px; left:18px; z-index:999; width:46px; height:46px; border-radius:50%; border:1px solid var(--border); background:var(--panel); color:var(--text); font-size:19px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px -8px rgba(0,0,0,0.35); transition:transform .15s ease, background-color .25s ease, border-color .25s ease;}
+  #theme-toggle:hover{transform:scale(1.08);}
+  @media (max-width:640px){ #theme-toggle{top:12px; left:12px; width:42px; height:42px; font-size:17px;} }
+</style>
+<link rel="stylesheet" href="projector.css">
+</head>
+<body>
+<style>
+.coursenav{position:sticky;top:0;z-index:900;background:rgba(255,254,251,0.88);backdrop-filter:saturate(160%) blur(10px);border-bottom:1px solid var(--border);}
+.coursenav .inner{max-width:1000px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;padding:10px 20px 10px 74px;}
+.coursenav .brand{font-weight:800;color:var(--accent-ink);margin-inline-end:12px;font-size:.9em;letter-spacing:-.2px;}
+.coursenav a{color:#3c382f;text-decoration:none;font-weight:600;font-size:.82em;padding:6px 10px;border-radius:999px;transition:background-color .15s,color .15s;}
+.coursenav a:hover{background:#eef0ff;color:var(--accent-ink);}
+.coursenav a.active{background:var(--accent);color:#fff;}
+html[data-theme="dark"] .coursenav{background:rgba(27,30,42,0.9);}
+html[data-theme="dark"] .coursenav a{color:#c7c9dc;}
+html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
+@media print{.coursenav{display:none;}}
+</style>
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html">Home</a>
+  <a href="syllabus.html">Syllabus</a>
+  <a href="schedule.html">Schedule</a>
+  <a href="assignments.html">Assignments</a>
+  <a href="index.html#lectures" class="active">Lectures</a>
+</div></nav>
+<button id="theme-toggle" aria-label="Toggle light/dark mode" title="Light/dark mode">
+  <span id="theme-toggle-icon">🌙</span>
+</button>
+<div id="lightbox" role="dialog" aria-label="Enlarged figure"><img alt=""><div class="lb-cap"></div></div>
+<div class="wrap">
+
+  <div class="cover">
+    <div class="kicker">LIMO Robotics &amp; ROS 2 Lecture &nbsp;·&nbsp; Session 12 of 14 — Build Your Own Robot</div>
+    <h1>Lecture 12: Build Your Own Robot I — Motors, Power &amp; Compute</h1>
+    <div class="subtitle">From a bag of parts to a robot with wheels that spin, a battery that feeds them, and a brain running ROS 2 — meet Forge</div>
+    <div class="meta-row">
+      <div class="chip">Duration: 4-5 hours</div>
+      <div class="chip">Prerequisite: Lecture 11</div>
+      <div class="chip">Project: Forge — your own ROS 2 robot</div>
+      <div class="chip">Hands-on: motors spin by the end</div>
+    </div>
+  </div>
+
+  <div class="toc">
+    <strong style="color:var(--text)">In this session</strong>
+    <a href="#intro"><span>12.1</span>The build arc — meet Forge</a>
+    <a href="#bom"><span>12.2</span>What you need before you start</a>
+    <a href="#motors"><span>12.3</span>Motors — specifications and pinout</a>
+    <a href="#hardware"><span>12.4</span>Motor control hardware — L298N &amp; Arduino Nano</a>
+    <a href="#wiring"><span>12.5</span>Wiring Forge, step by step</a>
+    <a href="#firmware"><span>12.6</span>Firmware — <code>ros_arduino_bridge</code> on the Nano</a>
+    <a href="#firstmotion"><span>12.7</span>First motion &amp; encoder calibration</a>
+    <a href="#budget"><span>12.8</span>The power budget</a>
+    <a href="#battery"><span>12.9</span>Battery selection &amp; safety</a>
+    <a href="#powermodule"><span>12.10</span>Power distribution — the DFRobot module</a>
+    <a href="#brain"><span>12.11</span>The brain — Ubuntu Server, static IP &amp; SSH</a>
+    <a href="#ros2install"><span>12.12</span>Installing ROS 2 Humble (and fixing a real bug)</a>
+    <a href="#summary"><span>12.13</span>Summary, checkpoint, quiz &amp; glossary</a>
+  </div>
+
+  <section id="intro">
+    <h2><span class="num">12.1</span>The build arc — meet Forge</h2>
+    <p>
+      For eleven lectures, "the robot" has meant a professional, pre-engineered platform: the AgileX LIMO, with
+      its four bolt-on drive modules, its sealed motor drivers, its factory-calibrated sensors. You learned to
+      drive it, simulate it, sense with it, localize on it, and — in Lecture 11 — open it up and understand the
+      real electronics inside it well enough to test and trust it.
+    </p>
+    <p>
+      For these last three lectures, you build your own. Not in simulation — a real, physical, wheeled robot,
+      assembled from a bare gear motor, an empty microSD card, and a spool of wire, using <em>every single skill</em>
+      this course has given you: H-bridges and PWM from Lecture 11, ROS 2 node/topic architecture from Lecture 2,
+      URDF from Lecture 4, sensor drivers from Lecture 7, Gazebo from Lecture 6. Nothing here is new in kind —
+      it's everything you already know, applied without a manufacturer's chassis doing the hard parts for you.
+    </p>
+    <p>
+      Say hello to <strong>Forge</strong> — the name we'll use throughout this build arc for the differential-drive
+      robot you're about to wire, program, design, and bring to life.
+    </p>
+
+    <div class="fig-grid">
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/1-2-fastbot-intro_p02_01.jpeg" alt="CAD render of the finished robot: three stacked plates on standoffs, two yellow wheels, a cylindrical LiDAR on top">
+        <figcaption><b>Figure 12.1</b> — Forge, rendered from the CAD assembly you'll build in Lecture 13. Three plates on standoffs, two driven wheels, LiDAR on top.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/1-3-intro-demo_p02_01.png" alt="Photograph of the fully assembled robot on a workbench surrounded by its component parts: motors, driver board, battery, Raspberry Pi, camera and cabling">
+        <figcaption><b>Figure 12.2</b> — The same robot in reality, surrounded by everything that goes into it. Every part in this photo is covered across Lectures 12-14.</figcaption>
+      </figure>
+    </div>
+
+    <div class="box def">
+      <div class="box-title">📖 Forge is a build of the FastBot reference design</div>
+      <p style="margin-bottom:10px;">
+        Lectures 12-14 follow the <strong>FastBot</strong> reference design from The Construct's course
+        <em>Build Your First ROS 2 Based Robot</em>. Everything here — part choices, pin assignments, firmware,
+        the ROS 2 driver, the CAD documents, the Gazebo plugins — comes from that build, so every command and
+        config file in these three sessions is copy-paste-correct against real, published hardware.
+      </p>
+      <p style="margin-bottom:0;">
+        One consequence worth flagging up front: <strong>the ROS 2 package names stay <code>fastbot_*</code></strong>
+        (<code>fastbot_description</code>, <code>fastbot_bringup</code>, <code>fastbot_gazebo</code>), the default
+        <code>robot_name</code> stays <code>fastbot</code>, and the Pi's hostname is <code>fastbot</code>. That is
+        deliberate, not a typo — it keeps your workspace aligned with the upstream CAD documents and reference
+        repositories. "Forge" is what you call the machine on your bench; <code>fastbot</code> is what its software
+        calls itself. If you'd rather rename everything, do it <em>after</em> Lecture 14, when nothing external
+        depends on the names any more.
+      </p>
+    </div>
+
+    <div class="mermaid">
+flowchart TB
+    subgraph BUILD["The build arc"]
+      W12["Lecture 12<br/>Motors · Firmware · Power · Compute"] --> W13["Lecture 13<br/>ROS 2 driver · CAD · URDF · LiDAR · Camera"]
+      W13 --> W14["Lecture 14<br/>Gazebo · 3D-printed cover · Capstone"]
+    end
+    style W12 fill:#eef0ff,stroke:#3d4bf5
+    style W13 fill:#f4effe,stroke:#8b5cf6
+    style W14 fill:#eafaf3,stroke:#0e9e6e
+    </div>
+
+    <p>
+      By the end of <strong>this</strong> session, Forge's wheels will physically spin under closed-loop encoder
+      control, off its own battery, and its Raspberry Pi will be running ROS 2 Humble over SSH. By the end of
+      Lecture 13 it will drive from <code>/cmd_vel</code>, describe its own body in URDF, and publish LiDAR and
+      camera data. By the end of Lecture 14 it will exist in Gazebo and wear a 3D-printed cover you designed.
+    </p>
+
+    <div class="fig-grid">
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/1-1-course-intro_p02_01.png" alt="Onshape CAD workspace showing the simplified FastBot assembly with its feature tree on the left">
+        <figcaption><b>Figure 12.3</b> — Lecture 13: the CAD assembly that becomes Forge's URDF automatically.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/1-3-intro-demo_p03_02.png" alt="Gazebo simulation showing the robot model driving in a virtual environment">
+        <figcaption><b>Figure 12.4</b> — Lecture 14: the same robot, simulated in Gazebo.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/1-4-course-outline_p10_09.png" alt="Gazebo warehouse world with the robot driving between marked lanes">
+        <figcaption><b>Figure 12.5</b> — Lecture 14: Forge in a warehouse world, ready for the Nav2 stack from Lectures 9-10.</figcaption>
+      </figure>
+    </div>
+
+    <div class="box idea">
+      <div class="box-title">💡 The three sessions in one sentence each</div>
+      <ul style="margin-bottom:0;">
+        <li><strong>Lecture 12 (today)</strong> — make the hardware work: motors, encoders, driver board, microcontroller, battery, power distribution, and a Raspberry Pi running ROS 2.</li>
+        <li><strong>Lecture 13</strong> — make ROS 2 own the hardware: a workspace, a differential-drive driver node, a CAD-derived URDF, and two working sensors.</li>
+        <li><strong>Lecture 14</strong> — make it reproducible and finished: a Gazebo digital twin, a 3D-printed cover, and a capstone review.</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="bom">
+    <h2><span class="num">12.2</span>What you need before you start</h2>
+
+    <h3>The bill of materials</h3>
+    <p>
+      Get every part in front of you before wiring anything. Nothing here is exotic; it is all standard hobby
+      robotics stock, and it is also sold as a single pre-boxed kit if you'd rather not source it piece by piece.
+    </p>
+    <div class="tw">
+    <table>
+      <tr><th>Category</th><th>Item</th><th>Key spec</th><th>Qty</th><th>Notes</th></tr>
+      <tr><td rowspan="3">Motors &amp; Motion</td><td>DC gear reduced motor with encoder (TT-style)</td><td>5-12&nbsp;V motor, encoder powered 3.3-5&nbsp;V</td><td>2</td><td>90° body for a compact chassis; usually ships with a bracket and a 6-wire connector — §12.3</td></tr>
+      <tr><td>Wheels</td><td>65&nbsp;mm diameter × 25&nbsp;mm wide</td><td>2</td><td>These two numbers reappear in the URDF (W13) and the Gazebo diff-drive plugin (W14)</td></tr>
+      <tr><td>Ball caster</td><td>Passive, omnidirectional</td><td>1</td><td>The third ground contact — two wheels alone are not statically stable</td></tr>
+      <tr><td rowspan="4">Electronics &amp; Control</td><td>L298N motor driver board</td><td>Dual H-bridge, PWM speed control</td><td>1</td><td>Drives both motors from one board — §12.4</td></tr>
+      <tr><td>Arduino Nano (or compatible)</td><td>ATmega328P, USB-mini</td><td>1</td><td>Owns the real-time motor loop — §12.4</td></tr>
+      <tr><td>Raspberry Pi 4</td><td>4&nbsp;GB+ RAM, microSD 32&nbsp;GB+ (A1/A2)</td><td>1</td><td>Ubuntu Server 22.04 + ROS 2 Humble — §12.11</td></tr>
+      <tr><td>LSLiDAR N-10 + Raspicam</td><td>360° USB-C LiDAR; Pi Camera Module 2 (CSI)</td><td>1 each</td><td>Brought up in Lecture 13 — buy now, wire later</td></tr>
+      <tr><td rowspan="4">Cables &amp; Power</td><td>LiPo battery</td><td>3S, 11.1&nbsp;V, 2200&nbsp;mAh, 35&nbsp;C</td><td>1</td><td>Sized against a real power budget in §12.8-12.9</td></tr>
+      <tr><td>DFRobot Power Module</td><td>Regulated 12&nbsp;V + 5&nbsp;V distribution</td><td>1</td><td>Feeds motors and Pi from one pack — §12.10</td></tr>
+      <tr><td>Dupont jumper cables</td><td>20&nbsp;cm, female-female <em>and</em> male-male</td><td>1 set each</td><td>You will use more of these than you expect</td></tr>
+      <tr><td>USB cables</td><td>USB-mini (Nano), 90° USB-to-USB-C (LiDAR), USB-C (Pi power)</td><td>1 each</td><td>The 90° connectors matter — straight plugs foul the chassis</td></tr>
+      <tr><td rowspan="3">Fasteners &amp; Mounting</td><td>M3 hardware</td><td>4&nbsp;cm male-female spacers, 6/12&nbsp;mm nylon screws, nylon spacers, nuts</td><td>~30-40</td><td>Plate stack and motor mounts</td></tr>
+      <tr><td>M2.5 hardware</td><td>10&nbsp;mm spacers, 6&nbsp;mm screws, nuts</td><td>~12</td><td>Raspberry Pi standoffs</td></tr>
+      <tr><td>M2 hardware</td><td>6&nbsp;mm and 20&nbsp;mm screws</td><td>~10</td><td>Camera and small brackets</td></tr>
+      <tr><td>Safety</td><td>LiPo-safe charging bag or case</td><td>—</td><td>1</td><td>Same lithium discipline as Lecture 11's LIMO battery</td></tr>
+    </table>
+    </div>
+
+    <div class="box hw">
+      <div class="box-title">🔩 Every row is a part <em>class</em> as much as a part number</div>
+      <p>
+        The exact parts above are the ones the reference build uses, and the pin numbers, voltages and firmware in
+        this session are correct <em>for them</em>. Supply varies by region and by year, though, and the skills this
+        arc teaches — reading a datasheet, budgeting power, wiring an H-bridge, calibrating an encoder — transfer
+        completely to a near-equivalent part. Buy what's available that matches the specs in this table, and
+        re-verify every number against your specific part's actual datasheet before wiring it in.
+      </p>
+    </div>
+
+    <div class="exercise">
+      <div class="level">Exercise · Easy</div>
+      <p>
+        Lay every item from this table out on your bench. For each one, write down its single most important spec
+        for this build — the one number that would break the design if it were badly wrong. (For the battery
+        that's arguably three numbers; §12.9 explains why.)
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="motors">
+    <h2><span class="num">12.3</span>Motors — specifications and pinout</h2>
+    <p>
+      Choosing the motors is the single most consequential decision about how Forge interacts with the physical
+      world. Forge is small and light, so almost any hobby gear motor could physically move it — which means the
+      choice comes down to two things that have nothing to do with raw torque.
+    </p>
+
+    <h3>Decision 1: voltage</h3>
+    <p>
+      Whatever voltage the motors need, the battery has to supply — and the same battery also has to feed the
+      Raspberry Pi, the LiDAR, and the camera. Motors rated for <strong>12&nbsp;V</strong> hit the sweet spot:
+      they're the most widely available class, they typically run happily anywhere in a <strong>5-12&nbsp;V</strong>
+      range, and 12&nbsp;V sits comfortably within reach of a 3S LiPo (11.1&nbsp;V nominal, ~12.6&nbsp;V charged) that
+      can also feed a 5&nbsp;V rail for everything else. §12.8-12.10 close that loop.
+    </p>
+
+    <h3>Decision 2: encoders</h3>
+    <p>
+      An encoder tracks how far the motor shaft has actually turned. Without one you have an <strong>open-loop</strong>
+      system: you command "half power" and hope. With one you have a <strong>closed-loop</strong> system: the
+      controller reads back real rotation and corrects the command until the wheel is genuinely doing what you asked.
+      The practical difference is visible — closed-loop motion is smoother, holds speed under load, and drives
+      straighter, because the two wheels no longer drift apart just because one motor happens to be slightly
+      stronger than the other.
+    </p>
+    <div class="box real">
+      <div class="box-title">🌍 Encoders are also non-negotiable for odometry</div>
+      <p>
+        Beyond smooth motion, the encoder counts are what Forge's driver node turns into <code>/odom</code> in
+        Lecture 13 — the same wheel odometry you fused with an IMU through an EKF back in Lecture 9, and the same
+        signal AMCL and Nav2 lean on in Lecture 10. A robot without encoders cannot do dead reckoning at all.
+        And since a motor with an integrated encoder costs barely more than one without, there is no reason to
+        compromise here.
+      </p>
+    </div>
+
+    <p>Those two constraints land on a very common, very cheap part: the <strong>DC gear reduced motor with encoder</strong>.</p>
+
+    <div class="fig-grid">
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/2-2-motor-specifications_p03_01.png" alt="Black 90-degree DC gear reduced motor with an integrated quadrature encoder on the rear">
+        <figcaption><b>Figure 12.6</b> — The motor: 5-12&nbsp;V, encoder powered at 3.3-5&nbsp;V, 90° body for a compact chassis. Usually ships with a mounting bracket and a standard 6-way connector.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/2-2-motor-specifications_p04_02.png" alt="Pinout diagram of the motor's 6-wire connector, numbering the encoder ground, encoder A phase, encoder B phase, encoder power supply, motor line plus and motor line minus">
+        <figcaption><b>Figure 12.7</b> — The 6-wire pinout. Wires 1 and 4 power the encoder; 2 and 3 are its signal outputs; 5 and 6 drive the motor itself.</figcaption>
+      </figure>
+    </div>
+
+    <div class="tw">
+    <table>
+      <tr><th>Wire</th><th>Signal</th><th>Connects to</th><th>Notes</th></tr>
+      <tr><td>01</td><td>Encoder ground</td><td>Nano GND</td><td>Logic-level ground, shared with the Nano</td></tr>
+      <tr><td>02</td><td>Encoder output, A phase</td><td>Nano digital input</td><td>Square wave; phase-offset from B</td></tr>
+      <tr><td>03</td><td>Encoder output, B phase</td><td>Nano digital input</td><td>The A/B edge order gives direction — the quadrature idea from Lecture 11, §9.4</td></tr>
+      <tr><td>04</td><td>Encoder power supply</td><td>Nano 5&nbsp;V (3.3-5&nbsp;V)</td><td>Over-voltage here can destroy the encoder. Check before connecting.</td></tr>
+      <tr><td>05</td><td>Motor line +</td><td>L298N OUT terminal</td><td>High current — never to an MCU pin</td></tr>
+      <tr><td>06</td><td>Motor line −</td><td>L298N OUT terminal</td><td>Swapping 05/06 simply reverses spin direction</td></tr>
+    </table>
+    </div>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ Never trust a wire colour from memory</div>
+      <p>
+        Wire colours on these motors are <strong>not standardised</strong> across vendors, and frequently differ
+        between batches of the <em>same model</em> from the same supplier. A red wire on one motor might be encoder
+        power; on the next unit out of the same bag, red might be a motor terminal carrying real current straight
+        into a signal pin that was never designed for it. This is the single most common way to release the magic
+        smoke from a fresh motor or Nano. Every time you wire a motor — even one that looks identical to yesterday's —
+        check the pinout published by the seller you bought it from, and confirm it against Figure 12.7.
+      </p>
+    </div>
+
+    <div class="exercise">
+      <div class="level">Exercise · Easy</div>
+      <p>
+        Using the tick-to-distance relationship from Lecture 11
+        (<code>distance_per_tick = (2 &times; &pi; &times; R) / N</code>), and Forge's 65&nbsp;mm wheel
+        (<code>R = 0.0325&nbsp;m</code>): if your encoder turns out to produce 3450 counts per wheel revolution
+        (you'll measure the real figure in §12.7), how far does Forge travel per encoder count? How many counts
+        make one metre?
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="hardware">
+    <h2><span class="num">12.4</span>Motor control hardware — L298N &amp; Arduino Nano</h2>
+    <p>
+      A motor connected straight to a battery spins one way, at one speed, forever. To make it "smart" — fast, slow,
+      forward, backward, on demand — two pieces of hardware sit between the battery and the motor.
+    </p>
+
+    <h3>The L298N: direction and current</h3>
+    <p>
+      A DC motor reverses when you reverse the polarity across its terminals. Doing that under software control
+      means an <strong>H-bridge</strong>: four switches arranged so that closing one diagonal pair drives the motor
+      one way and closing the other pair drives it the other. You met this concept on LIMO in Lecture 11, sealed
+      inside the chassis. On Forge it's a board on your bench: the <strong>L298N</strong>.
+    </p>
+    <p>The L298N does three jobs at once:</p>
+    <ul>
+      <li><strong>Direction</strong> — bidirectional control by switching DC polarity.</li>
+      <li><strong>Current amplification</strong> — an Arduino pin can source milliamps; motors want amps. The L298N stands between them.</li>
+      <li><strong>Speed</strong> — it accepts <strong>PWM</strong> (pulse-width modulation) on its control inputs.</li>
+    </ul>
+
+    <div class="box def">
+      <div class="box-title">📖 PWM in one paragraph</div>
+      <p>
+        PWM controls power by switching a signal on and off very rapidly and varying the fraction of time it's on —
+        the <strong>duty cycle</strong>. 100% duty cycle means the signal is always on, so full power. 50% means it's
+        on half the time, so roughly half power. 0% means always off, so no power. The motor's own inertia smooths
+        the chopped supply into steady rotation. Below some low duty cycle — the motor's <em>deadband</em> — you get
+        audible buzzing and no visible motion at all, exactly the symptom Lecture 11 warned you to expect on real
+        hardware.
+      </p>
+    </div>
+
+    <h3>The Arduino Nano: generating that PWM</h3>
+    <p>
+      Something has to produce the PWM signal. It could in principle be the Raspberry Pi — but it shouldn't be.
+      Forge uses a small <strong>Arduino Nano</strong> (or any compatible ATmega328P board) dedicated to the motor loop.
+    </p>
+
+    <div class="fig-grid">
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/2-3-motor-control-hardware_p02_01.png" alt="L298N dual H-bridge motor driver board with its large heatsink, screw terminals and header pins">
+        <figcaption><b>Figure 12.8</b> — The L298N dual H-bridge board. The big heatsink is a hint about how much current this part is expected to handle.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/2-3-motor-control-hardware_p03_02.png" alt="Arduino Nano microcontroller board with USB mini connector and header pins">
+        <figcaption><b>Figure 12.9</b> — The Arduino Nano. Small enough to tuck into the chassis, and it owns the real-time motor loop.</figcaption>
+      </figure>
+    </div>
+
+    <div class="tw">
+    <table>
+      <tr><th>Why a dedicated MCU?</th><th>What it means in practice</th></tr>
+      <tr><td><strong>Stable, reliable PWM generation</strong></td><td>The Nano has dedicated hardware PWM timers, so the signal stays smooth and consistent. On a Linux PC, PWM is software-scheduled — a heavy computational load can visibly degrade the signal.</td></tr>
+      <tr><td><strong>Real-time performance</strong></td><td>The Nano runs one loop and nothing else, so motors respond immediately. A general-purpose OS is not real-time; other processes introduce delays and jitter.</td></tr>
+      <tr><td><strong>Offloading the main computer</strong></td><td>The Pi should spend its cycles on ROS 2 nodes, perception and autonomous navigation — not on bit-banging a motor signal. It just tells the Nano what speed it wants.</td></tr>
+    </table>
+    </div>
+
+    <div class="box real">
+      <div class="box-title">🌍 You have seen this architecture before — on LIMO</div>
+      <p>
+        This is the <strong>exact same split</strong> AgileX designed into LIMO and you studied in Lecture 11: a
+        general-purpose Linux computer running ROS 2, and a separate embedded controller that owns motor PWM and
+        encoder reading, talking to each other over a serial link. Forge's Nano is that lesson applied by your own
+        hand. A heavy perception callback on the Pi must never be able to delay a motor command long enough for
+        Forge to behave unpredictably. Split "thinking" from "moving," and you'll recognise the pattern on almost
+        every serious wheeled robot you meet after this course.
+      </p>
+    </div>
+
+    <div class="mermaid">
+flowchart LR
+    PI["Raspberry Pi 4<br/>ROS 2 Humble<br/><i>thinking</i>"] -- "USB serial<br/>57600 baud" --> NANO["Arduino Nano<br/>ros_arduino_bridge<br/><i>moving</i>"]
+    NANO -- "PWM on IN1-IN4" --> L298["L298N<br/>dual H-bridge"]
+    L298 -- "OUT1/OUT2" --> ML["Left motor"]
+    L298 -- "OUT3/OUT4" --> MR["Right motor"]
+    ML -. "encoder A/B" .-> NANO
+    MR -. "encoder A/B" .-> NANO
+    BATT["3S LiPo<br/>11.1 V"] -- "+12 V" --> L298
+    style PI fill:#eef0ff,stroke:#3d4bf5
+    style NANO fill:#f4effe,stroke:#8b5cf6
+    style L298 fill:#fdeee4,stroke:#c8622c
+    style BATT fill:#fdf3e4,stroke:#c8862c
+    </div>
+    <p>
+      Read that diagram carefully — it is the whole of §12.5 in one picture, and the dotted encoder lines closing
+      the loop back to the Nano are what makes Forge's motion closed-loop rather than hopeful.
+    </p>
+
+    <div class="exercise">
+      <div class="level">Exercise · Intermediate</div>
+      <p>
+        You wire Forge's left motor, power it on, command a small positive velocity — and the wheel spins
+        <em>backward</em>. Name two different places in the chain (Nano pin → L298N → motor terminals) where a
+        simple wiring choice could cause this, and how you'd fix each one <em>without touching any code</em>.
+      </p>
+    </div>
+    <div class="exercise">
+      <div class="level">Exercise · Harder</div>
+      <p>
+        Under normal cruising each motor draws roughly 1.5&nbsp;A (3&nbsp;A combined, from the budget in §12.8). A
+        stalled motor — a wheel wedged against a curb — briefly draws several times its running current. If a stall
+        pushes one motor to 4× its normal draw, is that still inside the L298N's per-channel rating? What does that
+        tell you about the limits of a power budget built only from steady-state numbers, and where in the wiring
+        chain would you add a fuse?
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="wiring">
+    <h2><span class="num">12.5</span>Wiring Forge, step by step</h2>
+    <p>
+      Time to connect things. Work through this in order, and keep the wheels off the ground (or the motors
+      unmounted) until §12.7 — a mis-wired first test that sends the robot off the bench is a very avoidable way to
+      break a LiDAR.
+    </p>
+
+    <h3>The L298N pinout</h3>
+    <figure class="figure">
+      <img loading="lazy" src="images/fastbot-course/2-4-wiring_p02_01.png" alt="Annotated L298N board diagram labelling OUT1 to OUT4 motor terminals, the ENA IN1 IN2 IN3 IN4 ENB control header, and the +5V GND +12V power terminals">
+      <figcaption><b>Figure 12.10</b> — The L298N, fully labelled. Motor terminals on the outer screw blocks, control header along the edge, power terminals bottom right.</figcaption>
+    </figure>
+
+    <div class="tw">
+    <table>
+      <tr><th>Pin group</th><th>What it is</th><th>How Forge uses it</th></tr>
+      <tr><td><code>OUT1</code> <code>OUT2</code></td><td>Motor A power terminals</td><td>Left motor's <em>Motor line+</em> / <em>Motor line−</em></td></tr>
+      <tr><td><code>OUT3</code> <code>OUT4</code></td><td>Motor B power terminals</td><td>Right motor's <em>Motor line+</em> / <em>Motor line−</em> — <strong>flipped</strong> relative to the left, because the motors face out in opposite directions</td></tr>
+      <tr><td><code>+12V</code> <code>GND</code></td><td>Motor supply</td><td>From the 11.1&nbsp;V LiPo (via the power module, from §12.10). Red is always positive, black is ground.</td></tr>
+      <tr><td><code>+5V</code></td><td>Regulated 5&nbsp;V output</td><td><strong>Leave disconnected.</strong> It stays in place only as the source for the ENA/ENB jumpers.</td></tr>
+      <tr><td><code>IN1</code> <code>IN2</code></td><td>Motor A direction inputs</td><td>Driven by the Nano</td></tr>
+      <tr><td><code>IN3</code> <code>IN4</code></td><td>Motor B direction inputs</td><td>Driven by the Nano</td></tr>
+      <tr><td><code>ENA</code> <code>ENB</code></td><td>Per-motor enable pins</td><td><strong>Leave the jumpers on</strong>, tying them to 5&nbsp;V (permanently enabled)</td></tr>
+    </table>
+    </div>
+
+    <p>The direction logic is simple, and identical for both channels:</p>
+    <pre><code>IN1 = HIGH, IN2 = LOW   -&gt;  Motor A forward
+IN1 = LOW,  IN2 = HIGH  -&gt;  Motor A backward
+IN1 = LOW,  IN2 = LOW   -&gt;  Motor A stopped
+
+(IN3 / IN4 behave identically for Motor B)</code></pre>
+
+    <div class="box eng">
+      <div class="box-title">🔧 If ENA/ENB are jumpered HIGH, where does speed control come from?</div>
+      <p>
+        Reasonable question — many L298N tutorials put PWM on ENA/ENB and use IN1-IN4 as pure digital direction
+        pins. Forge does it the other way round. The four Nano pins chosen below (<code>D5</code>, <code>D6</code>,
+        <code>D9</code>, <code>D10</code>) are all <strong>hardware-PWM-capable</strong> pins on the ATmega328P, and
+        the <code>ros_arduino_bridge</code> firmware you'll flash in §12.6 drives <em>them</em> with PWM: to go
+        forward at 60% it holds one input at 0 and PWMs the other at 60% duty. Enable stays permanently high, so
+        the jumpers can stay where the board shipped them. Two valid designs; the firmware decides which one you're
+        using, which is exactly why the pin assignments below are not arbitrary.
+      </p>
+    </div>
+
+    <h3>Step 1 — Motors to the L298N</h3>
+    <p>
+      Connect each motor's power pair (wires 05 and 06, the red 🔴 and black ⚫ pair on most units — <em>confirm
+      against your pinout</em>) to the OUT terminals. Because one motor is physically mirrored relative to the
+      other, its two wires go on flipped compared to the first.
+    </p>
+    <figure class="figure">
+      <img loading="lazy" src="images/fastbot-course/2-4-wiring_p03_02.jpeg" alt="Wiring diagram showing two DC motors connected by red and black wires to the OUT terminals on either side of the L298N board">
+      <figcaption><b>Figure 12.11</b> — Step 1: motor power only. Nothing else is connected yet.</figcaption>
+    </figure>
+    <div class="box idea">
+      <div class="box-title">💡 Getting this backwards costs you nothing</div>
+      <p>
+        If you flip a motor pair the wrong way, the worst case is that Forge drives backwards when you tell it to
+        go forwards during the §12.7 bench test. Swap that motor's two OUT wires and move on. This is genuinely a
+        30-second fix, and it is a much better failure mode than the alternatives elsewhere in this section.
+      </p>
+    </div>
+
+    <h3>Step 2 — L298N control inputs to the Nano</h3>
+    <p>
+      The IN pins go to digital GPIO pins on the Nano. The specific pin numbers are not arbitrary — they must match
+      what the firmware in §12.6 expects:
+    </p>
+    <div class="tw">
+    <table>
+      <tr><th>L298N pin</th><th>Arduino Nano pin</th><th>Role in firmware</th></tr>
+      <tr><td><code>IN1</code></td><td><code>D6</code></td><td>Left motor, one direction (PWM-capable)</td></tr>
+      <tr><td><code>IN2</code></td><td><code>D10</code></td><td>Left motor, other direction (PWM-capable)</td></tr>
+      <tr><td><code>IN3</code></td><td><code>D9</code></td><td>Right motor, one direction (PWM-capable)</td></tr>
+      <tr><td><code>IN4</code></td><td><code>D5</code></td><td>Right motor, other direction (PWM-capable)</td></tr>
+    </table>
+    </div>
+    <figure class="figure">
+      <img loading="lazy" src="images/fastbot-course/2-4-wiring_p05_03.jpeg" alt="Wiring diagram showing four coloured jumper wires running from the L298N IN header to digital pins on an Arduino Nano">
+      <figcaption><b>Figure 12.12</b> — Step 2: four jumpers from the L298N control header to the Nano's PWM-capable digital pins.</figcaption>
+    </figure>
+
+    <h3>Step 3 — Encoders to the Nano</h3>
+    <p>
+      Now close the feedback loop. Each motor's two encoder signal wires (02 and 03) go to the Nano:
+    </p>
+    <div class="tw">
+    <table>
+      <tr><th>Motor</th><th>Encoder output</th><th>Arduino Nano pin</th><th>Why this pin</th></tr>
+      <tr><td rowspan="2">Left (Motor A)</td><td>A phase</td><td><code>D2</code></td><td rowspan="2">D2 and D3 are the ATmega328P's two <strong>hardware interrupt</strong> pins — the fastest, most reliable way to catch encoder edges</td></tr>
+      <tr><td>B phase</td><td><code>D3</code></td></tr>
+      <tr><td rowspan="2">Right (Motor B)</td><td>A phase</td><td><code>A5</code></td><td rowspan="2">Analog pins used as digital inputs, read via pin-change interrupts</td></tr>
+      <tr><td>B phase</td><td><code>A4</code></td></tr>
+    </table>
+    </div>
+    <figure class="figure">
+      <img loading="lazy" src="images/fastbot-course/2-4-wiring_p07_05.png" alt="Wiring diagram showing encoder signal wires from both motors routed to digital and analog pins on the Arduino Nano">
+      <figcaption><b>Figure 12.13</b> — Step 3: encoder A/B phases wired to the Nano. This is what turns open-loop guessing into closed-loop control.</figcaption>
+    </figure>
+    <p>
+      The encoders also need power. For this bench test, take 5&nbsp;V and GND from the Nano's own pins (wires 04
+      and 01). Later, once the power module is in place (§12.10), you'll move that 5&nbsp;V feed to the robot's
+      regulated rail instead.
+    </p>
+    <figure class="figure">
+      <img loading="lazy" src="images/fastbot-course/2-4-wiring_p08_06.jpeg" alt="Combined wiring diagram showing both motors connected to the L298N, the L298N control pins and both encoders connected to the Arduino Nano">
+      <figcaption><b>Figure 12.14</b> — Steps 1-3 combined: motor power, motor control, and encoder feedback all in place.</figcaption>
+    </figure>
+
+    <h3>Step 4 — Battery to the L298N</h3>
+    <p>
+      For the very first test the LiPo connects <strong>directly</strong> to the L298N's <code>+12V</code> /
+      <code>GND</code> terminals, through a T-connector pigtail whose bare ends you can screw into the terminal block.
+      (§12.10 inserts the power module between them permanently — this direct connection is a temporary,
+      motors-only test rig.)
+    </p>
+    <div class="fig-grid">
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/2-4-wiring_p09_07.jpeg" alt="Photograph of a LiPo battery connected to a T-connector pigtail cable with bare wire ends, lying on a cutting mat">
+        <figcaption><b>Figure 12.15</b> — The T-connector pigtail: bare ends to screw into the L298N terminal block.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/2-4-wiring_p10_08.jpeg" alt="Wiring diagram showing the LiPo battery pack connected to the L298N's 12V and GND terminals">
+        <figcaption><b>Figure 12.16</b> — Step 4: the battery feeding the L298N's motor supply.</figcaption>
+      </figure>
+    </div>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ Check polarity twice before you connect once</div>
+      <p>
+        This is the moment where a mistake is expensive. Red is positive, black is ground, and a reversed connector
+        on a freshly wired robot is a fast way to destroy an L298N, a Nano, or eventually the Pi. Unlike the flipped
+        motor wires in Step 1, this one does not politely fail — it releases smoke. Meter it if you have any doubt.
+      </p>
+    </div>
+
+    <h3>Step 5 — Everything together</h3>
+    <figure class="figure">
+      <img loading="lazy" src="images/fastbot-course/2-4-wiring_p12_09.jpeg" alt="Complete wiring diagram: two motors, L298N driver, Arduino Nano and LiPo battery all interconnected">
+      <figcaption><b>Figure 12.17</b> — The complete Stage-1 wiring diagram. Bookmark this figure; you will come back to it.</figcaption>
+    </figure>
+    <figure class="figure">
+      <img loading="lazy" src="images/fastbot-course/2-4-wiring_p14_11.jpeg" alt="Photograph of the real assembled wiring on a green cutting mat: two motors, L298N, Arduino Nano and LiPo battery connected with jumper wires">
+      <figcaption><b>Figure 12.18</b> — What that looks like in reality. Neatness is not cosmetic here — you will be probing these wires.</figcaption>
+    </figure>
+
+    <div class="exercise">
+      <div class="level">Exercise · Easy</div>
+      <p>
+        Before powering anything: photograph your own wiring from directly above and annotate it against Figure
+        12.18 — every wire in your photo should correspond to one in the diagram, and vice versa. Any wire you
+        can't account for is a bug you'd rather find now than after the battery is connected.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="firmware">
+    <h2><span class="num">12.6</span>Firmware — <code>ros_arduino_bridge</code> on the Nano</h2>
+    <p>
+      The Nano is wired but empty. It needs firmware that (a) reads the encoders, (b) closes a velocity loop, and
+      (c) accepts commands over serial. Rather than writing that from scratch, Forge uses a well-established
+      open-source package: <strong>Josh Newans' fork of <code>ros_arduino_bridge</code></strong>. It converts velocity
+      commands arriving over UART into PWM on the L298N's inputs, and reports encoder counts back.
+    </p>
+    <p>
+      The Nano connects to your development PC with a <strong>USB-to-USB-mini</strong> cable. Do this from your own
+      PC, not from the Pi — you'll want the Arduino IDE's GUI.
+    </p>
+
+    <h3>Get the firmware</h3>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> cd
+<span class="term-prompt">$</span> mkdir git-repo
+<span class="term-prompt">$</span> cd git-repo
+<span class="term-prompt">$</span> git clone https://github.com/joshnewans/ros_arduino_bridge.git</div>
+    </div>
+
+    <h3>Install the Arduino IDE</h3>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> sudo apt update
+<span class="term-prompt">$</span> sudo apt install arduino</div>
+    </div>
+    <p>On Windows or macOS, install the IDE from <a href="https://www.arduino.cc/en/software">arduino.cc/en/software</a> instead.</p>
+
+    <h3>Upload</h3>
+    <ol class="steps">
+      <li>Open the Arduino IDE, then <strong>File → Open</strong> and select
+        <code>~/git-repo/ros_arduino_bridge/ROSArduinoBridge/ROSArduinoBridge.ino</code>.</li>
+      <li>Select the board: <strong>Tools → Board → Arduino Nano</strong>.</li>
+      <li>Select the port: <strong>Tools → Port</strong> — usually <code>/dev/ttyUSB0</code> or similar.</li>
+      <li>Click <strong>Upload</strong> and watch for a successful compile-and-flash message.</li>
+    </ol>
+
+    <div class="fig-grid">
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/2-5-serial-communication_p03_01.png" alt="Arduino IDE with the File menu open showing Open, Sketchbook and Examples entries">
+        <figcaption><b>Figure 12.19</b> — <strong>File → Open</strong> in the Arduino IDE.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/2-5-serial-communication_p03_02.png" alt="Arduino IDE showing the ROSArduinoBridge sketch open with its header comment and multiple tabs including commands.h and diff_controller.h">
+        <figcaption><b>Figure 12.20</b> — <code>ROSArduinoBridge.ino</code> loaded. Note the sibling tabs: <code>commands.h</code>, <code>diff_controller.h</code>.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/2-5-serial-communication_p04_03.png" alt="Arduino IDE Tools menu with the Board submenu open and Arduino Nano selected">
+        <figcaption><b>Figure 12.21</b> — <strong>Tools → Board → Arduino Nano</strong>.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/2-5-serial-communication_p05_04.png" alt="Arduino IDE Tools menu with the Port submenu open showing /dev/ttyUSB0 selected">
+        <figcaption><b>Figure 12.22</b> — <strong>Tools → Port → /dev/ttyUSB0</strong>. Yours may differ.</figcaption>
+      </figure>
+    </div>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ "Processor: ATmega328P (Old Bootloader)"</div>
+      <p>
+        A very common snag with clone Nanos: the upload fails with a timeout or <code>avrdude: stk500_recv()</code>
+        errors even though the board and port are right. Most inexpensive Nano clones ship with the <em>old</em>
+        bootloader. Go to <strong>Tools → Processor</strong> and switch to
+        <strong>ATmega328P (Old Bootloader)</strong>, then upload again. This is not in the reference material and
+        it will cost you twenty minutes if nobody tells you.
+      </p>
+    </div>
+
+    <p>✅ With a successful upload, the Nano's firmware is live. Time to make something move.</p>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="firstmotion">
+    <h2><span class="num">12.7</span>First motion &amp; encoder calibration</h2>
+    <p>
+      This is the payoff for §12.3-12.6. Before you start: make sure the battery is powering the motors through
+      the L298N, the Nano is connected to your PC by USB, and <strong>the wheels are off the ground</strong>.
+    </p>
+
+    <h3>A serial terminal</h3>
+    <p>
+      You need a tool to talk to the Nano over serial. The reference build uses
+      <a href="https://www.serialtool.com/_en/index.php">SerialTool</a> (Windows, macOS, Linux); the Arduino IDE's
+      built-in Serial Monitor works too, as does <code>screen /dev/ttyUSB0 57600</code> if you prefer a terminal.
+    </p>
+    <div class="fig-grid">
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/2-5-serial-communication_p07_05.png" alt="SerialTool application main window with a command input field and a log pane">
+        <figcaption><b>Figure 12.23</b> — SerialTool's main window. Commands go in the input field at the bottom.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/2-5-serial-communication_p08_06.png" alt="SerialTool's Serial Port Configuration dialog showing device, baud rate 57600 and an OPEN button">
+        <figcaption><b>Figure 12.24</b> — <strong>Controls → Serial Port Configuration</strong>: set <em>Change Serial</em> to 1 and <em>BaudRate</em> to <strong>57600</strong>, then click <strong>OPEN</strong>.</figcaption>
+      </figure>
+    </div>
+    <div class="box hw">
+      <div class="box-title">🔩 57600 is not a suggestion</div>
+      <p>
+        The baud rate must match the firmware exactly. A mismatch does not produce an error — it produces garbage
+        bytes, silently. Remember this number: it reappears as the <code>baud_rate</code> parameter of the ROS 2
+        driver node in Lecture 13, and it must match there too.
+      </p>
+    </div>
+
+    <h3>The command set</h3>
+    <div class="tw">
+    <table>
+      <tr><th>Command</th><th>Meaning</th><th>Example</th></tr>
+      <tr><td><code>o &lt;pwm1&gt; &lt;pwm2&gt;</code></td><td><strong>Open loop.</strong> Raw PWM per motor, −255 to 255.</td><td><code>o 255 255</code> — both motors, full power forward</td></tr>
+      <tr><td><code>e</code></td><td>Read the current encoder counts for both motors</td><td><code>e</code> → <code>1204 1198</code></td></tr>
+      <tr><td><code>r</code></td><td>Reset both encoder counters to zero</td><td><code>r</code></td></tr>
+      <tr><td><code>m &lt;cpl1&gt; &lt;cpl2&gt;</code></td><td><strong>Closed loop.</strong> Target encoder counts per PID loop, per motor.</td><td><code>m 115 115</code> — see the calibration below</td></tr>
+    </table>
+    </div>
+
+    <h4>Test 1 — open loop</h4>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">&gt;</span> o 255 255
+<span class="term-out">OK</span>
+<span class="term-out"># both wheels spin at full power</span>
+<span class="term-prompt">&gt;</span> o 0 0
+<span class="term-out">OK</span></div>
+    </div>
+    <p>
+      🎉 <strong>Your robot's wheels just moved under your own wiring and your own firmware.</strong> If one wheel
+      turns the wrong way, that's the Step-1 fix from §12.5 — swap that motor's two OUT wires.
+    </p>
+
+    <h4>Test 2 — do the encoders work?</h4>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">&gt;</span> r
+<span class="term-out">OK</span>
+<span class="term-prompt">&gt;</span> e
+<span class="term-out">0 0</span>
+<span class="term-out"># now turn each wheel by hand, then:</span>
+<span class="term-prompt">&gt;</span> e
+<span class="term-out">3450 -3450</span></div>
+    </div>
+    <p>
+      Non-zero, changing numbers mean the hall-effect encoders are being read correctly. A channel stuck at zero
+      means a wiring fault on that motor's A/B lines or its 5&nbsp;V/GND feed. Fix that before continuing — closed-loop
+      control without encoders is worse than open loop, not better.
+    </p>
+
+    <h4>Test 3 — closed loop</h4>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">&gt;</span> m -255 -255
+<span class="term-out">OK</span>
+<span class="term-out"># motors spin the opposite way, and you can hear the controller
+# actively adjusting to hold the commanded rate</span></div>
+    </div>
+
+    <h3>Calibrating counts per revolution</h3>
+    <p>
+      The controller needs to know how many encoder counts correspond to one full motor revolution. This value —
+      <strong>counts per revolution</strong> (<code>encoder_cpr</code>) — is a property of your specific
+      encoder-and-gearbox combination, so you have to <em>measure</em> it:
+    </p>
+    <ol class="steps">
+      <li>Reset the encoder: <code>r</code></li>
+      <li>Turn the wheel by hand through exactly <strong>1</strong> revolution.</li>
+      <li>Read the encoder: <code>e</code>. That number is one estimate of counts/rev.</li>
+      <li>Reset again, turn <strong>5</strong> revolutions, read, and divide by 5.</li>
+      <li>Reset again, turn <strong>10</strong> revolutions, read, and divide by 10.</li>
+      <li>Average the three estimates. That's your <code>encoder_cpr</code>.</li>
+    </ol>
+    <p>
+      For the reference build this lands around <strong>3450 counts/rev</strong>. Yours will differ — a different
+      gear ratio changes it completely.
+    </p>
+
+    <div class="box def">
+      <div class="box-title">📖 From counts/rev to counts/loop</div>
+      <p style="margin-bottom:10px;">
+        The <code>m</code> command doesn't take counts per revolution — it takes <strong>counts per PID loop</strong>.
+        <code>ros_arduino_bridge</code> runs its PID loop at <strong>30&nbsp;Hz</strong>, so converting is one division:
+      </p>
+      <pre style="margin-bottom:10px;"><code>counts_per_loop = counts_per_revolution / PID_loop_rate
+
+              = 3450 counts/rev / 30 loops/sec
+              = 115 counts/loop     (for a target of 1 rev/sec)</code></pre>
+      <p style="margin-bottom:0;">
+        So each PID cycle should accumulate 115 counts if the wheel is turning once per second. That same
+        conversion, generalised, is exactly what the ROS 2 driver node computes in Lecture 13 — you're deriving it
+        by hand now so the code isn't magic later.
+      </p>
+    </div>
+
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">&gt;</span> m 115 115
+<span class="term-out">OK</span>
+<span class="term-out"># each wheel should now hold very close to 1 revolution per second</span></div>
+    </div>
+    <p>
+      Verify it with a stopwatch and a mark on the tyre: ten revolutions should take about ten seconds. If it
+      doesn't, your measured counts/rev is wrong — repeat the calibration.
+    </p>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ A deliberate inconsistency to notice</div>
+      <p>
+        In Lecture 13 you'll meet two reference files that declare <code>encoder_cpr</code> defaults of
+        <strong>2500</strong> (the driver launch file) and <strong>2550</strong> (the bringup launch file) — neither
+        of which is the 3450 derived above. That's not a trick question, it's what real projects look like: a
+        default value gets typed once, copied into a second file, and drifts. <strong>Your measured value is the
+        only one that's true for your robot.</strong> Set it deliberately in both places, and treat any
+        hardcoded default you didn't measure yourself as a placeholder.
+      </p>
+    </div>
+
+    <div class="exercise">
+      <div class="level">Exercise · Intermediate</div>
+      <p>
+        Command <code>m 115 115</code> and, while the wheels are spinning freely, gently pinch one tyre to load it.
+        Listen and watch. What does the controller do? Now do the same while commanding <code>o 128 128</code>
+        (open loop) instead. Describe the difference in one sentence — you have just demonstrated, physically, why
+        §12.3 insisted on encoders.
+      </p>
+    </div>
+    <div class="assignment">
+      <div class="label">Assignment</div>
+      <p>
+        Record your own measured <code>encoder_cpr</code> for both motors separately. Are they identical? If they
+        differ by more than a percent or two, what would that do to Forge's ability to drive in a straight line
+        under <em>open</em>-loop control — and why does closed-loop control largely rescue you? Keep this number
+        written down; Lecture 13 needs it.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="budget">
+    <h2><span class="num">12.8</span>The power budget</h2>
+    <figure class="figure">
+      <img loading="lazy" src="images/fastbot-course/3-1-battery-unit-summary_p02_01.png" alt="Icon of a battery with a lightning bolt through it, marking the start of the power and battery unit" style="max-width:200px;">
+      <figcaption>Everything from here to §12.10 is one question: <em>where does the energy come from, and for how long?</em></figcaption>
+    </figure>
+    <p>
+      The motors run. Now they need to run off a battery you chose on purpose. Every component on Forge draws
+      current at some voltage, and every watt has to come from a pack with finite stored energy. Before choosing a
+      battery you need an honest power budget — not a guess.
+    </p>
+    <p>The core formula:</p>
+    <pre><code>P (watts) = V (volts) &times; I (amps)</code></pre>
+    <p>Applied component by component:</p>
+    <div class="tw">
+    <table>
+      <tr><th>Component</th><th>Voltage (V)</th><th>Current draw (A)</th><th>Power (W) = V × A</th></tr>
+      <tr><td>Raspberry Pi 4</td><td>5</td><td>2.5</td><td>12.5</td></tr>
+      <tr><td>Motor driver (L298N)</td><td>12</td><td>2</td><td>24</td></tr>
+      <tr><td>Motors (2×)</td><td>12</td><td>3</td><td>36</td></tr>
+      <tr><td>Camera</td><td>5</td><td>0.5</td><td>2.5</td></tr>
+      <tr><td>LiDAR</td><td>5</td><td>0.7</td><td>3.5</td></tr>
+      <tr><td><strong>Total</strong></td><td>—</td><td><strong>8.7</strong></td><td><strong>78.5 W</strong></td></tr>
+    </table>
+    </div>
+
+    <div class="box def">
+      <div class="box-title">📖 This is a worst case, on purpose</div>
+      <p>
+        This table assumes every component draws its rated current simultaneously and continuously — motors at full
+        sustained torque, everything running at once. Real usage is usually kinder, which is exactly why a power
+        budget is a <em>design ceiling to size against</em>, not a prediction of typical use. Budget for the worst
+        case and get a pleasant surprise; budget for the average and watch a demo die in front of an audience.
+      </p>
+    </div>
+
+    <p>From total power draw you can estimate runtime, once you know a pack's energy capacity:</p>
+    <pre><code>Energy (Wh)  = Voltage (V) &times; Capacity (Ah)
+Runtime (h)  = Energy (Wh) / Power (W)</code></pre>
+    <p>Worked through for the 11.1&nbsp;V, 2200&nbsp;mAh (2.2&nbsp;Ah) pack from §12.9:</p>
+    <pre><code>Energy  = 11.1 V &times; 2.2 Ah  = 24.42 Wh
+Runtime = 24.42 Wh / 78.5 W  &asymp; 0.31 h  &asymp; 18-22 minutes</code></pre>
+    <p>
+      Eighteen to twenty-two minutes of guaranteed worst-case runtime is short — and that is exactly the point of
+      doing this arithmetic <em>before</em> buying a battery rather than after.
+    </p>
+
+    <div class="box think">
+      <div class="box-title">🤔 Think About It</div>
+      <p>
+        You just budgeted assuming every component draws its rated current all the time. In reality, does a motor
+        draw the same current sitting still under load, accelerating from rest, and cruising at constant speed?
+        Which of those three is the number in the table closest to — and what does that mean for how much headroom
+        this budget really has?
+      </p>
+    </div>
+
+    <div class="exercise">
+      <div class="level">Exercise · Easy</div>
+      <p>
+        Swap Forge's camera for a higher-resolution model drawing 5&nbsp;V at 1.1&nbsp;A instead of 0.5&nbsp;A.
+        Recompute the total power and the resulting runtime against the same 24.42&nbsp;Wh pack.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="battery">
+    <h2><span class="num">12.9</span>Battery selection &amp; safety</h2>
+    <p>
+      With the power requirements known, you can pick a pack. Forge uses a <strong>LiPo</strong>
+      (lithium-polymer) — a rechargeable chemistry with high energy density that can also deliver high discharge
+      currents. Unlike traditional lithium-ion cells, LiPos use a soft polymer electrolyte, which allows flexible,
+      compact shapes. They're the standard choice in robotics, drones and RC because they hold voltage well under
+      load and handle high power demands efficiently.
+    </p>
+
+    <figure class="figure">
+      <img loading="lazy" src="images/fastbot-course/3-3-battery-selection_p03_01.png" alt="OVONIC 3S 11.1V 2200mAh 35C LiPo battery pack with a T-connector output lead and a balance lead">
+      <figcaption><b>Figure 12.25</b> — A 3S 2200&nbsp;mAh 35&nbsp;C LiPo. Note the two leads: the fat output pair, and the thin balance connector used by the charger.</figcaption>
+    </figure>
+
+    <div class="tw">
+    <table>
+      <tr><th>Spec</th><th>Forge's pack</th><th>What it tells you</th></tr>
+      <tr><td>Nominal voltage</td><td><strong>11.1&nbsp;V</strong> (3S)</td><td>Three cells in series at 3.7&nbsp;V each; ~12.6&nbsp;V fully charged. Suits 12&nbsp;V motors, and regulates down cleanly to 5&nbsp;V for the Pi.</td></tr>
+      <tr><td>Capacity</td><td><strong>2200&nbsp;mAh</strong> (2.2&nbsp;Ah)</td><td>Total stored charge; feeds straight into the runtime formula in §12.8.</td></tr>
+      <tr><td>Discharge rating</td><td><strong>35&nbsp;C</strong></td><td>Maximum safe continuous current = <code>Capacity(Ah) × C</code> = <code>2.2 × 35 = 77&nbsp;A</code>.</td></tr>
+      <tr><td>Connector</td><td>XT60 / T-connector</td><td>Match the gender and type to your harness before you order.</td></tr>
+    </table>
+    </div>
+
+    <p>
+      Forge's total draw is about <strong>8.7&nbsp;A</strong> (from the budget table). Against a 77&nbsp;A continuous
+      rating, the pack is nowhere near being the bottleneck — which is exactly the confirmation you want. The failure
+      mode to avoid is the opposite: a pack with plenty of energy capacity but too <em>low</em> a C-rating for your
+      peak current. Under load it sags badly or trips its own protection, which is the same voltage-sag warning sign
+      Lecture 11 taught you to watch for in LIMO's <code>battery_voltage</code> field.
+    </p>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ Lithium safety, restated for a robot you wired yourself</div>
+      <p>
+        Everything Lecture 11 taught about lithium handling on LIMO applies without exception here: never leave a
+        pack fully discharged for long, always charge with a proper <strong>balance charger</strong> in a fire-safe
+        bag or case on a non-flammable surface, never puncture or short the terminals, and retire any pack showing
+        swelling, unusual heat or casing damage. A DIY build adds a risk LIMO's sealed pack doesn't have —
+        <strong>you</strong> wired the connector. Double-check polarity before every first connection of a new
+        harness, and never over-discharge: below roughly 3.0&nbsp;V per cell you are permanently damaging the pack.
+      </p>
+    </div>
+
+    <div class="assignment">
+      <div class="label">Assignment</div>
+      <p>
+        Recompute the full power table and runtime for a version of Forge with a <em>second</em> camera added
+        (assume the same 5&nbsp;V / 0.5&nbsp;A). Given a target of at least <strong>30 minutes</strong> of runtime
+        under full load, what minimum capacity (in Ah) would you need at 11.1&nbsp;V? Then check your answer against
+        the C-rating requirement: does a pack of that capacity still comfortably supply the peak current, and would
+        you change anything else about the design to hit 30 minutes more gracefully than by just buying a bigger
+        battery?
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="powermodule">
+    <h2><span class="num">12.10</span>Power distribution — the DFRobot module</h2>
+    <p>
+      One battery, several very different consumers. The motors want ~12&nbsp;V and are electrically noisy. The
+      Raspberry Pi wants a clean, well-regulated 5&nbsp;V and will misbehave — or corrupt its SD card — if that rail
+      sags. The LiDAR, camera and Nano also live on 5&nbsp;V. You need something between the pack and the robot that
+      transforms and distributes power.
+    </p>
+    <p>
+      Forge uses the <strong>DFRobot Power Module</strong>. It takes the raw LiPo input and provides both a switched
+      12&nbsp;V output for the motor driver and a regulated 5&nbsp;V output for everything else, with a physical power
+      switch — which is more valuable than it sounds when you want to kill a runaway robot in a hurry.
+    </p>
+
+    <figure class="figure">
+      <img loading="lazy" src="images/fastbot-course/3-4-connect-battery-to-robot_p02_01.png" alt="DFRobot power module board with green screw terminals labelled GND Vin and GND Vout, a switch, and large capacitors">
+      <figcaption><b>Figure 12.26</b> — The DFRobot Power Module. <code>Vin</code> from the battery; <code>Vout</code> to the L298N; a regulated 5&nbsp;V rail for the Pi and sensors.</figcaption>
+    </figure>
+
+    <p>
+      Remember the direct battery-to-L298N connection from §12.5, Step 4? Now the module goes <em>between</em> them:
+    </p>
+    <div class="mermaid">
+flowchart LR
+    BATT["3S LiPo<br/>11.1 V, 2200 mAh"] --> PM["DFRobot<br/>Power Module"]
+    PM -- "12 V rail" --> L298["L298N"]
+    L298 --> ML["Left motor"]
+    L298 --> MR["Right motor"]
+    PM -- "regulated 5 V rail" --> PI["Raspberry Pi 4"]
+    PM -- "5 V" --> ENC["Motor encoders"]
+    PI -- "USB" --> LID["LiDAR"]
+    PI -- "CSI ribbon" --> CAM["Camera"]
+    PI -- "USB serial" --> NANO["Arduino Nano"]
+    NANO --> L298
+    style BATT fill:#fdf3e4,stroke:#c8862c
+    style PM fill:#fdeee4,stroke:#c8622c
+    style PI fill:#eef0ff,stroke:#3d4bf5
+    style NANO fill:#f4effe,stroke:#8b5cf6
+    </div>
+
+    <div class="fig-grid">
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/3-4-connect-battery-to-robot_p04_04.jpeg" alt="Wiring diagram with the battery feeding a power module, which feeds the L298N and the Arduino Nano, with both motors attached">
+        <figcaption><b>Figure 12.27</b> — The revised wiring: battery → power module → L298N, with the Nano's logic now fed from the regulated rail.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/3-4-connect-battery-to-robot_p05_05.jpeg" alt="Photograph of the real wiring on a cutting mat with the power module inserted between the LiPo battery and the motor driver">
+        <figcaption><b>Figure 12.28</b> — The same thing built. This is Forge's permanent power topology.</figcaption>
+      </figure>
+    </div>
+
+    <div class="box eng">
+      <div class="box-title">🔧 Why motor power and logic power stay separate</div>
+      <p>
+        Look at the diagram again: the module feeds two <em>separate rails</em>. That separation is not cosmetic.
+        Starting, stopping and reversing a motor induces voltage spikes on its supply line. If that same rail
+        powered the Pi's or the Nano's logic, those spikes could reset or corrupt them mid-operation — and a Pi
+        that browns out during an SD-card write can lose its filesystem. Keeping motor power and logic power on
+        distinct regulated rails, joined only by a common ground, is standard practice on essentially every
+        motor-driven robot, and it echoes the same power-distribution reasoning Lecture 11 walked through for
+        LIMO's own battery and BMS.
+      </p>
+    </div>
+
+    <p>
+      ✅ Forge now has power distribution. Flip the module's switch and it delivers 12&nbsp;V to the motors and a
+      clean 5&nbsp;V rail that, from §12.11 onward, will run the robot's brain.
+    </p>
+
+    <div class="exercise">
+      <div class="level">Exercise · Intermediate</div>
+      <p>
+        Move the encoders' 5&nbsp;V/GND feed off the Arduino Nano's pins (where §12.5 temporarily put them) and onto
+        the power module's 5&nbsp;V rail — but keep the Nano's GND connected to that same ground. Why is that last
+        part not optional? What happens to a digital signal whose sender and receiver don't share a ground
+        reference?
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="brain">
+    <h2><span class="num">12.11</span>The brain — Ubuntu Server, static IP &amp; SSH</h2>
+    <p>
+      Forge's brain is a <strong>Raspberry Pi 4</strong> running <strong>Ubuntu Server 22.04 LTS (64-bit)</strong> —
+      a headless, no-desktop build, because a robot you drive around a room is not a machine you want to plug a
+      monitor into. Ubuntu (rather than Raspberry Pi OS) because ROS 2 Humble targets Ubuntu 22.04 directly.
+    </p>
+
+    <div class="fig-grid">
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/4-1-computer-unit-summary_p02_01.png" alt="Raspberry Pi 4 board alongside the Ubuntu and ROS 2 logos">
+        <figcaption><b>Figure 12.29</b> — The stack: Raspberry Pi 4 + Ubuntu 22.04 + ROS 2 Humble.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/4-1-computer-unit-summary_p03_02.png" alt="Top-down photograph of a Raspberry Pi 4 Model B board showing its USB ports, Ethernet jack, GPIO header, CSI camera connector and USB-C power input">
+        <figcaption><b>Figure 12.30</b> — The Pi 4 Model B. Note the CSI camera connector — Lecture 13 uses it.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/4-1-computer-unit-summary_p03_03.png" alt="A USB-C connector and a USB-A connector on a black cable">
+        <figcaption><b>Figure 12.31</b> — USB-C for power. For the first boot, a mains charger is fine; later, the power module's 5&nbsp;V rail takes over.</figcaption>
+      </figure>
+    </div>
+
+    <div class="box idea">
+      <div class="box-title">💡 Two ways in — pick SSH</div>
+      <p>
+        You can set the Pi up either <strong>over SSH</strong> (a network protocol for secure remote access — you
+        work from your own PC) or <strong>with a screen and keyboard</strong> (mini-HDMI plus USB). SSH is
+        dramatically more convenient once you're chasing a robot around a room, and the rest of this course assumes
+        it. The screen-and-keyboard route stays available as a recovery path if networking goes wrong.
+      </p>
+    </div>
+
+    <h3>Flashing the card</h3>
+    <p>
+      Use the <strong>Raspberry Pi Imager</strong>. On Ubuntu:
+    </p>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> sudo apt update
+<span class="term-prompt">$</span> sudo apt install snapd
+<span class="term-prompt">$</span> sudo snap install rpi-imager</div>
+    </div>
+    <p>On Windows or macOS, download it from <a href="https://www.raspberrypi.com/software/">raspberrypi.com/software</a>.</p>
+
+    <figure class="figure">
+      <img loading="lazy" src="images/fastbot-course/4-2-install-ubuntu-server_p02_01.png" alt="Graphic showing the Raspberry Pi logo, an arrow labelled Flash Ubuntu, and an SD card with the Ubuntu logo">
+      <figcaption><b>Figure 12.32</b> — The whole operation in one picture: Ubuntu Server written to a microSD card.</figcaption>
+    </figure>
+
+    <ol class="steps">
+      <li>Insert the microSD card into your PC (use a USB-SD adapter if needed) and open Imager.</li>
+      <li>Choose <strong>Raspberry Pi 4</strong> as the device.</li>
+      <li>Choose <strong>Other general-purpose OS → Ubuntu → Ubuntu Server 22.04 LTS (64-bit)</strong> as the operating system.</li>
+      <li>Choose your SD card as the storage. <strong>Check the capacity</strong> to be sure you have the right device — this step is destructive.</li>
+      <li>Click <strong>Next</strong>. When the <em>Use OS customisation?</em> popup appears, choose <strong>EDIT SETTINGS</strong>.</li>
+      <li>On the <strong>GENERAL</strong> tab: set hostname and username both to <code>fastbot</code>, set a password, tick <em>Configure wireless LAN</em> and enter your SSID and Wi-Fi password, and tick <em>Set locale settings</em> for your region and keyboard layout.</li>
+      <li>On the <strong>SERVICES</strong> tab: tick <strong>Enable SSH</strong>. Do not skip this.</li>
+      <li><strong>SAVE</strong>, answer <strong>YES</strong> to the customisation popup, and flash the card.</li>
+    </ol>
+
+    <div class="fig-grid">
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/4-2-install-ubuntu-server_p04_02.png" alt="Raspberry Pi Imager main window with device, operating system and storage selectors">
+        <figcaption><b>Figure 12.33</b> — Device, OS and storage. Ubuntu Server 22.04 LTS (64-bit).</figcaption>
+      </figure>
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/4-2-install-ubuntu-server_p05_03.png" alt="Dialog asking Would you like to apply OS customisation settings, with EDIT SETTINGS, NO CLEAR SETTINGS, YES and NO buttons">
+        <figcaption><b>Figure 12.34</b> — Choose <strong>EDIT SETTINGS</strong>, not YES.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/4-2-install-ubuntu-server_p06_04.png" alt="OS Customisation GENERAL tab with hostname fastbot, username fastbot, password, wireless LAN SSID and password, and locale settings">
+        <figcaption><b>Figure 12.35</b> — GENERAL tab: hostname <code>fastbot</code>, username <code>fastbot</code>, Wi-Fi, locale.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/4-2-install-ubuntu-server_p07_05.png" alt="OS Customisation SERVICES tab with the Enable SSH checkbox ticked and password authentication selected">
+        <figcaption><b>Figure 12.36</b> — SERVICES tab: <strong>Enable SSH</strong>. This is the step everyone forgets.</figcaption>
+      </figure>
+    </div>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ Forgetting "Enable SSH" is the classic own-goal</div>
+      <p>
+        A headless install with SSH disabled is only reachable by plugging in a monitor and keyboard — which defeats
+        the entire point, and on a Pi buried inside a chassis means partial disassembly. Double-check that
+        checkbox before writing the image, every single time.
+      </p>
+    </div>
+
+    <figure class="figure">
+      <img loading="lazy" src="images/fastbot-course/4-2-install-ubuntu-server_p08_06.png" alt="Raspberry Pi Imager showing a Write Successful dialog confirming Ubuntu Server 22.04.5 LTS 64-bit was written to the storage device">
+      <figcaption><b>Figure 12.37</b> — Write successful. Eject the card, then plug it straight back in — the next step edits it.</figcaption>
+    </figure>
+
+    <h3>Setting a static IP before first boot</h3>
+    <p>
+      When a new device joins your network, your router's DHCP server hands it a more-or-less random address. That's
+      fine for a laptop and miserable for a robot: you need the IP to SSH in, and you're about to hardcode
+      connection details into scripts and launch files. Fix it before the Pi ever boots.
+    </p>
+    <ol class="steps">
+      <li>With the freshly flashed card connected to your PC, find the <code>system-boot</code> volume that appears.</li>
+      <li>Open the file <code>/system-boot/network-config</code> (you'll need permission to modify it).</li>
+      <li>Find the <code>wifis</code> section and replace it with the block below.</li>
+    </ol>
+
+    <div class="filename">/system-boot/network-config</div>
+    <pre><code>network:
+  version: 2
+  renderer: networkd
+  wifis:
+    wlan0:
+      dhcp4: no
+      optional: true            # allow booting even if Wi-Fi is unavailable
+      addresses:
+        - 192.168.1.100/24      # the static IP you are claiming
+      gateway4: 192.168.1.1     # your router's IP
+      nameservers:
+        addresses:
+          - 8.8.8.8
+          - 1.1.1.1
+      access-points:
+        "SSID_WIFI_NETWORK_HERE":     # double-check this is exactly right
+          password: "PASSWORD_HERE"   # and this</code></pre>
+
+    <div class="box hw">
+      <div class="box-title">🔩 Adjust these to <em>your</em> network</div>
+      <ul style="margin-bottom:0;">
+        <li><code>dhcp4: no</code> stops the router assigning a random address.</li>
+        <li><code>addresses: - 192.168.1.100/24</code> claims <code>192.168.1.100</code>. Pick something outside your router's DHCP pool so nothing else is ever handed the same address.</li>
+        <li><code>gateway4</code> must be your actual router address — commonly <code>192.168.1.1</code> or <code>192.168.0.1</code>.</li>
+        <li>The SSID and password are typed here in plain text and are unforgiving about typos. A wrong character means a Pi that boots and never appears on the network.</li>
+      </ul>
+    </div>
+
+    <p>Save, eject the card, insert it into the Pi, and power it on. After a minute or two:</p>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> ssh fastbot@192.168.1.100
+<span class="term-out">fastbot@192.168.1.100's password:
+Welcome to Ubuntu 22.04.5 LTS (GNU/Linux 5.15.0-1053-raspi aarch64)
+...
+fastbot@fastbot:~$</span></div>
+    </div>
+    <p>
+      ✅ You are inside Forge's brain, over the network, with no monitor or keyboard ever attached to it.
+    </p>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="ros2install">
+    <h2><span class="num">12.12</span>Installing ROS 2 Humble (and fixing a real bug)</h2>
+    <p>
+      Ubuntu Server ships with nothing ROS-related. Forge's Pi needs the same ROS 2 Humble install every other
+      machine in this course has used — except this time you run it yourself, over SSH, on a completely blank system.
+      Every command below runs <strong>on the Pi</strong>.
+    </p>
+
+    <h3>1 — Update, and set the locale</h3>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> sudo apt update &amp;&amp; sudo apt upgrade -y
+
+<span class="term-prompt">$</span> locale   <span class="term-out"># check for UTF-8</span>
+<span class="term-prompt">$</span> sudo apt update &amp;&amp; sudo apt install locales
+<span class="term-prompt">$</span> sudo locale-gen en_US en_US.UTF-8
+<span class="term-prompt">$</span> sudo update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+<span class="term-prompt">$</span> export LANG=en_US.UTF-8
+<span class="term-prompt">$</span> locale   <span class="term-out"># verify</span></div>
+    </div>
+
+    <h3>2 — Enable the required repositories and add the ROS 2 key</h3>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> sudo apt install software-properties-common
+<span class="term-prompt">$</span> sudo add-apt-repository universe
+
+<span class="term-prompt">$</span> sudo apt update &amp;&amp; sudo apt install curl -y
+<span class="term-prompt">$</span> sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key \
+       -o /usr/share/keyrings/ros-archive-keyring.gpg</div>
+    </div>
+
+    <h3>3 — Add the repository to your sources list</h3>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> echo "deb [arch=$(dpkg --print-architecture) \
+signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu \
+$(. /etc/os-release &amp;&amp; echo $UBUNTU_CODENAME) main" | \
+       sudo tee /etc/apt/sources.list.d/ros2.list &gt; /dev/null</div>
+    </div>
+
+    <h3>4 — Install development tools and ROS 2</h3>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> sudo apt update &amp;&amp; sudo apt install ros-dev-tools git-all -y
+
+<span class="term-prompt">$</span> sudo apt update &amp;&amp; sudo apt upgrade -y
+<span class="term-prompt">$</span> sudo apt install ros-humble-ros-base ros-humble-demo-nodes-cpp \
+       ros-humble-teleop-twist-keyboard -y</div>
+    </div>
+    <div class="box idea">
+      <div class="box-title">💡 Why <code>ros-base</code> and not <code>desktop</code></div>
+      <p>
+        <code>ros-humble-ros-base</code> is the bare communication stack plus core tooling — no RViz, no
+        visualization, nothing that wants a display. That's exactly right for a headless robot: it installs faster,
+        uses far less of the SD card, and doesn't drag in GUI dependencies the Pi will never use. RViz runs on
+        <em>your</em> machine, subscribing over the network. <code>teleop_twist_keyboard</code> comes along because
+        Lecture 13 uses it to drive Forge by hand.
+      </p>
+    </div>
+
+    <h3>5 — Source ROS 2 in every new shell</h3>
+    <p>
+      ROS 2 has to be sourced in each new shell, which is normally handled by adding one line to
+      <code>~/.bashrc</code>:
+    </p>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> nano ~/.bashrc</div>
+    </div>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ Spot the bug</div>
+      <p style="margin-bottom:10px;">
+        You just installed <code>ros-humble-*</code> packages. A student adds this line to the bottom of
+        <code>~/.bashrc</code>:
+      </p>
+      <pre style="margin-bottom:10px;"><code>### rest of .bashrc
+
+source /opt/ros/jazzy/setup.bash</code></pre>
+      <p style="margin-bottom:0;">
+        They save, open a new terminal, and run <code>ros2 topic list</code> — and nothing works, or the shell
+        complains that the file doesn't exist. What's wrong? Work it out before reading the next box. (This exact
+        mistake appears in the published reference material for this build, which is precisely why it's worth
+        practising: copy-pasted setup lines pointing at the wrong distribution are one of the most common
+        real-world ROS 2 environment bugs, on any robot.)
+      </p>
+    </div>
+
+    <div class="exercise">
+      <div class="level">Exercise · Intermediate — diagnose it yourself</div>
+      <p style="margin-bottom:10px;">Work through the diagnosis rather than jumping to the fix:</p>
+      <ul style="margin-bottom:10px;">
+        <li>What command lists which ROS distributions are actually installed? (Hint: <code>ls /opt/ros/</code>.)</li>
+        <li>What does <code>echo $ROS_DISTRO</code> print in a shell where the wrong line was sourced, versus a correct one?</li>
+        <li>What error does <code>source</code> itself give when the path doesn't exist — and why is it easy to miss in a login banner?</li>
+      </ul>
+      <p style="margin-bottom:0;">
+        Then fix the line — it should read <code>source /opt/ros/humble/setup.bash</code> — re-source your shell,
+        and confirm with <code>ros2 doctor</code> or <code>ros2 topic list</code>.
+      </p>
+    </div>
+
+    <div class="filename">~/.bashrc (corrected)</div>
+    <pre><code>### rest of .bashrc
+
+source /opt/ros/humble/setup.bash</code></pre>
+
+    <h3>6 — Verify the installation end to end</h3>
+    <p>Two SSH sessions into the Pi, running the classic talker/listener pair:</p>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> source ~/.bashrc
+<span class="term-out"># --- SSH session 1 ---</span>
+<span class="term-prompt">$</span> ros2 run demo_nodes_cpp talker
+<span class="term-out">[INFO] [talker]: Publishing: 'Hello World: 1'
+[INFO] [talker]: Publishing: 'Hello World: 2'</span>
+
+<span class="term-out"># --- SSH session 2, same Pi ---</span>
+<span class="term-prompt">$</span> ros2 run demo_nodes_cpp listener
+<span class="term-out">[INFO] [listener]: I heard: [Hello World: 1]
+[INFO] [listener]: I heard: [Hello World: 2]</span></div>
+    </div>
+    <p>
+      Two independent processes publishing and subscribing over ROS 2, on hardware you flashed, networked and
+      configured yourself. ✅ <strong>Forge's brain is alive.</strong>
+    </p>
+
+    <h3>7 — Move the Pi onto the robot's own power</h3>
+    <p>
+      Last step of the session: unplug the Pi from its mains charger and run it from the power module's regulated
+      5&nbsp;V rail, so the whole robot lives off one battery.
+    </p>
+    <figure class="figure">
+      <img loading="lazy" src="images/fastbot-course/4-4-connect-rpi-to-df_p04_01.jpeg" alt="Photograph of the Raspberry Pi wired to the DFRobot power module alongside the L298N, Arduino Nano, motors and LiPo battery on a cutting mat">
+      <figcaption><b>Figure 12.38</b> — Everything on one battery: Pi, Nano, L298N and motors, fed through the power module.</figcaption>
+    </figure>
+    <div class="box mistake">
+      <div class="box-title">⚠️ Watch the Pi's undervoltage warning</div>
+      <p>
+        Reboot and SSH back in, then check <code>dmesg | grep -i voltage</code> and look for the Pi's
+        low-voltage lightning-bolt warnings. The Pi 4 is genuinely fussy about a clean 5&nbsp;V under load, and an
+        undervolted Pi behaves like a flaky Pi — random freezes, dropped USB devices, corrupted SD cards — while
+        reporting nothing obviously wrong. This is the same "no error is not the same as working" discipline
+        Lecture 11 built around LIMO's <code>error_code</code> field, and Lecture 13 turns it into a full
+        debugging exercise.
+      </p>
+    </div>
+
+    <div class="box real">
+      <div class="box-title">🌍 Where Forge stands at the end of Lecture 12</div>
+      <ul style="margin-bottom:0;">
+        <li>✅ Motors wired to an L298N, driven by an Arduino Nano running <code>ros_arduino_bridge</code></li>
+        <li>✅ Encoders read back, and <code>encoder_cpr</code> measured for <em>your</em> hardware</li>
+        <li>✅ Closed-loop velocity control verified over serial</li>
+        <li>✅ A power budget computed, a battery sized against it, and a power module distributing 12&nbsp;V and 5&nbsp;V</li>
+        <li>✅ A Raspberry Pi 4 on a fixed IP, reachable over SSH, running ROS 2 Humble</li>
+        <li>⬜ Not yet: anything that speaks ROS 2 to the motors. That's §13.2-13.5.</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="summary">
+    <h2><span class="num">12.13</span>Summary, checkpoint, quiz &amp; glossary</h2>
+    <p>
+      This session took Forge from a bag of components to a robot whose wheels physically spin under closed-loop
+      encoder control, off its own battery, with a networked Linux brain running ROS 2. You chose motors on
+      voltage and feedback rather than raw torque, wired an H-bridge and a microcontroller by hand, flashed real
+      firmware, measured your own encoder constant instead of trusting a default, built an honest power budget and
+      sized a pack against both its energy <em>and</em> its current rating, and stood up Ubuntu Server + ROS 2
+      Humble from a blank card. Lecture 13 gives Forge a ROS 2 nervous system, a body it can describe, and senses
+      it can trust; Lecture 14 puts it in Gazebo, gives it a printed cover, and closes out the course.
+    </p>
+
+    <div class="checkpoint">
+      <strong style="color:var(--text); display:block; margin-bottom:10px;">✅ Learning checkpoint</strong>
+      <ul>
+        <li>I can explain why 12&nbsp;V motors <em>with encoders</em> are the right class of part for this robot, in terms of both power distribution and closed-loop control.</li>
+        <li>I can identify a gear motor's encoder and power lines from its published pinout, and I know why I can't trust wire colour alone.</li>
+        <li>I can explain how an H-bridge and PWM together give a motor bidirectional, speed-controllable motion, and what a duty cycle is.</li>
+        <li>I can explain why the motor loop runs on a dedicated MCU rather than the Pi, and connect it directly to LIMO's SBC/embedded-controller split from Lecture 11.</li>
+        <li>I wired the L298N, the Nano and both encoders using the documented pin map, and I know why those specific pins were chosen.</li>
+        <li>I flashed <code>ros_arduino_bridge</code> and drove the motors with <code>o</code>, <code>e</code>, <code>r</code> and <code>m</code> over serial at 57600 baud.</li>
+        <li>I measured my own <code>encoder_cpr</code> and converted it to counts-per-PID-loop for a 30&nbsp;Hz controller.</li>
+        <li>I can build a component power budget using P=V×I and compute runtime from Energy=V×Capacity and Runtime=Energy/Power.</li>
+        <li>I can size a battery against both an energy/runtime requirement and a current/C-rating requirement, and I know what voltage sag looks like.</li>
+        <li>I flashed Ubuntu Server, set a static IP via the netplan <code>network-config</code> file, and reached a headless Pi over SSH.</li>
+        <li>I installed ROS 2 Humble and diagnosed a wrong-distribution sourcing bug in <code>.bashrc</code>.</li>
+      </ul>
+    </div>
+
+    <div class="quiz">
+      <div class="quiz-title">🧠 Quick Quiz — Session 12</div>
+      <div class="quiz-q">
+        <p><strong>Q1.</strong> Forge's BOM lists a rear ball caster. What breaks if you leave it out?</p>
+        <details><summary>Reveal answer</summary><p>A two-wheel differential-drive robot has only two ground contacts, which isn't statically stable — without a third contact point the chassis tips forward or backward under its own weight or any acceleration.</p></details>
+      </div>
+      <div class="quiz-q">
+        <p><strong>Q2.</strong> Why does the encoder need its own 3.3-5&nbsp;V power pin, separate from the motor terminals?</p>
+        <details><summary>Reveal answer</summary><p>The encoder is a low-power digital signal source, while the motor terminals carry high-current drive power at up to 12&nbsp;V. Feeding the encoder from the motor supply — or from any rail outside its rated range — risks destroying it.</p></details>
+      </div>
+      <div class="quiz-q">
+        <p><strong>Q3.</strong> Why does the motor loop run on an Arduino Nano instead of the Raspberry Pi?</p>
+        <details><summary>Reveal answer</summary><p>Three reasons: dedicated hardware PWM timers give a rock-steady signal; a dedicated MCU gives real-time, predictable response with no OS scheduling jitter; and it frees the Pi for ROS 2, perception and navigation. It's the same SBC/embedded-controller split LIMO uses (Lecture 11).</p></details>
+      </div>
+      <div class="quiz-q">
+        <p><strong>Q4.</strong> On Forge, ENA and ENB are jumpered to 5&nbsp;V. So where does speed control come from?</p>
+        <details><summary>Reveal answer</summary><p>From PWM on the IN pins. D5, D6, D9 and D10 are all hardware-PWM-capable on the ATmega328P, and <code>ros_arduino_bridge</code> drives them with a duty cycle while holding the opposite input low. Enable stays permanently high.</p></details>
+      </div>
+      <div class="quiz-q">
+        <p><strong>Q5.</strong> Your encoder measures 3450 counts/rev and the PID loop runs at 30&nbsp;Hz. What do you send to spin at 1 rev/s, and why that number?</p>
+        <details><summary>Reveal answer</summary><p><code>m 115 115</code>. 3450 counts/rev ÷ 30 loops/sec = 115 counts accumulated per PID loop cycle when the wheel turns once per second.</p></details>
+      </div>
+      <div class="quiz-q">
+        <p><strong>Q6.</strong> A pack has plenty of capacity (Ah) but too low a C-rating for Forge's peak current. What symptom would you expect under load?</p>
+        <details><summary>Reveal answer</summary><p>Voltage sag under load, or the pack's own protection circuitry tripping — the same warning sign Lecture 11 taught you to watch for in LIMO's <code>battery_voltage</code> field.</p></details>
+      </div>
+      <div class="quiz-q">
+        <p><strong>Q7. (Gotcha)</strong> You installed <code>ros-humble-*</code> packages, sourced <code>.bashrc</code>, and <code>ros2 topic list</code> still misbehaves. Where's the bug most likely hiding?</p>
+        <details><summary>Reveal answer</summary><p>In the distribution name inside the sourced path. A very common copy-paste mistake is <code>source /opt/ros/jazzy/setup.bash</code> when Humble is what's installed — it should read <code>source /opt/ros/humble/setup.bash</code>. Confirm with <code>ls /opt/ros/</code> and <code>echo $ROS_DISTRO</code>.</p></details>
+      </div>
+    </div>
+
+    <h3>Glossary</h3>
+    <dl class="glossary">
+      <dt>H-bridge</dt><dd>A switch arrangement that lets a motor be driven in either direction by choosing which diagonal pair is closed. Forge's is an L298N; LIMO's was sealed inside the chassis (Lecture 11).</dd>
+      <dt>PWM (Pulse-Width Modulation)</dt><dd>Controlling delivered power by switching a signal on and off rapidly and varying the fraction of time it's on (the duty cycle).</dd>
+      <dt>Duty cycle</dt><dd>The on-fraction of a PWM signal. 100% = full power, 50% ≈ half power, 0% = off.</dd>
+      <dt>Deadband</dt><dd>The low range of duty cycles where a motor buzzes but doesn't turn, because the commanded power can't overcome static friction.</dd>
+      <dt>Open loop / closed loop</dt><dd>Open loop commands power and hopes. Closed loop reads back actual motion (from encoders) and corrects the command until reality matches the request.</dd>
+      <dt>Quadrature encoder</dt><dd>Two phase-offset output channels (A and B) whose edge ordering reveals both amount and direction of rotation.</dd>
+      <dt>Counts per revolution (CPR)</dt><dd>Encoder counts accumulated in one full wheel revolution. A property of your specific motor and gearbox — measure it, don't assume it.</dd>
+      <dt>Power budget</dt><dd>A component-by-component tally of V×I for every part, summed to a worst-case total draw and used to size the battery.</dd>
+      <dt>C-rating</dt><dd>A pack's maximum safe continuous discharge current, as a multiple of its capacity: <code>Capacity(Ah) × C</code>.</dd>
+      <dt>Voltage sag</dt><dd>The drop in pack voltage under heavy load; severe sag indicates the C-rating is too low for the peak current being drawn.</dd>
+      <dt>Netplan</dt><dd>Ubuntu's YAML network configuration system, used here (via <code>network-config</code> on the boot partition) to claim a static IP before first boot.</dd>
+      <dt>Headless</dt><dd>A computer run without a directly attached monitor or keyboard, administered over the network via SSH.</dd>
+    </dl>
+
+    <h3>Common mistakes</h3>
+    <ul>
+      <li>Wiring a motor by remembered wire colour instead of checking that specific unit's published pinout.</li>
+      <li>Connecting the battery with reversed polarity — the one failure in §12.5 that costs hardware rather than 30 seconds.</li>
+      <li>Powering MCU or Pi logic from the same unregulated rail as the motors, exposing them to switching spikes.</li>
+      <li>Using a firmware baud rate that doesn't match the serial tool: no error, just garbage bytes.</li>
+      <li>Trusting a hardcoded <code>encoder_cpr</code> default (2500 or 2550 in the reference launch files) instead of measuring your own.</li>
+      <li>Sizing a battery for capacity alone while ignoring its C-rating against actual peak current.</li>
+      <li>Forgetting to tick <strong>Enable SSH</strong> during flashing, then needing a monitor and keyboard to recover a headless board.</li>
+      <li>Sourcing the wrong ROS distribution's <code>setup.bash</code> in <code>.bashrc</code>.</li>
+      <li>Running the Pi from a rail that browns out under motor load, then blaming ROS 2 for the resulting flakiness.</li>
+    </ul>
+  </section>
+
+  <div class="footer-nav">
+    <a href="11-limo-hardware-six-systems.html">&larr; Lecture 11: LIMO Hardware Deep-Dive</a>
+    <a href="index.html">Table of Contents</a>
+    <a href="13-diy-robot-ros2-driver-urdf-lidar-camera.html">Lecture 13: Build Your Own Robot II &rarr;</a>
+  </div>
+
+</div>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      background: '#f1efe8', primaryColor: '#eef0ff', primaryTextColor: '#211f1a',
+      primaryBorderColor: '#3d4bf5', lineColor: '#0e9e6e', secondaryColor: '#f1efe8',
+      tertiaryColor: '#fffefb', textColor: '#211f1a', fontFamily: 'Inter, -apple-system, sans-serif'
+    },
+    flowchart: { curve: 'basis' },
+    securityLevel: 'loose'
+  });
+</script>
+<script>
+(function(){
+  var btn = document.getElementById('theme-toggle');
+  var icon = document.getElementById('theme-toggle-icon');
+  function updateIcon(){
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    icon.textContent = isDark ? '☀️' : '🌙';
+  }
+  updateIcon();
+  btn.addEventListener('click', function(){
+    var cur = document.documentElement.getAttribute('data-theme');
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try{ localStorage.setItem('limo-book-theme', next); }catch(e){}
+    updateIcon();
+  });
+})();
+</script>
+<script>
+(function(){
+  var lb = document.getElementById('lightbox');
+  var lbImg = lb.querySelector('img');
+  var lbCap = lb.querySelector('.lb-cap');
+  document.querySelectorAll('.figure img').forEach(function(img){
+    img.addEventListener('click', function(){
+      lbImg.src = img.currentSrc || img.src;
+      lbImg.alt = img.alt || '';
+      var cap = img.parentElement.querySelector('figcaption');
+      lbCap.textContent = cap ? cap.textContent : (img.alt || '');
+      lb.classList.add('on');
+    });
+  });
+  function close(){ lb.classList.remove('on'); lbImg.src = ''; }
+  lb.addEventListener('click', close);
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') close(); });
+})();
+</script>
+<script src="annotate.js" defer></script>
+</body>
+</html>

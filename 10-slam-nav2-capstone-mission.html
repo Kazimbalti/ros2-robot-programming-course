@@ -1,0 +1,1823 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<script>
+(function(){
+  try{
+    var t = localStorage.getItem('limo-book-theme');
+    if(!t){ t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+    document.documentElement.setAttribute('data-theme', t);
+  }catch(e){}
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 10 — SLAM, Navigation2 &amp; the Simulated Capstone Mission</title>
+<meta name="description" content="Map the lab with slam_toolbox, teach LIMO to plan and act with Navigation2, then fuse waypoints, exploration, and detection into one simulated capstone mission — the dress rehearsal for the real-hardware capstone in Lecture 14.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<style>
+  :root{
+    --bg:#f6f4ef; --panel:#fffefb; --panel2:#f1efe8; --border:#e6e1d6;
+    --text:#211f1a; --muted:#7a7568; --accent:#3d4bf5; --accent-ink:#2732b8;
+    --accent2:#0e9e6e; --gold:#c8862c; --danger:#d64a3c; --purple:#8b5cf6; --radius:14px;
+  }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--bg); color:var(--text); font-family:'Inter', -apple-system, sans-serif; line-height:1.85; font-size:17.5px; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:880px; margin:0 auto; padding:48px 24px 120px;}
+  .cover{border-radius:28px; background:#12142b; padding:64px 44px; margin-bottom:56px; position:relative; overflow:hidden; isolation:isolate;}
+  .cover::before{content:""; position:absolute; inset:-40%; background:
+      radial-gradient(38% 45% at 15% 20%, rgba(61,75,245,0.55), transparent 70%),
+      radial-gradient(35% 40% at 85% 15%, rgba(139,92,246,0.45), transparent 70%),
+      radial-gradient(45% 50% at 60% 90%, rgba(14,158,110,0.35), transparent 70%);
+    filter:blur(60px); z-index:0;}
+  .cover::after{content:""; position:absolute; inset:0; background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px); background-size: 20px 20px; z-index:0;}
+  .cover > *{position:relative; z-index:1;}
+  .kicker{display:inline-block; color:#c9cdff; font-weight:600; letter-spacing:.4px; font-size:13px; margin-bottom:18px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); padding:6px 14px; border-radius:999px;}
+  .cover h1{font-size:2.7em; margin:0 0 12px; font-weight:800; line-height:1.3; color:#ffffff; letter-spacing:-.5px;}
+  .cover .subtitle{color:#aeb2d6; font-size:1.2em; margin-bottom:30px; font-weight:400;}
+  .meta-row{display:flex; flex-wrap:wrap; gap:10px; margin-top:18px;}
+  .chip{background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.14); color:#d4d7f0; padding:7px 15px; border-radius:999px; font-size:.83em;}
+  h2{font-size:1.9em; font-weight:800; margin:72px 0 22px; display:flex; align-items:center; gap:14px; letter-spacing:-.3px;}
+  h2 .num{display:inline-flex; align-items:center; justify-content:center; min-width:40px; height:40px; padding:0 12px; border-radius:12px; background:var(--accent); box-shadow:0 6px 16px -4px rgba(61,75,245,0.5); color:#ffffff; font-size:.62em; font-weight:800; flex-shrink:0; white-space:nowrap;}
+  h3{font-size:1.3em; font-weight:700; margin:36px 0 14px; color:var(--accent-ink); letter-spacing:-.2px;}
+  h4{font-size:1.08em; font-weight:700; margin:24px 0 10px; color:var(--purple);}
+  p{margin:0 0 16px; color:#3c382f;}
+  strong{color:var(--text); font-weight:700;}
+  a{color:var(--accent);}
+  .box{border-radius:16px; padding:20px 24px; margin:22px 0; border:1px solid var(--border); background:var(--panel); position:relative; box-shadow:0 1px 2px rgba(33,31,26,0.03);}
+  .box-title{font-weight:800; margin-bottom:9px; display:flex; align-items:center; gap:8px; font-size:.96em; letter-spacing:.1px;}
+  .box p:last-child{margin-bottom:0;}
+  .box.idea{background:#eef0ff;border-color:#d6dafc;} .box.idea .box-title{color:var(--accent-ink);}
+  .box.mistake{background:#fdeeec; border-color:#f6d2cd;} .box.mistake .box-title{color:var(--danger);}
+  .box.eng{background:#f4effe; border-color:#e2d6fb;} .box.eng .box-title{color:var(--purple);}
+  .box.real{background:#eafaf3; border-color:#c9eeda;} .box.real .box-title{color:var(--accent2);}
+  .box.def{background:#fdf3e4; border-color:#f2ddb3;} .box.def .box-title{color:var(--gold);}
+  .box.hw{background:#fdeee4; border-color:#f2c9a3;} .box.hw .box-title{color:#c8622c;}
+  .box.think{background:#eafcfb; border-color:#bfeae6;} .box.think .box-title{color:#0e8a7d;}
+  code, pre{font-family:'JetBrains Mono', monospace; direction:ltr; text-align:left;}
+  code{background:#eceaf9; border:1px solid #dcdaf3; border-radius:6px; padding:2px 7px; font-size:.87em; color:var(--accent-ink); display:inline-block;}
+  pre{background:#181a2e; border-radius:16px; padding:18px 20px; overflow-x:auto; margin:18px 0; font-size:.88em; line-height:1.65; box-shadow:0 12px 28px -16px rgba(24,26,46,0.5);}
+  pre code{background:none; border:none; padding:0; color:#d8dcff; display:block;}
+  table{width:100%; border-collapse:separate; border-spacing:0; margin:22px 0; font-size:.92em; border-radius:14px; overflow:hidden; border:1px solid var(--border);}
+  th, td{border-bottom:1px solid var(--border); padding:12px 15px; text-align:left;}
+  th{background:#eceaf9; color:var(--accent-ink); font-weight:700; font-size:.9em;}
+  tr:last-child td{border-bottom:none;}
+  tr:nth-child(even) td{background:rgba(33,31,26,0.02);}
+  ul, ol{margin:0 0 16px; padding-inline-start:26px; color:#3c382f;}
+  li{margin-bottom:7px;}
+  .figure{margin:28px 0; text-align:center;}
+  .figure img, .figure svg{max-width:100%; height:auto; background:#fffefb; border:1px solid var(--border); border-radius:16px; box-shadow:0 1px 2px rgba(33,31,26,0.03), 0 16px 32px -20px rgba(33,31,26,0.14);}
+  .figure figcaption{color:var(--muted); font-size:.87em; margin-top:12px;}
+  .mermaid{background:#fffefb; border:1px solid var(--border); border-radius:16px; padding:18px; margin:24px 0; text-align:center; box-shadow:0 1px 2px rgba(33,31,26,0.03), 0 16px 32px -20px rgba(33,31,26,0.14);}
+  .checkpoint{border-radius:16px; padding:22px 24px; margin:26px 0; background:#eafaf3; border:1px solid #c9eeda;}
+  .checkpoint ul{list-style:none; padding:0; margin:0;}
+  .checkpoint li{padding:9px 0; border-bottom:1px solid rgba(33,31,26,0.06); display:flex; gap:10px; align-items:flex-start;}
+  .checkpoint li:last-child{border-bottom:none;}
+  .checkpoint li::before{content:"◻"; color:var(--accent2); font-size:1.2em; line-height:1;}
+  .exercise{border-radius:14px; padding:18px 22px; margin:16px 0; background:var(--panel); border:1px solid var(--border); border-inline-start:4px solid var(--gold);}
+  .exercise .level{font-size:.76em; color:var(--gold); font-weight:800; text-transform:uppercase; letter-spacing:.6px;}
+  .assignment{border-radius:14px; padding:18px 22px; margin:16px 0; background:var(--panel); border:1px solid var(--border); border-inline-start:4px solid var(--accent2);}
+  .assignment .label{font-size:.76em; color:var(--accent2); font-weight:800; text-transform:uppercase; letter-spacing:.6px;}
+  .glossary dt{font-weight:800; color:var(--accent-ink); margin-top:16px;}
+  .glossary dd{margin:4px 0 0; color:var(--muted);}
+  .toc{background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:26px 30px;}
+  .toc a{display:block; padding:8px 0; color:#3c382f; text-decoration:none; border-bottom:1px solid rgba(33,31,26,.06); transition:color .15s;}
+  .toc a:last-child{border-bottom:none;}
+  .toc a:hover{color:var(--accent-ink);}
+  .toc a span{color:var(--muted); font-size:.85em; margin-inline-end:10px; font-weight:600;}
+  .divider{height:1px; background:linear-gradient(90deg, transparent, var(--border), transparent); margin:52px 0;}
+  .footer-nav{display:flex; justify-content:space-between; align-items:center; gap:16px; margin-top:64px; padding-top:26px; border-top:1px solid var(--border); color:var(--muted); font-size:.9em;}
+  .footer-nav a{color:var(--text); text-decoration:none; font-weight:600;}
+  .footer-nav a:hover{color:var(--accent-ink);}
+  .badge-project{display:inline-block; background:#fdf3e4; border:1px solid #f2ddb3; color:var(--gold); border-radius:8px; padding:3px 11px; font-size:.78em; font-weight:700;}
+  .term{background:#181a2e; border-radius:16px; overflow:hidden; margin:22px 0; box-shadow:0 12px 28px -16px rgba(24,26,46,0.5);}
+  .term-bar{display:flex; align-items:center; gap:7px; padding:12px 16px; background:#20223a;}
+  .term-dot{width:11px; height:11px; border-radius:50%;}
+  .term-body{padding:16px 20px; font-family:'JetBrains Mono', monospace; direction:ltr; text-align:left; font-size:.87em; line-height:1.75; color:#d8dcff; white-space:pre-wrap;}
+  .term-prompt{color:#7ee7c7;}
+  .term-out{color:#9aa0c8;}
+  @media print{ body{background:#fff; color:#000;} }
+  html[data-theme="dark"]{
+    --bg:#12141c; --panel:#1b1e2a; --panel2:#20232f; --border:#2d3142;
+    --text:#e7e8f2; --muted:#9498b3; --accent:#7c86ff; --accent-ink:#aab1ff;
+    --accent2:#34d399; --gold:#e3a548; --danger:#f0685a; --purple:#a78bfa; --radius:14px;
+  }
+  html[data-theme="dark"] p, html[data-theme="dark"] ul, html[data-theme="dark"] ol, html[data-theme="dark"] .toc a{color:#c7c9dc;}
+  html[data-theme="dark"] code{background:#262a45; border-color:#3a3f5c;}
+  html[data-theme="dark"] th{background:#262a45;}
+  html[data-theme="dark"] tr:nth-child(even) td{background:rgba(255,255,255,0.03);}
+  html[data-theme="dark"] .box.idea{background:#1f2242; border-color:#383d6b;}
+  html[data-theme="dark"] .box.mistake{background:#3a2220; border-color:#5c332e;}
+  html[data-theme="dark"] .box.eng{background:#2a2340; border-color:#453a63;}
+  html[data-theme="dark"] .box.real{background:#16302a; border-color:#1f4a3d;}
+  html[data-theme="dark"] .box.def{background:#3a2f18; border-color:#5c4826;}
+  html[data-theme="dark"] .box.hw{background:#3a2618; border-color:#5c3f26;}
+  html[data-theme="dark"] .box.think{background:#0f2e2c; border-color:#1d4a45;}
+  html[data-theme="dark"] .checkpoint{background:#16302a; border-color:#1f4a3d;}
+  html[data-theme="dark"] .checkpoint li{border-bottom-color:rgba(255,255,255,0.08);}
+  html[data-theme="dark"] .badge-project{background:#3a2f18; border-color:#5c4826;}
+  html[data-theme="dark"] .chapter-num{background:#1f2242;}
+  html[data-theme="dark"] .chapter-card{box-shadow:0 1px 2px rgba(0,0,0,0.25);}
+  html[data-theme="dark"] .chapter-card:hover{border-color:#454a7a; box-shadow:0 16px 32px -20px rgba(0,0,0,0.55);}
+  body, .box, .chapter-card, .exercise, .assignment, .checkpoint, .toc, table, code, th{transition:background-color .25s ease, border-color .25s ease, color .25s ease;}
+  #theme-toggle{position:fixed; top:18px; left:18px; z-index:999; width:46px; height:46px; border-radius:50%; border:1px solid var(--border); background:var(--panel); color:var(--text); font-size:19px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px -8px rgba(0,0,0,0.35); transition:transform .15s ease, background-color .25s ease, border-color .25s ease;}
+  #theme-toggle:hover{transform:scale(1.08);}
+  @media (max-width:640px){ #theme-toggle{top:12px; left:12px; width:42px; height:42px; font-size:17px;} }
+</style>
+<link rel="stylesheet" href="projector.css">
+</head>
+<body>
+<style>
+.coursenav{position:sticky;top:0;z-index:900;background:rgba(255,254,251,0.88);backdrop-filter:saturate(160%) blur(10px);border-bottom:1px solid var(--border);}
+.coursenav .inner{max-width:1000px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;padding:10px 20px 10px 74px;}
+.coursenav .brand{font-weight:800;color:var(--accent-ink);margin-inline-end:12px;font-size:.9em;letter-spacing:-.2px;}
+.coursenav a{color:#3c382f;text-decoration:none;font-weight:600;font-size:.82em;padding:6px 10px;border-radius:999px;transition:background-color .15s,color .15s;}
+.coursenav a:hover{background:#eef0ff;color:var(--accent-ink);}
+.coursenav a.active{background:var(--accent);color:#fff;}
+html[data-theme="dark"] .coursenav{background:rgba(27,30,42,0.9);}
+html[data-theme="dark"] .coursenav a{color:#c7c9dc;}
+html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
+@media print{.coursenav{display:none;}}
+</style>
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html">Home</a>
+  <a href="syllabus.html">Syllabus</a>
+  <a href="schedule.html">Schedule</a>
+  <a href="assignments.html">Assignments</a>
+  <a href="index.html#lectures" class="active">Lectures</a>
+</div></nav>
+<button id="theme-toggle" aria-label="Toggle light/dark mode" title="Light/dark mode">
+  <span id="theme-toggle-icon">🌙</span>
+</button>
+<div class="wrap">
+
+  <div class="cover">
+    <div class="kicker">LIMO Robotics &amp; ROS 2 Lecture &nbsp;·&nbsp; Session 10 of 14</div>
+    <h1>Lecture 10: SLAM, Navigation2 &amp; the Simulated Capstone Mission</h1>
+    <div class="subtitle">Mapping the lab, navigating it autonomously, and completing a full survey mission — the simulated dress rehearsal before real hardware</div>
+    <div class="meta-row">
+      <div class="chip">Duration: ~6 hours (extended lab session — can be split across two lab days)</div>
+      <div class="chip">Prerequisite: Lecture 9</div>
+      <div class="chip">Focus: mapping, autonomous navigation &amp; mission execution</div>
+    </div>
+  </div>
+
+  <p>
+    This session absorbs what used to be three separate three-hour lectures — SLAM mapping, Nav2 navigation, and the
+    capstone mission — into one extended lab, because the three problems they solve (build a map, navigate it, run a
+    full mission on top of it) only really make sense as one continuous story. Expect this to be the longest and
+    densest session in the course; plan to split it across two lab days if you need to, with natural break points at
+    the end of Section 10.7 (map saved) and the end of Section 10.15 (Nav2 driving to goals). And treat everything
+    below as the <strong>simulated dress rehearsal</strong> for the real-hardware capstone mission that now lives at
+    the very end of the course, in Lecture 14 — where you'll run this same kind of mission for real, on Forge, a
+    robot you build from raw components yourself.
+  </p>
+
+  <div class="toc">
+    <strong style="color:var(--text)">In this session</strong>
+    <a href="#chicken-egg"><span>10.1</span>The chicken-and-egg problem SLAM solves</a>
+    <a href="#slam-toolbox"><span>10.2</span>slam_toolbox: the package this course runs</a>
+    <a href="#slam-launch"><span>10.3</span>Setting up the SLAM launch</a>
+    <a href="#drive-map"><span>10.4</span>Driving the map into existence</a>
+    <a href="#map-odom"><span>10.5</span>map→odom during SLAM vs. AMCL</a>
+    <a href="#save-map"><span>10.6</span>Saving the map</a>
+    <a href="#good-map"><span>10.7</span>Getting a GOOD map</a>
+    <a href="#bigpicture"><span>10.8</span>From "where am I" to "get me there" — Nav2's architecture</a>
+    <a href="#costmaps"><span>10.9</span>Costmaps — global vs. local, and the real LIMO footprint</a>
+    <a href="#planner"><span>10.10</span>The global planner</a>
+    <a href="#controller"><span>10.11</span>The local controller — DWB</a>
+    <a href="#bt"><span>10.12</span>Behavior Trees &amp; bt_navigator</a>
+    <a href="#lifecycle"><span>10.13</span>Lifecycle nodes &amp; bringup order</a>
+    <a href="#bringup"><span>10.14</span>Bringing the full stack up</a>
+    <a href="#goals"><span>10.15</span>Sending a goal, three ways</a>
+    <a href="#mission"><span>10.16</span>The final mission, stated plainly</a>
+    <a href="#waypoints-gui"><span>10.17</span>Multi-goal waypoint following, the GUI way</a>
+    <a href="#waypoints-code"><span>10.18</span>Multi-goal waypoint following, programmatically</a>
+    <a href="#exploration"><span>10.19</span>Autonomous frontier exploration</a>
+    <a href="#package"><span>10.20</span>The capstone mission package</a>
+    <a href="#pipeline"><span>10.21</span>Wiring the full pipeline together</a>
+    <a href="#grading"><span>10.22</span>Grading your own mission run</a>
+    <a href="#summary"><span>10.23</span>Summary, checkpoint &amp; glossary</a>
+  </div>
+
+  <section id="chicken-egg">
+    <h2><span class="num">10.1</span>The chicken-and-egg problem SLAM solves</h2>
+    <p>
+      In Lecture 9 you gave LIMO a finished map and asked AMCL a comparatively easy question: <em>given this
+      known map and these LiDAR scans, where on the map am I?</em> That's a hard problem in its own right, but
+      it has a huge advantage — the map already exists as ground truth to match against.
+    </p>
+    <p>
+      Today you have neither. You wheel LIMO into a lab it has never seen, with no <code>map.pgm</code> anywhere
+      on disk, and no idea what the walls even look like. Worse, you also don't know LIMO's own pose in that
+      space, because "pose in the space" only means something once a map exists to be a pose <em>in</em>. This
+      is the classic chicken-and-egg problem of mobile robotics:
+    </p>
+    <div class="box def">
+      <div class="box-title">📖 The deadlock, stated precisely</div>
+      <p>
+        To localize accurately, you need a map. To build an accurate map, you need to know where the robot was
+        standing when it took each scan. Neither can be solved first — each depends on the answer to the other.
+        <strong>SLAM</strong> (Simultaneous Localization And Mapping) is the family of algorithms that breaks
+        this deadlock, not by solving both problems perfectly from scratch, but by solving them
+        <em>incrementally and jointly</em>, letting partial answers to each bootstrap the other.
+      </p>
+    </div>
+    <p>
+      The trick is to never try to localize against the "final" map, because there isn't one yet — only the map
+      built so far. Each new LiDAR scan is compared (<strong>scan-matched</strong>) against whatever partial map
+      already exists, which is usually good enough to estimate how far and which way the robot moved since the
+      last scan. That small motion estimate lets the map be extended a little further. Repeat this thousands of
+      times per drive and a full occupancy grid emerges — one scan at a time, each one leaning on the
+      partially-built work of all the scans before it.
+    </p>
+    <p>
+      There's a catch: small scan-matching errors accumulate. Drive LIMO in a long loop around the lab and, by
+      the time it returns to its starting corner, the map might show two overlapping copies of that corner
+      instead of one, because dead-reckoning drift piled up along the way. SLAM's answer to this is
+      <strong>loop closure</strong>: recognizing "I have been here before" and using that recognition to correct
+      the accumulated drift across the <em>entire</em> map at once, not just the most recent scan. That global
+      correction step operates on a data structure called the <strong>pose graph</strong> — a graph where nodes
+      are robot poses at each scan and edges are the relative-motion constraints between them (both the
+      scan-to-scan ones and, once found, the loop-closure ones).
+    </p>
+    <div class="mermaid">
+flowchart TB
+    A["New LiDAR scan<br/>/scan"] --> B["Scan-match against<br/>the map built so far"]
+    B --> C["Estimate motion<br/>since the last scan"]
+    C --> D["Add node + constraint<br/>to the pose graph"]
+    D --> E["Extend / update the<br/>occupancy grid"]
+    E --> F{"Does this scan<br/>match an old, already-<br/>mapped area?"}
+    F -- "no — new territory" --> A
+    F -- "yes — loop closure!" --> G["Global pose-graph<br/>optimization: correct<br/>drift across the whole map"]
+    G --> E
+    style B fill:#eef0ff,stroke:#3d4bf5,color:#211f1a,font-weight:bold
+    style D fill:#f4effe,stroke:#8b5cf6,color:#211f1a
+    style G fill:#eafaf3,stroke:#0e9e6e,color:#211f1a,font-weight:bold
+    </div>
+    <div class="box idea">
+      <div class="box-title">🧠 Why this is not "just AMCL running twice"</div>
+      <p>
+        AMCL (Lecture 9) assumes the map is frozen ground truth and only ever updates a probability cloud of
+        candidate poses. SLAM has no such luxury — the map itself is a moving target, being rewritten scan by
+        scan. That's why SLAM needs the extra machinery of a pose graph and loop closure: without a way to go
+        back and fix earlier map cells when new evidence arrives, small errors would compound into a badly
+        warped map with no path to correct them.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="slam-toolbox">
+    <h2><span class="num">10.2</span>slam_toolbox: the package this course runs</h2>
+    <p>
+      This course standardizes on <strong><code>slam_toolbox</code></strong>, the most widely deployed 2D LiDAR
+      SLAM package in the ROS 2 ecosystem. Install it if it isn't already on your workstation and the LIMO's
+      onboard computer:
+    </p>
+    <pre><code>sudo apt install ros-humble-slam-toolbox</code></pre>
+    <p>
+      <code>slam_toolbox</code> ships several node executables for different situations. The one you'll run
+      today is <strong><code>async_slam_toolbox_node</code></strong> — the online, real-time mapping node.
+    </p>
+    <table>
+      <tr><th>Node</th><th>Mode</th><th>When you use it</th></tr>
+      <tr><td><code>async_slam_toolbox_node</code></td><td>Online, asynchronous</td><td>Driving LIMO around live and watching the map build in RViz2 — today's lab</td></tr>
+      <tr><td><code>sync_slam_toolbox_node</code></td><td>Online, synchronous</td><td>Rare — when every single scan must be processed with nothing dropped, at the cost of possibly lagging behind real time</td></tr>
+      <tr><td><em>(offline tools)</em></td><td>Post-processing</td><td>Replaying a recorded rosbag after the fact to build or refine a map without a live robot</td></tr>
+    </table>
+    <div class="box idea">
+      <div class="box-title">🧠 Why "async" is the right default</div>
+      <p>
+        <code>async_slam_toolbox_node</code> processes incoming scans on its own schedule and is explicitly
+        allowed to skip a scan if it's still busy with the previous one, rather than blocking the rest of the
+        ROS graph until it catches up. That trade-off is exactly right for a robot you're actively driving:
+        odometry, TF, and teleop control must keep flowing smoothly in real time, and losing an occasional scan
+        costs you almost nothing because the next one arrives a fraction of a second later. The synchronous node
+        exists for cases — mostly offline bag processing — where dropping frames is unacceptable and lag is
+        fine.
+      </p>
+    </div>
+    <p>
+      You'll sometimes see other robotics courses and industrial stacks use <strong>Google Cartographer</strong>
+      instead — its ROS 2 nodes are <code>cartographer_node</code> (the SLAM backend itself) and
+      <code>cartographer_occupancy_grid_node</code> (which converts Cartographer's internal submaps into the
+      familiar <code>nav_msgs/OccupancyGrid</code> you see in RViz2). Cartographer is a capable, production-grade
+      SLAM system, but it's configured through a Lua scripting file with a steeper learning curve than a plain
+      ROS 2 YAML parameter file.
+    </p>
+    <div class="box eng">
+      <div class="box-title">🔧 Why this course picked slam_toolbox over Cartographer</div>
+      <p>
+        Two reasons drove the choice: <code>slam_toolbox</code> is configured with the same
+        <code>ros__parameters</code> YAML style you already know from every other node in this course (no new
+        language to learn), and it integrates tightly with Nav2 out of the box — the same map-lifecycle
+        conventions you'll rely on later in this session. Cartographer remains an excellent choice in industry,
+        especially for large-scale or multi-sensor mapping, and it's worth knowing it exists — but for a LIMO in
+        a single lab room, <code>slam_toolbox</code> gets you there with less configuration overhead.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="slam-launch">
+    <h2><span class="num">10.3</span>Setting up the SLAM launch</h2>
+    <p>
+      This course wraps <code>async_slam_toolbox_node</code> inside its own launch file,
+      <code>limo_slam.launch.py</code>, which lives in the <code>limo_localisation</code> package alongside the
+      AMCL launch file you used in Lecture 9. It loads a parameter file — <code>slam.yaml</code> — that you
+      write and tune for this lab's geometry and LIMO's LiDAR.
+    </p>
+    <pre><code># limo_localisation/config/slam.yaml
+slam_toolbox:
+  ros__parameters:
+    use_sim_time: true
+    mode: mapping
+    scan_topic: /scan
+    base_frame: base_footprint
+    odom_frame: odom
+    map_frame: map
+
+    resolution: 0.05
+    max_laser_range: 8.0
+
+    minimum_travel_distance: 0.2
+    minimum_travel_heading: 0.2
+    map_update_interval: 2.0
+
+    do_loop_closing: true
+    transform_publish_period: 0.02</code></pre>
+    <p>Three parameter groups matter most for the map you're about to build:</p>
+    <table>
+      <tr><th>Parameter</th><th>Role</th><th>Trade-off</th></tr>
+      <tr><td><code>resolution</code></td><td>Size of one occupancy-grid cell, in meters per pixel</td><td>Finer (smaller) resolution captures more detail — thin table legs, doorframes — but costs more memory and compute, and is more sensitive to LiDAR noise, since fewer scan points land in each tiny cell</td></tr>
+      <tr><td><code>max_laser_range</code></td><td>How far a scan return is trusted for mapping purposes</td><td>Set too far and noisy long-range returns pollute the map with stray occupied cells; set too short and you throw away real structure LIMO's LiDAR can actually see</td></tr>
+      <tr><td><code>minimum_travel_distance</code> / <code>minimum_travel_heading</code></td><td>How far LIMO must move (meters) or turn (radians) before a new scan is fed into the map update</td><td>Lower values update the map more often — smoother, denser coverage — at the cost of more compute; higher values are cheaper but can miss detail if LIMO moves in bigger jumps between updates</td></tr>
+    </table>
+    <div class="box def">
+      <div class="box-title">📖 What slam.yaml is actually doing</div>
+      <p>
+        Think of <code>slam.yaml</code> as telling <code>async_slam_toolbox_node</code> two different kinds of
+        things: which TF frames and topics to listen to (<code>scan_topic</code>, <code>base_frame</code>,
+        <code>odom_frame</code>, <code>map_frame</code> — the same REP-105 names from Lecture 5), and how
+        aggressively to spend compute building the map (<code>resolution</code>, the
+        <code>minimum_travel_*</code> thresholds, <code>map_update_interval</code>). Get the frame names wrong
+        and nothing appears in RViz2 at all; get the compute knobs wrong and you get a map, just a worse one.
+      </p>
+    </div>
+    <p>Launch the pieces in order, each in its own terminal:</p>
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dot" style="background:#ff5f57;"></div>
+        <div class="term-dot" style="background:#febc2e;"></div>
+        <div class="term-dot" style="background:#28c840;"></div>
+      </div>
+      <div class="term-body"><span class="term-prompt">limo@lab-01:~$</span> ros2 launch limo_gazebosim limo_gazebo_diff.launch.py
+<span class="term-out">[INFO] [gazebo-1]: process started
+[INFO] [robot_state_publisher-2]: process started
+[gazebo-1] Gazebo multi-robot simulator, version 11
+[gazebo-1] Spawned entity [limo]</span>
+
+<span class="term-prompt">limo@lab-01:~$</span> ros2 launch limo_localisation limo_slam.launch.py
+<span class="term-out">[INFO] [async_slam_toolbox_node-1]: process started
+[async_slam_toolbox_node-1] [INFO] [...] Node using mapping mode.
+[async_slam_toolbox_node-1] [INFO] [...] Loaded 0 pose graph nodes, 0 constraints
+[async_slam_toolbox_node-1] [INFO] [...] Publishing map -> odom transform
+[async_slam_toolbox_node-1] [INFO] [...] Registering sensor: [Custom Described Lidar]</span></div>
+    </div>
+    <p>
+      Open RViz2, set the <strong>Fixed Frame</strong> to <code>map</code>, and add displays for
+      <code>Map</code> (topic <code>/map</code>), <code>LaserScan</code>, <code>RobotModel</code>, and
+      <code>TF</code>. Right now you should see a gray, mostly empty grid with LIMO's model sitting in the
+      middle of it — nothing has been explored yet.
+    </p>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="drive-map">
+    <h2><span class="num">10.4</span>Driving the map into existence</h2>
+    <p>
+      With Gazebo and <code>limo_slam.launch.py</code> both running, open a third terminal and take manual
+      control:
+    </p>
+    <pre><code>ros2 run teleop_twist_keyboard teleop_twist_keyboard</code></pre>
+    <p>
+      Now drive. Watch RViz2 as you go: every time LIMO crosses its <code>minimum_travel_distance</code> or
+      <code>minimum_travel_heading</code> threshold, a new scan gets folded into the map, and you'll see the
+      gray "unknown" cells resolve into crisp white free space and black obstacle outlines a little further out
+      along your path.
+    </p>
+    <div class="figure">
+      <img src="./images/slam_start.png" alt="RViz2 showing a mostly gray, unexplored occupancy grid moments after starting the SLAM run">
+      <figcaption>Fig 10.1 — Seconds into the drive: mostly unknown (gray) space, with only the area immediately around LIMO's starting pose resolved.</figcaption>
+    </div>
+    <div class="figure">
+      <img src="./images/slam_end.png" alt="RViz2 showing a fully resolved occupancy grid of the lab after a complete mapping run">
+      <figcaption>Fig 10.2 — Same run, after covering the whole lab: walls are solid black lines, floor space is white, and only a few occluded pockets remain gray.</figcaption>
+    </div>
+    <div class="box mistake">
+      <div class="box-title">⚠️ Don't stop at "looks done"</div>
+      <p>
+        It's tempting to stop as soon as the room you started in looks fully mapped. Push further — drive down
+        every corridor, into every side room, around every obstacle cluster you plan to navigate near later.
+        Any cell that's still gray when you save the map stays permanently unknown to Nav2's costmap later in
+        this session, which either blocks paths that should be legal or, worse, lets the planner route through
+        space it never actually verified as free.
+      </p>
+    </div>
+    <p>
+      Recall from Lecture 9 what the three occupancy-grid colors mean — the semantics don't change just
+      because you're building the map instead of localizing against one:
+    </p>
+    <table>
+      <tr><th>Color in RViz2</th><th>Meaning</th></tr>
+      <tr><td>White</td><td>Free space — a LiDAR beam passed through this cell and hit nothing</td></tr>
+      <tr><td>Black</td><td>Obstacle — a LiDAR beam terminated at this cell repeatedly</td></tr>
+      <tr><td>Gray</td><td>Unknown / unexplored — no scan has crossed this cell yet</td></tr>
+    </table>
+    <div class="box hw">
+      <div class="box-title">🔩 On real LIMO hardware</div>
+      <p>
+        The physical LIMO's onboard 2D LiDAR has a genuinely limited range and a narrower field of view than the
+        idealized sensor in Gazebo, and it will happily return noisy points off reflective whiteboards or glass.
+        Expect to drive more slowly and closer to obstacles on the real robot than in simulation to get clean
+        scan matches, and expect <code>max_laser_range</code> to need retuning downward from whatever worked in
+        the simulated lab. Lecture 11's hardware deep-dive covers exactly this real-vs-simulated LiDAR gap.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="map-odom">
+    <h2><span class="num">10.5</span>map→odom during SLAM vs. AMCL</h2>
+    <p>
+      Back in Lecture 5 you learned the REP-105 TF chain that every ROS 2 navigation stack relies on:
+      <code>map</code> → <code>odom</code> → <code>base_link</code>. <code>odom</code> → <code>base_link</code>
+      comes from wheel/IMU odometry and drifts slowly but continuously. The <code>map</code> → <code>odom</code>
+      transform is the correction term that snaps that drifting odometry frame back onto ground truth — and
+      crucially, <strong>exactly one node owns the right to publish it at any given time.</strong>
+    </p>
+    <div class="box real">
+      <div class="box-title">🌍 Same TF slot, two different tenants</div>
+      <p>
+        Right now, while <code>async_slam_toolbox_node</code> is running, <em>it</em> is the node publishing
+        <code>map</code> → <code>odom</code> — computed from its own scan-matching and pose-graph optimization.
+        Once you're happy with the finished map and save it (next section), you stop SLAM and hand that same TF
+        slot to AMCL, which you already built in Lecture 9. AMCL then publishes <code>map</code> →
+        <code>odom</code> going forward, computed from particle-filter localization against the now-frozen map
+        instead of live mapping. Nav2, later in this session, doesn't care which of the two produced the
+        transform — it simply consumes whichever one is currently running.
+      </p>
+    </div>
+    <p>This gives the course's overall workflow a clean two-phase shape:</p>
+    <table>
+      <tr><th>Phase</th><th>Where</th><th>Who owns map→odom</th><th>Map status</th></tr>
+      <tr><td>1. Build the map</td><td>This session, Sections 10.1-10.7 — SLAM</td><td><code>async_slam_toolbox_node</code></td><td>Being actively constructed and corrected</td></tr>
+      <tr><td>2. Localize on the map</td><td>Lecture 9 (learned first, used here second) — AMCL</td><td><code>amcl</code> node</td><td>Frozen — loaded from the saved <code>map.pgm</code>/<code>map.yaml</code></td></tr>
+      <tr><td>3. Navigate</td><td>This session, Sections 10.8 onward — Nav2</td><td>Whichever of the two is active</td><td>Consumed by planners and costmaps either way</td></tr>
+    </table>
+    <p>
+      Note the pedagogical ordering versus the operational ordering: you learned AMCL first, in Lecture 9,
+      because it's the simpler of the two problems to reason about (map is a known constant). Operationally,
+      though, SLAM always runs <em>first</em> on a brand-new space — there is no map for AMCL to localize
+      against until a SLAM run like today's produces one.
+    </p>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="save-map">
+    <h2><span class="num">10.6</span>Saving the map</h2>
+    <p>
+      Once you've driven the full lab and every area you care about has resolved to white or black in RViz2,
+      save the map with Nav2's map-saving CLI tool — the same one referenced in Lecture 9:
+    </p>
+    <pre><code>ros2 run nav2_map_server map_saver_cli -f map</code></pre>
+    <p>This writes two files into your current working directory:</p>
+    <table>
+      <tr><th>File</th><th>Content</th></tr>
+      <tr><td><code>map.pgm</code></td><td>The grayscale raster image itself — white pixels for free space, black for obstacles, gray for unknown</td></tr>
+      <tr><td><code>map.yaml</code></td><td>Metadata: <code>resolution</code>, <code>origin</code>, and the relative path back to <code>map.pgm</code>, plus the <code>occupied_thresh</code>/<code>free_thresh</code> values that turn grayscale pixels back into occupied/free/unknown when the map is reloaded</td></tr>
+    </table>
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dot" style="background:#ff5f57;"></div>
+        <div class="term-dot" style="background:#febc2e;"></div>
+        <div class="term-dot" style="background:#28c840;"></div>
+      </div>
+      <div class="term-body"><span class="term-prompt">limo@lab-01:~$</span> ros2 run nav2_map_server map_saver_cli -f map
+<span class="term-out">[INFO] [map_saver]: Waiting for the map
+[INFO] [map_saver]: Received a 384 X 384 map at 0.050000 m/pix
+[INFO] [map_saver]: Writing map occupancy data to map.pgm
+[INFO] [map_saver]: Writing map metadata to map.yaml
+[INFO] [map_saver]: Map saved successfully</span></div>
+    </div>
+    <p>
+      Move this <code>map.pgm</code> / <code>map.yaml</code> pair into the <code>maps/</code> directory of the
+      package your Lecture 9 AMCL launch file already expects — typically
+      <code>limo_localisation/maps/</code> — so the rest of this session can point straight at it without you
+      having to edit any launch arguments.
+    </p>
+    <div class="box eng">
+      <div class="box-title">🔧 Sanity-check before you move on</div>
+      <p>
+        Open the fresh <code>map.yaml</code> and confirm <code>resolution</code> matches what you set in
+        <code>slam.yaml</code>, and that <code>image:</code> points at <code>map.pgm</code> sitting alongside it
+        (a relative path, not an absolute one from your home directory — it needs to still resolve after you
+        move both files into the package).
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="good-map">
+    <h2><span class="num">10.7</span>Getting a GOOD map</h2>
+    <p>
+      A map that merely exists isn't the same as a map that's useful. Three habits separate a clean map from a
+      torn, drifted one — and all three cost you nothing but a little patience during the drive.
+    </p>
+    <div class="box eng">
+      <div class="box-title">🔧 Drive slowly and smoothly</div>
+      <p>
+        Scan matching works by comparing consecutive LiDAR scans and assuming the overlap between them is large
+        enough to find a confident alignment. Fast translation or a fast in-place spin shrinks that overlap —
+        in the worst case the algorithm can't find a match at all, or worse, matches confidently to the
+        <em>wrong</em> alignment. Either way the symptom in RViz2 is the same: walls appear torn, duplicated, or
+        offset from themselves by a few centimeters where the mismatch occurred. Treat fast spins the same way
+        you'd treat motion blur in a photograph — the faster you turn, the less two consecutive scans have in
+        common.
+      </p>
+    </div>
+    <div class="box idea">
+      <div class="box-title">🧠 Deliberately close the loop</div>
+      <p>
+        Near the end of your mapping run, drive LIMO back through or near your original starting area, even if
+        you've technically already "seen" it. That revisit gives <code>slam_toolbox</code> a clean loop-closure
+        opportunity — a chance to recognize the returning scans and run its global pose-graph optimization,
+        which can noticeably tighten up small misalignments accumulated over the whole session. Skip this and
+        whatever drift built up over your drive stays baked permanently into the saved map.
+      </p>
+    </div>
+    <p>
+      <code>resolution</code> is worth experimenting with hands-on rather than trusting a single default. Try
+      the same lab drive at two different settings and compare:
+    </p>
+    <table>
+      <tr><th>resolution</th><th>Effect</th></tr>
+      <tr><td><code>0.05</code> (5 cm/pixel)</td><td>Standard starting point — good balance of detail and compute for a typical lab-sized space; a reasonable default for this session's Nav2 costmaps too</td></tr>
+      <tr><td><code>0.02</code> (2 cm/pixel)</td><td>Captures fine detail like thin table legs and door edges, but the map array is over 6× larger in cell count, costs more CPU per update, and is noticeably more sensitive to individual noisy LiDAR returns — small artifacts that would average out at 5 cm can persist as visible specks at 2 cm</td></tr>
+    </table>
+    <div class="figure">
+      <img src="./images/rviz_map.png" alt="RViz2 view of the completed occupancy grid map with clean, single-line walls">
+      <figcaption>Fig 10.3 — A well-formed final map: single, unbroken wall lines and a fully white-and-black-resolved floor plan.</figcaption>
+    </div>
+    <div class="figure">
+      <img src="./images/rviz_costmap.png" alt="RViz2 view of the costmap layer derived from the saved occupancy grid, showing an inflated buffer around obstacles">
+      <figcaption>Fig 10.4 — The costmap layer Nav2 will build on top of this same map next in this session, with an inflated buffer zone around every obstacle.</figcaption>
+    </div>
+    <div class="exercise">
+      <div class="level">Easy</div>
+      <p>
+        Launch the sim, launch <code>limo_slam.launch.py</code>, and drive LIMO in a small closed loop around a
+        single obstacle without ever leaving RViz2's view. Identify the moment loop closure happens by watching
+        the console output of <code>async_slam_toolbox_node</code> — what log line signals it?
+      </p>
+    </div>
+    <div class="exercise">
+      <div class="level">Intermediate</div>
+      <p>
+        Map the same lab twice: once with <code>resolution: 0.05</code>, once with <code>resolution: 0.02</code>,
+        keeping your driving path as close to identical as you can manage. Save both maps under different
+        filenames with <code>map_saver_cli</code> and compare the resulting <code>.pgm</code> file sizes and the
+        level of detail visible around a cluttered area like a table leg cluster.
+      </p>
+    </div>
+    <div class="exercise">
+      <div class="level">Harder</div>
+      <p>
+        Deliberately do a fast in-place spin partway through a mapping run, then finish the drive normally and
+        save the map. Inspect the result in RViz2 for torn or duplicated walls near where the spin happened.
+        Then re-run the whole drive at a slow, steady pace and compare the two saved maps side by side. Write
+        down, in your own words, exactly what scan matching needs from consecutive scans to succeed, based on
+        what you observed.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="bigpicture">
+    <h2><span class="num">10.8</span>From "where am I" to "get me there"</h2>
+    <p>
+      You now have two things LIMO didn't have this morning: a saved map of the room (<code>map.yaml</code> /
+      <code>map.pgm</code>) and, from Lecture 9, a way to localize itself on that map with AMCL. Neither of those,
+      on its own, moves the robot anywhere. Localization only answers <em>"where am I on this map right now?"</em>
+      The next question is: given a goal pose somewhere on that map, how does LIMO get there without hitting
+      anything?
+    </p>
+    <p>
+      That's the job of <strong>Nav2</strong> — the Navigation2 stack. It is not a single program. It's a set of cooperating
+      ROS 2 nodes, each responsible for one narrow piece of the problem, all coordinated by a Behavior Tree and brought up in a
+      strict order by a lifecycle manager.
+    </p>
+    <div class="box idea">
+      <div class="box-title">🧠 The cast of characters</div>
+      <p>
+        <code>map_server</code> serves the saved map. <code>amcl</code> keeps the robot localized on it. <code>planner_server</code>
+        computes a global path across the whole map. <code>controller_server</code> turns that path into real-time velocity
+        commands and reacts to what the sensors see right now. The <code>behavior_server</code> holds recovery behaviors — spin,
+        back up, wait — for when the robot gets stuck. <code>bt_navigator</code> sits above all of them, orchestrating the whole
+        mission through a Behavior Tree. And <code>nav2_lifecycle_manager</code> brings every one of these nodes up, in the
+        correct order, before any of it is allowed to do real work.
+      </p>
+    </div>
+    <div class="mermaid">
+flowchart TB
+    MAP["map_server<br/>serves saved map"] --> AMCL["amcl<br/>localization"]
+    AMCL --> BTN["bt_navigator<br/>orchestrates via Behavior Tree"]
+    BTN --> PS["planner_server<br/>global path"]
+    BTN --> CS["controller_server<br/>local velocity commands"]
+    BTN --> BS["behavior_server<br/>spin / backup / wait"]
+    PS --> CS
+    CS --> CMD["/cmd_vel"]
+    CMD --> BASE["LIMO base"]
+    LM["nav2_lifecycle_manager"] -.manages state of.-> MAP
+    LM -.manages state of.-> AMCL
+    LM -.manages state of.-> PS
+    LM -.manages state of.-> CS
+    LM -.manages state of.-> BS
+    LM -.manages state of.-> BTN
+    style BTN fill:#f4effe,stroke:#8b5cf6
+    style PS fill:#eef0ff,stroke:#3d4bf5
+    style CS fill:#eafaf3,stroke:#0e9e6e
+    style LM fill:#fdf3e4,stroke:#c8862c
+    </div>
+    <p>
+      Notice the shape of that diagram: everything funnels through <code>bt_navigator</code>, and the lifecycle manager sits
+      off to the side, quietly controlling whether each server is even allowed to run. Both of those ideas — Behavior Trees and
+      lifecycle nodes — are new material, and they're what separate Nav2 from a simple "compute a path, follow it" script.
+    </p>
+    <div class="box real">
+      <div class="box-title">🌍 Real package layout for this course</div>
+      <p>
+        This part of the course lives in <code>limo_navigation</code>: <code>launch/limo_localisation.launch.py</code> (map_server +
+        amcl), <code>launch/limo_navigation.launch.py</code> (planner_server, controller_server, bt_navigator, behavior_server,
+        lifecycle_manager), <code>params/bt_nav.yaml</code>, <code>params/planner.yaml</code>, <code>params/controller.yaml</code>,
+        and <code>maps/map.yaml</code> / <code>maps/map.pgm</code> — the exact map you saved in Section 10.6.
+      </p>
+    </div>
+    <div class="box think">
+      <div class="box-title">🤔 Think About It</div>
+      <p>
+        Nav2 needs to know where the robot is on the map to plan and drive safely. The AMCL you built in Lecture 9
+        already tracks the robot's pose against a saved map — so why does the navigation stack rely on AMCL for live
+        localization instead of just leaving the SLAM algorithm running continuously the way it did while the map
+        was being built?
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="costmaps">
+    <h2><span class="num">10.9</span>Costmaps — global vs. local</h2>
+    <p>
+      A raw map only tells you where a wall is. A <strong>costmap</strong> is a grid overlaid on that same space where every
+      cell carries a cost: free, occupied, or somewhere in between — "expensive but technically passable," like the strip of
+      space right next to a wall. The planner and controller both make their decisions by reading costmaps, never the raw map
+      directly.
+    </p>
+    <p>Nav2 keeps two separate costmaps because they answer two different questions at two different rates:</p>
+    <table>
+      <tr><th></th><th>Global costmap</th><th>Local costmap</th></tr>
+      <tr><td>Built from</td><td>The static SLAM map + inflation layer</td><td>Live <code>/scan</code> data (+ optional depth-camera voxel layer)</td></tr>
+      <tr><td>Coverage</td><td>The entire known map</td><td>A small rolling window centered on the robot</td></tr>
+      <tr><td>Question it answers</td><td>"What does the whole world look like?"</td><td>"What's near me right now that the map didn't know about?"</td></tr>
+      <tr><td>Reacts to</td><td>Permanent structure (walls, shelving)</td><td>Transient obstacles (a person walking by, a moved chair)</td></tr>
+    </table>
+    <div class="box eng">
+      <div class="box-title">🔧 Why two costmaps, not one</div>
+      <p>
+        The static map was captured once, during Section 10.4's mapping run. It has no idea a chair has since moved two metres,
+        or that someone is currently standing in the doorway. The global costmap alone would happily plan a path straight
+        through them. The local costmap fixes this by rebuilding a small window around the robot from live sensor data on
+        every cycle — it's the layer that lets the LIMO react to the world as it actually is right now, not as it was when
+        the map was saved.
+      </p>
+    </div>
+    <h3>Layer types</h3>
+    <table>
+      <tr><th>Layer</th><th>Used in</th><th>What it contributes</th></tr>
+      <tr><td>Static layer</td><td>Global costmap</td><td>The saved SLAM map (<code>map.yaml</code> / <code>map.pgm</code>) as a base cost grid</td></tr>
+      <tr><td>Obstacle layer</td><td>Local (and sometimes global) costmap</td><td>Marks cells occupied from live <code>/scan</code> LiDAR returns; clears them again once the sensor sees through</td></tr>
+      <tr><td>Voxel layer</td><td>Local costmap</td><td>Optional 3D variant of the obstacle layer, built from depth-camera point clouds instead of a flat 2D LiDAR</td></tr>
+      <tr><td>Inflation layer</td><td>Global costmap</td><td>Raises cost in a radius around every obstacle so the planner prefers a safety buffer instead of grazing walls</td></tr>
+    </table>
+    <h3>The LIMO's real footprint</h3>
+    <p>
+      Both costmaps need to know the robot's actual physical shape to judge whether a given cell is reachable. Guessing here
+      is a mistake — this course uses LIMO's measured differential-drive footprint, expressed as a rectangle of four corner
+      points in metres, robot-centered:
+    </p>
+    <pre><code># costmap_common section, shared by global_costmap and local_costmap
+footprint: "[[0.17,0.11],[0.17,-0.11],[-0.17,-0.11],[-0.17,0.11]]"
+# equivalent to a 0.34 m x 0.22 m rectangle centred on base_link</code></pre>
+    <div class="box real">
+      <div class="box-title">🌍 Trust it now, verify it in Lecture 11</div>
+      <p>
+        Where does 0.34 m × 0.22 m come from? It's built from LIMO's differential-drive kinematic parameters —
+        wheelbase and wheel radius. You're using that number as a given fact right now to configure the costmap. In
+        Lecture 11's hardware deep-dive you'll physically measure LIMO's real chassis with a tape measure and
+        confirm — or correct — this exact figure against the robot in front of you. That's a deliberate ordering:
+        simulation lets you build and test the whole navigation stack against a trusted number today; real hardware
+        lets you go back and verify the number itself was right.
+      </p>
+    </div>
+    <div class="box mistake">
+      <div class="box-title">⚠️ An inaccurate footprint bites you both ways</div>
+      <p>
+        If the configured footprint is <strong>smaller</strong> than the real LIMO, Nav2 will happily plan paths that scrape
+        shelving, door frames, or table legs the robot's actual body doesn't clear — a real collision, not a simulation
+        artifact. If it's <strong>larger</strong> than the real robot, Nav2 becomes needlessly timid: it marks narrow doorways
+        or aisles as unreachable even though the physical LIMO would fit through them easily, and the planner reports "no path
+        found" for a route that's perfectly viable.
+      </p>
+    </div>
+    <div class="figure">
+      <img src="./images/rviz_costmap.png" alt="RViz view of the LIMO's global and local costmaps, with the inflated safety margin visible around obstacles">
+      <figcaption>The global costmap (whole map, inflated) and the local costmap (small robot-centered window) as seen in RViz.</figcaption>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="planner">
+    <h2><span class="num">10.10</span>The global planner</h2>
+    <p>
+      <code>planner_server</code> answers one question: given the robot's current pose and a goal pose, what is the shortest
+      <em>safe</em> path across the global costmap? This course uses the default NavFn planner, a Dijkstra/A*-style graph
+      search over the costmap grid — treating each cell as a graph node, each move between adjacent cells as an edge weighted
+      by that cell's cost, and searching for the lowest-total-cost route from start to goal.
+    </p>
+    <div class="box idea">
+      <div class="box-title">🧠 "Where should I eventually go," not "what do I do right now"</div>
+      <p>
+        The global planner's output is just a path — a sequence of poses — not a single velocity command. And critically, it
+        doesn't recompute on every control cycle. It only runs again when it actually needs to: a new goal was sent, the
+        global costmap changed enough to invalidate the current path, or the controller reports it can no longer make
+        progress along the existing route. Planning across an entire map is comparatively expensive; there's no reason to pay
+        that cost dozens of times a second when nothing about the big picture has changed.
+      </p>
+    </div>
+    <pre><code># params/planner.yaml (excerpt)
+planner_server:
+  ros__parameters:
+    planner_plugins: ["GridBased"]
+    GridBased:
+      plugin: "nav2_navfn_planner/NavfnPlanner"
+      tolerance: 0.5
+      use_astar: false
+      allow_unknown: true</code></pre>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="controller">
+    <h2><span class="num">10.11</span>The local controller — DWB</h2>
+    <p>
+      The global path tells the LIMO the route; it says nothing about how fast the wheels should spin right now, this
+      instant, given that a person just stepped into frame on the LiDAR. That's <code>controller_server</code>'s job, and this
+      course uses its default plugin: <strong>DWB</strong> (Dynamic Window Approach).
+    </p>
+    <p>On every control cycle, DWB does roughly this:</p>
+    <ol>
+      <li>Looks at the robot's current speed and its acceleration/velocity limits to build a "dynamic window" of feasible short-term velocity commands (linear + angular).</li>
+      <li>Samples a set of candidate commands from that window.</li>
+      <li>Forward-simulates each candidate a short distance into the future — "if I commanded this velocity for the next second, where would the robot end up?"</li>
+      <li>Scores every simulated trajectory against a set of <strong>trajectory critics</strong>: how closely does it track the global path, how far does it stay from costmap obstacles, how much does it waste time or oscillate in place?</li>
+      <li>Commands the single best-scoring trajectory's velocity, then repeats the whole cycle again next tick.</li>
+    </ol>
+    <div class="box idea">
+      <div class="box-title">🧠 Continuous reaction vs. occasional replanning</div>
+      <p>
+        This is the "how do I actually move right now" answer — recomputed continuously, at a much higher frequency than the
+        global planner. If a person steps briefly into the local costmap, DWB's critics simply score paths that avoid them
+        higher; the global plan doesn't need to change at all. Only if the local controller genuinely cannot make any safe
+        progress along the current global path does it escalate back up to <code>bt_navigator</code>, which may then trigger a
+        recovery behavior or ask the planner for a fresh route.
+      </p>
+    </div>
+    <pre><code># params/controller.yaml (excerpt)
+controller_server:
+  ros__parameters:
+    controller_frequency: 20.0
+    controller_plugins: ["FollowPath"]
+    FollowPath:
+      plugin: "dwb_core::DWBLocalPlanner"
+      min_vel_x: 0.0
+      max_vel_x: 0.3
+      max_vel_theta: 1.0
+      acc_lim_x: 1.5
+      acc_lim_theta: 2.0
+      critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]</code></pre>
+    <div class="box eng">
+      <div class="box-title">🔧 Two very different clocks</div>
+      <p>
+        Keep the rates straight: the global planner might recompute a handful of times over an entire mission. DWB, at
+        <code>controller_frequency: 20.0</code> above, is recomputing a fresh velocity command <strong>twenty times every
+        second</strong>. Confusing "the plan changed" with "the robot moved" is one of the most common debugging traps in
+        Nav2 — see the Common Mistakes list at the end of this session.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="bt">
+    <h2><span class="num">10.12</span>Behavior Trees &amp; bt_navigator</h2>
+    <p>
+      So far we have two servers that each do one job well. Something still has to decide, moment to moment, <em>which</em>
+      server to call, in what order, and what to do when one of them fails. You could hard-code that as a state machine — a
+      fixed set of states and hand-written transitions between them. Nav2 deliberately doesn't. Instead, <code>bt_navigator</code>
+      drives the whole mission using a <strong>Behavior Tree</strong>: an XML file built out of a small set of composable node
+      types.
+    </p>
+    <table>
+      <tr><th>Node type</th><th>Behaviour</th></tr>
+      <tr><td>Sequence</td><td>Runs its children in order; if any child fails, the whole Sequence fails immediately ("fail fast")</td></tr>
+      <tr><td>Fallback / Selector</td><td>Tries its children in order until one succeeds; only fails if all of them do</td></tr>
+      <tr><td>Decorator</td><td>Wraps a single child, modifying it — e.g. retry N times, invert its result, apply a timeout</td></tr>
+      <tr><td>Action / Condition (leaf)</td><td>The actual work — e.g. <code>ComputePathToPose</code>, <code>FollowPath</code>, <code>IsStuck</code></td></tr>
+    </table>
+    <div class="box idea">
+      <div class="box-title">🧠 Why a tree beats a hand-written state machine</div>
+      <p>
+        With a state machine, every new failure mode you want to handle means adding a new state and wiring up new
+        transitions by hand — the graph gets tangled fast. With a Behavior Tree, a recovery behavior like "spin in place, then
+        retry" is just another branch under a Fallback node: if the main Sequence (plan + follow path) fails, the tree simply
+        tries the next sibling instead. Nothing about the planner or controller's code has to change. And because the whole
+        strategy lives in one declarative XML file, swapping in a different BT — say, one that's more conservative about
+        recoveries, or that tries a different order of fallbacks — changes the robot's <em>navigation strategy</em> without
+        touching a single line of C++ or Python.
+      </p>
+    </div>
+    <p>
+      A short, illustrative snippet (not the full production tree Nav2 ships with — just enough to show the shape):
+    </p>
+    <pre><code>&lt;!-- illustrative only — simplified from Nav2's default navigate_to_pose BT --&gt;
+&lt;BehaviorTree&gt;
+  &lt;Fallback name="NavigateWithRecovery"&gt;
+
+    &lt;Sequence name="ComputeAndFollow"&gt;
+      &lt;ComputePathToPose goal="{goal}" path="{path}"/&gt;
+      &lt;FollowPath path="{path}" controller_id="FollowPath"/&gt;
+    &lt;/Sequence&gt;
+
+    &lt;Sequence name="RecoveryBranch"&gt;
+      &lt;Spin spin_dist="1.57"/&gt;
+      &lt;Wait wait_duration="2"/&gt;
+      &lt;BackUp backup_dist="0.15" backup_speed="0.05"/&gt;
+    &lt;/Sequence&gt;
+
+  &lt;/Fallback&gt;
+&lt;/BehaviorTree&gt;</code></pre>
+    <p>
+      Read it the way the tree engine "ticks" it: try <code>ComputeAndFollow</code> first. If — and only if — that whole
+      Sequence fails (planner can't find a path, or the controller can't make progress), the Fallback moves on and tries
+      <code>RecoveryBranch</code> instead: spin in place to clear a bad local costmap reading, wait briefly in case a person
+      walks past, then back up a little to escape a tight spot. If recovery succeeds, control returns to the outer tree, which
+      typically re-attempts <code>ComputeAndFollow</code>.
+    </p>
+    <div class="box def">
+      <div class="box-title">📖 Recovery behaviors</div>
+      <p>
+        <code>Spin</code>, <code>BackUp</code>, and <code>Wait</code> are actions served by <code>behavior_server</code>, not
+        by the controller or planner. They exist specifically for the "I'm stuck and normal navigation isn't working" case —
+        cheap, generic maneuvers a Behavior Tree can fall back to without any mission-specific logic.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="lifecycle">
+    <h2><span class="num">10.13</span>Lifecycle nodes &amp; bringup order</h2>
+    <p>
+      Every server we've discussed — <code>map_server</code>, <code>amcl</code>, <code>planner_server</code>,
+      <code>controller_server</code>, <code>bt_navigator</code>, and <code>behavior_server</code> — is a <strong>managed
+      lifecycle node</strong>, not an ordinary ROS 2 node that starts doing work the instant its process launches. A lifecycle
+      node begins <code>Unconfigured</code> and must be explicitly walked through a sequence of transitions before it will do
+      anything real:
+    </p>
+    <div class="mermaid">
+stateDiagram-v2
+    [*] --> Unconfigured
+    Unconfigured --> Inactive: configure()
+    Inactive --> Active: activate()
+    Active --> Inactive: deactivate()
+    Inactive --> Unconfigured: cleanup()
+    Unconfigured --> [*]: shutdown()
+    Inactive --> [*]: shutdown()
+    Active --> [*]: shutdown()
+    </div>
+    <p>
+      Only in the <code>Active</code> state does a node subscribe, publish, and act on requests. This matters for order:
+      <code>amcl</code> can't usefully activate before <code>map_server</code> has a map to serve; <code>bt_navigator</code>
+      can't usefully activate before <code>planner_server</code> and <code>controller_server</code> are both up. Doing all of
+      this by hand, node by node, every time you launch, would be tedious and error-prone.
+    </p>
+    <div class="box eng">
+      <div class="box-title">🔧 What nav2_lifecycle_manager actually does</div>
+      <p>
+        It's a small coordinator that walks every managed node it's configured to watch through <code>configure()</code> then
+        <code>activate()</code>, in the right dependency order, and can walk them back down through
+        <code>deactivate()</code>/<code>cleanup()</code> just as automatically. In this course's
+        <code>limo_navigation.launch.py</code>, the lifecycle manager is the very last piece that brings the whole stack from
+        "processes running but idle" to "actually navigating."
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="bringup">
+    <h2><span class="num">10.14</span>Bringing the full stack up</h2>
+    <p>Four terminals, in this order — the same pattern you've used since Lecture 8, extended with the two navigation launch files:</p>
+    <pre><code># terminal 1 — build once if you've changed anything
+colcon build
+source install/setup.bash
+
+# terminal 2 — simulated LIMO in Gazebo
+ros2 launch limo_gazebosim limo_gazebo_diff.launch.py
+
+# terminal 3 — map_server + amcl
+ros2 launch limo_navigation limo_localisation.launch.py
+
+# terminal 4 — planner_server, controller_server, bt_navigator,
+#              behavior_server, and the lifecycle_manager that
+#              brings all of the above to Active
+ros2 launch limo_navigation limo_navigation.launch.py
+
+# terminal 5 — visualize and interact
+rviz2</code></pre>
+    <p>
+      Once everything reports active, set the LIMO's initial pose in RViz (<strong>2D Pose Estimate</strong>, as in Lecture 9)
+      and give the AMCL particle cloud a moment to converge before sending any goal.
+    </p>
+    <h3>Inspecting the running stack</h3>
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dot" style="background:#f66;"></div>
+        <div class="term-dot" style="background:#fc5;"></div>
+        <div class="term-dot" style="background:#6c6;"></div>
+      </div>
+      <div class="term-body"><span class="term-prompt">limo@lecture:~$</span> ros2 action list
+<span class="term-out">/backup
+/compute_path_to_pose
+/follow_path
+/navigate_through_poses
+/navigate_to_pose
+/spin
+/wait</span>
+<span class="term-prompt">limo@lecture:~$</span> ros2 lifecycle get /controller_server
+<span class="term-out">active [3]</span>
+<span class="term-prompt">limo@lecture:~$</span> ros2 run rqt_graph rqt_graph</span>
+<span class="term-out">[rqt_graph opens — shows bt_navigator wired to planner_server,
+ controller_server and behavior_server, each publishing/cmd_vel
+ or subscribing /scan, /map, and the TF tree]</span></div>
+    </div>
+    <p>
+      <code>/navigate_to_pose</code> showing up in <code>ros2 action list</code> is your single best "is Nav2 actually up"
+      signal — it's the action <code>bt_navigator</code> exposes and the one every goal-sending method in the next section
+      ultimately calls. For live parameter tuning without restarting anything, <code>ros2 run rqt_reconfigure
+      rqt_reconfigure</code> lets you nudge DWB or costmap parameters and watch the effect immediately in RViz.
+    </p>
+    <div class="figure">
+      <img src="./images/nav2_demo.gif" alt="Animated demo of the LIMO navigating autonomously to a goal pose in RViz, replanning around an obstacle">
+      <figcaption>The full stack active: global plan (solid line), local costmap updating live, LIMO following the path.</figcaption>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="goals">
+    <h2><span class="num">10.15</span>Sending a goal, three ways</h2>
+    <p>
+      Every one of these three methods ends up calling the same thing under the hood: the <code>/navigate_to_pose</code>
+      action server exposed by <code>bt_navigator</code>. They differ only in how the goal pose gets constructed and sent.
+    </p>
+
+    <h3>1. RViz2's Nav2 Goal tool</h3>
+    <p>
+      The fastest way to test interactively. Click the <strong>Nav2 Goal</strong> button in RViz's toolbar, then click-and-drag
+      on the map: the click point sets position, the drag direction sets the goal orientation. Release, and Nav2 does the
+      rest — plans, activates the controller, and the LIMO starts moving.
+    </p>
+    <div class="figure">
+      <img src="./images/nav2_goal.png" alt="RViz2 with the Nav2 Goal tool active, an arrow being dragged to set a goal pose on the map">
+      <figcaption>Setting a Nav2 Goal in RViz — the arrow's base is the target position, its direction the target heading.</figcaption>
+    </div>
+
+    <h3>2. Raw CLI action call</h3>
+    <p>Useful for scripting or for testing without RViz open at all:</p>
+    <pre><code>ros2 action send_goal /navigate_to_pose nav2_msgs/action/NavigateToPose \
+  "pose: {header: {frame_id: 'map'}, pose: {position: {x: 1.0, y: 0.5, z: 0.0}, orientation: {w: 1.0}}}"</code></pre>
+    <p>
+      This blocks in the terminal and streams feedback as the LIMO drives — handy for a quick sanity check that the action
+      server responds at all, before writing any Python around it.
+    </p>
+
+    <h3>3. Programmatically — nav2_simple_commander</h3>
+    <p>
+      For anything beyond a one-off test — waypoint missions, timeouts, goal changes mid-flight — this course uses Nav2's
+      <code>BasicNavigator</code> helper class, the same pattern as the real
+      <code>example_nav_to_pose.py</code> node in <code>KV6022_assessment</code>:
+    </p>
+    <pre><code>from geometry_msgs.msg import PoseStamped
+from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
+import rclpy
+from rclpy.duration import Duration
+
+def main():
+    rclpy.init()
+    navigator = BasicNavigator()
+
+    # Wait until every Nav2 server is active before sending anything
+    navigator.waitUntilNav2Active()
+
+    # Build the goal — always in the 'map' frame
+    goal_pose = PoseStamped()
+    goal_pose.header.frame_id = 'map'
+    goal_pose.header.stamp = navigator.get_clock().now().to_msg()
+    goal_pose.pose.position.x = 1.0
+    goal_pose.pose.position.y = 0.5
+    goal_pose.pose.orientation.w = 1.0
+
+    navigator.goToPose(goal_pose)
+
+    # Poll for feedback while the goal is in progress
+    while not navigator.isTaskComplete():
+        feedback = navigator.getFeedback()
+        if feedback:
+            eta = Duration.from_msg(feedback.estimated_time_remaining).nanoseconds / 1e9
+            print(f'ETA: {eta:.0f} s')
+            # Timeout-based cancellation
+            if Duration.from_msg(feedback.navigation_time) > Duration(seconds=60.0):
+                navigator.cancelTask()
+
+    result = navigator.getResult()
+    if result == TaskResult.SUCCEEDED:
+        print('Goal succeeded!')
+    elif result == TaskResult.CANCELED:
+        print('Goal was canceled!')
+    elif result == TaskResult.FAILED:
+        print('Goal failed!')
+
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()</code></pre>
+    <div class="box real">
+      <div class="box-title">🌍 The real course node</div>
+      <p>
+        <code>KV6022_assessment/KV6022_assessment/example_nav_to_pose.py</code> follows exactly this shape, plus one extra
+        step: before sending any goal it optionally reads the LIMO's current pose via a <code>tf2_ros</code> lookup from
+        <code>map</code> to <code>base_footprint</code> and feeds that into <code>navigator.setInitialPose()</code>. It also
+        demonstrates <strong>goal preemption</strong> — calling <code>navigator.goToPose()</code> again with a new pose while
+        a previous goal is still in progress simply replaces it, no need to cancel first.
+      </p>
+    </div>
+    <div class="box mistake">
+      <div class="box-title">⚠️ waitUntilNav2Active() is not optional</div>
+      <p>
+        Calling <code>goToPose()</code> before <code>waitUntilNav2Active()</code> returns is a common source of "the goal
+        just silently disappears" bugs. If <code>bt_navigator</code> (or any node it depends on) hasn't finished its
+        lifecycle activation yet, the action server may not exist, or may reject the goal outright. Always wait for it first.
+      </p>
+    </div>
+
+    <div class="exercise">
+      <div class="level">Exercise · Easy</div>
+      <p>With the full stack up (Section 10.14) and the LIMO localized, send it to a goal 1 metre in front of its starting position using RViz's Nav2 Goal tool. Watch the global path appear, then watch the local costmap update as the robot moves. Confirm <code>ros2 action list</code> shows <code>/navigate_to_pose</code> before you start.</p>
+    </div>
+    <div class="exercise">
+      <div class="level">Exercise · Intermediate</div>
+      <p>Send the same goal using the raw <code>ros2 action send_goal</code> CLI command from Section 10.15. Then edit <code>params/planner.yaml</code> to set <code>use_astar: true</code>, relaunch, and compare the resulting global path to the NavFn-default path. Which is smoother? Which took longer to compute?</p>
+    </div>
+    <div class="exercise">
+      <div class="level">Exercise · Harder</div>
+      <p>Write a Python node modelled on the <code>BasicNavigator</code> example above that sends the LIMO to three goal poses in sequence (don't use <code>followWaypoints()</code> — call <code>goToPose()</code> three times, waiting for each <code>isTaskComplete()</code> in turn). Add a 45-second timeout per goal that calls <code>cancelTask()</code> and moves on to the next pose if exceeded. Print the final <code>TaskResult</code> for each leg.</p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="mission">
+    <h2><span class="num">10.16</span>The final mission, stated plainly</h2>
+    <p>
+      Walk back through the lectures so far and each one handed you exactly one working piece. Lecture 1
+      got LIMO booted and simulated. Lecture 2 introduced the ROS 2 graph. Lecture 3 gave you drive modes and a
+      development loop. Lecture 4 built the URDF body. Lecture 5 put a rigorous TF tree underneath all of it.
+      Lecture 6 wired Gazebo and <code>ros2_control</code> together. Lecture 7 added LiDAR, IMU, and camera with
+      obstacle avoidance. Lecture 8 taught LIMO to <em>see</em> — HSV colour thresholds, contours, and depth-based
+      localization of what the camera finds. Lecture 9 fused noisy sensors into a clean estimate of where LIMO
+      actually is, and turned that into map-based localization with AMCL. Sections 10.1-10.15 of today gave LIMO a
+      real map of its own and the full Nav2 stack to plan and drive across it.
+    </p>
+    <p>
+      None of that, on its own, produces a robot that does something useful end to end. This closing part of the
+      session does. And because it runs entirely in Gazebo, think of it as the dress rehearsal for Lecture 14's
+      real-hardware capstone — everything you get working here on the simulated LIMO is exactly what you'll be
+      asked to reproduce on the physical robot once Lectures 11-13 have taken you through its real electronics,
+      and through building a second ROS 2 robot completely from parts. The mission is stated in one sentence:
+    </p>
+    <div class="box def">
+      <div class="box-title">🎯 The mission</div>
+      <p>
+        Send LIMO out to autonomously survey an arena, visiting every corner of it either by a fixed waypoint route
+        or by frontier exploration, continuously watching its camera for road defects ("potholes"), converting every
+        detection into a real-world position in the <code>map</code> frame, filtering out repeat sightings of the
+        same defect, and finishing with a clean, logged, visualized list of what it found and where.
+      </p>
+    </div>
+    <p>
+      That is <strong>not</strong> a new skill. It is this session's Nav2 driving coverage, Lecture 8's OpenCV
+      detector watching the camera, Lecture 5 and 8's depth+TF pattern turning a pixel into a map coordinate, and a
+      small piece of new logic — de-duplication — that decides whether a detection is something LIMO has already
+      logged. The whole exercise runs against the <code>potholes</code> / <code>potholes_simple</code> Gazebo worlds
+      you first saw back in Lecture 6, now dressed up as a proper "assessment" arena — see <code>assessment.png</code>.
+    </p>
+    <div class="figure">
+      <img src="./images/assessment.png" alt="LIMO in the KV6022 assessment arena with defects marked on the map">
+      <figcaption>The assessment arena: LIMO, the pre-built high-resolution map, and a scattering of defects waiting to be found.</figcaption>
+    </div>
+    <p>Here is the integrated pipeline you are building now, top to bottom:</p>
+    <div class="mermaid">
+flowchart TB
+    A["SLAM Toolbox / AMCL<br/>where am I on the map?"] --> B["Nav2<br/>costmaps + planner + controller"]
+    B --> C{"Coverage strategy"}
+    C -->|"nav2_waypoint_follower"| D["Ordered waypoint list<br/>GUI-clicked or scripted"]
+    C -->|"explore_lite"| E["Frontier-driven<br/>autonomous exploration"]
+    D --> F["LIMO drives the arena"]
+    E --> F
+    F --> G["example_opencv_detector.py<br/>HSV / contour defect detection"]
+    G --> H{"Defect in the frame?"}
+    H -->|"no"| F
+    H -->|"yes"| I["Depth + TF<br/>pixel to map-frame position"]
+    I --> J{"Within ~0.3-0.5 m of a<br/>defect already logged?"}
+    J -->|"yes — duplicate"| F
+    J -->|"no — new defect"| K["Log defect + publish Marker"]
+    K --> F
+    F --> L{"Frontiers / waypoints<br/>exhausted?"}
+    L -->|"no"| F
+    L -->|"yes"| M["Mission complete —<br/>final defect report"]
+    style A fill:#eef0ff,stroke:#3d4bf5
+    style B fill:#eef0ff,stroke:#3d4bf5
+    style G fill:#f4effe,stroke:#8b5cf6
+    style I fill:#f4effe,stroke:#8b5cf6
+    style K fill:#eafaf3,stroke:#0e9e6e
+    style M fill:#3d4bf5,color:#fff
+    </div>
+    <div class="box idea">
+      <div class="box-title">🧠 Why this is the right capstone</div>
+      <p>
+        A mission like this cannot be faked by wiring one node cleverly. It genuinely needs correct localization
+        (or the defect positions are garbage), correct navigation (or LIMO never reaches the defects), correct
+        perception (or nothing is ever detected), and correct bookkeeping (or the same pothole gets reported five
+        times). Every lecture you sat through was a prerequisite for exactly one part of this pipeline.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="waypoints-gui">
+    <h2><span class="num">10.17</span>Multi-goal waypoint following, the GUI way</h2>
+    <p>
+      The simplest way to get LIMO covering a fixed route is <strong>waypoint following</strong>: a list of poses,
+      visited one after another, no manual driving required after you set them. Nav2 ships a purpose-built action
+      server for exactly this — <code>nav2_waypoint_follower</code> — and it slots into your existing launch file
+      as just another lifecycle-managed node next to the planner, the controller, and the recovery server.
+    </p>
+    <p>
+      Extend <code>limo_navigation.launch.py</code> by adding the waypoint follower to the list of nodes handed to
+      <code>nav2_lifecycle_manager</code>, alongside the nodes you already brought up earlier in this session:
+    </p>
+    <pre><code>waypoint_follower_node = Node(
+    package='nav2_waypoint_follower',
+    executable='waypoint_follower',
+    name='waypoint_follower',
+    output='screen',
+    parameters=[nav2_params_file]
+)
+
+lifecycle_manager_node = Node(
+    package='nav2_lifecycle_manager',
+    executable='lifecycle_manager',
+    name='lifecycle_manager_navigation',
+    output='screen',
+    parameters=[{
+        'autostart': True,
+        'node_names': [
+            'controller_server',
+            'planner_server',
+            'behavior_server',
+            'bt_navigator',
+            'waypoint_follower',   # <-- added for the capstone
+        ]
+    }]
+)</code></pre>
+    <p>
+      With that in place, launch the assessment stack, open RViz2, and switch to the <strong>Navigation2</strong>
+      panel. Select its waypoint-mode tool, then click a sequence of poses directly on the map — each click drops a
+      new goal, drawn as an arrow, and the whole sequence renders as a <code>visualization_msgs/MarkerArray</code>
+      so you can see the planned route before committing to it.
+    </p>
+    <div class="figure">
+      <img src="./images/waypoint_mode.png" alt="RViz2 Navigation2 panel in waypoint mode">
+      <figcaption>Waypoint mode in the RViz2 Navigation2 panel — each click on the map queues one more pose.</figcaption>
+    </div>
+    <div class="figure">
+      <img src="./images/waypoints_marker.png" alt="Waypoint sequence rendered as a MarkerArray in RViz2">
+      <figcaption>The queued waypoint sequence, visualized as arrows and numbered markers before LIMO starts moving.</figcaption>
+    </div>
+    <p>
+      Once the route looks right, press <strong>Start Waypoint Following</strong>. LIMO plans and drives to the
+      first pose, then the second, and so on, using exactly the same planner/controller/recovery stack from
+      earlier in this session — waypoint following adds no new motion logic, it is simply Nav2 driven by a list
+      instead of a single goal.
+    </p>
+    <div class="box eng">
+      <div class="box-title">⚙️ What's actually happening under the hood</div>
+      <p>
+        <code>nav2_waypoint_follower</code> is an action server that loops over your pose list, sends each one to
+        <code>bt_navigator</code>'s <code>NavigateToPose</code> action (the same action a single <code>goToPose()</code>
+        call uses), waits for success, and moves to the next. It can also fire "waypoint task executors" at each
+        stop — useful later if you want LIMO to pause and take a closer look at a defect before continuing.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="waypoints-code">
+    <h2><span class="num">10.18</span>Multi-goal waypoint following, programmatically</h2>
+    <p>
+      Clicking in RViz2 is great for testing a route once, but a repeatable, gradeable mission needs the waypoints
+      defined in code. This course's own <code>KV6022_assessment</code> package ships exactly that:
+      <code>example_waypoint_follower.py</code>, built on the same <code>nav2_simple_commander</code>
+      <code>BasicNavigator</code> class you used earlier in this session for single-goal navigation — the only
+      difference is which method you call.
+    </p>
+    <pre><code>#!/usr/bin/env python3
+import rclpy
+from rclpy.duration import Duration
+from geometry_msgs.msg import PoseStamped
+from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
+
+
+def make_pose(navigator, x, y, yaw_z=1.0, yaw_w=0.0):
+    pose = PoseStamped()
+    pose.header.frame_id = 'map'
+    pose.header.stamp = navigator.get_clock().now().to_msg()
+    pose.pose.position.x = x
+    pose.pose.position.y = y
+    pose.pose.orientation.z = yaw_z
+    pose.pose.orientation.w = yaw_w
+    return pose
+
+
+def main():
+    rclpy.init()
+    navigator = BasicNavigator()
+    navigator.waitUntilNav2Active()
+
+    waypoints = [
+        make_pose(navigator, 1.20, 0.40),
+        make_pose(navigator, 2.05, -0.85),
+        make_pose(navigator, 3.10, 0.10),
+        make_pose(navigator, 1.60, 1.75),
+    ]
+
+    navigator.navigateThroughPoses(waypoints)
+
+    while not navigator.isTaskComplete():
+        feedback = navigator.getFeedback()
+        if feedback:
+            navigator.get_logger().info(
+                f'Distance remaining: {feedback.distance_remaining:.2f} m')
+
+    result = navigator.getResult()
+    if result == TaskResult.SUCCEEDED:
+        navigator.get_logger().info('Waypoint mission complete.')
+    elif result == TaskResult.CANCELED:
+        navigator.get_logger().warn('Mission was canceled.')
+    else:
+        navigator.get_logger().error('Mission failed.')
+
+    rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()</code></pre>
+    <p>Run it against a live navigation stack with:</p>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f04a4a"></span>
+        <span class="term-dot" style="background:#e3b341"></span>
+        <span class="term-dot" style="background:#3fb950"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> ros2 run KV6022_assessment example_waypoint_follower
+<span class="term-out">[INFO] [example_waypoint_follower]: Waiting for navigation to fully activate...
+[INFO] [example_waypoint_follower]: Nav2 is active. Sending 4 waypoints.
+[INFO] [example_waypoint_follower]: Distance remaining: 6.83 m
+[INFO] [example_waypoint_follower]: Distance remaining: 4.21 m
+[INFO] [example_waypoint_follower]: Distance remaining: 1.02 m
+[INFO] [example_waypoint_follower]: Waypoint mission complete.</span></div>
+    </div>
+    <p>
+      <code>navigateThroughPoses(pose_list)</code> hands the whole list to <code>bt_navigator</code> at once, which
+      lets Nav2's behaviour tree replan smoothly across the sequence. The alternative — calling <code>goToPose()</code>
+      repeatedly in a loop, waiting for each one to finish before sending the next — works too, and is what you'd
+      reach for if you needed to run custom logic (like checking the detector) between each stop.
+    </p>
+    <h3>Getting real coordinates for your waypoint list</h3>
+    <p>
+      Hard-coding <code>x, y</code> pairs only works once you know what they should be. Two ways to find real
+      coordinates in the assessment map:
+    </p>
+    <div class="box real">
+      <div class="box-title">🔧 Option A — echo a waypoint-publishing tool</div>
+      <p>If a waypoint-publishing tool is running (for example, one built from RViz2's clicked-point publisher), read the poses straight off the topic:</p>
+      <pre><code>ros2 topic echo /waypoints --field pose.pose.position</code></pre>
+    </div>
+    <div class="box real">
+      <div class="box-title">🔧 Option B — drive there and ask TF</div>
+      <p>Teleop LIMO to the exact spot you want, then ask TF where <code>base_link</code> currently sits relative to <code>map</code>:</p>
+      <pre><code>ros2 run tf2_ros tf2_echo map base_link</code></pre>
+      <p>Read off the translation, drop it straight into your <code>make_pose(x, y)</code> calls.</p>
+    </div>
+    <div class="figure">
+      <img src="./images/waypoints_locations.png" alt="Chosen waypoint locations plotted on the assessment map">
+      <figcaption>Waypoint locations chosen to sweep the assessment arena, plotted on the pre-built map.</figcaption>
+    </div>
+    <div class="figure">
+      <img src="./images/waypoints_following.png" alt="LIMO mid-route, following a programmatic waypoint sequence">
+      <figcaption>LIMO mid-mission, following the <code>navigateThroughPoses()</code> route from <code>example_waypoint_follower.py</code>.</figcaption>
+    </div>
+    <div class="box mistake">
+      <div class="box-title">⚠️ Waypoints defined in the wrong frame</div>
+      <p>
+        Every <code>PoseStamped</code> in the list needs <code>header.frame_id = 'map'</code>. Set it to
+        <code>base_link</code> or leave it blank and Nav2 will either reject the goal outright or, worse, interpret
+        the coordinates relative to wherever LIMO happens to be standing at that instant — a route that looked
+        correct on paper will send LIMO somewhere completely different.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="exploration">
+    <h2><span class="num">10.19</span>Autonomous frontier exploration</h2>
+    <p>
+      Waypoints require you to already know the arena's layout well enough to plan a route. When you don't — or
+      when you want LIMO to genuinely explore on its own — the answer is <strong>frontier exploration</strong>.
+    </p>
+    <div class="box def">
+      <div class="box-title">📖 What is a frontier?</div>
+      <p>
+        On any occupancy grid, a <strong>frontier</strong> is a boundary cell that sits between explored free space
+        and unknown space (the grey, un-mapped region SLAM hasn't reached yet). As LIMO maps more of the arena,
+        frontiers shrink and shift outward. When there are no frontiers left, there is no unknown space left to
+        reach — the map is complete.
+      </p>
+    </div>
+    <p>
+      The <code>m-explore-ros2</code> package provides <code>explore_lite</code>, a node that automates the whole
+      loop: detect the current frontiers on the live occupancy grid, score each one with a "gain" formula that
+      weighs frontier size against travel distance, send the best-scoring frontier to Nav2 as a normal navigation
+      goal, wait for it to be reached (or to fail), and repeat — with zero manual driving.
+    </p>
+    <h3>Setting it up</h3>
+    <pre><code>cd ~/limo_ws/src
+git clone https://github.com/robo-friends/m-explore-ros2.git
+cd ~/limo_ws
+colcon build --packages-select explore_lite
+source install/setup.bash</code></pre>
+    <p>Key parameters to tune in <code>explore.yaml</code>:</p>
+    <table>
+      <tr><th>Parameter</th><th>What it controls</th></tr>
+      <tr><td><code>min_frontier_size</code></td><td>Smallest frontier worth sending LIMO to — filters out tiny noise-driven gaps so LIMO doesn't chase them</td></tr>
+      <tr><td><code>planner_frequency</code></td><td>How often <code>explore_lite</code> re-evaluates frontiers and picks a new target</td></tr>
+      <tr><td><code>gain_scale</code></td><td>Balance between frontier-size reward and distance cost — higher favors big unexplored regions even if they're farther away</td></tr>
+      <tr><td><code>progress_timeout</code></td><td>How long LIMO can go without measurable progress before that frontier is abandoned as unreachable</td></tr>
+    </table>
+    <p>Then bring up SLAM, Nav2, and exploration together — for example against the <code>simulation_table.world</code> arena:</p>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f04a4a"></span>
+        <span class="term-dot" style="background:#e3b341"></span>
+        <span class="term-dot" style="background:#3fb950"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> ros2 launch limo_gazebosim limo_gazebo_diff.launch.py world:=simulation_table.world
+<span class="term-prompt">$</span> ros2 launch limo_slam limo_slam_toolbox.launch.py
+<span class="term-prompt">$</span> ros2 launch limo_navigation limo_navigation.launch.py use_sim_time:=true
+<span class="term-prompt">$</span> ros2 launch explore_lite explore.launch.py
+<span class="term-out">[INFO] [explore_lite]: 6 frontiers found.
+[INFO] [explore_lite]: Sending goal to frontier at (2.31, -1.02), gain 4.87
+[INFO] [explore_lite]: Goal reached, re-evaluating frontiers.
+[INFO] [explore_lite]: 2 frontiers found.
+[INFO] [explore_lite]: 0 frontiers found. Exploration complete.</span></div>
+    </div>
+    <div class="figure">
+      <img src="./images/exploration.gif" alt="LIMO autonomously exploring an arena, map filling in as it drives">
+      <figcaption>Frontier exploration in motion — the occupancy grid fills in as LIMO chases the next frontier.</figcaption>
+    </div>
+    <div class="figure">
+      <img src="./images/rosgraph_exploration.png" alt="ROS 2 node graph during autonomous exploration, showing explore_lite, SLAM, and Nav2 nodes">
+      <figcaption>The full node graph during exploration: <code>explore_lite</code> sits above Nav2 and feeds it goals derived from SLAM's live occupancy grid.</figcaption>
+    </div>
+    <div class="box mistake">
+      <div class="box-title">⚠️ Exploration and a manually-sent goal, fighting for control</div>
+      <p>
+        <code>explore_lite</code> sends Nav2 a new goal every time it re-evaluates frontiers. If you also click a
+        goal in RViz2 while exploration is running, the two will keep overriding each other — LIMO lurches between
+        destinations and never actually completes either one. Pause or stop exploration before sending any manual
+        goal, and don't run waypoint following and frontier exploration at the same time; they are two different
+        answers to "how do I cover the arena," not a pair meant to run together.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="package">
+    <h2><span class="num">10.20</span>The capstone mission package</h2>
+    <p>
+      This course's real assessment package, <code>KV6022_assessment</code>, bundles everything the mission needs:
+      a tuned <code>nav2_params.yaml</code>, a pre-built occupancy map, and a set of example nodes you extend rather
+      than write from scratch.
+    </p>
+    <pre><code>KV6022_assessment/
+├── params/
+│   └── nav2_params.yaml            # Nav2 tuned for the assessment arena
+├── maps/
+│   └── assessment_map.yaml         # pre-built map, ~20 mm/pixel resolution
+├── KV6022_assessment/
+│   ├── example_opencv_detector.py      # Lecture 8-style HSV/contour defect detector
+│   ├── example_waypoint_follower.py    # navigateThroughPoses() pattern
+│   ├── example_nav_to_pose.py          # single-goal BasicNavigator pattern
+│   └── example_nav_through_poses.py    # multi-goal BasicNavigator pattern
+└── launch/
+    └── limo_navigation.launch.py   # localization + Nav2 against the assessment map</code></pre>
+    <div class="box def">
+      <div class="box-title">📖 Why a finer map resolution?</div>
+      <p>
+        The assessment map ships at roughly <strong>20 mm/pixel</strong>, noticeably finer than the 0.05 m (50 mm)
+        grid used in Section 10.3. Defect detection needs LIMO's localized position to be accurate to a few
+        centimetres — a coarse map is fine for "don't hit the wall" navigation, but it isn't precise enough to place
+        a defect marker correctly on the map.
+      </p>
+    </div>
+    <p>Install Nav2 if it isn't already present, then bring the whole assessment stack up in order:</p>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f04a4a"></span>
+        <span class="term-dot" style="background:#e3b341"></span>
+        <span class="term-dot" style="background:#3fb950"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> sudo apt install ros-humble-navigation2 ros-humble-nav2-bringup
+<span class="term-out">Reading package lists... Done
+...
+Setting up ros-humble-navigation2 (1.1.9-1jammy.20240115) ...</span>
+<span class="term-prompt">$</span> ros2 launch limo_gazebosim limo_gazebo_assessment.launch.py
+<span class="term-out">[INFO] [gzserver]: Spawning LIMO in the assessment world.</span>
+<span class="term-prompt">$</span> ros2 launch KV6022_assessment limo_navigation.launch.py
+<span class="term-out">[INFO] [amcl]: Initial pose set.
+[INFO] [bt_navigator]: Navigation2 active and ready.</span>
+<span class="term-prompt">$</span> ros2 run KV6022_assessment example_opencv_detector
+<span class="term-out">[INFO] [example_opencv_detector]: Watching camera for defects...</span>
+<span class="term-prompt">$</span> ros2 run KV6022_assessment example_waypoint_follower
+<span class="term-out">[INFO] [example_waypoint_follower]: Nav2 is active. Sending 4 waypoints.</span></div>
+    </div>
+    <p>
+      <code>limo_gazebo_assessment.launch.py</code> spawns LIMO in the assessment world specifically — not the
+      generic world you've used in earlier lectures — and <code>KV6022_assessment</code>'s own
+      <code>limo_navigation.launch.py</code> loads localization and Nav2 against the assessment map, not whatever
+      default map file you may already have on disk.
+    </p>
+    <div class="box mistake">
+      <div class="box-title">⚠️ Using the earlier lectures' default map or launch files</div>
+      <p>
+        The assessment arena is a different world with a different, finer-resolution map. If you launch the
+        generic <code>limo_navigation.launch.py</code> from earlier in this session against the assessment world,
+        AMCL will be localizing LIMO against a map that doesn't match what the sensors are seeing — particle
+        filter convergence gets unstable and every downstream position (including every logged defect) becomes
+        unreliable. Always launch the assessment-specific files for the assessment world.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="pipeline">
+    <h2><span class="num">10.21</span>Wiring the full pipeline together</h2>
+    <p>
+      Coverage (waypoints or exploration) and detection are two independent nodes that need to run at the same
+      time, not in sequence. Coverage keeps LIMO moving through the arena; detection watches the camera on every
+      frame regardless of where LIMO currently is. What ties them together is what happens <em>after</em> a
+      detection fires: localizing it into the map, checking whether it's new, and logging it if so.
+    </p>
+    <h3>Detection → map-frame position (Lecture 5 + 8's pattern)</h3>
+    <p>
+      This is exactly the <code>object_localisation.py</code>-style pattern from Lecture 8: take the pixel
+      coordinates of a detected defect, look up the corresponding depth value, project that into a 3D point in the
+      camera's optical frame, then use TF2 to transform that point into the <code>map</code> frame.
+    </p>
+    <pre><code>from tf2_ros import Buffer, TransformListener
+from tf2_geometry_msgs import do_transform_point
+from geometry_msgs.msg import PointStamped
+
+class DefectLocalizer:
+    def __init__(self, node):
+        self.node = node
+        self.tf_buffer = Buffer()
+        self.tf_listener = TransformListener(self.tf_buffer, node)
+
+    def pixel_to_map(self, u, v, depth, camera_info, source_frame='camera_link'):
+        # pixel + depth -> point in the camera optical frame (Lecture 8 pattern)
+        x = (u - camera_info.k[2]) * depth / camera_info.k[0]
+        y = (v - camera_info.k[5]) * depth / camera_info.k[4]
+        point = PointStamped()
+        point.header.frame_id = source_frame
+        point.header.stamp = self.node.get_clock().now().to_msg()
+        point.point.x, point.point.y, point.point.z = x, y, depth
+
+        transform = self.tf_buffer.lookup_transform(
+            'map', source_frame, rclpy.time.Time())
+        return do_transform_point(point, transform)   # PointStamped in 'map'</code></pre>
+    <h3>De-duplication (Lecture 8's <code>object_counter.py</code> pattern)</h3>
+    <p>
+      A defect sitting in LIMO's field of view for several consecutive frames — or seen again on a later pass —
+      must not be logged as multiple separate defects. Before logging, check the new point against everything
+      already logged; if it's within a small proximity threshold of an existing entry, it's the same one, seen
+      again.
+    </p>
+    <pre><code>import math
+
+DEDUP_RADIUS_M = 0.4   # anything closer than this is "the same defect"
+
+class DefectLog:
+    def __init__(self):
+        self.defects = []   # list of (x, y) map-frame positions
+
+    def maybe_log(self, x, y):
+        for (ex, ey) in self.defects:
+            if math.hypot(x - ex, y - ey) < DEDUP_RADIUS_M:
+                return False   # duplicate — already counted
+        self.defects.append((x, y))
+        return True   # new defect, logged</code></pre>
+    <h3>Publishing the final report as Markers</h3>
+    <pre><code>from visualization_msgs.msg import Marker, MarkerArray
+
+def build_marker_array(defects):
+    array = MarkerArray()
+    for i, (x, y) in enumerate(defects):
+        m = Marker()
+        m.header.frame_id = 'map'
+        m.ns = 'defects'
+        m.id = i
+        m.type = Marker.SPHERE
+        m.action = Marker.ADD
+        m.pose.position.x, m.pose.position.y = x, y
+        m.scale.x = m.scale.y = m.scale.z = 0.25
+        m.color.r, m.color.a = 1.0, 1.0
+        array.markers.append(m)
+    return array</code></pre>
+    <div class="box eng">
+      <div class="box-title">⚙️ Callback-driven, not a loop</div>
+      <p>
+        In practice this all lives inside the detector node's image callback: on every frame that contains a
+        candidate defect, call <code>pixel_to_map()</code>, hand the result to <code>maybe_log()</code>, and if it
+        returns <code>True</code>, publish an updated <code>MarkerArray</code>. Coverage (waypoint follower or
+        <code>explore_lite</code>) runs completely independently in its own node — the two only interact through
+        shared TF and the shared costmap, never through direct calls.
+      </p>
+    </div>
+    <div class="box idea">
+      <div class="box-title">🧠 Costmap and goal-sending recap</div>
+      <p>
+        Nothing about detection changes how Nav2 sends goals or builds its costmap — that machinery is exactly what
+        you configured earlier in this session. The capstone doesn't add new navigation logic; it adds a second,
+        independent consumer (the detector) of the localization and TF data that navigation was already producing.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="grading">
+    <h2><span class="num">10.22</span>Grading your own mission run</h2>
+    <p>
+      Before calling a run finished, check it against the same criteria an instructor — or a self-check script —
+      would use to grade it.
+    </p>
+    <table>
+      <tr><th>Criterion</th><th>What "pass" looks like</th></tr>
+      <tr><td>Full-arena coverage</td><td>No unexplored/unvisited region of the arena was left uninspected</td></tr>
+      <tr><td>Detection accuracy</td><td>Every real defect in the arena was detected exactly once — no misses</td></tr>
+      <tr><td>De-duplication</td><td>No defect was logged more than once (no duplicate counts from repeated sightings)</td></tr>
+      <tr><td>Collision-free</td><td>Zero collisions with walls or obstacles during the entire run</td></tr>
+      <tr><td>Mission time</td><td>Completed in a reasonable total time — not stalled, not looping indefinitely</td></tr>
+      <tr><td>Final report</td><td>A visualized (Markers) and/or logged list of defect positions is produced at the end</td></tr>
+    </table>
+    <div class="exercise">
+      <div class="level">Easy</div>
+      <p>
+        Run the full assessment stack end to end (Section 10.20), let it finish, then answer each rubric row
+        honestly against your own run: did the coverage strategy you chose actually reach every corner of the
+        arena? Compare the number of Markers published against the number of defects you can count by eye in
+        Gazebo. If they don't match, is it a detector miss, a localization error, or a de-duplication threshold
+        that's too tight or too loose?
+      </p>
+    </div>
+    <div class="exercise">
+      <div class="level">Intermediate</div>
+      <p>
+        Swap the coverage strategy on your mission: if you ran it with the scripted waypoint list, re-run the same
+        arena with <code>explore_lite</code> instead (Section 10.19), and vice versa. Compare the two runs against
+        the rubric table — which one finished faster? Which one found more defects? Does the fixed waypoint route
+        ever miss a corner that frontier exploration reaches automatically?
+      </p>
+    </div>
+    <div class="exercise">
+      <div class="level">Harder</div>
+      <p>
+        Add a "waypoint task executor" to <code>example_waypoint_follower.py</code> so LIMO pauses for two seconds
+        at each waypoint and lets the detector take a clean, non-blurred look before continuing. Then tighten or
+        loosen <code>DEDUP_RADIUS_M</code> from Section 10.21 and re-run the same mission twice — plot how the final
+        defect count changes as the threshold moves from 0.2 m to 0.6 m, and pick the value that best matches the
+        real number of defects placed in the arena.
+      </p>
+    </div>
+    <div class="assignment">
+      <div class="label">Assignment</div>
+      <p>
+        Build and save a brand-new occupancy grid map of a room you haven't mapped before in this course (a
+        different corner of the simulated world, or a reconfigured Gazebo world if your instructor provides one).
+        Without retuning any Nav2 or AMCL parameters from their current values, run the full
+        waypoint-following-then-frontier-exploration mission pipeline cold in that new map. Log everywhere it
+        behaves differently than it did in the room you tuned it on, and for each difference, argue whether the fix
+        belongs in map-specific parameters, in more general tuning, or in the mission code itself.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="summary">
+    <h2><span class="num">10.23</span>Summary, checkpoint &amp; glossary</h2>
+    <p>
+      This session took LIMO from "no map, no known pose" all the way to a fully autonomous mission: SLAM built a
+      map from nothing (Sections 10.1-10.7), Nav2 turned that map plus a goal pose into safe, obstacle-aware motion
+      (10.8-10.15), and the final third fused waypoint or frontier coverage with the Lecture 8 detector, TF
+      localization, and de-duplication into one integrated survey-and-report mission (10.16-10.22). Every one of
+      those pieces ran entirely in Gazebo.
+    </p>
+    <div class="box real">
+      <div class="box-title">🌍 What comes next</div>
+      <p>
+        You've now completed the simulated half of this course. Lectures 11 through 14 take everything you just
+        built onto real hardware: Lecture 11 is a deep, hands-on dive into LIMO's actual electronics — its
+        chassis and four drive modules, onboard computer, LiDAR, depth camera, IMU, and battery/power system —
+        verifying, on the physical robot, several numbers (like that 0.34 m × 0.22 m footprint from Section 10.9)
+        you've so far only trusted in simulation. Lectures 12-14 then have you design and build a second ROS 2
+        robot completely from raw components, applying the exact same SLAM-Nav2-mission pattern you just built
+        here to hardware you assembled with your own hands.
+      </p>
+    </div>
+    <div class="checkpoint">
+      <strong style="color:var(--text); display:block; margin-bottom:10px;">✅ Learning checkpoint</strong>
+      <ul>
+        <li>I can explain why SLAM is a chicken-and-egg problem and how incremental scan-matching breaks the deadlock.</li>
+        <li>I know why this course uses <code>async_slam_toolbox_node</code> rather than the synchronous variant, and roughly how Cartographer differs.</li>
+        <li>I can describe what <code>resolution</code>, <code>max_laser_range</code>, and the <code>minimum_travel_*</code> parameters in <code>slam.yaml</code> each control.</li>
+        <li>I've driven a full SLAM mapping run in Gazebo, watched the occupancy grid fill in live in RViz2, and saved the result with <code>map_saver_cli</code>.</li>
+        <li>I can explain who owns the <code>map</code>→<code>odom</code> transform during SLAM versus during AMCL, and why Nav2 doesn't care which one is running.</li>
+        <li>I know what makes a map "good" — slow driving, deliberate loop closure, and full-space coverage — and can point to a torn wall as evidence of the opposite.</li>
+        <li>I can explain the difference between the global and local costmap, including which sensor data feeds each one.</li>
+        <li>I can explain why an inaccurate footprint causes either real collisions or unnecessarily blocked paths.</li>
+        <li>I can describe what the global planner computes versus what the local controller (DWB) computes, and how often each runs.</li>
+        <li>I can explain why a Behavior Tree is more flexible than a hand-written state machine for composing recovery behaviors.</li>
+        <li>I know the lifecycle states a managed node passes through and what <code>nav2_lifecycle_manager</code> automates.</li>
+        <li>I can send a navigation goal three different ways: RViz, the CLI action call, and <code>BasicNavigator</code>.</li>
+        <li>I can add <code>nav2_waypoint_follower</code> to a lifecycle-managed launch file and drive a route from RViz2's Navigation2 panel.</li>
+        <li>I can write a script using <code>BasicNavigator.navigateThroughPoses()</code> with a real coordinate list captured from <code>tf2_echo</code> or a waypoints topic.</li>
+        <li>I can explain what a frontier is and set up <code>explore_lite</code> to autonomously map an arena.</li>
+        <li>I can bring up the full <code>KV6022_assessment</code> stack end to end: assessment world, assessment map, detector, and coverage strategy together.</li>
+        <li>I can localize a camera detection into the <code>map</code> frame and de-duplicate repeat sightings of the same defect.</li>
+        <li>I can grade a mission run against coverage, detection accuracy, duplication, collisions, time, and final report.</li>
+      </ul>
+    </div>
+    <div class="box idea">
+      <div class="box-title">🧠 Beyond this lecture</div>
+      <p>
+        A few genuine directions worth knowing about even though they're outside this course's scheduled scope:
+        <strong>multi-robot fleets</strong> — everything here generalizes to more than one LIMO by namespacing each
+        robot's topics (<code>/limo1/scan</code>, <code>/limo2/scan</code>, …) and TF prefixes under a shared
+        <code>map</code> frame; <strong>a manipulator arm + MoveIt2</strong> — some LIMO variants support an optional
+        6-DOF arm add-on (not standard equipment on every unit), which adds motion planning for the arm itself on top
+        of everything Nav2 already gives you for base motion; and <strong>Docker + CI</strong> — packaging this whole
+        stack into a pinned-ROS-2-Humble Docker image with a smoke-test CI pipeline is the difference between "works
+        on my machine" and something you could hand to someone else or deploy to a fleet with confidence.
+      </p>
+    </div>
+    <h3>Glossary</h3>
+    <dl class="glossary">
+      <dt>SLAM</dt><dd>Simultaneous Localization And Mapping — building a map and estimating the robot's pose within it at the same time, from a standing start of neither.</dd>
+      <dt>Scan matching</dt><dd>Aligning a new LiDAR scan against the map (or a previous scan) built so far to estimate the robot's motion since the last update.</dd>
+      <dt>Loop closure</dt><dd>Recognizing that the robot has returned to a previously-mapped area, triggering a global correction of accumulated drift across the whole map.</dd>
+      <dt>Pose graph</dt><dd>The graph structure SLAM maintains internally — nodes are robot poses at each scan, edges are the motion and loop-closure constraints between them — optimized to keep the map globally consistent.</dd>
+      <dt>Occupancy grid</dt><dd>The 2D raster representation of the map: white cells are free space, black cells are obstacles, gray cells are unexplored.</dd>
+      <dt>map_saver_cli</dt><dd>The Nav2 command-line tool that snapshots the current live map into a <code>.pgm</code>/<code>.yaml</code> file pair for later reuse.</dd>
+      <dt>Costmap</dt><dd>A grid overlaid on the map where each cell holds a traversal cost, used by the planner and controller instead of the raw map.</dd>
+      <dt>Inflation layer</dt><dd>A costmap layer that raises cost in a radius around obstacles so the planner keeps a safety margin rather than grazing walls.</dd>
+      <dt>DWB (Dynamic Window Approach)</dt><dd>Nav2's default local controller plugin: samples feasible velocity commands, forward-simulates them briefly, and scores them with trajectory critics.</dd>
+      <dt>Behavior Tree</dt><dd>A tree of Sequence, Fallback, Decorator, and Action/Condition nodes used by <code>bt_navigator</code> to orchestrate navigation and compose recovery behaviors declaratively.</dd>
+      <dt>Lifecycle node</dt><dd>A managed ROS 2 node that must be explicitly configured and activated (Unconfigured → Inactive → Active) before it does real work.</dd>
+      <dt>Recovery behavior</dt><dd>A generic fallback action — Spin, BackUp, Wait — served by <code>behavior_server</code> and triggered by the Behavior Tree when normal navigation stalls.</dd>
+      <dt>BasicNavigator</dt><dd>The <code>nav2_simple_commander</code> Python helper class that wraps the <code>/navigate_to_pose</code> action for scripted goal-sending, feedback polling, and cancellation.</dd>
+      <dt>Frontier</dt><dd>A boundary cell on an occupancy grid between explored free space and unknown, unmapped space — the target of autonomous exploration.</dd>
+      <dt>Waypoint follower</dt><dd>A Nav2 action server (<code>nav2_waypoint_follower</code>) that drives a robot through an ordered list of poses, one <code>NavigateToPose</code> call at a time.</dd>
+      <dt>De-duplication</dt><dd>Checking a new detection's position against previously logged detections within a proximity threshold, so a repeated sighting of the same real-world object isn't counted twice.</dd>
+      <dt>Mission rubric</dt><dd>An explicit, checkable set of pass/fail criteria for grading an autonomous run — coverage, accuracy, duplication, collisions, time, and reporting.</dd>
+      <dt><code>navigateThroughPoses()</code></dt><dd>A <code>BasicNavigator</code> method that sends a whole list of <code>PoseStamped</code> goals to Nav2's behaviour tree at once, letting it plan and replan smoothly across the full sequence.</dd>
+    </dl>
+    <h3>Common mistakes</h3>
+    <ul>
+      <li><strong>Driving too fast during SLAM.</strong> Fast translation or fast in-place spins shrink the overlap between consecutive scans, causing scan-matching failures that tear or duplicate walls in the map.</li>
+      <li><strong>Never closing the loop.</strong> Ending the mapping drive without deliberately revisiting the starting area skips the loop-closure correction, leaving accumulated drift permanently baked into the saved map.</li>
+      <li><strong>Saving the map too early.</strong> Calling <code>map_saver_cli</code> before every relevant area has resolved out of gray leaves permanent unknown regions that later block or mis-inform Nav2's costmap.</li>
+      <li><strong>Losing track of the saved map files.</strong> Forgetting to move <code>map.pgm</code>/<code>map.yaml</code> into the specific package's <code>maps/</code> folder that later launch files (AMCL, Nav2) expect them in, causing "map not found" failures.</li>
+      <li>Configuring the costmap footprint to a size that doesn't match the physical LIMO (0.34 m × 0.22 m) — too small causes real collisions, too large blocks valid narrow paths.</li>
+      <li>Forgetting to launch or configure <code>nav2_lifecycle_manager</code>, leaving every Nav2 server stuck in <code>Inactive</code> and no goal ever getting accepted.</li>
+      <li>Sending a goal before <code>waitUntilNav2Active()</code> returns (or before RViz shows the servers as active) — the goal is silently dropped or rejected.</li>
+      <li>Tuning DWB velocity/acceleration limits for one LIMO drive mode (e.g. differential) and reusing the same params unchanged on a different drive mode, where the limits no longer match reality.</li>
+      <li>Confusing the global planner's occasional recompute rate with the local controller's much higher, continuous rate — they are not the same clock, and debugging "jerky motion" versus "bad overall route" requires looking at the right one.</li>
+      <li>Defining waypoints with the wrong (or missing) <code>header.frame_id</code>, so Nav2 either rejects the goal or interprets coordinates relative to the robot's current pose instead of the map.</li>
+      <li>Running <code>explore_lite</code> and sending a manually-clicked RViz2 goal at the same time — the two fight over control and LIMO never completes either one.</li>
+      <li>Launching an earlier, generic map and navigation launch file against the assessment world instead of <code>KV6022_assessment</code>'s own assessment-specific map and launch files, breaking AMCL convergence.</li>
+      <li>Declaring the mission "done" once LIMO stops moving, without checking that every corner of the arena was actually covered — a stalled exploration or an incomplete waypoint list can quietly finish early.</li>
+    </ul>
+  </section>
+
+  <div class="footer-nav">
+    <a href="09-odometry-ekf-amcl-localization.html">&larr; Lecture 9: Odometry, EKF &amp; AMCL</a>
+    <a href="index.html">Table of Contents</a>
+    <a href="11-limo-hardware-six-systems.html">Lecture 11: LIMO Hardware Deep-Dive &rarr;</a>
+  </div>
+
+</div>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      background: '#f1efe8', primaryColor: '#eef0ff', primaryTextColor: '#211f1a',
+      primaryBorderColor: '#3d4bf5', lineColor: '#0e9e6e', secondaryColor: '#f1efe8',
+      tertiaryColor: '#fffefb', textColor: '#211f1a', fontFamily: 'Inter, -apple-system, sans-serif'
+    },
+    flowchart: { curve: 'basis' },
+    securityLevel: 'loose'
+  });
+</script>
+<script>
+(function(){
+  var btn = document.getElementById('theme-toggle');
+  var icon = document.getElementById('theme-toggle-icon');
+  function updateIcon(){
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    icon.textContent = isDark ? '☀️' : '🌙';
+  }
+  updateIcon();
+  btn.addEventListener('click', function(){
+    var cur = document.documentElement.getAttribute('data-theme');
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try{ localStorage.setItem('limo-book-theme', next); }catch(e){}
+    updateIcon();
+  });
+})();
+</script>
+<script src="annotate.js" defer></script>
+</body>
+</html>

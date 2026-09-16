@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<script>
+(function(){
+  try{
+    var t = localStorage.getItem('limo-book-theme');
+    if(!t){ t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+    document.documentElement.setAttribute('data-theme', t);
+  }catch(e){}
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 6 — Gazebo, ros2_control &amp; Path-Following Controllers</title>
+<meta name="description" content="Simulate the LIMO in Gazebo Classic, understand the industrial ros2_control pattern, add a cmd_vel safety watchdog, and build three increasingly capable path-following controllers scored by the trajectory_referee.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<style>
+  :root{
+    --bg:#f6f4ef; --panel:#fffefb; --panel2:#f1efe8; --border:#e6e1d6;
+    --text:#211f1a; --muted:#7a7568; --accent:#3d4bf5; --accent-ink:#2732b8;
+    --accent2:#0e9e6e; --gold:#c8862c; --danger:#d64a3c; --purple:#8b5cf6; --radius:14px;
+  }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--bg); color:var(--text); font-family:'Inter', -apple-system, sans-serif; line-height:1.85; font-size:17.5px; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:880px; margin:0 auto; padding:48px 24px 120px;}
+  .cover{border-radius:28px; background:#12142b; padding:64px 44px; margin-bottom:56px; position:relative; overflow:hidden; isolation:isolate;}
+  .cover::before{content:""; position:absolute; inset:-40%; background:
+      radial-gradient(38% 45% at 15% 20%, rgba(61,75,245,0.55), transparent 70%),
+      radial-gradient(35% 40% at 85% 15%, rgba(139,92,246,0.45), transparent 70%),
+      radial-gradient(45% 50% at 60% 90%, rgba(14,158,110,0.35), transparent 70%);
+    filter:blur(60px); z-index:0;}
+  .cover::after{content:""; position:absolute; inset:0; background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px); background-size: 20px 20px; z-index:0;}
+  .cover > *{position:relative; z-index:1;}
+  .kicker{display:inline-block; color:#c9cdff; font-weight:600; letter-spacing:.4px; font-size:13px; margin-bottom:18px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); padding:6px 14px; border-radius:999px;}
+  .cover h1{font-size:2.7em; margin:0 0 12px; font-weight:800; line-height:1.3; color:#ffffff; letter-spacing:-.5px;}
+  .cover .subtitle{color:#aeb2d6; font-size:1.2em; margin-bottom:30px; font-weight:400;}
+  .meta-row{display:flex; flex-wrap:wrap; gap:10px; margin-top:18px;}
+  .chip{background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.14); color:#d4d7f0; padding:7px 15px; border-radius:999px; font-size:.83em;}
+  h2{font-size:1.9em; font-weight:800; margin:72px 0 22px; display:flex; align-items:center; gap:14px; letter-spacing:-.3px;}
+  h2 .num{display:inline-flex; align-items:center; justify-content:center; min-width:40px; height:40px; padding:0 12px; border-radius:12px; background:var(--accent); box-shadow:0 6px 16px -4px rgba(61,75,245,0.5); color:#ffffff; font-size:.62em; font-weight:800; flex-shrink:0; white-space:nowrap;}
+  h3{font-size:1.3em; font-weight:700; margin:36px 0 14px; color:var(--accent-ink); letter-spacing:-.2px;}
+  h4{font-size:1.08em; font-weight:700; margin:24px 0 10px; color:var(--purple);}
+  p{margin:0 0 16px; color:#3c382f;}
+  strong{color:var(--text); font-weight:700;}
+  a{color:var(--accent);}
+  .box{border-radius:16px; padding:20px 24px; margin:22px 0; border:1px solid var(--border); background:var(--panel); position:relative; box-shadow:0 1px 2px rgba(33,31,26,0.03);}
+  .box-title{font-weight:800; margin-bottom:9px; display:flex; align-items:center; gap:8px; font-size:.96em; letter-spacing:.1px;}
+  .box p:last-child{margin-bottom:0;}
+  .box.idea{background:#eef0ff;border-color:#d6dafc;} .box.idea .box-title{color:var(--accent-ink);}
+  .box.mistake{background:#fdeeec; border-color:#f6d2cd;} .box.mistake .box-title{color:var(--danger);}
+  .box.eng{background:#f4effe; border-color:#e2d6fb;} .box.eng .box-title{color:var(--purple);}
+  .box.real{background:#eafaf3; border-color:#c9eeda;} .box.real .box-title{color:var(--accent2);}
+  .box.def{background:#fdf3e4; border-color:#f2ddb3;} .box.def .box-title{color:var(--gold);}
+  .box.hw{background:#fdeee4; border-color:#f2c9a3;} .box.hw .box-title{color:#c8622c;}
+  code, pre{font-family:'JetBrains Mono', monospace; direction:ltr; text-align:left;}
+  code{background:#eceaf9; border:1px solid #dcdaf3; border-radius:6px; padding:2px 7px; font-size:.87em; color:var(--accent-ink); display:inline-block;}
+  pre{background:#181a2e; border-radius:16px; padding:18px 20px; overflow-x:auto; margin:18px 0; font-size:.88em; line-height:1.65; box-shadow:0 12px 28px -16px rgba(24,26,46,0.5);}
+  pre code{background:none; border:none; padding:0; color:#d8dcff; display:block;}
+  table{width:100%; border-collapse:separate; border-spacing:0; margin:22px 0; font-size:.92em; border-radius:14px; overflow:hidden; border:1px solid var(--border);}
+  th, td{border-bottom:1px solid var(--border); padding:12px 15px; text-align:left;}
+  th{background:#eceaf9; color:var(--accent-ink); font-weight:700; font-size:.9em;}
+  tr:last-child td{border-bottom:none;}
+  tr:nth-child(even) td{background:rgba(33,31,26,0.02);}
+  ul, ol{margin:0 0 16px; padding-inline-start:26px; color:#3c382f;}
+  li{margin-bottom:7px;}
+  .figure{margin:28px 0; text-align:center;}
+  .figure img, .figure svg{max-width:100%; height:auto; background:#fffefb; border:1px solid var(--border); border-radius:16px; box-shadow:0 1px 2px rgba(33,31,26,0.03), 0 16px 32px -20px rgba(33,31,26,0.14);}
+  .figure figcaption{color:var(--muted); font-size:.87em; margin-top:12px;}
+  .mermaid{background:#fffefb; border:1px solid var(--border); border-radius:16px; padding:18px; margin:24px 0; text-align:center; box-shadow:0 1px 2px rgba(33,31,26,0.03), 0 16px 32px -20px rgba(33,31,26,0.14);}
+  .checkpoint{border-radius:16px; padding:22px 24px; margin:26px 0; background:#eafaf3; border:1px solid #c9eeda;}
+  .checkpoint ul{list-style:none; padding:0; margin:0;}
+  .checkpoint li{padding:9px 0; border-bottom:1px solid rgba(33,31,26,0.06); display:flex; gap:10px; align-items:flex-start;}
+  .checkpoint li:last-child{border-bottom:none;}
+  .checkpoint li::before{content:"◻"; color:var(--accent2); font-size:1.2em; line-height:1;}
+  .exercise{border-radius:14px; padding:18px 22px; margin:16px 0; background:var(--panel); border:1px solid var(--border); border-inline-start:4px solid var(--gold);}
+  .exercise .level{font-size:.76em; color:var(--gold); font-weight:800; text-transform:uppercase; letter-spacing:.6px;}
+  .glossary dt{font-weight:800; color:var(--accent-ink); margin-top:16px;}
+  .glossary dd{margin:4px 0 0; color:var(--muted);}
+  .toc{background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:26px 30px;}
+  .toc a{display:block; padding:8px 0; color:#3c382f; text-decoration:none; border-bottom:1px solid rgba(33,31,26,.06); transition:color .15s;}
+  .toc a:last-child{border-bottom:none;}
+  .toc a:hover{color:var(--accent-ink);}
+  .toc a span{color:var(--muted); font-size:.85em; margin-inline-end:10px; font-weight:600;}
+  .divider{height:1px; background:linear-gradient(90deg, transparent, var(--border), transparent); margin:52px 0;}
+  .footer-nav{display:flex; justify-content:space-between; align-items:center; gap:16px; margin-top:64px; padding-top:26px; border-top:1px solid var(--border); color:var(--muted); font-size:.9em;}
+  .footer-nav a{color:var(--text); text-decoration:none; font-weight:600;}
+  .footer-nav a:hover{color:var(--accent-ink);}
+  .badge-project{display:inline-block; background:#fdf3e4; border:1px solid #f2ddb3; color:var(--gold); border-radius:8px; padding:3px 11px; font-size:.78em; font-weight:700;}
+  .term{background:#181a2e; border-radius:16px; overflow:hidden; margin:22px 0; box-shadow:0 12px 28px -16px rgba(24,26,46,0.5);}
+  .term-bar{display:flex; align-items:center; gap:7px; padding:12px 16px; background:#20223a;}
+  .term-dot{width:11px; height:11px; border-radius:50%;}
+  .term-body{padding:16px 20px; font-family:'JetBrains Mono', monospace; direction:ltr; text-align:left; font-size:.87em; line-height:1.75; color:#d8dcff; white-space:pre-wrap;}
+  .term-prompt{color:#7ee7c7;}
+  .term-out{color:#9aa0c8;}
+  @media print{ body{background:#fff; color:#000;} }
+  html[data-theme="dark"]{
+    --bg:#12141c; --panel:#1b1e2a; --panel2:#20232f; --border:#2d3142;
+    --text:#e7e8f2; --muted:#9498b3; --accent:#7c86ff; --accent-ink:#aab1ff;
+    --accent2:#34d399; --gold:#e3a548; --danger:#f0685a; --purple:#a78bfa; --radius:14px;
+  }
+  html[data-theme="dark"] p, html[data-theme="dark"] ul, html[data-theme="dark"] ol, html[data-theme="dark"] .toc a{color:#c7c9dc;}
+  html[data-theme="dark"] code{background:#262a45; border-color:#3a3f5c;}
+  html[data-theme="dark"] th{background:#262a45;}
+  html[data-theme="dark"] tr:nth-child(even) td{background:rgba(255,255,255,0.03);}
+  html[data-theme="dark"] .box.idea{background:#1f2242; border-color:#383d6b;}
+  html[data-theme="dark"] .box.mistake{background:#3a2220; border-color:#5c332e;}
+  html[data-theme="dark"] .box.eng{background:#2a2340; border-color:#453a63;}
+  html[data-theme="dark"] .box.real{background:#16302a; border-color:#1f4a3d;}
+  html[data-theme="dark"] .box.def{background:#3a2f18; border-color:#5c4826;}
+  html[data-theme="dark"] .box.hw{background:#3a2618; border-color:#5c3f26;}
+  html[data-theme="dark"] .checkpoint{background:#16302a; border-color:#1f4a3d;}
+  html[data-theme="dark"] .checkpoint li{border-bottom-color:rgba(255,255,255,0.08);}
+  html[data-theme="dark"] .badge-project{background:#3a2f18; border-color:#5c4826;}
+  html[data-theme="dark"] .chapter-num{background:#1f2242;}
+  html[data-theme="dark"] .chapter-card{box-shadow:0 1px 2px rgba(0,0,0,0.25);}
+  html[data-theme="dark"] .chapter-card:hover{border-color:#454a7a; box-shadow:0 16px 32px -20px rgba(0,0,0,0.55);}
+  body, .box, .chapter-card, .exercise, .checkpoint, .toc, table, code, th{transition:background-color .25s ease, border-color .25s ease, color .25s ease;}
+  #theme-toggle{position:fixed; top:18px; left:18px; z-index:999; width:46px; height:46px; border-radius:50%; border:1px solid var(--border); background:var(--panel); color:var(--text); font-size:19px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px -8px rgba(0,0,0,0.35); transition:transform .15s ease, background-color .25s ease, border-color .25s ease;}
+  #theme-toggle:hover{transform:scale(1.08);}
+  @media (max-width:640px){ #theme-toggle{top:12px; left:12px; width:42px; height:42px; font-size:17px;} }
+</style>
+<link rel="stylesheet" href="projector.css">
+</head>
+<body>
+<style>
+.coursenav{position:sticky;top:0;z-index:900;background:rgba(255,254,251,0.88);backdrop-filter:saturate(160%) blur(10px);border-bottom:1px solid var(--border);}
+.coursenav .inner{max-width:1000px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;padding:10px 20px 10px 74px;}
+.coursenav .brand{font-weight:800;color:var(--accent-ink);margin-inline-end:12px;font-size:.9em;letter-spacing:-.2px;}
+.coursenav a{color:#3c382f;text-decoration:none;font-weight:600;font-size:.82em;padding:6px 10px;border-radius:999px;transition:background-color .15s,color .15s;}
+.coursenav a:hover{background:#eef0ff;color:var(--accent-ink);}
+.coursenav a.active{background:var(--accent);color:#fff;}
+html[data-theme="dark"] .coursenav{background:rgba(27,30,42,0.9);}
+html[data-theme="dark"] .coursenav a{color:#c7c9dc;}
+html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
+@media print{.coursenav{display:none;}}
+</style>
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html">Home</a>
+  <a href="syllabus.html">Syllabus</a>
+  <a href="schedule.html">Schedule</a>
+  <a href="assignments.html">Assignments</a>
+  <a href="index.html#lectures" class="active">Lectures</a>
+</div></nav>
+<button id="theme-toggle" aria-label="Toggle light/dark mode" title="Light/dark mode">
+  <span id="theme-toggle-icon">🌙</span>
+</button>
+<div class="wrap">
+
+  <div class="cover">
+    <div class="kicker">LIMO Robotics &amp; ROS 2 Lecture &nbsp;·&nbsp; Session 6 of 14</div>
+    <h1>Lecture 6: Gazebo, ros2_control &amp; Path-Following Controllers</h1>
+    <div class="subtitle">From "the plugin drives the wheels" to a real pose-regulation controller that lands where you tell it to</div>
+    <div class="meta-row">
+      <div class="chip">Duration: 3 hours</div>
+      <div class="chip">Prerequisite: Lecture 5 (TF2 &amp; RViz)</div>
+      <div class="chip">Packages: limo_gazebosim, trajectory_skeleton, trajectory_referee</div>
+    </div>
+  </div>
+
+  <div class="toc">
+    <strong style="color:var(--text)">In this session</strong>
+    <a href="#sim-lab"><span>6.1</span>Gazebo as LIMO's virtual lab</a>
+    <a href="#plugin-drive"><span>6.2</span>How Gazebo actually drives LIMO</a>
+    <a href="#ros2-control"><span>6.3</span>ros2_control — the industrial pattern</a>
+    <a href="#watchdog"><span>6.4</span>twist_watchdog.py — a safety habit worth keeping</a>
+    <a href="#onoff"><span>6.5</span>Path-following, level 1 — bang-bang</a>
+    <a href="#pcontrol"><span>6.6</span>Path-following, level 2 — proportional control</a>
+    <a href="#kinematic"><span>6.7</span>Path-following, level 3 — pose regulation</a>
+    <a href="#referee"><span>6.8</span>Racing the referee</a>
+    <a href="#summary"><span>6.9</span>Summary, checkpoint &amp; glossary</a>
+  </div>
+
+  <section id="sim-lab">
+    <h2><span class="num">6.1</span>Gazebo as LIMO's virtual lab</h2>
+    <p>
+      Every session so far has run against either turtlesim or a LIMO whose motion you mostly took for granted.
+      This session opens the hood: what actually makes a simulated LIMO fall under gravity, roll on friction,
+      and bump into a pothole model? The answer is <strong>Gazebo Classic 11</strong>, driven through the
+      <code>gazebo_ros</code> bridge and a family of <code>gazebo_plugins</code>. This course deliberately uses
+      Gazebo Classic rather than the newer <code>gz-sim</code> (Ignition) line, because Classic 11 is the version
+      that pairs most reliably with ROS 2 Humble in a teaching lab — fewer moving parts, fewer version
+      mismatches, one consistent set of tutorials.
+    </p>
+    <div class="box idea">
+      <div class="box-title">🧠 Simple Analogy</div>
+      <p>
+        RViz (Lecture 5) is a window — it only shows you what's already been measured or computed. Gazebo is a
+        laboratory: it has an actual physics engine (ODE — Open Dynamics Engine) computing gravity, mass,
+        friction, and collisions at every simulation step, whether or not you're looking. Drop LIMO one metre
+        above the potholes world and in RViz nothing happens; in Gazebo, it falls.
+      </p>
+    </div>
+    <div class="box def">
+      <div class="box-title">📖 Real-Time Factor (RTF)</div>
+      <p>
+        <code>RTF = simulation-time-elapsed / wall-time-elapsed</code>. <code>RTF = 1.0</code> means one second
+        of simulated physics takes exactly one second of your life. <code>RTF &lt; 1</code> means the simulation
+        is running slower than real time — very common on a modest laptop once you add a detailed world, several
+        pothole meshes, and a LiDAR. Watch RTF in Gazebo's bottom status bar; if it's badly below 1, your
+        <code>/cmd_vel</code> commands and sensor timestamps are all being computed "in slow motion" relative to
+        the wall clock, which can make timing-sensitive code (like our watchdog in 6.4) misbehave if you assumed
+        real-time.
+      </p>
+    </div>
+    <p>The <code>limo_gazebosim</code> package ships several real worlds, each built for a different purpose:</p>
+    <table>
+      <tr><th>World file</th><th>What it contains</th><th>Good for</th></tr>
+      <tr><td><code>simple.world</code></td><td>Empty ground plane, basic lighting</td><td>First launch, sanity checks, isolating a bug from world complexity</td></tr>
+      <tr><td><code>potholes.world</code> / <code>potholes_simple.world</code></td><td>A road surface with pothole models scattered across it</td><td>The course's capstone "road defect survey" theme</td></tr>
+      <tr><td><code>simulation_table.world</code>, <code>_small</code>, <code>_with_obstacles</code></td><td>A tabletop-scale arena, optionally with obstacles</td><td>Indoor navigation practice at a scale that fits a small room</td></tr>
+    </table>
+    <p>
+      Which world loads is normally set inside the launch file's <code>world</code> argument. If that argument
+      is exposed, you can override it from the command line:
+    </p>
+    <pre><code>ros2 launch limo_gazebosim limo_gazebo_diff.launch.py world:=potholes_simple.world</code></pre>
+    <p>
+      Otherwise, open the launch file and edit the default path to point at the <code>.world</code> file you
+      want under <code>limo_gazebosim/worlds/</code>.
+    </p>
+    <div class="term">
+      <div class="term-bar"><div class="term-dot" style="background:#ff5f57;"></div><div class="term-dot" style="background:#febc2e;"></div><div class="term-dot" style="background:#28c840;"></div></div>
+      <div class="term-body"><span class="term-prompt">student@limo-ws:~$</span> ros2 launch limo_gazebosim limo_gazebo_diff.launch.py world:=potholes_simple.world
+<span class="term-out">[gzserver-1] Msg Waiting for master.
+[gzserver-1] Msg Connected to gazebo master @ http://127.0.0.1:11345
+[gzserver-1] [Msg] Real time factor: 0.97
+[spawn_entity-3] [INFO] [spawn_entity]: Spawn status: SpawnEntity: Successfully spawned entity [limo]</span></div>
+    </div>
+    <div class="box mistake">
+      <div class="box-title">⚠️ Common Trap</div>
+      <p>
+        A poor RTF is not always your fault. It's a genuine trade-off: complex meshes (pothole geometry, tables,
+        obstacles) cost more physics computation per step. If your simulation feels sluggish, try
+        <code>simple.world</code> first to confirm the controller code itself is fine before blaming your
+        laptop.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="plugin-drive">
+    <h2><span class="num">6.2</span>How Gazebo actually drives LIMO</h2>
+    <p>
+      In this course's simulation stack, LIMO's Gazebo model carries a <code>gazebo_ros</code> plugin (a
+      differential-drive plugin from the <code>gazebo_plugins</code> family) attached directly to its wheel
+      joints. This single plugin does three jobs at once, and understanding the loop end to end demystifies
+      everything you've been typing since Lecture 2.
+    </p>
+    <div class="mermaid">
+flowchart LR
+    A["/cmd_vel<br/>geometry_msgs/Twist"] --> B["gazebo_ros diff-drive plugin"]
+    B --> C["ODE physics engine<br/>wheel velocities / torques"]
+    C --> D["Robot moves in the World"]
+    D --> E["/odom<br/>nav_msgs/Odometry"]
+    D --> F["odom → base_link TF"]
+    style B fill:#eef0ff,stroke:#3d4bf5,color:#211f1a,font-weight:bold
+    style E fill:#eafaf3,stroke:#0e9e6e,color:#211f1a
+    style F fill:#eafaf3,stroke:#0e9e6e,color:#211f1a
+    </div>
+    <ol>
+      <li>The plugin <strong>subscribes to <code>/cmd_vel</code></strong> — the same topic you have been
+      publishing to since your very first turtlesim exercises.</li>
+      <li>It converts that linear/angular velocity into per-wheel commands and hands them to the
+      <strong>ODE physics engine</strong>, which applies real forces and torques, respecting friction, mass, and
+      collisions.</li>
+      <li>Every simulation step, the plugin reads back the resulting motion and <strong>publishes
+      <code>/odom</code></strong> and <strong>broadcasts the <code>odom → base_link</code> TF itself</strong> —
+      no separate node needed.</li>
+    </ol>
+    <div class="box eng">
+      <div class="box-title">🔧 "Plugin does everything" — good and bad</div>
+      <p>
+        This is a deliberately simple, direct pattern: one plugin owns input, physics, and output. It's fantastic
+        for learning because there's a single place to look when something's wrong. Its downside only shows up
+        once you compare it with the industrial pattern in the next section — the plugin knows nothing about
+        <em>real</em> LIMO hardware, and its internals aren't reusable when you eventually plug in an actual
+        motor controller.
+      </p>
+    </div>
+    <div class="term">
+      <div class="term-bar"><div class="term-dot" style="background:#ff5f57;"></div><div class="term-dot" style="background:#febc2e;"></div><div class="term-dot" style="background:#28c840;"></div></div>
+      <div class="term-body"><span class="term-prompt">student@limo-ws:~$</span> ros2 topic pub -1 /cmd_vel geometry_msgs/msg/Twist "{linear: {x: 0.2}, angular: {z: 0.0}}"
+<span class="term-prompt">student@limo-ws:~$</span> ros2 topic echo /odom --once
+<span class="term-out">pose:
+  pose:
+    position: {x: 0.0412, y: 0.0006, z: 0.0}
+twist:
+  twist:
+    linear: {x: 0.2, y: 0.0, z: 0.0}</span>
+<span class="term-prompt">student@limo-ws:~$</span> ros2 run tf2_ros tf2_echo odom base_link
+<span class="term-out">Translation: [0.041, 0.001, 0.000]
+Rotation: in Quaternion [0.000, 0.000, 0.001, 1.000]</span></div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="ros2-control">
+    <h2><span class="num">6.3</span>ros2_control — the industrial pattern</h2>
+    <p>
+      The gazebo_ros plugin pattern is simple, but it doesn't scale to how real robotics companies build
+      products. Industrial ROS 2 stacks almost always use <strong>ros2_control</strong> instead — a general
+      framework built around three pieces:
+    </p>
+    <table>
+      <tr><th>Piece</th><th>Role</th></tr>
+      <tr><td><code>controller_manager</code></td><td>A process that loads controllers and hardware interfaces, and runs the real-time control loop</td></tr>
+      <tr><td><code>hardware_interface</code></td><td>An abstraction layer — can be backed by a <em>simulated</em> interface, or by a real serial/CAN driver talking to actual motors. The controller code above it never knows which.</td></tr>
+      <tr><td>Controllers (e.g. <code>diff_drive_controller</code>)</td><td>Consume <code>/cmd_vel</code>, know the robot's wheel geometry, and issue per-joint commands through the hardware_interface</td></tr>
+    </table>
+    <p>Which controllers to load, and at what update rate, is declared in a <code>controllers.yaml</code> file:</p>
+    <pre><code>controller_manager:
+  ros__parameters:
+    update_rate: 50  # Hz
+
+    diff_drive_controller:
+      type: diff_drive_controller/DiffDriveController
+
+diff_drive_controller:
+  ros__parameters:
+    left_wheel_names: ["left_wheel_joint"]
+    right_wheel_names: ["right_wheel_joint"]
+    wheel_separation: 0.172
+    wheel_radius: 0.045
+    cmd_vel_timeout: 0.5</code></pre>
+    <div class="mermaid">
+flowchart TB
+    A["/cmd_vel"] --> B["diff_drive_controller"]
+    B --> C["controller_manager"]
+    C --> D{"hardware_interface"}
+    D -->|"simulated backend"| E["Gazebo physics"]
+    D -->|"real backend, Lecture 9"| F["Serial / CAN link to real LIMO motors"]
+    style B fill:#eef0ff,stroke:#3d4bf5,color:#211f1a,font-weight:bold
+    style D fill:#f4effe,stroke:#8b5cf6,color:#211f1a,font-weight:bold
+    style E fill:#eafaf3,stroke:#0e9e6e,color:#211f1a
+    style F fill:#fdeee4,stroke:#c8622c,color:#211f1a
+    </div>
+    <div class="box real">
+      <div class="box-title">🌍 Why real robot companies use this</div>
+      <p>
+        The engineering win is huge: you can develop and tune a <code>diff_drive_controller</code> entirely in
+        Gazebo, then move to the real robot by swapping <em>only</em> the <code>hardware_interface</code> —
+        from a simulated one to a real serial/CAN driver — with <strong>zero changes to the controller code</strong>.
+        The same is true for arm controllers, gripper controllers, anything ros2_control manages. In
+        <strong>Lecture 9</strong> you'll meet LIMO's real embedded motion controller and see this swap happen
+        for real — the diff_drive_controller you configure here does not need to be rewritten.
+      </p>
+    </div>
+    <table>
+      <tr><th></th><th>gazebo_ros plugin (6.2)</th><th>ros2_control</th></tr>
+      <tr><td>Who talks to physics</td><td>The plugin itself, directly</td><td>The hardware_interface, behind an abstraction</td></tr>
+      <tr><td>Reusable on real hardware?</td><td>No — Gazebo-only code</td><td>Yes — same controller, different hardware_interface</td></tr>
+      <tr><td>Configuration</td><td>Plugin parameters in the URDF/SDF</td><td>Central <code>controllers.yaml</code></td></tr>
+      <tr><td>Odometry &amp; TF publishing</td><td>Done by the plugin</td><td>Done by the controller (e.g. diff_drive_controller)</td></tr>
+      <tr><td>Best for</td><td>Quick learning, simple simulation-only projects</td><td>Anything meant to eventually touch real hardware</td></tr>
+    </table>
+    <div class="box mistake">
+      <div class="box-title">⚠️ Don't conflate the two</div>
+      <p>
+        This course's default LIMO simulation launch uses the simpler gazebo_ros plugin pattern from 6.2 — it is
+        <em>not</em> running ros2_control underneath. If you go looking for a <code>controller_manager</code>
+        node while running the default launch file, you won't find one; that's expected, not a bug.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="watchdog">
+    <h2><span class="num">6.4</span>twist_watchdog.py — a safety habit worth keeping</h2>
+    <p>
+      <code>limo_gazebosim/scripts/twist_watchdog.py</code> is a small node with an outsized lesson. It tracks
+      the timestamp of the last <code>/cmd_vel</code> message it received, and if no new command arrives within a
+      timeout window, it publishes a zero <code>Twist</code> — bringing the robot to a stop.
+    </p>
+    <div class="mermaid">
+flowchart LR
+    A["/cmd_vel arrives"] --> B["Reset last-seen timer"]
+    C["Timer check<br/>(periodic)"] --> D{"Time since last cmd_vel<br/>&gt; timeout?"}
+    D -->|"yes"| E["Publish zero Twist<br/>(STOP)"]
+    D -->|"no"| F["Do nothing — last command still valid"]
+    style E fill:#fdeeec,stroke:#d64a3c,color:#211f1a,font-weight:bold
+    </div>
+    <pre><code># conceptual sketch, not a line-for-line copy of the real script
+def timer_callback(self):
+    elapsed = self.get_clock().now() - self.last_cmd_time
+    if elapsed.nanoseconds / 1e9 > self.timeout_sec:
+        self.cmd_vel_pub.publish(Twist())  # all-zero: stop</code></pre>
+    <div class="box eng">
+      <div class="box-title">🔧 Why this matters far beyond LIMO</div>
+      <p>
+        This is not a LIMO quirk — it's a pattern every teleoperated or scripted mobile robot needs. A dropped
+        Wi-Fi link during joystick teleop, a control node that crashes mid-loop, a disconnected joystick USB
+        cable — in every case, the last <code>/cmd_vel</code> the robot received might have been "drive forward
+        at 0.3 m/s." Without a watchdog, the robot has no way of knowing the command is stale, and it will
+        happily keep obeying it until it hits something. A robot's default on silence must be
+        <strong>stopped</strong>, never "keep doing the last thing forever."
+      </p>
+    </div>
+    <div class="term">
+      <div class="term-bar"><div class="term-dot" style="background:#ff5f57;"></div><div class="term-dot" style="background:#febc2e;"></div><div class="term-dot" style="background:#28c840;"></div></div>
+      <div class="term-body"><span class="term-prompt">student@limo-ws:~$</span> ros2 run limo_gazebosim twist_watchdog.py --ros-args -p timeout_sec:=0.8
+<span class="term-out">[INFO] [twist_watchdog]: watchdog started, timeout=0.8s
+[WARN] [twist_watchdog]: no /cmd_vel for 0.83s — publishing stop</span></div>
+    </div>
+    <div class="box hw">
+      <div class="box-title">🛠️ Where this becomes non-optional</div>
+      <p>
+        In simulation, a watchdog failure just means LIMO drifts across an empty Gazebo floor. On the real robot
+        (Lecture 9 onward) the exact same silent-network scenario means an unattended robot rolling toward a
+        wall, a person, or a staircase at whatever speed it was last told. Build the habit now.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="onoff">
+    <h2><span class="num">6.5</span>Path-following, level 1 — bang-bang control</h2>
+    <p>
+      The rest of this session builds toward a real skill: driving LIMO to a target waypoint using only its
+      current pose (from TF, tying directly back to Lecture 5) and a target <code>Transform</code>. We'll build
+      three controllers of increasing sophistication, starting with the crudest one that actually works:
+      <strong>on/off ("bang-bang") control</strong>.
+    </p>
+    <p>
+      The idea: compute the distance error and heading error to the goal. If either is above a threshold,
+      command a fixed velocity. If below, stop.
+    </p>
+    <pre><code># trajectory_tracking_controller_on_off.py — core control law
+dx = wx - x
+dy = wy - y
+distance_error = math.hypot(dx, dy)
+angle_to_goal = math.atan2(dy, dx)
+angle_error = angle_to_goal - theta   # then normalized to [-pi, pi]
+
+# On/Off linear speed controller
+if distance_error > 0.1:
+    linear_speed = 0.2
+else:
+    linear_speed = 0.0
+
+# On/Off angular speed controller
+if angle_error > 0:
+    angular_speed = 0.5
+else:
+    angular_speed = -0.5
+
+motor_command = Twist()
+motor_command.linear.x = linear_speed
+motor_command.angular.z = angular_speed
+self.publisher.publish(motor_command)</code></pre>
+    <div class="box mistake">
+      <div class="box-title">⚠️ Why it's jerky</div>
+      <p>
+        There is no middle ground: the robot is always commanding full speed or zero, full left turn or full
+        right turn. Near the goal, tiny fluctuations in the sign of <code>angle_error</code> flip
+        <code>angular_speed</code> between <code>+0.5</code> and <code>-0.5</code> every control cycle, so LIMO
+        visibly twitches and oscillates instead of settling. It also never manages final orientation at all —
+        once <code>distance_error &lt; 0.1</code> it simply stops, facing whatever direction it happened to be
+        facing.
+      </p>
+    </div>
+    <div class="exercise">
+      <div class="level">Easy</div>
+      <p>
+        Run the on/off controller against a single waypoint 1 metre straight ahead of LIMO's start pose. Watch
+        <code>/cmd_vel</code> with <code>ros2 topic echo /cmd_vel</code> as it approaches — count how many times
+        <code>angular.z</code> flips sign in the last 20 cm.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="pcontrol">
+    <h2><span class="num">6.6</span>Path-following, level 2 — proportional control</h2>
+    <p>
+      The obvious fix for jerkiness: instead of a fixed velocity, make the commanded velocity <strong>scale with
+      the error</strong>. This is a classic proportional (P) controller — the same idea shows up everywhere
+      from thermostats to cruise control.
+    </p>
+    <pre><code># trajectory_tracking_p_controller.py — core control law
+distance_error = math.hypot(dx, dy)
+angle_to_goal = math.atan2(dy, dx)
+alpha = angle_to_goal - theta   # normalized to [-pi, pi]
+
+Kp_linear = 0.5
+Kp_angular = 1.0
+
+linear_speed  = Kp_linear  * distance_error
+angular_speed = Kp_angular * alpha
+
+# clamp to the robot's speed limits
+linear_speed  = max(min(linear_speed, 0.5), -0.5)
+angular_speed = max(min(angular_speed, 1.0), -1.0)</code></pre>
+    <p>
+      <code>v = kp_lin &times; distance_error</code> and <code>ω = kp_ang &times; heading_error</code>. Far from
+      the goal, the errors are large, so LIMO drives fast; as it gets close, both velocities taper smoothly
+      toward zero instead of slamming to a stop.
+    </p>
+    <div class="box idea">
+      <div class="box-title">🧠 Smoother, but still incomplete</div>
+      <p>
+        This removes the twitchiness of bang-bang control — no more sign-flipping at full speed. But look at the
+        control law again: it only ever drives <code>alpha</code> (heading toward the goal <em>point</em>) to
+        zero. Nothing in this law cares what direction LIMO is facing once it <em>arrives</em>. Two robots with
+        the same P controller, approaching the same goal from different directions, will stop at the same
+        position but face completely different, uncontrolled headings.
+      </p>
+    </div>
+    <div class="box mistake">
+      <div class="box-title">⚠️ Tuning trap</div>
+      <p>
+        It's tempting to push <code>Kp_angular</code> higher to make LIMO "snap" toward the goal direction
+        faster. Push it too far and you re-introduce oscillation — the robot overshoots the correct heading,
+        corrects, overshoots the other way, and the smooth P-controller behaviour degrades back toward
+        bang-bang-like jitter. A gain that looks great on <code>simple.world</code> can already oscillate on
+        <code>potholes.world</code> once RTF drops and control cycles get less regular.
+      </p>
+    </div>
+    <div class="exercise">
+      <div class="level">Intermediate</div>
+      <p>
+        Run the P controller toward a waypoint placed behind and to the side of LIMO's start pose (so it must
+        turn substantially before advancing). Log the final heading with <code>tf2_echo odom base_link</code>
+        once the robot stops, and compare it against the waypoint's own orientation field — confirm they do not
+        match.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="kinematic">
+    <h2><span class="num">6.7</span>Path-following, level 3 — pose regulation</h2>
+    <p>
+      To land at the goal <em>and</em> face the correct final orientation, we need a controller that reasons
+      about three quantities instead of one. This is the classic unicycle <strong>pose-regulation</strong>
+      formulation, using three errors usually named <strong>rho, alpha, beta</strong>:
+    </p>
+    <ul>
+      <li><strong>ρ (rho)</strong> — straight-line distance from the robot's current position to the goal.</li>
+      <li><strong>α (alpha)</strong> — the angle between the robot's current heading and the direction toward
+      the goal (exactly the same quantity the P controller used).</li>
+      <li><strong>β (beta)</strong> — the remaining orientation error once the robot reaches the goal: how far
+      off the robot's final heading will be from the goal's desired orientation.</li>
+    </ul>
+    <div class="mermaid">
+flowchart TB
+    A["Current pose (x, y, theta)<br/>from odom→base_link TF"] --> D["Compute rho, alpha, beta"]
+    B["Goal waypoint (wx, wy, wtheta)<br/>from /waypoint_cmd"] --> D
+    D --> E["v = K_rho * rho"]
+    D --> F["omega = K_alpha * alpha + K_beta * beta"]
+    E --> G["/cmd_vel"]
+    F --> G
+    style D fill:#f4effe,stroke:#8b5cf6,color:#211f1a,font-weight:bold
+    style G fill:#eafaf3,stroke:#0e9e6e,color:#211f1a,font-weight:bold
+    </div>
+    <p>The control law itself is compact:</p>
+    <pre><code>v     = K_rho   * rho
+omega = K_alpha * alpha + K_beta * beta</code></pre>
+    <p>
+      Both terms driving <code>omega</code> matter: <code>K_alpha * alpha</code> steers the robot toward the
+      goal point (same job as the P controller's angular term); <code>K_beta * beta</code> is the new piece — it
+      continuously nudges the heading toward the goal's <em>desired final orientation</em> as well, so by the
+      time <code>rho</code> reaches zero, the robot's heading has already converged too.
+    </p>
+    <pre><code># trajectory_tracking_kinematic_controller.py — core control law
+dx = wx - x
+dy = wy - y
+rho = math.hypot(dx, dy)
+angle_to_goal = math.atan2(dy, dx)
+alpha = angle_to_goal - theta        # normalized to [-pi, pi]
+beta = - theta - alpha               # normalized to [-pi, pi]
+
+K_rho   = 0.4
+K_alpha = 3.0
+K_beta  = -0.5   # negative for stability
+
+linear_speed  = K_rho * rho
+angular_speed = K_alpha * alpha + K_beta * beta
+
+linear_speed  = max(min(linear_speed, 0.5), -0.5)
+angular_speed = max(min(angular_speed, 1.0), -1.0)</code></pre>
+    <div class="box def">
+      <div class="box-title">📖 Why K_beta is negative</div>
+      <p>
+        This is a well-known stability result for this control law: for the closed-loop system to converge
+        smoothly (rather than spiral or overshoot around the goal), the gains must satisfy
+        <code>K_rho &gt; 0</code>, <code>K_beta &lt; 0</code>, and <code>K_alpha - K_rho &gt; 0</code>. You don't
+        need to re-derive this to use it — just remember that flipping <code>K_beta</code> positive by accident
+        (an easy typo) will visibly break convergence near the goal.
+      </p>
+    </div>
+    <table>
+      <tr><th>Controller</th><th>Reaches the goal position</th><th>Reaches the goal orientation</th><th>Smoothness</th></tr>
+      <tr><td>On/off (6.5)</td><td>Yes, roughly</td><td>No — arbitrary</td><td>Jerky, oscillates near goal</td></tr>
+      <tr><td>Proportional (6.6)</td><td>Yes, smoothly</td><td>No — arbitrary</td><td>Smooth approach</td></tr>
+      <tr><td>Kinematic / rho-alpha-beta (6.7)</td><td>Yes, smoothly</td><td><strong>Yes</strong></td><td>Smooth, converges in both position and heading</td></tr>
+    </table>
+    <div class="exercise">
+      <div class="level">Harder</div>
+      <p>
+        Set a waypoint whose <code>rotation</code> field encodes a heading 90&deg; different from the straight-line
+        approach direction. Run all three controllers back to back against it and record, for each, the final
+        heading error in degrees once the robot has stopped. Only the kinematic controller should land close to
+        zero.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="referee">
+    <h2><span class="num">6.8</span>Racing the referee</h2>
+    <p>
+      All three controllers above share the same shape: subscribe to <code>/waypoint_cmd</code>
+      (<code>geometry_msgs/msg/Transform</code>), look up the current pose via TF, publish <code>/cmd_vel</code>.
+      The <code>trajectory_skeleton</code> package gives you that shared scaffold —
+      <code>trajectory_tracking_controller.py</code> — ready for you to drop your control law into. The
+      <code>trajectory_referee</code> package plays the opposing role: it feeds waypoints along a named test
+      route and scores how well you followed them.
+    </p>
+    <div class="mermaid">
+flowchart LR
+    A["trajectory_referee<br/>trajectory_publisher"] -->|"/waypoint_cmd"| B["trajectory_skeleton<br/>trajectory_tracking_controller"]
+    C["odom → base_link TF"] --> B
+    B -->|"/cmd_vel"| D["LIMO in Gazebo"]
+    D -->|"pose feedback"| A
+    A --> E["Score: dis or dor"]
+    style B fill:#eef0ff,stroke:#3d4bf5,color:#211f1a,font-weight:bold
+    style E fill:#eafaf3,stroke:#0e9e6e,color:#211f1a,font-weight:bold
+    </div>
+    <p>Setup, once per workspace:</p>
+    <pre><code>sudo apt install ros-humble-tf-transformations</code></pre>
+    <p>Then, in separate terminals:</p>
+    <pre><code># terminal 1 — spawn LIMO + RViz
+ros2 launch trajectory_skeleton view_robot.launch.py
+
+# terminal 2 — your controller (edit this node with each level's control law)
+ros2 run trajectory_skeleton trajectory_tracking_controller
+
+# terminal 3 — the referee sends waypoints along a named route and scores you
+ros2 run trajectory_referee trajectory_publisher route1 dis</code></pre>
+    <div class="box def">
+      <div class="box-title">📖 dis vs dor scoring modes</div>
+      <p>
+        The second argument to <code>trajectory_publisher</code> selects what the referee scores:
+        <code>dis</code> scores <strong>position only</strong> — how close you got to each waypoint's (x, y).
+        <code>dor</code> scores <strong>position and orientation</strong> — it also checks how close your final
+        heading was to the waypoint's target orientation. The on/off and P controllers can score reasonably
+        under <code>dis</code>; only the kinematic controller should hold up well under <code>dor</code>.
+      </p>
+    </div>
+    <div class="term">
+      <div class="term-bar"><div class="term-dot" style="background:#ff5f57;"></div><div class="term-dot" style="background:#febc2e;"></div><div class="term-dot" style="background:#28c840;"></div></div>
+      <div class="term-body"><span class="term-prompt">student@limo-ws:~$</span> ros2 run trajectory_referee trajectory_publisher route1 dor
+<span class="term-out">[INFO] [trajectory_publisher]: route1 loaded, 5 waypoints, mode=dor
+[INFO] [trajectory_publisher]: waypoint 1/5 reached, pos_err=0.04m, ori_err=2.1deg
+[INFO] [trajectory_publisher]: waypoint 2/5 reached, pos_err=0.03m, ori_err=41.6deg
+[INFO] [trajectory_publisher]: route1 complete — mean pos_err=0.05m, mean ori_err=27.8deg</span></div>
+    </div>
+    <table>
+      <tr><th>Controller</th><th>route1, mode=dis</th><th>route1, mode=dor</th></tr>
+      <tr><td>On/off</td><td>Poor — position wanders around the threshold band</td><td>Poor — orientation essentially random</td></tr>
+      <tr><td>Proportional</td><td>Good — tight position tracking</td><td>Mediocre — orientation never targeted</td></tr>
+      <tr><td>Kinematic (rho/alpha/beta)</td><td>Good</td><td>Best — converges in position and orientation</td></tr>
+    </table>
+    <div class="exercise">
+      <div class="level">Intermediate</div>
+      <p>
+        Run each of the three controllers against <code>route1</code> in both <code>dis</code> and
+        <code>dor</code> mode (six runs total). Tabulate the referee's reported mean position and orientation
+        error for each run and confirm the ranking above holds for your machine and gains.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="summary">
+    <h2><span class="num">6.9</span>Summary, checkpoint &amp; glossary</h2>
+    <p>
+      You moved from a black-box "the plugin drives the robot" understanding of simulation to seeing exactly how
+      <code>/cmd_vel</code> becomes physics and physics becomes <code>/odom</code> and TF. You compared that
+      simple pattern against the industrial <code>controller_manager</code> / <code>hardware_interface</code> /
+      controller architecture that lets the exact same controller code run in Gazebo today and on real LIMO
+      hardware in Lecture 9. You picked up a safety habit — the <code>/cmd_vel</code> watchdog — that belongs in
+      every teleoperated robot you ever build. And you implemented, ran, and scored three path-following
+      controllers of increasing sophistication, ending with a real pose-regulation controller that converges in
+      both position and orientation.
+    </p>
+    <div class="checkpoint">
+      <strong style="color:var(--text); display:block; margin-bottom:10px;">✅ Lecture 6 Checkpoint</strong>
+      <ul>
+        <li>You can launch any of the five real worlds in <code>limo_gazebosim/worlds/</code> and read Gazebo's
+        reported Real-Time Factor.</li>
+        <li>You can explain, in one sentence each, what the gazebo_ros plugin, the controller_manager, and the
+        hardware_interface are each responsible for.</li>
+        <li><code>twist_watchdog.py</code> is running and you have watched it stop the robot after a
+        <code>/cmd_vel</code> silence.</li>
+        <li>You have run all three trajectory controllers against <code>trajectory_referee</code> in both
+        <code>dis</code> and <code>dor</code> mode and can explain why their scores differ.</li>
+      </ul>
+    </div>
+    <h3>Connection to the course</h3>
+    <p>
+      This session is the hinge between "LIMO exists in simulation" (Lectures 1&ndash;5) and "LIMO senses and
+      reacts to its environment" (Lecture 7 onward: LiDAR, IMU, camera, obstacle avoidance). The pose-regulation
+      controller you built here is also the direct ancestor of the path-following behaviour Nav2 will give you
+      for free in later lectures — knowing how the rho/alpha/beta math works under the hood means Nav2's
+      controller parameters will make sense instead of feeling like magic numbers. And the ros2_control pattern
+      you learned in 6.3 is exactly what Lecture 9 swaps onto real hardware.
+    </p>
+    <dl class="glossary">
+      <dt>Real-Time Factor (RTF)</dt><dd>Ratio of simulated time elapsed to wall-clock time elapsed; RTF &lt; 1 means the simulation is running slower than real life.</dd>
+      <dt>Plugin (gazebo_ros)</dt><dd>Code attached to a Gazebo model that reads/writes ROS 2 topics and directly manipulates the physics engine — here, the pattern that drives LIMO from /cmd_vel to /odom + TF.</dd>
+      <dt>controller_manager</dt><dd>The ros2_control process that loads hardware_interfaces and controllers and runs the control loop.</dd>
+      <dt>hardware_interface</dt><dd>An abstraction layer in ros2_control that can be backed by simulation or real hardware, without changing controller code.</dd>
+      <dt>Bang-bang control</dt><dd>A control strategy using only fixed, extreme output values (full on / full off) switched by a threshold — simple but prone to oscillation.</dd>
+      <dt>Proportional control</dt><dd>A control strategy where the output scales linearly with the current error, giving a smoother response than bang-bang control.</dd>
+      <dt>Pose regulation</dt><dd>The control problem of driving a robot to a target position <em>and</em> a target orientation, not just a target position.</dd>
+      <dt>rho / alpha / beta</dt><dd>The three errors in the classic unicycle pose-regulation formulation: distance to goal, heading-to-goal angle, and remaining final-orientation error.</dd>
+    </dl>
+    <h3>Common Mistakes</h3>
+    <ul>
+      <li>Tuning <code>Kp</code> or <code>K_alpha</code> gains too aggressively, causing the robot to overshoot
+      and oscillate around the goal heading instead of converging smoothly.</li>
+      <li>Forgetting that the TF lookup (<code>odom</code> &rarr; <code>base_link</code>) can throw a
+      <code>LookupException</code> before the first odometry message has arrived — always wrap it in a
+      try/except and skip the cycle rather than crashing the node.</li>
+      <li>Running two Gazebo worlds or two <code>view_robot.launch.py</code> instances at once and hitting port
+      conflicts (Gazebo's default TCP port and the ROS 2 domain both collide) — always fully shut down one
+      simulation before starting another.</li>
+      <li>Misreading <code>dis</code> vs <code>dor</code> scoring mode — celebrating a good <code>dis</code>
+      score from the proportional controller without realizing the same run would score poorly under
+      <code>dor</code> because orientation was never controlled.</li>
+    </ul>
+  </section>
+
+  <div class="footer-nav">
+    <a href="05-tf2-frames-rviz.html">&larr; Lecture 5: TF2 &amp; RViz</a>
+    <a href="07-sensors-lidar-imu-camera-obstacle-avoidance.html">Lecture 7: Sensors &amp; Obstacle Avoidance &rarr;</a>
+  </div>
+
+</div>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      background: '#f1efe8', primaryColor: '#eef0ff', primaryTextColor: '#211f1a',
+      primaryBorderColor: '#3d4bf5', lineColor: '#0e9e6e', secondaryColor: '#f1efe8',
+      tertiaryColor: '#fffefb', textColor: '#211f1a', fontFamily: 'Inter, -apple-system, sans-serif'
+    },
+    flowchart: { curve: 'basis' },
+    securityLevel: 'loose'
+  });
+</script>
+<script>
+(function(){
+  var btn = document.getElementById('theme-toggle');
+  var icon = document.getElementById('theme-toggle-icon');
+  function updateIcon(){
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    icon.textContent = isDark ? '☀️' : '🌙';
+  }
+  updateIcon();
+  btn.addEventListener('click', function(){
+    var cur = document.documentElement.getAttribute('data-theme');
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try{ localStorage.setItem('limo-book-theme', next); }catch(e){}
+    updateIcon();
+  });
+})();
+</script>
+<script src="annotate.js" defer></script>
+</body>
+</html>

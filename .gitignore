@@ -1,0 +1,9 @@
+# Internal working materials (not part of the published site)
+ROBOTICS/
+_fastbot_text/
+Lecture_1/
+
+# OS/editor cruft
+.DS_Store
+Thumbs.db
+*.tmp

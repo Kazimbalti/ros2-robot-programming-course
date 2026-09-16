@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<script>
+(function(){
+  try{
+    var t = localStorage.getItem('limo-book-theme');
+    if(!t){ t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+    document.documentElement.setAttribute('data-theme', t);
+  }catch(e){}
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attendance Policy — ROS and Robot Programming</title>
+<meta name="description" content="Attendance and participation policy for ROS and Robot Programming — lecture vs mandatory lab attendance, the 75% rule, absences, make-ups, and lateness.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="book.css">
+<link rel="stylesheet" href="projector.css">
+</head>
+<body>
+<button id="theme-toggle" aria-label="Toggle light/dark mode" title="Light/Dark mode"><span id="theme-toggle-icon">🌙</span></button>
+
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html">Home</a>
+  <a href="syllabus.html">Syllabus</a>
+  <a href="schedule.html">Schedule</a>
+  <a href="assignments.html">Assignments</a>
+  <a href="index.html#lectures">Lectures</a>
+</div></nav>
+
+<div class="wrap">
+
+  <div class="cover">
+    <div class="kicker">Attendance &amp; Participation Policy</div>
+    <h1>Attendance</h1>
+    <div class="subtitle">Lectures are expected; labs are mandatory. Shared robots, hardware checkouts, and safety procedures mean the lab half of each session can't be made up alone at home.</div>
+    <div class="meta-row">
+      <div class="chip">75% minimum to sit the final</div>
+      <div class="chip">Lab attendance: mandatory</div>
+      <div class="chip">Notify before an absence</div>
+    </div>
+  </div>
+
+  <h2>📌 The Rules</h2>
+  <div class="table-scroll">
+  <table>
+    <tr><th>Component</th><th>Policy</th></tr>
+    <tr><td>Lecture (first 1.5&nbsp;h)</td><td>Expected. Attendance is recorded each week. Repeated unexplained absence is raised with the student and, if it continues, per institutional policy.</td></tr>
+    <tr><td>Lab (second 1.5&nbsp;h; full session in Wk 9–14)</td><td><strong>Mandatory.</strong> You must be present to check out a robot or hardware kit, to be signed off on the safety brief, and to have lab work marked.</td></tr>
+    <tr><td>Overall</td><td>A student with under <strong>75% attendance</strong> across the 14 sessions is <strong>not permitted to sit the final exam</strong> and is graded as incomplete for that component, subject to the department's condonation process.</td></tr>
+    <tr><td>Exams &amp; capstone milestones</td><td>Attendance is compulsory (Midterm Wk 8, Capstone Part 1 Wk 10, Capstone Part 2 Wk 14, Final Wk 15). Absence needs documented grounds.</td></tr>
+  </table>
+  </div>
+
+  <h2>📝 If You Have to Miss a Session</h2>
+  <ol>
+    <li><strong>Tell the instructor first.</strong> Email <code>muhammad.kazim@is.uol.edu.pk</code> <em>before</em> the session whenever possible, with the date and reason.</li>
+    <li><strong>Labs:</strong> a make-up lab slot is arranged only when you have notified in advance and a robot/kit and supervision are available — usually within the same week. Unnotified lab absences are not made up.</li>
+    <li><strong>Lectures:</strong> get the lecture page and a classmate's notes; the pen-annotation build of each lecture page is the same content used in class.</li>
+    <li><strong>Documented absence</strong> (illness, bereavement, university-sanctioned activity): send documentation within one week; the session is then excused and does not count against the 75%.</li>
+  </ol>
+
+  <div class="box def">
+    <div class="box-title">🩹 Excused vs unexcused</div>
+    <p style="margin:0;">An <strong>excused</strong> absence (documented, or pre-approved) is removed from the attendance denominator. An <strong>unexcused</strong> absence counts against the 75% threshold. Either way, the lab work still has to be completed — excused just means no penalty for the miss itself.</p>
+  </div>
+
+  <h2>⏰ Lateness &amp; Early Departure</h2>
+  <ul>
+    <li>Arriving more than <strong>15 minutes</strong> late or leaving early is recorded as a <strong>half-absence</strong>.</li>
+    <li>Two half-absences count as one full absence toward the 75%.</li>
+    <li>If you know you'll be late, message ahead — a one-off with notice is not penalised.</li>
+  </ul>
+
+  <h2>🤝 Participation</h2>
+  <p>
+    Participation isn't separately graded, but the lab sign-offs, in-class quizzes (see <a href="assignments.html">Assignments</a>),
+    and the capstone defence all assume you were in the room doing the work. Consistent engagement is also what makes
+    the borderline-grade and condonation conversations go your way.
+  </p>
+
+  <div class="box real">
+    <div class="box-title">✅ Quick checklist</div>
+    <ul style="margin:0;">
+      <li>Can't make it? Email <em>before</em> the session.</li>
+      <li>Missing a lab? Ask for a make-up slot in the same message.</li>
+      <li>Have a medical/official note? Send it within one week.</li>
+      <li>Keep your own tally — 4 unexcused absences out of 14 already breaches 75%.</li>
+    </ul>
+  </div>
+
+  <div class="footer-nav">
+    <a href="final.html">&larr; Final</a>
+    <a href="index.html">Home &rarr;</a>
+  </div>
+
+  <p class="footer-note">ROS and Robot Programming &nbsp;·&nbsp; Attendance Policy &nbsp;·&nbsp; Dr. Muhammad Kazim</p>
+
+</div>
+
+<script>
+(function(){
+  var btn = document.getElementById('theme-toggle');
+  var icon = document.getElementById('theme-toggle-icon');
+  function updateIcon(){ icon.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙'; }
+  updateIcon();
+  btn.addEventListener('click', function(){
+    var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try{ localStorage.setItem('limo-book-theme', next); }catch(e){}
+    updateIcon();
+  });
+})();
+</script>
+<script src="annotate.js" defer></script>
+</body>
+</html>

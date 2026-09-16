@@ -1,0 +1,100 @@
+/* ============================================================
+   projector.css — high-legibility layer for teaching on a
+   low-quality projector. Loaded LAST on every page (index,
+   all lectures, and every course-info page) so it wins the
+   cascade. To revert everything: delete the
+   <link rel="stylesheet" href="projector.css"> line from the
+   pages, or empty this file.
+
+   What it does:
+     • larger base type (17.5px -> 21px), scaled by em everywhere
+     • darker body / list / table ink for weak contrast
+     • lifts the low-contrast "muted" grey
+     • bigger code, terminal and table text
+     • firmer borders, bolder callout titles
+     • underlined inline links
+   Works in both light and dark themes. Reverts to normal size
+   for printing.
+   ============================================================ */
+
+/* ---- lift the washed-out greys everywhere they are used ---- */
+:root{
+  --muted:#565044 !important;
+  --border:#d2cbba !important;
+}
+html[data-theme="dark"]{
+  --muted:#c3c7de !important;
+  --border:#3b4053 !important;
+}
+
+/* ---- base type size: cascades to every em-based rule ---- */
+body{ font-size:21px !important; font-weight:450; }
+
+/* ---- body / list / definition / table ink ---- */
+body{ color:#191712 !important; }
+p, li, dd, .toc a, td, .glossary dd, .chapter-desc{ color:#2a2720 !important; }
+strong, b{ color:#120f0b !important; font-weight:800; }
+
+html[data-theme="dark"] body{ color:#f3f4fb !important; }
+html[data-theme="dark"] p,
+html[data-theme="dark"] li,
+html[data-theme="dark"] dd,
+html[data-theme="dark"] .toc a,
+html[data-theme="dark"] td,
+html[data-theme="dark"] .glossary dd,
+html[data-theme="dark"] .chapter-desc{ color:#dcdee9 !important; }
+html[data-theme="dark"] strong,
+html[data-theme="dark"] b{ color:#ffffff !important; }
+
+/* ---- a slightly wider column so the bigger type is not cramped ---- */
+.wrap{ max-width:1000px !important; }
+
+/* ---- headings: keep the hierarchy, guarantee weight ---- */
+h2{ font-weight:800 !important; }
+h3{ font-weight:800 !important; }
+h4{ font-size:1.15em !important; font-weight:800 !important; }
+
+/* ---- inline links: underline so they read through a dim beam ---- */
+a{ text-decoration:underline; text-underline-offset:2px; text-decoration-thickness:1px; }
+.coursenav a, .info-card, .chapter-card, .toc a, .footer-nav a, a.tag, .badge-project{ text-decoration:none; }
+
+/* ---- code, terminals: the biggest real-world readability win ---- */
+code{ font-size:.96em !important; }
+pre{ font-size:1em !important; line-height:1.7 !important; padding:20px 22px !important; }
+pre code{ font-size:1em !important; line-height:1.7 !important; }
+.term-body{ font-size:1em !important; line-height:1.8 !important; }
+.term-out{ color:#aab0d6 !important; }
+
+/* ---- tables: lift from ~.9em, keep the grid visible ---- */
+table{ font-size:1em !important; }
+th{ font-size:1em !important; font-weight:800 !important; }
+th, td{ padding:12px 16px !important; }
+
+/* ---- callout / info boxes: firmer edge, bolder title ---- */
+.box{ border-width:2px !important; }
+.box-title{ font-size:1.06em !important; }
+.checkpoint, .exercise, .toc{ border-width:2px !important; }
+
+/* ---- small print that students still need to read ---- */
+.figure figcaption, .chip, .kicker, .footer-note, .instructor-bio,
+.chapter-desc, .exercise .level, .part-title{ font-size:.94em !important; }
+.chapter-title{ font-size:1.08em !important; }
+
+/* ---- top navigation bar ---- */
+.coursenav a{ font-size:.92em !important; }
+.coursenav .brand{ font-size:1em !important; }
+
+/* ---- title banner: swap the dark-blue navy for a neutral "light black" ---- */
+.cover{ background:#1f1f1f !important; }
+.cover::before{ background:none !important; }   /* drop the blue/purple/green glow */
+
+/* ---- cover subtitle sits on a dark panel: brighten it ---- */
+.cover .subtitle{ color:#e9ebfa !important; }
+.cover .instructor-bio{ color:#d7d9ef !important; }
+
+/* ---- printing: back to normal size, no underlines ---- */
+@media print{
+  body{ font-size:12pt !important; color:#000 !important; }
+  a{ text-decoration:none; }
+  .wrap{ max-width:none !important; }
+}

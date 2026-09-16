@@ -1,0 +1,2551 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<script>
+(function(){
+  try{
+    var t = localStorage.getItem('limo-book-theme');
+    if(!t){ t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+    document.documentElement.setAttribute('data-theme', t);
+  }catch(e){}
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 13 — Build Your Own Robot II: ROS 2 Driver, CAD, URDF, LiDAR &amp; Camera</title>
+<meta name="description" content="Give Forge a ROS 2 nervous system: a colcon workspace, custom messages, a differential-drive serial motor driver node, a bringup package, a CAD chassis designed in Onshape, a URDF generated automatically with onshape-to-robot, robot_state_publisher, udev rules, the LSLiDAR N-10 driver, and a Raspicam brought up through V4L2 — including the silent camera-stack failure and how to fix it.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<style>
+  :root{
+    --bg:#f6f4ef; --panel:#fffefb; --panel2:#f1efe8; --border:#e6e1d6;
+    --text:#211f1a; --muted:#7a7568; --accent:#3d4bf5; --accent-ink:#2732b8;
+    --accent2:#0e9e6e; --gold:#c8862c; --danger:#d64a3c; --purple:#8b5cf6; --radius:14px;
+  }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--bg); color:var(--text); font-family:'Inter', -apple-system, sans-serif; line-height:1.85; font-size:17.5px; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:880px; margin:0 auto; padding:48px 24px 120px;}
+  .cover{border-radius:28px; background:#12142b; padding:64px 44px; margin-bottom:56px; position:relative; overflow:hidden; isolation:isolate;}
+  .cover::before{content:""; position:absolute; inset:-40%; background:
+      radial-gradient(38% 45% at 15% 20%, rgba(61,75,245,0.55), transparent 70%),
+      radial-gradient(35% 40% at 85% 15%, rgba(139,92,246,0.45), transparent 70%),
+      radial-gradient(45% 50% at 60% 90%, rgba(14,158,110,0.35), transparent 70%);
+    filter:blur(60px); z-index:0;}
+  .cover::after{content:""; position:absolute; inset:0; background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px); background-size: 20px 20px; z-index:0;}
+  .cover > *{position:relative; z-index:1;}
+  .kicker{display:inline-block; color:#c9cdff; font-weight:600; letter-spacing:.4px; font-size:13px; margin-bottom:18px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); padding:6px 14px; border-radius:999px;}
+  .cover h1{font-size:2.7em; margin:0 0 12px; font-weight:800; line-height:1.3; color:#ffffff; letter-spacing:-.5px;}
+  .cover .subtitle{color:#aeb2d6; font-size:1.2em; margin-bottom:30px; font-weight:400;}
+  .meta-row{display:flex; flex-wrap:wrap; gap:10px; margin-top:18px;}
+  .chip{background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.14); color:#d4d7f0; padding:7px 15px; border-radius:999px; font-size:.83em;}
+  h2{font-size:1.9em; font-weight:800; margin:72px 0 22px; display:flex; align-items:center; gap:14px; letter-spacing:-.3px;}
+  h2 .num{display:inline-flex; align-items:center; justify-content:center; min-width:40px; height:40px; padding:0 12px; border-radius:12px; background:var(--accent); box-shadow:0 6px 16px -4px rgba(61,75,245,0.5); color:#ffffff; font-size:.62em; font-weight:800; flex-shrink:0; white-space:nowrap;}
+  h3{font-size:1.3em; font-weight:700; margin:36px 0 14px; color:var(--accent-ink); letter-spacing:-.2px;}
+  h4{font-size:1.08em; font-weight:700; margin:24px 0 10px; color:var(--purple);}
+  p{margin:0 0 16px; color:#3c382f;}
+  strong{color:var(--text); font-weight:700;}
+  a{color:var(--accent);}
+  .box{border-radius:16px; padding:20px 24px; margin:22px 0; border:1px solid var(--border); background:var(--panel); position:relative; box-shadow:0 1px 2px rgba(33,31,26,0.03);}
+  .box-title{font-weight:800; margin-bottom:9px; display:flex; align-items:center; gap:8px; font-size:.96em; letter-spacing:.1px;}
+  .box p:last-child{margin-bottom:0;}
+  .box.idea{background:#eef0ff;border-color:#d6dafc;} .box.idea .box-title{color:var(--accent-ink);}
+  .box.mistake{background:#fdeeec; border-color:#f6d2cd;} .box.mistake .box-title{color:var(--danger);}
+  .box.eng{background:#f4effe; border-color:#e2d6fb;} .box.eng .box-title{color:var(--purple);}
+  .box.real{background:#eafaf3; border-color:#c9eeda;} .box.real .box-title{color:var(--accent2);}
+  .box.def{background:#fdf3e4; border-color:#f2ddb3;} .box.def .box-title{color:var(--gold);}
+  .box.hw{background:#fdeee4; border-color:#f2c9a3;} .box.hw .box-title{color:#c8622c;}
+  .box.think{background:#eafcfb; border-color:#bfeae6;} .box.think .box-title{color:#0e8a7d;}
+  code, pre{font-family:'JetBrains Mono', monospace; direction:ltr; text-align:left;}
+  code{background:#eceaf9; border:1px solid #dcdaf3; border-radius:6px; padding:2px 7px; font-size:.87em; color:var(--accent-ink); display:inline-block;}
+  pre{background:#181a2e; border-radius:16px; padding:18px 20px; overflow-x:auto; margin:18px 0; font-size:.88em; line-height:1.65; box-shadow:0 12px 28px -16px rgba(24,26,46,0.5);}
+  pre code{background:none; border:none; padding:0; color:#d8dcff; display:block;}
+  .filename{display:inline-block; font-family:'JetBrains Mono',monospace; font-size:.78em; font-weight:600; color:var(--muted); background:var(--panel2); border:1px solid var(--border); border-radius:8px 8px 0 0; padding:5px 12px; margin:18px 0 -18px; position:relative; z-index:1;}
+  .filename + pre{border-start-start-radius:0;}
+  table{width:100%; border-collapse:separate; border-spacing:0; margin:22px 0; font-size:.92em; border-radius:14px; overflow:hidden; border:1px solid var(--border);}
+  th, td{border-bottom:1px solid var(--border); padding:12px 15px; text-align:left;}
+  th{background:#eceaf9; color:var(--accent-ink); font-weight:700; font-size:.9em;}
+  tr:last-child td{border-bottom:none;}
+  tr:nth-child(even) td{background:rgba(33,31,26,0.02);}
+  .tw{overflow-x:auto; margin:22px 0;} .tw table{margin:0; min-width:520px;}
+  ul, ol{margin:0 0 16px; padding-inline-start:26px; color:#3c382f;}
+  li{margin-bottom:7px;}
+  .steps{counter-reset:stepc; list-style:none; padding-inline-start:0; margin:24px 0;}
+  .steps > li{counter-increment:stepc; position:relative; padding-inline-start:48px; margin-bottom:18px;}
+  .steps > li::before{content:counter(stepc); position:absolute; inset-inline-start:0; top:2px; width:31px; height:31px; border-radius:10px; background:var(--accent); color:#fff; font-weight:800; font-size:.78em; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px -4px rgba(61,75,245,.5);}
+  .figure{margin:28px 0; text-align:center;}
+  .figure img, .figure svg{max-width:100%; height:auto; background:#fffefb; border:1px solid var(--border); border-radius:16px; box-shadow:0 1px 2px rgba(33,31,26,0.03), 0 16px 32px -20px rgba(33,31,26,0.14);}
+  .figure img{cursor:zoom-in;}
+  .figure figcaption{color:var(--muted); font-size:.87em; margin-top:12px;}
+  .figure figcaption b{color:var(--accent-ink); font-weight:700;}
+  .fig-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:20px; margin:28px 0; align-items:start;}
+  .fig-grid .figure{margin:0;}
+  .mermaid{background:#fffefb; border:1px solid var(--border); border-radius:16px; padding:18px; margin:24px 0; text-align:center; box-shadow:0 1px 2px rgba(33,31,26,0.03), 0 16px 32px -20px rgba(33,31,26,0.14);}
+  .checkpoint{border-radius:16px; padding:22px 24px; margin:26px 0; background:#eafaf3; border:1px solid #c9eeda;}
+  .checkpoint ul{list-style:none; padding:0; margin:0;}
+  .checkpoint li{padding:9px 0; border-bottom:1px solid rgba(33,31,26,0.06); display:flex; gap:10px; align-items:flex-start;}
+  .checkpoint li:last-child{border-bottom:none;}
+  .checkpoint li::before{content:"◻"; color:var(--accent2); font-size:1.2em; line-height:1;}
+  .exercise{border-radius:14px; padding:18px 22px; margin:16px 0; background:var(--panel); border:1px solid var(--border); border-inline-start:4px solid var(--gold);}
+  .exercise .level{font-size:.76em; color:var(--gold); font-weight:800; text-transform:uppercase; letter-spacing:.6px;}
+  .assignment{border-radius:14px; padding:18px 22px; margin:16px 0; background:var(--panel); border:1px solid var(--border); border-inline-start:4px solid var(--accent2);}
+  .assignment .label{font-size:.76em; color:var(--accent2); font-weight:800; text-transform:uppercase; letter-spacing:.6px;}
+  .quiz{border-radius:16px; padding:22px 26px; margin:26px 0; border:1px solid var(--border); background:var(--panel2);}
+  .quiz-title{font-weight:800; margin-bottom:14px; color:var(--purple); font-size:1em;}
+  .quiz-q{margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid var(--border);}
+  .quiz-q:last-child{margin-bottom:0; padding-bottom:0; border-bottom:none;}
+  .quiz-q p{margin-bottom:8px;}
+  .quiz-q details{margin-top:8px;}
+  .quiz-q summary{cursor:pointer; color:var(--accent); font-weight:600; font-size:.9em;}
+  .quiz-q details[open] summary{margin-bottom:8px;}
+  .quiz-q details p{color:var(--muted); margin:0;}
+  .glossary dt{font-weight:800; color:var(--accent-ink); margin-top:16px;}
+  .glossary dd{margin:4px 0 0; color:var(--muted);}
+  .toc{background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:26px 30px;}
+  .toc a{display:block; padding:8px 0; color:#3c382f; text-decoration:none; border-bottom:1px solid rgba(33,31,26,.06); transition:color .15s;}
+  .toc a:last-child{border-bottom:none;}
+  .toc a:hover{color:var(--accent-ink);}
+  .toc a span{color:var(--muted); font-size:.85em; margin-inline-end:10px; font-weight:600;}
+  .divider{height:1px; background:linear-gradient(90deg, transparent, var(--border), transparent); margin:52px 0;}
+  .footer-nav{display:flex; justify-content:space-between; align-items:center; gap:16px; margin-top:64px; padding-top:26px; border-top:1px solid var(--border); color:var(--muted); font-size:.9em;}
+  .footer-nav a{color:var(--text); text-decoration:none; font-weight:600;}
+  .footer-nav a:hover{color:var(--accent-ink);}
+  .badge-project{display:inline-block; background:#fdf3e4; border:1px solid #f2ddb3; color:var(--gold); border-radius:8px; padding:3px 11px; font-size:.78em; font-weight:700;}
+  .term{background:#181a2e; border-radius:16px; overflow:hidden; margin:22px 0; box-shadow:0 12px 28px -16px rgba(24,26,46,0.5);}
+  .term-bar{display:flex; align-items:center; gap:7px; padding:12px 16px; background:#20223a;}
+  .term-dot{width:11px; height:11px; border-radius:50%;}
+  .term-body{padding:16px 20px; font-family:'JetBrains Mono', monospace; direction:ltr; text-align:left; font-size:.87em; line-height:1.75; color:#d8dcff; white-space:pre-wrap;}
+  .term-prompt{color:#7ee7c7;}
+  .term-out{color:#9aa0c8;}
+  #lightbox{position:fixed; inset:0; z-index:2000; background:rgba(10,11,22,.92); display:none; align-items:center; justify-content:center; padding:28px; cursor:zoom-out;}
+  #lightbox.on{display:flex;}
+  #lightbox img{max-width:100%; max-height:100%; border-radius:12px; box-shadow:0 30px 80px -30px #000;}
+  #lightbox .lb-cap{position:absolute; bottom:14px; left:0; right:0; text-align:center; color:#c7c9dc; font-size:.85em; padding:0 24px;}
+  @media print{ body{background:#fff; color:#000;} .figure img{cursor:auto;} }
+  html[data-theme="dark"]{
+    --bg:#12141c; --panel:#1b1e2a; --panel2:#20232f; --border:#2d3142;
+    --text:#e7e8f2; --muted:#9498b3; --accent:#7c86ff; --accent-ink:#aab1ff;
+    --accent2:#34d399; --gold:#e3a548; --danger:#f0685a; --purple:#a78bfa; --radius:14px;
+  }
+  html[data-theme="dark"] p, html[data-theme="dark"] ul, html[data-theme="dark"] ol, html[data-theme="dark"] .toc a{color:#c7c9dc;}
+  html[data-theme="dark"] code{background:#262a45; border-color:#3a3f5c;}
+  html[data-theme="dark"] th{background:#262a45;}
+  html[data-theme="dark"] tr:nth-child(even) td{background:rgba(255,255,255,0.03);}
+  html[data-theme="dark"] .box.idea{background:#1f2242; border-color:#383d6b;}
+  html[data-theme="dark"] .box.mistake{background:#3a2220; border-color:#5c332e;}
+  html[data-theme="dark"] .box.eng{background:#2a2340; border-color:#453a63;}
+  html[data-theme="dark"] .box.real{background:#16302a; border-color:#1f4a3d;}
+  html[data-theme="dark"] .box.def{background:#3a2f18; border-color:#5c4826;}
+  html[data-theme="dark"] .box.hw{background:#3a2618; border-color:#5c3f26;}
+  html[data-theme="dark"] .box.think{background:#0f2e2c; border-color:#1d4a45;}
+  html[data-theme="dark"] .checkpoint{background:#16302a; border-color:#1f4a3d;}
+  html[data-theme="dark"] .checkpoint li{border-bottom-color:rgba(255,255,255,0.08);}
+  html[data-theme="dark"] .badge-project{background:#3a2f18; border-color:#5c4826;}
+  html[data-theme="dark"] .figure img, html[data-theme="dark"] .figure svg{background:#f4f4f8;}
+  html[data-theme="dark"] .chapter-num{background:#1f2242;}
+  body, .box, .chapter-card, .exercise, .assignment, .checkpoint, .toc, table, code, th{transition:background-color .25s ease, border-color .25s ease, color .25s ease;}
+  #theme-toggle{position:fixed; top:18px; left:18px; z-index:999; width:46px; height:46px; border-radius:50%; border:1px solid var(--border); background:var(--panel); color:var(--text); font-size:19px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px -8px rgba(0,0,0,0.35); transition:transform .15s ease, background-color .25s ease, border-color .25s ease;}
+  #theme-toggle:hover{transform:scale(1.08);}
+  @media (max-width:640px){ #theme-toggle{top:12px; left:12px; width:42px; height:42px; font-size:17px;} }
+</style>
+<link rel="stylesheet" href="projector.css">
+</head>
+<body>
+<style>
+.coursenav{position:sticky;top:0;z-index:900;background:rgba(255,254,251,0.88);backdrop-filter:saturate(160%) blur(10px);border-bottom:1px solid var(--border);}
+.coursenav .inner{max-width:1000px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;padding:10px 20px 10px 74px;}
+.coursenav .brand{font-weight:800;color:var(--accent-ink);margin-inline-end:12px;font-size:.9em;letter-spacing:-.2px;}
+.coursenav a{color:#3c382f;text-decoration:none;font-weight:600;font-size:.82em;padding:6px 10px;border-radius:999px;transition:background-color .15s,color .15s;}
+.coursenav a:hover{background:#eef0ff;color:var(--accent-ink);}
+.coursenav a.active{background:var(--accent);color:#fff;}
+html[data-theme="dark"] .coursenav{background:rgba(27,30,42,0.9);}
+html[data-theme="dark"] .coursenav a{color:#c7c9dc;}
+html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
+@media print{.coursenav{display:none;}}
+</style>
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html">Home</a>
+  <a href="syllabus.html">Syllabus</a>
+  <a href="schedule.html">Schedule</a>
+  <a href="assignments.html">Assignments</a>
+  <a href="index.html#lectures" class="active">Lectures</a>
+</div></nav>
+<button id="theme-toggle" aria-label="Toggle light/dark mode" title="Light/dark mode">
+  <span id="theme-toggle-icon">🌙</span>
+</button>
+<div id="lightbox" role="dialog" aria-label="Enlarged figure"><img alt=""><div class="lb-cap"></div></div>
+<div class="wrap">
+
+  <div class="cover">
+    <div class="kicker">LIMO Robotics &amp; ROS 2 Lecture &nbsp;·&nbsp; Session 13 of 14 — Build Your Own Robot</div>
+    <h1>Lecture 13: Build Your Own Robot II — ROS 2 Driver, CAD, URDF, LiDAR &amp; Camera</h1>
+    <div class="subtitle">Giving Forge a nervous system, a body it can describe, and senses it can trust</div>
+    <div class="meta-row">
+      <div class="chip">Duration: 5-6 hours</div>
+      <div class="chip">Prerequisite: Lecture 12</div>
+      <div class="chip">Project: Forge — your own ROS 2 robot</div>
+      <div class="chip">Hands-on: <code>/cmd_vel</code> drives real wheels</div>
+    </div>
+  </div>
+
+  <div class="toc">
+    <strong style="color:var(--text)">In this session</strong>
+    <a href="#intro"><span>13.1</span>Where Forge stands — and today's goal</a>
+    <a href="#workspace"><span>13.2</span>The ROS 2 workspace</a>
+    <a href="#packages"><span>13.3</span>The motor driver packages &amp; custom messages</a>
+    <a href="#kinematics"><span>13.4</span>Differential-drive kinematics — the maths first</a>
+    <a href="#node"><span>13.5</span>The motor driver node</a>
+    <a href="#driverlaunch"><span>13.6</span>The driver launch file &amp; the namespacing pattern</a>
+    <a href="#bringup"><span>13.7</span>The bringup package</a>
+    <a href="#cad"><span>13.8</span>Designing Forge's structure in CAD</a>
+    <a href="#urdf"><span>13.9</span>URDF — and why not to hand-write this one</a>
+    <a href="#onshape2robot"><span>13.10</span><code>onshape-to-robot</code> — CAD to URDF automatically</a>
+    <a href="#rsp"><span>13.11</span>Bringing up <code>robot_state_publisher</code></a>
+    <a href="#udev"><span>13.12</span>udev rules — a transferable skill</a>
+    <a href="#lidar"><span>13.13</span>The LiDAR — LSLiDAR N-10</a>
+    <a href="#camera"><span>13.14</span>The camera — Raspicam, V4L2 &amp; a silent failure</a>
+    <a href="#summary"><span>13.15</span>Summary, checkpoint, quiz &amp; glossary</a>
+  </div>
+
+  <section id="intro">
+    <h2><span class="num">13.1</span>Where Forge stands — and today's goal</h2>
+    <p>
+      After Lecture 12, Forge is a working piece of electromechanical hardware: motors wired to an L298N, an
+      Arduino Nano running <code>ros_arduino_bridge</code> and holding closed-loop wheel speeds, a battery sized
+      against a real power budget, a power module distributing 12&nbsp;V and 5&nbsp;V, and a Raspberry Pi 4 on a fixed
+      IP running ROS 2 Humble.
+    </p>
+    <p>
+      What Forge does <em>not</em> have is any way for that Pi to actually drive the motors over ROS 2, any formal
+      description of its own physical shape, or any way to perceive the world. Today fixes all three — and by the
+      end of this session, publishing a <code>Twist</code> to a ROS 2 topic will turn real wheels on your bench.
+    </p>
+
+    <div class="box idea">
+      <div class="box-title">💡 The shape of today: nervous system, body, senses</div>
+      <ul style="margin-bottom:0;">
+        <li><strong>A nervous system (§13.2-13.7)</strong> — a colcon workspace, custom messages, a differential-drive driver node that converts <code>/cmd_vel</code> into serial commands and encoder counts into <code>/odom</code>, and a single bringup launch file that starts the whole robot.</li>
+        <li><strong>A body (§13.8-13.11)</strong> — a CAD chassis you design, converted automatically into a URDF, published to TF by <code>robot_state_publisher</code>.</li>
+        <li><strong>Senses (§13.12-13.14)</strong> — a stable device name via udev, a LiDAR publishing <code>/scan</code>, and a camera publishing images (eventually — there's a genuinely instructive bug in the way).</li>
+      </ul>
+    </div>
+
+    <div class="mermaid">
+flowchart TB
+    subgraph TODAY["What you build today"]
+      direction LR
+      NS["Nervous system<br/>serial_motor · serial_motor_msgs<br/>fastbot_bringup"]
+      BODY["Body<br/>Onshape CAD → URDF<br/>fastbot_description"]
+      SENSE["Senses<br/>udev · lslidar_driver<br/>v4l2_camera"]
+    end
+    NS --> BRING["ros2 launch fastbot_bringup bringup.launch.xml"]
+    BODY --> BRING
+    SENSE --> BRING
+    BRING --> OUT["/fastbot/cmd_vel · /fastbot/odom<br/>/scan · /image_raw · TF tree"]
+    style NS fill:#eef0ff,stroke:#3d4bf5
+    style BODY fill:#f4effe,stroke:#8b5cf6
+    style SENSE fill:#fdeee4,stroke:#c8622c
+    style OUT fill:#eafaf3,stroke:#0e9e6e
+    </div>
+
+    <p>
+      Nothing here works in isolation. The URDF gives the LiDAR and camera a place to live in the TF tree, exactly
+      the way Lectures 4 and 5 taught you for LIMO. The driver node's odometry is what the EKF from Lecture 9
+      would consume. The bringup file is what Lecture 14 mirrors in simulation. This session is where all the
+      separate strands of the course finally converge on one machine.
+    </p>
+
+    <div class="box def">
+      <div class="box-title">📖 A reminder on names</div>
+      <p>
+        As set out in §12.1, Forge's ROS 2 packages keep the upstream <code>fastbot_*</code> naming from the
+        reference design, and the Pi's user and hostname are both <code>fastbot</code>. Every command below is
+        written to be copy-paste-correct against that. If you renamed things, translate as you go.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="workspace">
+    <h2><span class="num">13.2</span>The ROS 2 workspace</h2>
+    <p>
+      Everything you build today lives in a normal <code>colcon</code> workspace on the Pi — the same shape as every
+      workspace you've built since Lecture 3. Start by SSHing in:
+    </p>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> ssh fastbot@192.168.1.100
+
+<span class="term-prompt">$</span> cd
+<span class="term-prompt">$</span> mkdir -p ros2_ws/src
+<span class="term-prompt">$</span> cd ~/ros2_ws
+<span class="term-prompt">$</span> colcon build
+<span class="term-out">Summary: 0 packages finished [0.15s]</span>
+<span class="term-prompt">$</span> source ~/ros2_ws/install/setup.bash</div>
+    </div>
+    <p>
+      Right after <code>mkdir</code> the workspace has exactly one directory, <code>~/ros2_ws/src</code>. After
+      <code>colcon build</code> it has four: <code>src/</code>, <code>build/</code>, <code>install/</code> and
+      <code>log/</code>. The last three are entirely generated — <code>colcon build</code> recreates them from
+      scratch every time, so if a build goes strange, deleting them and rebuilding is a legitimate and often
+      correct first move.
+    </p>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ Always source after building</div>
+      <p>
+        <code>source ~/ros2_ws/install/setup.bash</code> is what makes newly built packages visible to
+        <code>ros2 run</code> and <code>ros2 launch</code>. Forgetting it produces "package not found" for a package
+        you are literally staring at, which is maddening the first time it happens. Add the line to
+        <code>~/.bashrc</code> below the ROS 2 source line so every new shell picks it up:
+      </p>
+      <pre style="margin-bottom:0;"><code>source /opt/ros/humble/setup.bash
+source ~/ros2_ws/install/setup.bash</code></pre>
+    </div>
+
+    <p>By the end of this session, <code>~/ros2_ws/src</code> will contain five packages:</p>
+    <pre><code>~/ros2_ws/
+└── src/
+    ├── serial_motor/          # the differential-drive driver node (Python)
+    ├── serial_motor_msgs/     # its custom message definitions (CMake)
+    ├── fastbot_description/   # URDF/Xacro + robot_state_publisher launch (CMake)
+    ├── fastbot_bringup/       # the one launch file that starts the whole robot (CMake)
+    └── Lslidar_ROS2_driver/   # vendor LiDAR driver, cloned in §13.13</code></pre>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="packages">
+    <h2><span class="num">13.3</span>The motor driver packages &amp; custom messages</h2>
+    <p>
+      Forge needs a ROS 2 <strong>driver</strong> — the standard ROS concept for a node that lets you talk to a
+      sensor or actuator through topics, services and actions instead of through its raw protocol. This one will
+      take differential-drive velocity commands and turn them into the serial commands the Nano understands, so
+      publishing to <code>/fastbot/cmd_vel</code> moves the wheels.
+    </p>
+    <p>
+      Name the package <code>serial_motor</code>, not <code>fastbot_motor</code>. It's good practice to keep a
+      driver generic — nothing in it is Forge-specific, and you may well reuse it on your next robot.
+    </p>
+
+    <h3>Create the packages</h3>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> cd ~/ros2_ws/src
+<span class="term-prompt">$</span> ros2 pkg create --build-type ament_python serial_motor \
+       --dependencies rclpy serial_motor_msgs
+
+<span class="term-prompt">$</span> ros2 pkg create --build-type ament_cmake serial_motor_msgs</div>
+    </div>
+    <p>
+      Two packages, because ROS 2 message generation needs CMake while the node itself is comfortably plain Python.
+      Splitting interface definitions into their own package is the standard ROS 2 convention, and it means other
+      nodes can depend on Forge's message types without pulling in the driver implementation.
+    </p>
+
+    <h3>Define the messages</h3>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> cd ~/ros2_ws/src/serial_motor_msgs
+<span class="term-prompt">$</span> mkdir msg
+<span class="term-prompt">$</span> cd msg
+<span class="term-prompt">$</span> touch EncoderVals.msg MotorCommand.msg MotorVels.msg</div>
+    </div>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ Singular or plural? Pick one and be consistent</div>
+      <p>
+        The published reference material for this build lists <code>MotorCommand.msg</code> in prose but creates
+        <code>MotorCommands.msg</code> in the <code>touch</code> command one line later. That's a real inconsistency
+        in real published material, and it's exactly the kind of thing that produces a baffling
+        <code>ModuleNotFoundError</code> at import time. This lecture standardises on the <strong>singular</strong>
+        <code>MotorCommand.msg</code>. Whichever you choose, the filename, the <code>CMakeLists.txt</code> entry and
+        every Python import must agree exactly — message type names are case- and spelling-sensitive.
+      </p>
+    </div>
+
+    <div class="filename">serial_motor_msgs/msg/EncoderVals.msg</div>
+    <pre><code>int32 mot_1_enc_val
+int32 mot_2_enc_val</code></pre>
+
+    <div class="filename">serial_motor_msgs/msg/MotorCommand.msg</div>
+    <pre><code>bool is_pwm
+float32 mot_1_req_rad_sec
+float32 mot_2_req_rad_sec</code></pre>
+
+    <div class="filename">serial_motor_msgs/msg/MotorVels.msg</div>
+    <pre><code>float32 mot_1_rad_sec
+float32 mot_2_rad_sec</code></pre>
+
+    <div class="tw">
+    <table>
+      <tr><th>Message</th><th>Direction</th><th>What it carries, and why you'd want it</th></tr>
+      <tr><td><code>EncoderVals</code></td><td>Robot → you</td><td>Raw cumulative encoder counts per motor. Invaluable for diagnostics: if one wheel's counts stop changing, you have a hardware fault, not a control bug.</td></tr>
+      <tr><td><code>MotorVels</code></td><td>Robot → you</td><td>Measured wheel speeds in rad/s. This is the <em>actual</em> speed, which you can plot against the commanded speed to tune the controller.</td></tr>
+      <tr><td><code>MotorCommand</code></td><td>You → robot</td><td>A direct per-wheel command, with <code>is_pwm</code> selecting open-loop PWM versus closed-loop rad/s — the <code>o</code>-versus-<code>m</code> distinction from §12.7, exposed as a ROS 2 message.</td></tr>
+    </table>
+    </div>
+
+    <h3>Wire message generation into CMake</h3>
+    <p>
+      A fresh <code>ament_cmake</code> package doesn't know how to build messages. Add the standard generation
+      boilerplate:
+    </p>
+    <div class="filename">serial_motor_msgs/CMakeLists.txt</div>
+    <pre><code>cmake_minimum_required(VERSION 3.8)
+project(serial_motor_msgs)
+
+find_package(ament_cmake REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/EncoderVals.msg"
+  "msg/MotorCommand.msg"
+  "msg/MotorVels.msg"
+)
+
+ament_export_dependencies(rosidl_default_runtime)
+ament_package()</code></pre>
+
+    <div class="filename">serial_motor_msgs/package.xml (additions)</div>
+    <pre><code>&lt;buildtool_depend&gt;rosidl_default_generators&lt;/buildtool_depend&gt;
+&lt;exec_depend&gt;rosidl_default_runtime&lt;/exec_depend&gt;
+&lt;member_of_group&gt;rosidl_interface_packages&lt;/member_of_group&gt;</code></pre>
+
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> cd ~/ros2_ws
+<span class="term-prompt">$</span> colcon build --packages-select serial_motor_msgs
+<span class="term-prompt">$</span> source install/setup.bash
+<span class="term-prompt">$</span> ros2 interface show serial_motor_msgs/msg/MotorVels
+<span class="term-out">float32 mot_1_rad_sec
+float32 mot_2_rad_sec</span></div>
+    </div>
+    <p>
+      That last command is the verification step. If <code>ros2 interface show</code> can find and print your
+      message, generation worked — don't move on until it does.
+    </p>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="kinematics">
+    <h2><span class="num">13.4</span>Differential-drive kinematics — the maths first</h2>
+    <p>
+      Before the code, the maths. The node's job is to take a <code>geometry_msgs/Twist</code> off
+      <code>/cmd_vel</code> and turn it into two numbers the Nano understands. That's four conversions in a row, and
+      understanding them means the code in §13.5 is readable rather than mysterious.
+    </p>
+
+    <div class="box def">
+      <div class="box-title">📖 How a differential-drive robot steers</div>
+      <p>
+        A differential-drive robot has two independently controlled wheels and no steering mechanism at all. It
+        turns by varying the <em>difference</em> between wheel speeds:
+      </p>
+      <ul style="margin-bottom:0;">
+        <li>Both wheels the same speed → the robot moves straight.</li>
+        <li>One wheel faster than the other → the robot follows a curve.</li>
+        <li>Wheels in opposite directions → the robot rotates in place.</li>
+      </ul>
+    </div>
+
+    <h3>Step 1 — Extract the commanded velocities</h3>
+    <p>A <code>Twist</code> describes the motion of the <em>whole robot</em>, not the individual wheels:</p>
+    <pre><code>v = msg.linear.x      # forward speed,  metres per second
+&omega; = msg.angular.z     # turning speed,  radians per second</code></pre>
+
+    <h3>Step 2 — Split it across the two wheels</h3>
+    <p>The differential-drive equations turn one body velocity into two wheel velocities:</p>
+    <pre><code>v_L = v &minus; &omega; &middot; L/2        # left wheel linear speed  (m/s)
+v_R = v + &omega; &middot; L/2        # right wheel linear speed (m/s)
+
+where L = wheel separation (the distance between the two wheels)</code></pre>
+    <p>Sanity-check the formula against the three cases in the box above:</p>
+    <div class="tw">
+    <table>
+      <tr><th>Command</th><th>Result</th><th>Behaviour</th></tr>
+      <tr><td><code>&omega; = 0</code></td><td><code>v_L = v_R = v</code></td><td>Straight-line motion</td></tr>
+      <tr><td><code>v = 0</code>, <code>&omega; &ne; 0</code></td><td><code>v_L = &minus;v_R</code></td><td>Rotation in place</td></tr>
+      <tr><td>both non-zero</td><td><code>v_L &ne; v_R</code>, same sign</td><td>A curved path</td></tr>
+    </table>
+    </div>
+
+    <h3>Step 3 — Convert linear speed to angular speed</h3>
+    <p>Motors spin; they don't translate. Divide by the wheel radius <code>r</code>:</p>
+    <pre><code>&omega;_L = v_L / r          # left wheel angular velocity  (rad/s)
+&omega;_R = v_R / r          # right wheel angular velocity (rad/s)</code></pre>
+
+    <h3>Step 4 — Convert rad/s to encoder counts per loop</h3>
+    <p>
+      The Nano's controller doesn't accept rad/s either — as you discovered by hand in §12.7, it accepts
+      <strong>encoder counts per PID loop</strong>. That's the same conversion, generalised:
+    </p>
+    <pre><code>counts_per_loop = &omega; &times; (counts_per_revolution / 2&pi;) &times; (1 / loop_rate)
+
+where  counts_per_revolution = your measured encoder_cpr  (§12.7)
+       loop_rate             = the firmware's PID rate, 30 Hz</code></pre>
+
+    <div class="box real">
+      <div class="box-title">🌍 You already computed this by hand</div>
+      <p>
+        In §12.7 you worked out that 3450 counts/rev at 30&nbsp;Hz means 115 counts/loop for one revolution per
+        second. Check it against the formula: one rev/sec is <code>&omega; = 2&pi;</code> rad/s, so
+        <code>2&pi; &times; (3450 / 2&pi;) &times; (1/30) = 3450/30 = 115</code>. Same number. The code in the next
+        section computes exactly this, once per <code>/cmd_vel</code> message, for each wheel.
+      </p>
+    </div>
+
+    <div class="mermaid">
+flowchart LR
+    A["/cmd_vel<br/>Twist"] --> B["v, &omega;"]
+    B --> C["v_L, v_R<br/>&divide; wheel separation"]
+    C --> D["&omega;_L, &omega;_R<br/>&divide; wheel radius"]
+    D --> E["counts/loop<br/>&times; cpr/2&pi; &divide; loop_rate"]
+    E --> F["serial: m #lt;cpl1#gt; #lt;cpl2#gt;"]
+    F --> G["Arduino Nano<br/>PID loop @ 30 Hz"]
+    style A fill:#eef0ff,stroke:#3d4bf5
+    style F fill:#fdf3e4,stroke:#c8862c
+    style G fill:#f4effe,stroke:#8b5cf6
+    </div>
+
+    <div class="exercise">
+      <div class="level">Exercise · Intermediate — do it on paper first</div>
+      <p>
+        Forge has <code>wheel_diameter = 0.065&nbsp;m</code> (so <code>r = 0.0325</code>),
+        <code>wheel_separation = 0.17&nbsp;m</code>, <code>encoder_cpr = 3450</code>, <code>loop_rate = 30</code>.
+        You publish <code>linear.x = 0.1</code> m/s, <code>angular.z = 0.5</code> rad/s. Work all four steps by
+        hand: what are <code>v_L</code> and <code>v_R</code>? <code>&omega;_L</code> and <code>&omega;_R</code>? What
+        exact <code>m</code> command does the node send? Keep your answer — you'll check the node's log output
+        against it in §13.6.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="node">
+    <h2><span class="num">13.5</span>The motor driver node</h2>
+    <p>
+      Now the code. Create the file and make it executable:
+    </p>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> touch ~/ros2_ws/src/serial_motor/serial_motor/motor_driver.py
+<span class="term-prompt">$</span> chmod +x ~/ros2_ws/src/serial_motor/serial_motor/motor_driver.py
+<span class="term-prompt">$</span> pip install pyserial   <span class="term-out"># if not already present</span></div>
+    </div>
+
+    <div class="filename">serial_motor/serial_motor/motor_driver.py</div>
+    <pre><code>#!/usr/bin/env python3
+import time
+import math
+import rclpy
+import serial
+import argparse
+from threading import Lock
+from rclpy.node import Node
+from typing import List, Optional
+from nav_msgs.msg import Odometry
+from geometry_msgs.msg import Twist
+from rclpy.executors import MultiThreadedExecutor
+from rclpy.callback_groups import ReentrantCallbackGroup
+from serial_motor_msgs.msg import MotorVels, EncoderVals
+
+
+class MotorDriver(Node):
+    """ROS 2 Node for controlling and monitoring a differential drive robot."""
+
+    def __init__(self, args) -&gt; None:
+        """Initialize the node with serial communication, parameters, publishers and subscribers."""
+        super().__init__("motor_driver")
+        self.argument_parsing(args)
+
+        # Logger
+        self._logger = self.get_logger()
+
+        # Setup encoder and loop rate parameters; log error if unset or zero.
+        self.declare_parameter("encoder_cpr", value=0)
+        self.encoder_cpr = self.get_parameter("encoder_cpr").value
+        if not self.encoder_cpr:
+            self._logger.error("Encoder CPR must be set to a non-zero value!")
+            raise ValueError("Encoder CPR is required and must be non-zero.")
+
+        self.declare_parameter("loop_rate", value=0)
+        self.loop_rate = self.get_parameter("loop_rate").value
+        if not self.loop_rate:
+            self._logger.error("Loop rate must be set to a non-zero value!")
+            raise ValueError("Loop rate is required and must be non-zero.")
+
+        # Initialize serial port parameters and optional debugging.
+        self.declare_parameter("serial_port", value="/dev/ttyACM0")
+        self.serial_port: str = self.get_parameter("serial_port").value
+
+        self.declare_parameter("baud_rate", value=57600)
+        self.baud_rate: int = self.get_parameter("baud_rate").value
+
+        self.declare_parameter("serial_debug", value=False)
+        self.debug_serial_cmds: bool = self.get_parameter("serial_debug").value
+        if self.debug_serial_cmds:
+            self._logger.info("Serial debug enabled")
+
+        # Kinematic parameters for differential drive.
+        self.declare_parameter("wheel_diameter", value=0.065)
+        self.wheel_diameter = self.get_parameter("wheel_diameter").value
+
+        self.declare_parameter("wheel_separation", value=0.17)
+        self.wheel_separation = self.get_parameter("wheel_separation").value
+
+        self.wheel_radius = self.wheel_diameter / 2
+
+        # ROS 2 publishers and subscribers.
+        # A reentrant callback group allows concurrent execution.
+        self.callback_group = ReentrantCallbackGroup()
+        self._sub_cmd_vel = self.create_subscription(
+            Twist,
+            "cmd_vel",
+            self.cmd_vel_callback,
+            10,
+            callback_group=self.callback_group,
+        )
+        self.motor_vels_pub_ = self.create_publisher(MotorVels, "motor_vels", 10)
+        self.encoder_pub_ = self.create_publisher(EncoderVals, "encoder_vals", 10)
+        self.odom_pub_ = self.create_publisher(Odometry, "odom", 10)
+
+        # Timer callback to continuously publish odometry.
+        self.create_timer(0.1, self._timer_callback, callback_group=self.callback_group)
+
+        # Initialize encoder and speed tracking variables.
+        self.last_enc_read_time = time.time()
+        self.last_m1_enc = 0
+        self.last_m2_enc = 0
+        self.m1_spd = 0.0
+        self.m2_spd = 0.0
+
+        self.mutex = Lock()  # Ensures thread-safe serial communication.
+
+        # Initialize odometry variables.
+        self.x = 0.0        # Position in x
+        self.y = 0.0        # Position in y
+        self.theta = 0.0    # Orientation (yaw)
+        self.last_time = time.time()
+
+        # Attempt to establish a serial connection; log error if unsuccessful.
+        try:
+            self._logger.info(
+                f"Connecting to port {self.serial_port} at {self.baud_rate}."
+            )
+            self.conn = serial.Serial(self.serial_port, self.baud_rate, timeout=1.0)
+            self._logger.info(f"Connected to {self.conn}")
+        except serial.SerialException as e:
+            self._logger.error(f"Failed to connect to {self.serial_port}: {e}")
+            raise
+
+    def argument_parsing(self, args):
+        parser = argparse.ArgumentParser(description="Arguments for frame names.")
+        parser.add_argument(
+            "-robot_name_value",
+            type=str,
+            metavar="botbox_default",
+            default="fastbot_X",
+            help="Name of the robot",
+        )
+        self.args = parser.parse_args(args[1:])
+
+    def send_pwm_motor_command(self, mot_1_pwm: float, mot_2_pwm: float) -&gt; None:
+        """Send an open-loop PWM command to set motor speeds."""
+        self.send_command(f"o {int(mot_1_pwm)} {int(mot_2_pwm)}")
+
+    def send_feedback_motor_command(
+        self, mot_1_ct_per_loop: float, mot_2_ct_per_loop: float
+    ) -&gt; None:
+        """Send a closed-loop command expressed in encoder counts per PID loop."""
+        self.send_command(f"m {int(mot_1_ct_per_loop)} {int(mot_2_ct_per_loop)}")
+
+    def send_encoder_read_command(self) -&gt; List[int]:
+        """Request the current encoder values from the motor controller."""
+        resp = self.send_command("e")
+        if resp:
+            try:
+                return [int(raw_enc) for raw_enc in resp.split()]
+            except ValueError:
+                self._logger.error("Failed to parse encoder values.")
+        return []
+
+    def _timer_callback(self) -&gt; None:
+        """Timer callback to periodically read encoders and publish telemetry."""
+        self.check_encoders()
+
+    def cmd_vel_callback(self, msg: Twist) -&gt; None:
+        """Convert an incoming Twist into a closed-loop motor command."""
+        # Extract linear and angular velocities from the cmd_vel message.
+        linear_vel = msg.linear.x
+        angular_vel = msg.angular.z
+
+        # Differential drive kinematics: body velocity -&gt; wheel linear speeds (m/s).
+        left_wheel_speed = linear_vel - (angular_vel * self.wheel_separation) / 2
+        right_wheel_speed = linear_vel + (angular_vel * self.wheel_separation) / 2
+
+        # Avoid divide by zero on the wheel radius.
+        if self.wheel_radius == 0:
+            self._logger.error(
+                "Wheel radius is zero, cannot calculate angular velocities."
+            )
+            return
+
+        # Wheel linear speeds (m/s) -&gt; wheel angular velocities (rad/s).
+        left_wheel_rad_per_sec = left_wheel_speed / self.wheel_radius
+        right_wheel_rad_per_sec = right_wheel_speed / self.wheel_radius
+
+        self._logger.info(
+            f"cmd_vel -&gt; Linear: {linear_vel} m/s, Angular: {angular_vel} rad/s | "
+            f"Left wheel: {left_wheel_rad_per_sec:.2f} rad/s, "
+            f"Right wheel: {right_wheel_rad_per_sec:.2f} rad/s"
+        )
+
+        # rad/s -&gt; encoder counts per PID loop.
+        scaler = (1 / (2 * math.pi)) * self.encoder_cpr * (1 / self.loop_rate)
+        mot_1_ct_per_loop = left_wheel_rad_per_sec * scaler
+        mot_2_ct_per_loop = right_wheel_rad_per_sec * scaler
+
+        # Only send finite values down the wire.
+        if math.isfinite(mot_1_ct_per_loop) and math.isfinite(mot_2_ct_per_loop):
+            self.send_feedback_motor_command(mot_1_ct_per_loop, mot_2_ct_per_loop)
+        else:
+            self._logger.warning(
+                "Non-finite motor count detected, skipping command send."
+            )
+
+    def check_encoders(self) -&gt; None:
+        """Read encoders, compute wheel speeds, publish encoder and velocity topics."""
+        resp = self.send_encoder_read_command()
+        if resp:
+            # Time elapsed since the last encoder read.
+            new_time = time.time()
+            time_diff = new_time - self.last_enc_read_time
+            self.last_enc_read_time = new_time
+
+            # Encoder delta per motor.
+            m1_diff = resp[0] - self.last_m1_enc
+            self.last_m1_enc = resp[0]
+            m2_diff = resp[1] - self.last_m2_enc
+            self.last_m2_enc = resp[1]
+
+            # Counts -&gt; rad/s.
+            rads_per_ct = 2 * math.pi / self.encoder_cpr
+            self.m1_spd = m1_diff * rads_per_ct / time_diff
+            self.m2_spd = m2_diff * rads_per_ct / time_diff
+
+            # Publish the measured motor velocities.
+            spd_msg = MotorVels()
+            spd_msg.mot_1_rad_sec = self.m1_spd
+            spd_msg.mot_2_rad_sec = self.m2_spd
+            self.motor_vels_pub_.publish(spd_msg)
+
+            # Publish the raw encoder values.
+            enc_msg = EncoderVals()
+            enc_msg.mot_1_enc_val = self.last_m1_enc
+            enc_msg.mot_2_enc_val = self.last_m2_enc
+            self.encoder_pub_.publish(enc_msg)
+
+            # Publish odometry derived from the encoder readings.
+            # self.publish_odometry()     # &lt;-- see the exercise below
+
+    def publish_odometry(self) -&gt; None:
+        """Publish odometry data based on encoder readings (dead reckoning)."""
+        current_time = time.time()
+        dt = current_time - self.last_time
+        self.last_time = current_time
+        if dt == 0:
+            return
+
+        # Distance travelled by each wheel this tick.
+        left_distance = self.m1_spd * dt * self.wheel_radius
+        right_distance = self.m2_spd * dt * self.wheel_radius
+
+        # Average forward distance and change in heading.
+        avg_distance = (left_distance + right_distance) / 2.0
+        d_theta = (right_distance - left_distance) / self.wheel_separation
+
+        # Integrate the pose.
+        self.theta = (self.theta + d_theta) % (2 * math.pi)
+        self.x += avg_distance * math.cos(self.theta)
+        self.y += avg_distance * math.sin(self.theta)
+
+        # Build and publish the Odometry message.
+        odom_msg = Odometry()
+        odom_msg.header.stamp = self.get_clock().now().to_msg()
+        odom_msg.header.frame_id = self.args.robot_name_value + "_odom"
+        odom_msg.child_frame_id = self.args.robot_name_value + "_base_link"
+
+        odom_msg.pose.pose.position.x = self.x
+        odom_msg.pose.pose.position.y = self.y
+        odom_msg.pose.pose.position.z = 0.0
+
+        quat = self.euler_to_quaternion(0, 0, self.theta)
+        odom_msg.pose.pose.orientation.x = quat[0]
+        odom_msg.pose.pose.orientation.y = quat[1]
+        odom_msg.pose.pose.orientation.z = quat[2]
+        odom_msg.pose.pose.orientation.w = quat[3]
+
+        odom_msg.twist.twist.linear.x = avg_distance / dt
+        odom_msg.twist.twist.angular.z = d_theta / dt
+
+        self.odom_pub_.publish(odom_msg)
+
+    def euler_to_quaternion(
+        self, roll: float, pitch: float, yaw: float
+    ) -&gt; tuple:
+        """Convert Euler angles to a quaternion."""
+        qx = math.sin(roll / 2) * math.cos(pitch / 2) * math.cos(yaw / 2) - math.cos(
+            roll / 2
+        ) * math.sin(pitch / 2) * math.sin(yaw / 2)
+        qy = math.cos(roll / 2) * math.sin(pitch / 2) * math.cos(yaw / 2) + math.sin(
+            roll / 2
+        ) * math.cos(pitch / 2) * math.sin(yaw / 2)
+        qz = math.cos(roll / 2) * math.cos(pitch / 2) * math.sin(yaw / 2) - math.sin(
+            roll / 2
+        ) * math.sin(pitch / 2) * math.cos(yaw / 2)
+        qw = math.cos(roll / 2) * math.cos(pitch / 2) * math.cos(yaw / 2) + math.sin(
+            roll / 2
+        ) * math.sin(pitch / 2) * math.sin(yaw / 2)
+        return (qx, qy, qz, qw)
+
+    def send_command(self, cmd_string: str) -&gt; Optional[str]:
+        """Send a command to the motor controller over serial and read the reply."""
+        with self.mutex:
+            try:
+                cmd_string += "\r"  # Carriage return terminates a command.
+                self.conn.write(cmd_string.encode("utf-8"))
+                if self.debug_serial_cmds:
+                    self._logger.info(f"Sent: {cmd_string}")
+
+                # Read the response up to the terminating carriage return.
+                response = self.conn.read_until(b"\r").decode("utf-8").strip("\r")
+                if not response:
+                    self._logger.warning(f"Serial timeout on command: {cmd_string}")
+                    return None
+                if self.debug_serial_cmds:
+                    self._logger.info(f"Received: {response}")
+                return response
+            except serial.SerialTimeoutException:
+                self._logger.error("Serial timeout occurred.")
+                return None
+
+    def close_conn(self) -&gt; None:
+        """Close the serial connection cleanly."""
+        if self.conn.is_open:
+            self.conn.close()
+            self._logger.info("Serial connection closed.")
+
+
+def main(args: Optional[List[str]] = None) -&gt; None:
+    """Initialize the MotorDriver node and run the ROS 2 executor loop."""
+    rclpy.init(args=args)
+    try:
+        args_without_ros = rclpy.utilities.remove_ros_args(args)
+        motor_driver = MotorDriver(args_without_ros)
+
+        # Two threads so the cmd_vel callback and the encoder timer can overlap.
+        executor = MultiThreadedExecutor(num_threads=2)
+        executor.add_node(motor_driver)
+        try:
+            executor.spin()
+        finally:
+            executor.shutdown()
+            motor_driver.destroy_node()
+    finally:
+        rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre>
+
+    <h3>Reading the node, method by method</h3>
+    <div class="tw">
+    <table>
+      <tr><th>Method</th><th>What it does</th></tr>
+      <tr><td><code>__init__</code></td><td>Parses launch arguments; declares the parameters that make this driver reusable (<code>encoder_cpr</code>, <code>loop_rate</code>, <code>serial_port</code>, <code>baud_rate</code>, <code>wheel_diameter</code>, <code>wheel_separation</code>); creates the <code>/cmd_vel</code> subscription and the <code>motor_vels</code>, <code>encoder_vals</code> and <code>odom</code> publishers; starts a 10&nbsp;Hz timer; and opens the serial connection to the Nano.</td></tr>
+      <tr><td><code>cmd_vel_callback</code></td><td>The whole of §13.4 in about twenty lines: extract <code>v</code> and <code>&omega;</code>, split into wheel speeds, divide by radius, scale to counts per loop, send <code>m</code>.</td></tr>
+      <tr><td><code>check_encoders</code></td><td>Runs from the timer at 10&nbsp;Hz: sends <code>e</code>, differences the counts against the previous read, converts to rad/s using the elapsed time, and publishes <code>MotorVels</code> and <code>EncoderVals</code>.</td></tr>
+      <tr><td><code>publish_odometry</code></td><td>Dead reckoning: integrates wheel distances into an <code>(x, y, θ)</code> pose and publishes <code>nav_msgs/Odometry</code>. This is the same wheel odometry you fused with an IMU in Lecture 9.</td></tr>
+      <tr><td><code>send_command</code></td><td>The only place that touches the serial port, guarded by a <code>Lock</code>. That mutex is essential: with a multi-threaded executor, the <code>/cmd_vel</code> callback and the encoder timer can fire simultaneously, and two interleaved writes to one serial port produce garbage.</td></tr>
+    </table>
+    </div>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ A real bug, left in on purpose</div>
+      <p>
+        Look carefully at the end of <code>check_encoders</code>: the call to <code>self.publish_odometry()</code> is
+        <strong>commented out</strong>. The node therefore advertises an <code>odom</code> topic, contains a
+        complete and correct odometry implementation — and never publishes a single message on it. Nothing errors.
+        <code>ros2 topic list</code> shows <code>/fastbot/odom</code> existing. It's the same class of silent failure
+        as the camera bug in §13.14, and it comes straight from the reference implementation.
+      </p>
+    </div>
+    <div class="exercise">
+      <div class="level">Exercise · Intermediate — fix the odometry</div>
+      <p>
+        Uncomment <code>self.publish_odometry()</code>, rebuild, and verify with
+        <code>ros2 topic hz /fastbot/odom</code> that messages are actually flowing. Then drive Forge forward one
+        measured metre by hand-timed teleop and compare the reported <code>pose.position.x</code> against a tape
+        measure. Any error you find traces back to one of three numbers: <code>encoder_cpr</code>,
+        <code>wheel_diameter</code>, or <code>wheel_separation</code>. Which one would you suspect first if the
+        <em>straight-line distance</em> is wrong, and which if only the <em>turns</em> are wrong? (Lecture 11,
+        §11.5 asked you exactly this about LIMO.)
+      </p>
+    </div>
+
+    <div class="box think">
+      <div class="box-title">🤔 Think About It</div>
+      <p>
+        <code>publish_odometry</code> updates <code>self.theta</code> <em>before</em> using it to project
+        <code>x</code> and <code>y</code>. Most textbook dead-reckoning integrations use the heading at the
+        <em>midpoint</em> of the timestep instead. Over a long curved path, would that difference accumulate or
+        cancel out? What kind of test would reveal it — a straight line, a single 90° turn, or a closed square
+        loop?
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="driverlaunch">
+    <h2><span class="num">13.6</span>The driver launch file &amp; the namespacing pattern</h2>
+    <p>
+      Running the node with six parameters on the command line every time would be miserable. A launch file wraps
+      them up — and, more importantly, introduces a design habit that runs through the rest of this course.
+    </p>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> cd ~/ros2_ws/src/serial_motor
+<span class="term-prompt">$</span> mkdir launch
+<span class="term-prompt">$</span> touch launch/serial_motor.launch.py</div>
+    </div>
+
+    <div class="filename">serial_motor/launch/serial_motor.launch.py</div>
+    <pre><code>from launch_ros.actions import Node
+from launch import LaunchDescription
+from launch.substitutions import LaunchConfiguration
+from launch.actions import DeclareLaunchArgument, OpaqueFunction
+
+
+def launch_setup(context, *args, **kwargs):
+    """Build the node configuration from the launch arguments."""
+    robot_name = LaunchConfiguration("robot_name")
+    serial_port = LaunchConfiguration("serial_port").perform(context)
+    baud_rate = int(LaunchConfiguration("baud_rate").perform(context))
+    loop_rate = int(LaunchConfiguration("loop_rate").perform(context))
+    encoder_cpr = int(LaunchConfiguration("encoder_cpr").perform(context))
+
+    driver_node = Node(
+        package="serial_motor",
+        executable="motor_driver",
+        name="serial_motor_driver",
+        namespace=robot_name,
+        parameters=[
+            {
+                "robot_name": robot_name,
+                "serial_port": serial_port,   # Port where the device is connected.
+                "baud_rate": baud_rate,       # Serial speed; must match the firmware.
+                "loop_rate": loop_rate,       # Frequency (Hz) at which the PID loop spins.
+                "encoder_cpr": encoder_cpr,   # Encoder counts per revolution.
+            }
+        ],
+        arguments=["-robot_name", robot_name],
+        # remappings=[('/input/topic', '/output/topic')],
+        output="screen",
+    )
+
+    return [driver_node]
+
+
+def generate_launch_description():
+    robot_name_arg = DeclareLaunchArgument("robot_name", default_value="fastbot_X")
+    serial_port_arg = DeclareLaunchArgument("serial_port", default_value="/dev/ttyACM0")
+    baud_rate_arg = DeclareLaunchArgument("baud_rate", default_value="57600")
+    loop_rate_arg = DeclareLaunchArgument("loop_rate", default_value="30")
+    encoder_cpr_arg = DeclareLaunchArgument("encoder_cpr", default_value="2500")
+
+    return LaunchDescription(
+        [
+            robot_name_arg,
+            serial_port_arg,
+            baud_rate_arg,
+            loop_rate_arg,
+            encoder_cpr_arg,
+            OpaqueFunction(function=launch_setup),
+        ]
+    )</code></pre>
+
+    <div class="tw">
+    <table>
+      <tr><th>Parameter</th><th>Default</th><th>What it controls</th></tr>
+      <tr><td><code>robot_name</code></td><td><code>fastbot_X</code></td><td>The namespace for every topic and node this launch file creates — see below</td></tr>
+      <tr><td><code>serial_port</code></td><td><code>/dev/ttyACM0</code></td><td>Where the Nano is. Replace with a stable udev symlink (§13.12) — <code>/dev/arduino_nano</code></td></tr>
+      <tr><td><code>baud_rate</code></td><td><code>57600</code></td><td>Must match the firmware exactly. A mismatch doesn't error — it produces garbage bytes.</td></tr>
+      <tr><td><code>loop_rate</code></td><td><code>30</code></td><td>The Nano's PID loop rate, from <code>ros_arduino_bridge</code></td></tr>
+      <tr><td><code>encoder_cpr</code></td><td><code>2500</code></td><td><strong>Override this</strong> with the value you measured in §12.7</td></tr>
+    </table>
+    </div>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ That <code>2500</code> default is a placeholder, not a measurement</div>
+      <p>
+        This is the discrepancy §12.7 warned you about: this file defaults to <code>2500</code>, the bringup file in
+        §13.7 defaults to <code>2550</code>, and the reference build actually measured about <code>3450</code>. None
+        of those is right for <em>your</em> motors. Pass your measured value explicitly, every time — and consider
+        changing both defaults so a future you can't be caught out by them.
+      </p>
+    </div>
+
+    <h3>Make <code>colcon</code> aware of the node and the launch directory</h3>
+    <p>
+      An <code>ament_python</code> package won't install a <code>launch/</code> directory or create the
+      <code>motor_driver</code> executable unless you tell it to:
+    </p>
+    <div class="filename">serial_motor/setup.py</div>
+    <pre><code>import os
+from glob import glob
+from setuptools import setup
+
+package_name = 'serial_motor'
+
+setup(
+    name=package_name,
+    version='0.0.0',
+    packages=[package_name],
+    data_files=[
+        ('share/ament_index/resource_index/packages',
+            ['resource/' + package_name]),
+        ('share/' + package_name, ['package.xml']),
+        # Install every launch file in launch/ into the package share directory.
+        (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
+    ],
+    install_requires=['setuptools'],
+    zip_safe=True,
+    maintainer='fastbot',
+    maintainer_email='fastbot@todo.todo',
+    description='Serial differential-drive motor driver for ROS 2',
+    license='Apache-2.0',
+    entry_points={
+        'console_scripts': [
+            'motor_driver = serial_motor.motor_driver:main',
+        ],
+    },
+)</code></pre>
+
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> cd ~/ros2_ws &amp;&amp; colcon build --packages-select serial_motor &amp;&amp; source install/setup.bash</div>
+    </div>
+
+    <h3>Why <code>robot_name</code> threads through everything</h3>
+    <p>
+      Every launch file in this build carries a <code>robot_name</code> argument, and it's worth stopping to
+      understand why that one string is one of the most transferable software-design habits in this session — more
+      transferable, in the long run, than any individual driver.
+    </p>
+    <p>
+      Without namespacing, two Forges on the same lab network would both publish <code>/cmd_vel</code>, both
+      broadcast a <code>base_link</code> TF frame, and both claim the same node names. ROS 2's discovery system
+      doesn't know these are two different physical robots — it just sees two publishers fighting over one topic.
+      Threading <code>robot_name</code> through every namespace and frame name turns <code>/cmd_vel</code> into
+      <code>/fastbot/cmd_vel</code> and <code>base_link</code> into <code>fastbot_base_link</code>, and the collision
+      disappears.
+    </p>
+
+    <div class="box eng">
+      <div class="box-title">🔧 This is a general lesson, not a Forge quirk</div>
+      <p>
+        You'll meet this pattern — one identifier threaded through every name in a system — any time you need
+        multiple instances of the same software side by side: multiple robots on one network, multiple simulated
+        agents in one Gazebo world (Lecture 14), even multiple instances of a microservice in a distributed system
+        outside robotics entirely. Designing for it from day one, even when you only ever run one robot, costs
+        almost nothing and saves a rewrite later.
+      </p>
+    </div>
+
+    <h3>First ROS 2 motion</h3>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-out"># --- SSH session 1 ---</span>
+<span class="term-prompt">$</span> ros2 launch serial_motor serial_motor.launch.py \
+       robot_name:=fastbot serial_port:=/dev/ttyACM0 encoder_cpr:=3450
+<span class="term-out">[motor_driver-1] [INFO] [serial_motor_driver]: Connecting to port /dev/ttyACM0 at 57600.
+[motor_driver-1] [INFO] [serial_motor_driver]: Connected to Serial&lt;id=0x..., open=True&gt;...</span>
+
+<span class="term-out"># --- SSH session 2 ---</span>
+<span class="term-prompt">$</span> ros2 topic list | grep fastbot
+<span class="term-out">/fastbot/cmd_vel
+/fastbot/encoder_vals
+/fastbot/motor_vels
+/fastbot/odom</span>
+
+<span class="term-prompt">$</span> ros2 run teleop_twist_keyboard teleop_twist_keyboard \
+       --ros-args --remap cmd_vel:=/fastbot/cmd_vel</div>
+    </div>
+    <p>
+      🎉 <strong>Wheels off the ground, press <code>i</code>.</strong> Forge is now driven by ROS 2. Watch session 1's
+      log: it prints the computed left and right wheel speeds in rad/s for every <code>Twist</code> it receives —
+      compare those numbers against the ones you worked out by hand in §13.4's exercise.
+    </p>
+
+    <div class="exercise">
+      <div class="level">Exercise · Easy</div>
+      <p>
+        With the driver running, echo the telemetry: <code>ros2 topic echo /fastbot/motor_vels</code> in one
+        terminal while teleoperating in another. Command a pure rotation (<code>j</code> or <code>l</code>) and
+        confirm the two reported wheel speeds are roughly equal and opposite. Then command straight forward and
+        confirm they're roughly equal and the same sign. If they aren't, you have found a wiring or sign bug that
+        would otherwise only show up as Forge mysteriously curving.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="bringup">
+    <h2><span class="num">13.7</span>The bringup package</h2>
+    <p>
+      Launching each piece by hand doesn't scale past two. The ROS convention is a dedicated <strong>bringup</strong>
+      package holding the single launch file you run to start the entire robot. By the end of this session it will
+      start four things: the motor driver, the robot state publisher, the LiDAR driver and the camera node.
+    </p>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> cd ~/ros2_ws/src
+<span class="term-prompt">$</span> ros2 pkg create --build-type ament_cmake fastbot_bringup
+<span class="term-prompt">$</span> cd ~/ros2_ws/src/fastbot_bringup
+<span class="term-prompt">$</span> mkdir launch
+<span class="term-prompt">$</span> touch launch/bringup.launch.xml</div>
+    </div>
+
+    <div class="filename">fastbot_bringup/launch/bringup.launch.xml (first version — motors only)</div>
+    <pre><code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;launch&gt;
+    &lt;arg name="use_sim_time" default="False"/&gt;
+    &lt;arg name="robot_name"   default="fastbot"/&gt;
+    &lt;arg name="serial_port"  default="/dev/arduino_nano"/&gt;
+    &lt;arg name="baud_rate"    default="57600"/&gt;
+    &lt;arg name="loop_rate"    default="30"/&gt;
+    &lt;arg name="encoder_cpr"  default="2550"/&gt;
+
+    &lt;!-- Differential serial motor driver --&gt;
+    &lt;include file="$(find-pkg-share serial_motor)/launch/serial_motor.launch.py"&gt;
+        &lt;arg name="robot_name"  value="$(var robot_name)"/&gt;
+        &lt;arg name="serial_port" value="$(var serial_port)"/&gt;
+        &lt;arg name="baud_rate"   value="$(var baud_rate)"/&gt;
+        &lt;arg name="loop_rate"   value="$(var loop_rate)"/&gt;
+        &lt;arg name="encoder_cpr" value="$(var encoder_cpr)"/&gt;
+    &lt;/include&gt;
+&lt;/launch&gt;</code></pre>
+
+    <p>
+      Note the XML <code>&lt;arg&gt;</code> elements mirror the parameters declared in
+      <code>motor_driver.py</code> and re-declared in <code>serial_motor.launch.py</code>. That's the ROS 2 launch
+      idiom: parameters get plumbed up from the node, through each launch file, to the top level, where a single
+      command-line override reaches all the way down.
+    </p>
+    <p>
+      Notice also that <code>serial_port</code> now defaults to <code>/dev/arduino_nano</code>, not
+      <code>/dev/ttyACM0</code>. That symlink doesn't exist yet — you'll create it in §13.12.
+    </p>
+
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> cd ~/ros2_ws &amp;&amp; colcon build --packages-select fastbot_bringup &amp;&amp; source install/setup.bash
+<span class="term-prompt">$</span> ros2 launch fastbot_bringup bringup.launch.xml encoder_cpr:=3450</div>
+    </div>
+    <p>
+      ✅ One command now starts Forge. Every remaining section of this lecture adds one more <code>&lt;include&gt;</code>
+      to this file.
+    </p>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ Install the launch directory in CMakeLists.txt</div>
+      <p>
+        An <code>ament_cmake</code> package needs to be told to install its launch files, or
+        <code>find-pkg-share</code> will resolve to a share directory that doesn't contain them:
+      </p>
+      <pre style="margin-bottom:0;"><code># fastbot_bringup/CMakeLists.txt
+find_package(ament_cmake REQUIRED)
+
+install(
+  DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}
+)</code></pre>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="cad">
+    <h2><span class="num">13.8</span>Designing Forge's structure in CAD</h2>
+    <p>
+      Forge's chassis is three flat plates held apart by hex standoffs — a shape that is cheap to make from sheet
+      material (PVC, acrylic or thin plywood) on a laser cutter or CNC router, and easy to iterate on. This section
+      designs it in <strong>Onshape</strong>, a free browser-based CAD package, for one reason above all others: in
+      §13.10 the assembly you build here converts <em>automatically</em> into Forge's URDF.
+    </p>
+
+    <div class="box def">
+      <div class="box-title">📖 Resource files — you don't have to start from zero</div>
+      <p style="margin-bottom:10px;">
+        Even though this section teaches you to design it yourself, the reference files are available and worth
+        opening alongside:
+      </p>
+      <ul style="margin-bottom:0;">
+        <li><a href="https://drive.google.com/drive/folders/1jS1ckQXPjIXRjhqSK3VLUzdQERqNf-9Z?usp=sharing">FastBot PVC sheet drawings</a> — the flat patterns for the three plates</li>
+        <li><a href="https://cad.onshape.com/documents/4757b8f98f7afcc7c3655639/w/684b05ef017e615d3bca90ce/e/15599f7046132dd76e692f13">FastBot simplified assembly</a> — the Onshape document §13.10 converts to URDF</li>
+        <li><a href="https://youtu.be/tgRqfNDb1MQ">FastBot assembly video</a> — the physical build, start to finish</li>
+        <li>Create a free Onshape account: <a href="https://www.onshape.com/en/education/sign-up">onshape.com/education/sign-up</a></li>
+      </ul>
+    </div>
+
+    <figure class="figure">
+      <img loading="lazy" src="images/fastbot-course/6-2-part-creation_p02_01.png" alt="Onshape CAD window showing the completed FastBot assembly: three stacked plates on standoffs with wheels, motors and a LiDAR">
+      <figcaption><b>Figure 13.1</b> — Where this section ends up: the complete Forge assembly in Onshape.</figcaption>
+    </figure>
+
+    <h3>Part creation — the plates</h3>
+    <p>
+      The three plates (top, middle, bottom) are the robot's skeleton. Each one is the same short workflow, which is
+      the fundamental loop of parametric CAD:
+    </p>
+    <ol class="steps">
+      <li><strong>Sketch</strong> a rectangle to define the plate boundary.</li>
+      <li><strong>Dimension</strong> the sketch accurately — a fully-defined sketch has no free geometry left to drift.</li>
+      <li><strong>Extrude</strong> it to give it thickness (match your actual sheet stock).</li>
+      <li><strong>Extrude-cut</strong> holes for mounting components.</li>
+      <li><strong>Fillet</strong> and <strong>chamfer</strong> to soften edges and clean up corners.</li>
+    </ol>
+
+    <div class="fig-grid">
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/6-2-part-creation_p03_02.png" alt="Onshape sketch view showing the 2D outline of a robot plate with mounting holes">
+        <figcaption><b>Figure 13.2</b> — Step 1-2: the plate outline sketched and dimensioned.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/6-2-part-creation_p04_03.png" alt="Onshape 3D view of the sketch extruded into a solid blue plate with a circular hole">
+        <figcaption><b>Figure 13.3</b> — Step 3-4: extruded to thickness, with a hole cut through.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/6-2-part-creation_p05_04.png" alt="Onshape showing a dimensioned top plate drawing beside the extrude dialog">
+        <figcaption><b>Figure 13.4</b> — The top plate, fully dimensioned. Use <strong>Sketch Mirror</strong> for symmetric features and export as <code>.stl</code> when done.</figcaption>
+      </figure>
+    </div>
+
+    <div class="box eng">
+      <div class="box-title">🔧 Tolerance your screw holes</div>
+      <p>
+        An M3 screw does not fit through a 3.00&nbsp;mm hole in a part you actually cut. Sheet material, kerf width
+        and cutter accuracy all conspire against you. Draw clearance holes a few tenths of a millimetre oversize
+        (3.2-3.4&nbsp;mm is typical for M3) and you'll assemble the robot with your fingers instead of a drill. This
+        is exactly the same tolerancing thinking Lecture 14 applies to 3D-printed parts.
+      </p>
+    </div>
+
+    <h3>Assembly creation — bringing in other people's work</h3>
+    <p>
+      With parts modelled, assemble them. Two sources of parts matter here: things you design (the plates, the hex
+      standoffs) and things you <em>don't</em> — nobody should model a Raspberry Pi from scratch when accurate
+      models are freely published on libraries like <a href="https://grabcad.com/library">GrabCAD</a>.
+    </p>
+    <div class="fig-grid">
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/6-3-assembly-creation_p02_01.png" alt="Onshape modelling a cylindrical hex standoff spacer part">
+        <figcaption><b>Figure 13.5</b> — Hex standoffs, modelled in the same document as the plates.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/6-3-assembly-creation_p03_02.png" alt="GrabCAD library website showing a downloadable Raspberry Pi 4 Model B CAD model">
+        <figcaption><b>Figure 13.6</b> — GrabCAD: a free, accurate Raspberry Pi 4 model. Import rather than remodel.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/6-3-assembly-creation_p04_03.png" alt="Onshape assembly tab showing a plate, a Raspberry Pi and several standoffs inserted but not yet mated">
+        <figcaption><b>Figure 13.7</b> — Parts inserted into the assembly, floating freely — nothing is constrained yet.</figcaption>
+      </figure>
+    </div>
+
+    <h3>Mates — telling CAD how the parts relate</h3>
+    <p>
+      A <strong>mate</strong> is a geometric constraint between two parts. This is the step that matters most for
+      what comes next, because <em>mates become URDF joints</em> in §13.10.
+    </p>
+    <ul>
+      <li><strong>Fasten mate</strong> — rigidly attaches two parts. Becomes a <code>fixed</code> URDF joint.</li>
+      <li><strong>Revolute mate</strong> — allows rotation about one axis. Becomes a <code>continuous</code> URDF joint. Use it for the wheels.</li>
+      <li><strong>Fix</strong> — pins the whole assembly in space so you can confirm a revolute mate actually rotates the way you expect.</li>
+    </ul>
+
+    <div class="fig-grid">
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/6-4-mate-parts-in-assembly_p02_01.png" alt="Onshape assembly with a fasten mate dialog open, attaching a standoff to a plate">
+        <figcaption><b>Figure 13.8</b> — A fasten mate. If the orientation looks wrong, reorient the mate connector rather than moving the part.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/6-4-mate-parts-in-assembly_p03_02.png" alt="Onshape assembly showing plates, standoffs and a LiDAR progressively mated together">
+        <figcaption><b>Figure 13.9</b> — Continue mating until the chassis is complete.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/6-4-mate-parts-in-assembly_p04_03.png" alt="Onshape appearance editor with a colour palette open for changing part colour">
+        <figcaption><b>Figure 13.10</b> — Part appearance. Not vanity: these colours carry through to the URDF materials and into RViz and Gazebo.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/6-4-mate-parts-in-assembly_p05_04.png" alt="Onshape showing the completed three-plate chassis assembly with standoffs and LiDAR">
+        <figcaption><b>Figure 13.11</b> — The chassis, fully mated.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/6-4-mate-parts-in-assembly_p06_05.png" alt="Onshape assembly with a yellow wheel attached by a revolute mate">
+        <figcaption><b>Figure 13.12</b> — Wheels added with <strong>revolute</strong> mates. These two mates become Forge's only moving joints.</figcaption>
+      </figure>
+    </div>
+
+    <div class="box real">
+      <div class="box-title">🌍 Design → fabrication, in one workflow</div>
+      <p>
+        Designing the plates in Onshape, assembling them with imported components from GrabCAD, and exporting DXF
+        files for laser cutting gives you a straight line from digital prototype to physical part with no
+        transcription in between. That is exactly why the same CAD model can also produce the URDF: there is only
+        one source of truth for Forge's geometry, and everything else is generated from it.
+      </p>
+    </div>
+
+    <div class="exercise">
+      <div class="level">Exercise · Harder</div>
+      <p>
+        Design the top plate yourself from scratch, then export it as <code>.stl</code> and also as a
+        <code>.dxf</code> flat pattern. Compare your plate against the reference PVC sheet drawings linked above.
+        Where do they differ, and does any difference actually matter — or is it just a different valid solution to
+        the same constraints?
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="urdf">
+    <h2><span class="num">13.9</span>URDF — and why not to hand-write this one</h2>
+    <p>
+      ROS 2 needs to know Forge's physical structure in order to understand how it moves in space, simulate its
+      kinematics and dynamics, and visualize it correctly in RViz. That description is a
+      <strong>URDF</strong> (Unified Robot Description Format) — an XML file that is, effectively, a digital
+      blueprint.
+    </p>
+    <p>A URDF has two kinds of element:</p>
+    <ul>
+      <li><strong>Links</strong> 🛠️ — the rigid parts (base, wheels, sensors).</li>
+      <li><strong>Joints</strong> 🔗 — how those parts connect (fixed, revolute, continuous, prismatic).</li>
+    </ul>
+
+    <p>Here is the smallest URDF that describes a two-wheeled robot:</p>
+    <div class="filename">two_wheeled_robot.urdf</div>
+    <pre><code>&lt;?xml version="1.0"?&gt;
+&lt;robot name="two_wheeled_robot"&gt;
+
+  &lt;!-- Define the base link --&gt;
+  &lt;link name="base_link"&gt;
+    &lt;visual&gt;
+      &lt;geometry&gt;
+        &lt;box size="0.5 0.3 0.1"/&gt;
+      &lt;/geometry&gt;
+    &lt;/visual&gt;
+  &lt;/link&gt;
+
+  &lt;!-- Left wheel link --&gt;
+  &lt;link name="left_wheel"/&gt;
+
+  &lt;!-- Right wheel link --&gt;
+  &lt;link name="right_wheel"/&gt;
+
+  &lt;!-- Joints connecting the wheels to base_link --&gt;
+  &lt;joint name="left_wheel_joint" type="revolute"&gt;
+    &lt;parent link="base_link"/&gt;
+    &lt;child link="left_wheel"/&gt;
+    &lt;origin xyz="-0.2 0.15 0.1" rpy="0 0 0"/&gt;
+    &lt;axis xyz="0 1 0"/&gt;
+  &lt;/joint&gt;
+
+  &lt;joint name="right_wheel_joint" type="revolute"&gt;
+    &lt;parent link="base_link"/&gt;
+    &lt;child link="right_wheel"/&gt;
+    &lt;origin xyz="-0.2 -0.15 0.1" rpy="0 0 0"/&gt;
+    &lt;axis xyz="0 1 0"/&gt;
+  &lt;/joint&gt;
+
+&lt;/robot&gt;</code></pre>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ Three bugs hiding in that snippet</div>
+      <p style="margin-bottom:10px;">
+        This is the reference example, reproduced faithfully — and it will not load. Find the problems before
+        reading on:
+      </p>
+      <details style="margin-bottom:0;">
+        <summary style="cursor:pointer; color:var(--accent); font-weight:600;">Reveal</summary>
+        <ol style="margin-top:10px; margin-bottom:0;">
+          <li>Both joints name their parent as <code>base</code>, not <code>base_link</code> — a link that doesn't exist. <code>check_urdf</code> catches this immediately.</li>
+          <li>The joints are <code>type="revolute"</code>, which requires <code>&lt;limit&gt;</code> tags. A wheel has no reason to stop at any particular angle, so it should be <code>type="continuous"</code>.</li>
+          <li>Both wheels share <code>axis xyz="0 1 0"</code>. Depending on how the wheels are oriented, the two sides often need opposite signs — and getting that wrong doesn't error, it just makes the robot drive in a slow circle. Lecture 4 warned you about exactly this on LIMO.</li>
+        </ol>
+      </details>
+    </div>
+
+    <div class="exercise">
+      <div class="level">Exercise · Easy</div>
+      <p>
+        Save the snippet as <code>two_wheeled_robot.urdf</code>, fix all three bugs, and validate with
+        <code>check_urdf two_wheeled_robot.urdf</code> — the same tool Lecture 4 used on LIMO's expanded Xacro.
+        Confirm it reports a clean link tree before moving on.
+      </p>
+    </div>
+
+    <h3>Why not just hand-write Forge's?</h3>
+    <p>
+      You could. It would mean measuring every component's size, shape and position, then writing XML to represent
+      each one — and Forge has a chassis, two motors, two wheels, a LiDAR, a camera and a caster. That's
+      time-consuming and, more importantly, <strong>error-prone</strong>: a mistyped origin doesn't crash anything,
+      it silently puts your LiDAR 2&nbsp;cm from where it really is, and every downstream algorithm quietly inherits
+      the error.
+    </p>
+    <p>
+      Since Forge already exists as an accurate CAD assembly (§13.8), the better answer is to generate the URDF
+      from it. That guarantees the description matches the real robot's dimensions, eliminates human measurement
+      error, and lets you re-generate in seconds when the design changes.
+    </p>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="onshape2robot">
+    <h2><span class="num">13.10</span><code>onshape-to-robot</code> — CAD to URDF automatically</h2>
+    <p>
+      <a href="https://onshape-to-robot.readthedocs.io/">onshape-to-robot</a> is a command-line tool that talks to
+      Onshape's REST API, walks your assembly's mate tree, and emits a complete URDF — links, joints, origins,
+      inertial properties and exported STL meshes — with zero hand-typed XML.
+    </p>
+
+    <div class="mermaid">
+flowchart LR
+    A["Onshape Part Studio<br/>each rigid piece modelled"] --> B["Onshape Assembly<br/>parts joined with named mates"]
+    B --> C["onshape-to-robot CLI<br/>walks the mate tree<br/>via the REST API"]
+    C --> D["robot.urdf + assets/*.stl<br/>links, joints, origins,<br/>inertias — all generated"]
+    style A fill:#eef0ff,stroke:#3d4bf5
+    style B fill:#f4effe,stroke:#8b5cf6
+    style C fill:#fdf3e4,stroke:#c8862c
+    style D fill:#eafaf3,stroke:#0e9e6e
+    </div>
+
+    <div class="box eng">
+      <div class="box-title">🔧 Simplify the assembly first</div>
+      <p>
+        The tool's one real weakness: it converts <em>every</em> part of an assembly into a link. Run it on your
+        full design and you get a link for every screw, standoff and chip on the Raspberry Pi — an unusable URDF and
+        a simulation that crawls. So you feed it a deliberately <strong>simplified</strong> assembly. The reference
+        simplified assembly has no subassemblies and only <strong>9 parts</strong>: the chassis, 2 motors, 2 wheels
+        (each a tyre + rim pair), the LiDAR and the camera. Those become <strong>7 links</strong>, fixed joints
+        between most of them, and <strong>2 revolute joints</strong> for the wheels.
+      </p>
+    </div>
+
+    <h3>Step 1 — Get Onshape API keys</h3>
+    <p>
+      The tool needs permission to read your document. Create a key pair in Onshape's
+      <a href="https://cad.onshape.com/appstore/dev-portal/apiKeys">Developer Portal</a>: click
+      <strong>Create new API key</strong>, tick the permissions you need, and click <strong>Create API key</strong>.
+    </p>
+    <div class="fig-grid">
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/7-2-basic-structure-of-a-urdf-file_p06_02.png" alt="Onshape Create new API key dialog listing permission checkboxes for reading profile, reading documents, writing documents, deleting documents, requesting purchases and sharing documents">
+        <figcaption><b>Figure 13.13</b> — Creating an API key. <em>Read your documents</em> is the essential permission; grant the minimum you actually need.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img loading="lazy" src="images/fastbot-course/7-2-basic-structure-of-a-urdf-file_p07_03.png" alt="Onshape API Key Secret popup showing a partially redacted access key and secret key with a warning that it cannot be displayed again">
+        <figcaption><b>Figure 13.14</b> — 🚨 <strong>Copy both keys now.</strong> This popup is the only time the secret is ever shown.</figcaption>
+      </figure>
+    </div>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ API keys are credentials — treat them like passwords</div>
+      <p>
+        An access-key/secret-key pair lets anyone holding it act on your CAD account. Keep the pair in a file you
+        explicitly add to <code>.gitignore</code> and never commit — the same secrets hygiene you'd apply to a
+        database password or a cloud token anywhere else in software engineering. A key pushed to a repository, even
+        briefly, even a private one, should be treated as compromised and rotated immediately. This matters
+        concretely in Lecture 14, where you push these very packages to GitHub.
+      </p>
+    </div>
+
+    <h3>Step 2 — Create the description package</h3>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> cd ~/ros2_ws/src
+<span class="term-prompt">$</span> ros2 pkg create --build-type ament_cmake fastbot_description \
+       --dependencies urdf xacro robot_state_publisher
+
+<span class="term-prompt">$</span> cd ~/ros2_ws/src/fastbot_description/
+<span class="term-prompt">$</span> mkdir onshape</div>
+    </div>
+    <p>
+      <code>fastbot_description</code> follows the ROS convention of a dedicated <code>*_description</code> package
+      as the single centralized home for a robot's kinematic structure, physical properties and appearance —
+      exactly the role <code>limo_description</code> played back in Lecture 4.
+    </p>
+
+    <h3>Step 3 — The config file</h3>
+    <div class="filename">fastbot_description/onshape/config.json</div>
+    <pre><code>{
+    "documentId":   "YOUR-ONSHAPE-DOCUMENT-ID",
+    "outputFormat": "urdf",
+    "packageName":  "fastbot_description/onshape",
+    "robotName":    "fastbot",
+    "assemblyName": "fastbot-student"
+}</code></pre>
+    <p>
+      The <code>documentId</code> is the 24-character string in your browser's address bar, immediately after
+      <code>https://cad.onshape.com/documents/</code> when the assembly is open:
+    </p>
+    <figure class="figure">
+      <img loading="lazy" src="images/fastbot-course/7-2-basic-structure-of-a-urdf-file_p09_04.png" alt="Browser address bar with the Onshape document ID highlighted, above the simplified fastbot-student assembly showing its nine-part instance list">
+      <figcaption><b>Figure 13.15</b> — The <code>documentId</code> in the URL, and below it the simplified assembly's instance list — chassis, motors, wheels, LiDAR, camera.</figcaption>
+    </figure>
+
+    <h3>Step 4 — The API key script</h3>
+    <p><code>onshape-to-robot</code> reads the keys from environment variables, so keep them in a sourceable script:</p>
+    <div class="filename">fastbot_description/onshape/api-keys.sh</div>
+    <pre><code>#!/bin/bash
+# Replace with your own keys, copied from the popup in Figure 13.14.
+export ONSHAPE_API=https://cad.onshape.com
+export ONSHAPE_ACCESS_KEY=YOUR-ACCESS-KEY
+export ONSHAPE_SECRET_KEY=YOUR-SECRET-KEY</code></pre>
+    <div class="filename">fastbot_description/.gitignore</div>
+    <pre><code>onshape/api-keys.sh</code></pre>
+    <p>Create that <code>.gitignore</code> line <em>now</em>, before the file ever exists in a commit.</p>
+
+    <h3>Step 5 — Run it</h3>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> cd ~/ros2_ws/src/fastbot_description/
+<span class="term-prompt">$</span> . onshape/api-keys.sh
+<span class="term-prompt">$</span> onshape-to-robot onshape</div>
+    </div>
+
+    <div class="filename">Output of onshape-to-robot onshape</div>
+    <pre><code>* Not workspace ID specified, retrieving the current workspace ...
++ Using workspace id: 684b05ef017e615d3bca90ce
+* Retrieving elements in the document, searching for the assembly...
+* Retrieving assembly with id 15599f7046132dd76e692f13
++ Found DOF: right_motor (fixed)
++ Found DOF: left_motor (fixed)
++ Found DOF: lidar (fixed)
++ Found DOF: left_wheel (continuous)
++ Found DOF: right_wheel (continuous)
++ Found DOF: camera (fixed)
+* Found total 6 degrees of freedom
+* Found 1 root nodes:
+    - fastbot-chassis &lt;1&gt;
++ Adding part fastbot-chassis &lt;1&gt;
++ Adding part fastbot-motor &lt;1&gt;
++ Adding part Wheel D65x25 v1 &lt;4&gt;
+WARNING: part Wheel D65x25 v1 &lt;4&gt; has no mass, maybe you should assign a material to it?
++ Adding part Wheel D65x25 v1 &lt;3&gt;
+WARNING: Parts with same name "wheel_d65x25_v1", incrementing STL name to "wheel_d65x25_v1__2"
+WARNING: part Wheel D65x25 v1 &lt;3&gt; has no mass, maybe you should assign a material to it?
++ Adding part fastbot-motor &lt;2&gt;
++ Adding part Wheel D65x25 v1 &lt;1&gt;
+WARNING: part Wheel D65x25 v1 &lt;1&gt; has no mass, maybe you should assign a material to it?
++ Adding part Wheel D65x25 v1 &lt;2&gt;
+WARNING: part Wheel D65x25 v1 &lt;2&gt; has no mass, maybe you should assign a material to it?
++ Adding part LSLIDAR-N10 &lt;1&gt;
+WARNING: part LSLIDAR-N10 &lt;1&gt; has no mass, maybe you should assign a material to it?
++ Adding part raspicam &lt;1&gt;
+WARNING: part raspicam &lt;1&gt; has no mass, maybe you should assign a material to it?
+* Writing robot.urdf</code></pre>
+
+    <p>
+      ✅ <code>robot.urdf</code> now exists in <code>fastbot_description/onshape/</code>, alongside an
+      <code>assets/</code> directory of exported STL meshes. Read that log carefully — it's telling you a lot.
+    </p>
+    <div class="tw">
+    <table>
+      <tr><th>Log line</th><th>What it means</th></tr>
+      <tr><td><code>Found DOF: left_wheel (continuous)</code></td><td>A revolute mate in the assembly became a continuous URDF joint. <strong>The mate name is the joint name.</strong></td></tr>
+      <tr><td><code>Found DOF: lidar (fixed)</code></td><td>A fasten mate became a fixed joint — the LiDAR is rigidly attached.</td></tr>
+      <tr><td><code>Found 1 root nodes: fastbot-chassis</code></td><td>The chassis is the root of the kinematic tree; it becomes <code>base_link</code>.</td></tr>
+      <tr><td><code>WARNING: ... has no mass</code></td><td><strong>Not cosmetic.</strong> Parts with no assigned material get placeholder inertials, and a Gazebo model with wrong masses behaves wrong. See the exercise below.</td></tr>
+      <tr><td><code>incrementing STL name</code></td><td>Two parts shared a name; the exporter disambiguated the mesh files. Harmless, but a hint to name parts uniquely.</td></tr>
+    </table>
+    </div>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ Those "no mass" warnings will bite you in Lecture 14</div>
+      <p>
+        A URDF with wrong inertial properties loads fine in RViz — visualization doesn't care about mass — and then
+        behaves bizarrely in Gazebo, where physics very much does. Wheels with near-zero inertia jitter or sink
+        through the floor; a chassis with the wrong mass distribution tips over on gentle turns. Assign materials to
+        every part in Onshape and re-export, or hand-correct the inertials afterwards. Fixing it now costs five
+        minutes; debugging it as "my Gazebo robot is possessed" costs an afternoon.
+      </p>
+    </div>
+
+    <h3>Forge's generated link tree</h3>
+    <div class="mermaid">
+flowchart TD
+  BL["fastbot_base_link<br/>chassis · 0.247 kg"] -->|fixed| M1["motor_1<br/>0.034 kg"]
+  BL -->|fixed| M2["motor_2<br/>0.034 kg"]
+  M1 -->|continuous| WR["wheel_right<br/>65mm dia x 25mm"]
+  M2 -->|continuous| WL["wheel_left<br/>65mm dia x 25mm"]
+  BL -->|fixed| LID["n10_v2 (LiDAR)<br/>0.05 kg"]
+  BL -->|fixed| CAM["camera<br/>0.01 kg"]
+  BL -->|fixed| CAST["ball_caster<br/>0.01 kg"]
+  style BL fill:#eef0ff,stroke:#3d4bf5
+  style WL fill:#eafaf3,stroke:#0e9e6e
+  style WR fill:#eafaf3,stroke:#0e9e6e
+    </div>
+    <p>
+      Two details in that tree are worth pausing on. First, the wheels are children of the <em>motors</em>, not of
+      the chassis directly — because that's how they're mated in CAD, and the exporter faithfully reproduces the
+      real mechanical hierarchy. Second, the motor bodies are attached with <strong>fixed</strong> joints: the motor
+      housing is bolted rigidly to the chassis and doesn't move. What rotates is the output shaft, and that rotation
+      is the wheel joint.
+    </p>
+
+    <div class="exercise">
+      <div class="level">Exercise · Intermediate</div>
+      <p>
+        Forge's ball caster is a single fixed link with no rotating parts at all, even though a real caster ball
+        obviously spins. Why is that an acceptable simplification here — and what would you have to change if Forge
+        needed to simulate the caster's behaviour on a rough surface accurately? Relate your answer to the
+        more-joints-versus-faster-simulation tradeoff the "simplify the assembly" box raised.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="rsp">
+    <h2><span class="num">13.11</span>Bringing up <code>robot_state_publisher</code></h2>
+    <p>
+      A URDF sitting on disk does nothing. <strong><code>robot_state_publisher</code></strong> is the node that loads
+      it, listens for joint angles on <code>/joint_states</code>, and broadcasts the resulting TF tree — the same
+      role it played for LIMO in Lecture 5. This is what lets RViz draw Forge, and what lets a LiDAR scan be
+      interpreted relative to the chassis rather than floating in space.
+    </p>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> mkdir -p ~/ros2_ws/src/fastbot_description/launch
+<span class="term-prompt">$</span> touch ~/ros2_ws/src/fastbot_description/launch/robot_state_publisher.launch.py</div>
+    </div>
+
+    <div class="filename">fastbot_description/launch/robot_state_publisher.launch.py</div>
+    <pre><code>import os
+from ament_index_python.packages import get_package_share_directory
+from launch import LaunchDescription
+from launch_ros.actions import Node
+import xacro
+from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.substitutions import LaunchConfiguration
+
+
+def launch_setup(context, *args, **kwargs):
+
+    robot_name = LaunchConfiguration("robot_name").perform(context)
+    robot_file = LaunchConfiguration("robot_file").perform(context)
+
+    robot_description_topic_name = "/" + robot_name + "_robot_description"
+    robot_state_publisher_name = robot_name + "_robot_state_publisher"
+    joint_state_topic_name = "/" + robot_name + "/joint_states"
+
+    package_description = "fastbot_description"
+    robot_desc_path = os.path.join(
+        get_package_share_directory(package_description), "onshape/", robot_file
+    )
+
+    # Load the XACRO file, passing the robot name through as an argument.
+    robot_desc = xacro.process_file(
+        robot_desc_path, mappings={"robot_name": robot_name}
+    )
+    xml = robot_desc.toxml()
+
+    robot_state_publisher_node = Node(
+        package="robot_state_publisher",
+        executable="robot_state_publisher",
+        name=robot_state_publisher_name,
+        emulate_tty=True,
+        parameters=[{"use_sim_time": True, "robot_description": xml}],
+        remappings=[
+            ("/robot_description", robot_description_topic_name),
+            ("/joint_states", joint_state_topic_name),
+        ],
+        output="screen",
+    )
+
+    return [robot_state_publisher_node]
+
+
+def generate_launch_description():
+    robot_name_arg = DeclareLaunchArgument("robot_name", default_value="fastbot")
+    robot_file_arg = DeclareLaunchArgument("robot_file", default_value="robot.urdf")
+
+    return LaunchDescription(
+        [robot_name_arg, robot_file_arg, OpaqueFunction(function=launch_setup)]
+    )</code></pre>
+
+    <p>
+      Both remappings exist for the reason §13.6 already argued: without them, two robots (or a robot and its
+      simulated twin) would both publish plain <code>/robot_description</code> and <code>/joint_states</code>, and
+      every downstream tool — RViz, a TF listener, Gazebo — would have no reliable way to tell whose description it
+      was looking at.
+    </p>
+
+    <div class="box hw">
+      <div class="box-title">🔩 <code>use_sim_time: True</code> is wrong on real hardware</div>
+      <p>
+        This launch file hardcodes <code>use_sim_time: True</code>, which tells the node to take its clock from a
+        <code>/clock</code> topic that only Gazebo publishes. On the physical robot there is no <code>/clock</code>,
+        so timestamps stall at zero and TF lookups start failing with "extrapolation into the future" errors that
+        look like a TF bug and aren't. Wire it to the <code>use_sim_time</code> argument the bringup file already
+        declares — <code>False</code> on hardware, <code>True</code> in Lecture 14's simulation. This is a genuinely
+        common real-world ROS 2 trap.
+      </p>
+    </div>
+
+    <h3>Install the directories</h3>
+    <div class="filename">fastbot_description/CMakeLists.txt</div>
+    <pre><code># ... rest of CMakeLists.txt
+find_package(ament_cmake REQUIRED)
+
+install(
+  DIRECTORY launch onshape
+  DESTINATION share/${PROJECT_NAME}
+)
+
+if(BUILD_TESTING)
+# ... rest of CMakeLists.txt</code></pre>
+
+    <h3>Add it to bringup</h3>
+    <div class="filename">fastbot_bringup/launch/bringup.launch.xml (adding the state publisher)</div>
+    <pre><code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;launch&gt;
+    &lt;arg name="use_sim_time" default="False"/&gt;
+    &lt;arg name="robot_name"   default="fastbot"/&gt;
+    &lt;arg name="robot_file"   default="robot.urdf"/&gt;
+    &lt;arg name="serial_port"  default="/dev/arduino_nano"/&gt;
+    &lt;arg name="baud_rate"    default="57600"/&gt;
+    &lt;arg name="loop_rate"    default="30"/&gt;
+    &lt;arg name="encoder_cpr"  default="2550"/&gt;
+
+    &lt;!-- Differential serial motor driver --&gt;
+    &lt;include file="$(find-pkg-share serial_motor)/launch/serial_motor.launch.py"&gt;
+        &lt;arg name="robot_name"  value="$(var robot_name)"/&gt;
+        &lt;arg name="serial_port" value="$(var serial_port)"/&gt;
+        &lt;arg name="baud_rate"   value="$(var baud_rate)"/&gt;
+        &lt;arg name="loop_rate"   value="$(var loop_rate)"/&gt;
+        &lt;arg name="encoder_cpr" value="$(var encoder_cpr)"/&gt;
+    &lt;/include&gt;
+
+    &lt;!-- Robot state publisher --&gt;
+    &lt;include file="$(find-pkg-share fastbot_description)/launch/robot_state_publisher.launch.py"&gt;
+        &lt;arg name="robot_name" value="$(var robot_name)"/&gt;
+        &lt;arg name="robot_file" value="$(var robot_file)"/&gt;
+    &lt;/include&gt;
+&lt;/launch&gt;</code></pre>
+
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> cd ~/ros2_ws
+<span class="term-prompt">$</span> colcon build --symlink-install &amp;&amp; source install/setup.bash
+<span class="term-prompt">$</span> ros2 launch fastbot_bringup bringup.launch.xml
+
+<span class="term-out"># from your workstation, on the same network:</span>
+<span class="term-prompt">$</span> ros2 run tf2_ros tf2_echo fastbot_base_link fastbot_n10_v2
+<span class="term-out">At time 0.0
+- Translation: [-0.017, -0.009, 0.111]
+- Rotation: in Quaternion [0.000, 0.000, 0.000, 1.000]</span></div>
+    </div>
+    <p>
+      ✅ Forge now describes its own body to ROS 2 every time it starts.
+    </p>
+    <div class="box idea">
+      <div class="box-title">💡 <code>--symlink-install</code> saves you a rebuild every time</div>
+      <p>
+        With <code>--symlink-install</code>, colcon symlinks files into <code>install/</code> instead of copying
+        them. Editing a launch file, a URDF or a Python node then takes effect immediately, with no rebuild. It's
+        the single most useful colcon flag during active development.
+      </p>
+    </div>
+
+    <div class="exercise">
+      <div class="level">Exercise · Easy</div>
+      <p>
+        Launch bringup, then open RViz on your workstation with <em>Fixed Frame</em> set to
+        <code>fastbot_base_link</code> and add a <em>RobotModel</em> display pointed at
+        <code>/fastbot_robot_description</code>. Confirm every link from the tree diagram in §13.10 appears with the
+        correct parent/child relationships. Then run <code>ros2 run tf2_tools view_frames</code> and inspect the
+        generated PDF — is anything missing or disconnected?
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="udev">
+    <h2><span class="num">13.12</span>udev rules — a transferable skill</h2>
+    <p>
+      You have probably hit this on Linux before: you plug in a USB device and it lands on
+      <code>/dev/ttyUSB0</code>… or <code>/dev/ttyUSB1</code>… or <code>/dev/ttyACM0</code>, depending on what else
+      was plugged in and in what order. Those names are assigned by <em>enumeration order</em>, not by identity. Add
+      a second serial device and yesterday's <code>/dev/ttyUSB0</code> can silently become a completely different
+      piece of hardware.
+    </p>
+    <p>
+      That is intolerable on a robot where a launch file hardcodes the path. The fix is a <strong>udev rule</strong>:
+      a small file telling the Linux kernel "whenever a device with this exact vendor and product ID appears, also
+      create a stable, human-readable symlink to it." Forge gets two: <code>/dev/lslidar</code> for the LiDAR and
+      <code>/dev/arduino_nano</code> for the Nano.
+    </p>
+
+    <h3>The four-step recipe</h3>
+    <ol class="steps">
+      <li><strong>Watch the kernel log live</strong> with <code>sudo dmesg -wH</code>, then physically plug the device in.</li>
+      <li><strong>Read off</strong> the <code>idVendor</code>, <code>idProduct</code> and assigned port from the messages that appear.</li>
+      <li><strong>Write a one-line rule</strong> in <code>/etc/udev/rules.d/</code>.</li>
+      <li><strong>Reload</strong> the rules and verify the symlink exists.</li>
+    </ol>
+
+    <div class="filename">Output of sudo dmesg -wH, on plugging in the LiDAR</div>
+    <pre><code>[Mar20 01:11] usb 3-1: new full-speed USB device number 11 using xhci_hcd
+[  +0.127717] usb 3-1: New USB device found, idVendor=10c4, idProduct=ea60, bcdDevice= 1.00
+[  +0.000011] usb 3-1: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[  +0.000003] usb 3-1: Product: CP2102 USB to UART Bridge Controller
+[  +0.000004] usb 3-1: Manufacturer: Silicon Labs
+[  +0.000003] usb 3-1: SerialNumber: 0001
+[  +0.002429] cp210x 3-1:1.0: cp210x converter detected
+[  +0.002875] usb 3-1: cp210x converter now attached to ttyUSB0</code></pre>
+
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> sudo nano /etc/udev/rules.d/lslidar.rules</div>
+    </div>
+    <div class="filename">/etc/udev/rules.d/lslidar.rules</div>
+    <pre><code>SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", SYMLINK+="lslidar"</code></pre>
+
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> sudo udevadm control --reload-rules
+<span class="term-prompt">$</span> sudo udevadm trigger
+<span class="term-prompt">$</span> ls -l /dev/lslidar
+<span class="term-out">lrwxrwxrwx 1 root root 7 Jan  1 00:00 /dev/lslidar -&gt; ttyUSB0</span></div>
+    </div>
+    <p>
+      ✅ The LiDAR is now always at <code>/dev/lslidar</code>, regardless of enumeration order. Repeat the same four
+      steps for the Nano with its own vendor/product ID and <code>SYMLINK+="arduino_nano"</code>, which is what makes
+      the bringup file's <code>/dev/arduino_nano</code> default resolve.
+    </p>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ Your IDs will differ — copy the recipe, not the numbers</div>
+      <p>
+        <code>10c4:ea60</code> is the Silicon Labs CP2102 USB-to-UART bridge, which is what this particular LiDAR
+        happens to use. Your LiDAR may use an FTDI or CH340 chip with completely different IDs, and your Nano almost
+        certainly does. Always read the real IDs out of your own <code>dmesg</code> output. A rule with the wrong IDs
+        fails silently — no symlink, no error message.
+      </p>
+    </div>
+
+    <div class="box idea">
+      <div class="box-title">💡 Why this matters far beyond one LiDAR</div>
+      <p>
+        This exact four-step recipe works for any USB serial device you will ever add to a robot: a different LiDAR,
+        a GPS receiver, an IMU, a second motor controller, an emergency-stop button on a USB relay board. Learn it
+        once here and you never have to hardcode a fragile <code>/dev/ttyUSBn</code> path again.
+      </p>
+    </div>
+
+    <div class="exercise">
+      <div class="level">Exercise · Intermediate</div>
+      <p>
+        Suppose the LiDAR and the Nano both used the same USB-serial bridge chip — identical vendor and product IDs.
+        The rule above would then match both devices and create the same symlink for whichever enumerated last.
+        Look up what other <code>ATTRS{}</code> fields udev exposes (hint: <code>udevadm info -a -n /dev/ttyUSB0</code>)
+        and describe how you'd disambiguate them. What attribute would you key on, and what's the drawback of using
+        the physical USB port path instead?
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="lidar">
+    <h2><span class="num">13.13</span>The LiDAR — LSLiDAR N-10</h2>
+    <p>
+      Forge's LiDAR is the <a href="https://www.lslidar.com/product/n10-navigation-obstacle-avoidance-lidar/">LSLiDAR
+      N-10</a>. Before the driver, it's worth understanding why <em>this</em> sensor, because the reasoning is the
+      part that transfers.
+    </p>
+    <figure class="figure">
+      <img loading="lazy" src="images/fastbot-course/8-2-lslidar-n-10_p01_01.png" alt="LSLiDAR N-10 360-degree scanning LiDAR: a compact black cylinder with an enclosed spinning head">
+      <figcaption><b>Figure 13.16</b> — The LSLiDAR N-10. Note the fully enclosed spinning head.</figcaption>
+    </figure>
+
+    <div class="tw">
+    <table>
+      <tr><th>Specification</th><th>Value</th></tr>
+      <tr><td>Dimensions</td><td>52&nbsp;mm diameter × 36.1&nbsp;mm tall</td></tr>
+      <tr><td>Weight</td><td>60&nbsp;g</td></tr>
+      <tr><td>Range</td><td>0.2 - 12.0&nbsp;m</td></tr>
+      <tr><td>Range precision</td><td>±3&nbsp;cm (0-6&nbsp;m); ±4.5&nbsp;cm (6-12&nbsp;m)</td></tr>
+      <tr><td>Field of view</td><td>360°</td></tr>
+      <tr><td>Angular resolution</td><td>0.48° - 0.96°</td></tr>
+    </table>
+    </div>
+
+    <p>Why this one:</p>
+    <ul>
+      <li>The specs are more than enough for a small differential-drive robot doing SLAM and obstacle avoidance.</li>
+      <li>Compact and light — 60&nbsp;g barely dents the power or mass budget.</li>
+      <li>Unlike many cheap LiDARs, the <strong>spinning components are enclosed</strong>, which meaningfully extends its life on a robot that will get knocked about.</li>
+      <li><strong>Data and power over one USB-C cable</strong> — no separate supply, and it plugs straight into the Pi.</li>
+      <li>The manufacturer publishes a <strong>ROS 2 driver</strong>, which makes it close to plug-and-play.</li>
+    </ul>
+
+    <div class="box real">
+      <div class="box-title">🌍 "Does the vendor ship a ROS 2 driver?" is a real selection criterion</div>
+      <p>
+        One of the genuine advantages of ROS being open source is how much work it saves you. Manufacturers who want
+        their device widely adopted publish either an API or — much better — a ROS 2 driver. When you're choosing
+        components for your own robot after this course, treat driver availability as a hard specification alongside
+        range and resolution. A marginally better sensor with no driver can easily cost you a fortnight.
+      </p>
+    </div>
+
+    <h3>Clone and configure the driver</h3>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> cd ~/ros2_ws/src
+<span class="term-prompt">$</span> git clone -b N10_V1.0 https://github.com/Lslidar/Lslidar_ROS2_driver.git</div>
+    </div>
+    <p>The branch matters: <code>-b N10_V1.0</code> corresponds to the N-10 model specifically.</p>
+
+    <p>Then fix three things in the driver's parameter file:</p>
+    <div class="filename">Lslidar_ROS2_driver/lslidar_driver/params/lsx10.yaml</div>
+    <pre><code>/lslidar_driver_node:
+  ros__parameters:
+    frame_id: laser_link                   # laser coordinate frame
+    group_ip: 224.1.1.2
+    add_multicast: false
+    device_ip: 192.168.1.200               # lidar source IP (network mode only)
+    device_ip_difop: 192.168.1.102
+    msop_port: 2368
+    difop_port: 2369
+    lidar_name: N10                        # &lt;-- MUST match your model
+    angle_disable_min: 0.0                 # start of the angular blanking window
+    angle_disable_max: 0.0                 # end of the angular blanking window
+    min_range: 0.0
+    max_range: 200.0
+    use_gps_ts: false
+    scan_topic: /scan                      # LaserScan topic name
+    interface_selection: serial            # &lt;-- 'serial' (USB), not 'net'
+    serial_port_: /dev/lslidar             # &lt;-- the udev symlink from §13.12
+    high_reflection: false
+    compensation: false
+    pubScan: true                          # publish sensor_msgs/LaserScan
+    pubPointCloud2: false
+    pointcloud_topic: /lslidar_point_cloud</code></pre>
+
+    <div class="tw">
+    <table>
+      <tr><th>Setting</th><th>Why it must change</th></tr>
+      <tr><td><code>lidar_name: N10</code></td><td>The driver supports M10, M10_P, M10_PLUS, M10_GPS, N10, L1... — the wrong name means the wrong packet parser and garbage scans.</td></tr>
+      <tr><td><code>interface_selection: serial</code></td><td>The N-10 connects over USB, not Ethernet. Leave this on <code>net</code> and the driver waits forever for packets that never arrive.</td></tr>
+      <tr><td><code>serial_port_: /dev/lslidar</code></td><td>The stable symlink you created in §13.12. This is precisely what that section was for.</td></tr>
+    </table>
+    </div>
+
+    <p>One more edit — stop the driver launching its own RViz, which a headless Pi cannot do:</p>
+    <div class="filename">lslidar_driver/launch/lslidar_launch.py</div>
+    <pre><code>    return LaunchDescription([
+        driver_node,
+        # rviz_node,      &lt;-- comment this out
+    ])</code></pre>
+
+    <h3>Build and run</h3>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> cd ~/ros2_ws &amp;&amp; colcon build --symlink-install &amp;&amp; source install/setup.bash
+<span class="term-prompt">$</span> ros2 launch lslidar_driver lslidar_launch.py
+<span class="term-out">[INFO] [lslidar_driver_node-1]: process started with pid [69]
+[lslidar_driver_node-1] [INFO] [lslidar_driver_node]: Lidar is N10
+[lslidar_driver_node-1] port = /dev/lslidar, baud_rate = 230400
+[lslidar_driver_node-1] open_port /dev/lslidar OK !
+[lslidar_driver_node-1] [INFO] [lslidar_driver_node]: Initialised lslidar without error
+[lslidar_driver_node-1] [INFO] [lslidar_driver_node]: Successfully initialize driver...</span></div>
+    </div>
+
+    <h3>Verify — properly</h3>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> ros2 topic list
+<span class="term-out">/scan
+...</span>
+<span class="term-prompt">$</span> ros2 topic hz /scan
+<span class="term-out">average rate: 9.995   min: 0.099s max: 0.103s std dev: 0.00103s window: 11
+average rate: 9.992   min: 0.099s max: 0.103s std dev: 0.00102s window: 21
+average rate: 9.980   min: 0.099s max: 0.104s std dev: 0.00117s window: 31</span></div>
+    </div>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ A launched node is not the same as a working sensor</div>
+      <p>
+        Notice the verification isn't "did the launch command exit without an error" — it's
+        <code>ros2 topic hz</code>, confirming data is genuinely flowing at a sane rate (~10&nbsp;Hz here). A topic
+        existing in <code>ros2 topic list</code> proves only that something advertised it. Hold onto this habit;
+        §13.14 turns it into a full debugging exercise where a node launches perfectly cleanly and does nothing at
+        all.
+      </p>
+    </div>
+
+    <h3>Add it to bringup</h3>
+    <div class="filename">fastbot_bringup/launch/bringup.launch.xml (adding the LiDAR)</div>
+    <pre><code>    &lt;!-- LSLiDAR ROS 2 driver --&gt;
+    &lt;include file="$(find-pkg-share lslidar_driver)/launch/lslidar_launch.py"/&gt;
+&lt;/launch&gt;</code></pre>
+    <p>✅ Forge now publishes <code>sensor_msgs/LaserScan</code>.</p>
+
+    <div class="exercise">
+      <div class="level">Exercise · Intermediate</div>
+      <p>
+        Place Forge a measured 1.00&nbsp;m from a flat wall, facing it squarely. Echo <code>/scan</code>, find the
+        range reading nearest 0°, and compare it to your tape measure. Is it within the datasheet's ±3&nbsp;cm? If
+        not, what would you check first — the sensor, the mounting, or your measurement? (Lecture 11 asked you the
+        same question about LIMO's LiDAR, deliberately.)
+      </p>
+    </div>
+    <div class="exercise">
+      <div class="level">Exercise · Harder</div>
+      <p>
+        The parameter file sets <code>frame_id: laser_link</code>, but Forge's URDF names its LiDAR link something
+        generated by the CAD export (<code>fastbot_n10_v2</code> in the reference). What breaks if those don't match?
+        Load the scan in RViz with <em>Fixed Frame</em> set to <code>fastbot_base_link</code> and observe. Then fix
+        it — and decide whether it's better to change the driver's <code>frame_id</code> or add a static transform,
+        and why.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="camera">
+    <h2><span class="num">13.14</span>The camera — Raspicam, V4L2 &amp; a silent failure</h2>
+    <p>
+      Forge's camera is the <a href="https://www.raspberrypi.com/products/camera-module-v2/">Raspberry Pi Camera
+      Module 2</a> (any Raspicam version works).
+    </p>
+    <figure class="figure">
+      <img loading="lazy" src="images/fastbot-course/9-2-raspicam_p01_01.png" alt="Raspberry Pi Camera Module 2: a small green PCB with a central lens and an attached white ribbon cable">
+      <figcaption><b>Figure 13.17</b> — The Raspicam. 8&nbsp;MP, 25×23×9&nbsp;mm, just over 3&nbsp;g, connected by a 15&nbsp;cm ribbon.</figcaption>
+    </figure>
+
+    <div class="tw">
+    <table>
+      <tr><th>Specification</th><th>Value</th></tr>
+      <tr><td>Sensor</td><td>8&nbsp;megapixel native, 3280 × 2464 stills</td></tr>
+      <tr><td>Video</td><td>1080p30, 720p60, 640×480p90</td></tr>
+      <tr><td>Size / weight</td><td>25 × 23 × 9&nbsp;mm / just over 3&nbsp;g</td></tr>
+      <tr><td>Connection</td><td>15&nbsp;cm CSI ribbon cable (supplied)</td></tr>
+    </table>
+    </div>
+
+    <p>Why this camera:</p>
+    <ul>
+      <li>It's the <em>official</em> camera for the Raspberry Pi — using anything else on a Pi is fighting the platform.</li>
+      <li>It uses the dedicated <strong>CSI</strong> connector, which saves a USB port. On Forge, USB ports are scarce: the LiDAR takes one, the Nano takes another.</li>
+      <li>Power consumption is a non-issue — it was designed against the Pi's own specs.</li>
+    </ul>
+
+    <h3>The problem: no first-party ROS 2 driver on Ubuntu</h3>
+    <p>Bringing this camera up is trickier than the LiDAR, for two reasons:</p>
+    <ol>
+      <li>The Raspicam is officially supported only on <strong>Raspberry Pi OS</strong>. Forge runs Ubuntu Server. That doesn't make it impossible, but it adds steps.</li>
+      <li>The manufacturer never developed an open-source ROS 2 driver, so you need a generic one.</li>
+    </ol>
+
+    <div class="box def">
+      <div class="box-title">📖 Video4Linux2 — the generic answer</div>
+      <p>
+        <strong>V4L2</strong> is the Linux kernel's collection of camera device drivers plus a common API for
+        realtime video capture. Critically it supports <strong>CSI</strong> cameras, which is exactly what the
+        Raspicam is. And where there's a kernel API, there's a ROS 2 wrapper: Forge uses
+        <a href="https://gitlab.com/boldhearts/ros2_v4l2_camera"><code>ros2_v4l2_camera</code></a> by Sander G. van
+        Dijk. It exposes every user-settable camera control as a ROS 2 parameter, uses <code>cv_bridge</code> to
+        convert raw frames to ROS 2 messages, supports <code>image_transport</code> compression, and supports
+        zero-copy intra-process communication. 🥳 More than enough — hooray for open source.
+      </p>
+    </div>
+
+    <h3>Install</h3>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> sudo apt install ros-humble-v4l2-camera \
+       ros-humble-image-transport-plugins v4l-utils</div>
+    </div>
+    <div class="box idea">
+      <div class="box-title">💡 Why <code>apt</code> and not <code>git clone</code></div>
+      <p>
+        Some developers go the extra step of publishing their ROS 2 driver as a Debian package. That means instead
+        of cloning into your workspace and compiling, you just <code>apt install</code> it. Those packages land in
+        <code>/opt/ros/$ROS_DISTRO/share</code>, so a launch file requesting such a node needs the <em>ROS
+        installation</em> sourced — not just your workspace. <code>image-transport-plugins</code> comes along to give
+        you <code>/image_raw/compressed</code> (much kinder to WiFi than raw frames), and <code>v4l-utils</code>
+        gives you the diagnostic tools you're about to need.
+      </p>
+    </div>
+
+    <h3>Add it to bringup</h3>
+    <div class="filename">fastbot_bringup/launch/bringup.launch.xml (complete)</div>
+    <pre><code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;launch&gt;
+    &lt;arg name="use_sim_time" default="False"/&gt;
+    &lt;arg name="robot_name"   default="fastbot_1"/&gt;
+    &lt;arg name="robot_file"   default="fastbot_multi.xacro"/&gt;
+    &lt;arg name="serial_port"  default="/dev/arduino_nano"/&gt;
+    &lt;arg name="baud_rate"    default="57600"/&gt;
+    &lt;arg name="loop_rate"    default="30"/&gt;
+    &lt;arg name="encoder_cpr"  default="2550"/&gt;
+
+    &lt;!-- Differential serial motor driver --&gt;
+    &lt;include file="$(find-pkg-share serial_motor)/launch/serial_motor.launch.py"&gt;
+        &lt;arg name="robot_name"  value="$(var robot_name)"/&gt;
+        &lt;arg name="serial_port" value="$(var serial_port)"/&gt;
+        &lt;arg name="baud_rate"   value="$(var baud_rate)"/&gt;
+        &lt;arg name="loop_rate"   value="$(var loop_rate)"/&gt;
+        &lt;arg name="encoder_cpr" value="$(var encoder_cpr)"/&gt;
+    &lt;/include&gt;
+
+    &lt;!-- Robot state publisher --&gt;
+    &lt;include file="$(find-pkg-share fastbot_description)/launch/robot_state_publisher.launch.py"&gt;
+        &lt;arg name="robot_name" value="$(var robot_name)"/&gt;
+        &lt;arg name="robot_file" value="$(var robot_file)"/&gt;
+    &lt;/include&gt;
+
+    &lt;!-- LSLiDAR ROS 2 driver --&gt;
+    &lt;include file="$(find-pkg-share lslidar_driver)/launch/lslidar_launch.py"/&gt;
+
+    &lt;!-- v4l2 camera ROS 2 driver (Raspberry Pi camera) --&gt;
+    &lt;node pkg="v4l2_camera" exec="v4l2_camera_node" name="v4l2_camera_node"
+          namespace="$(var robot_name)"&gt;
+        &lt;param name="image_size" value="[320, 240]"/&gt;
+        &lt;param name="camera_frame_id" value="$(var robot_name)_camera"/&gt;
+    &lt;/node&gt;
+&lt;/launch&gt;</code></pre>
+
+    <div class="box hw">
+      <div class="box-title">🔩 320×240 on purpose</div>
+      <p>
+        The camera is capable of 1080p30, and this launch file asks for 320×240. That's deliberate: raw uncompressed
+        frames over WiFi will saturate the link and starve every other topic, including the ones keeping Forge from
+        driving into a wall. Start small, use the compressed transport for anything you stream off-robot, and only
+        raise the resolution when you have a concrete reason and have measured the bandwidth cost.
+      </p>
+    </div>
+
+    <h3>🚨 And now the bug</h3>
+    <p>
+      Launch it. The node starts. No errors. <code>ros2 topic list</code> shows <code>/fastbot_1/image_raw</code>
+      existing. And <strong>no messages ever flow through it</strong>. Forever. Silently.
+    </p>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ A clean launch is not a working sensor</div>
+      <p>
+        This is precisely the habit Lecture 11 built around LIMO's <code>error_code</code> field, and the same
+        pattern as the commented-out <code>publish_odometry()</code> in §13.5: <strong>a system reporting no error
+        is not the same as a system that is working.</strong> Zero log output from a camera node means "nothing
+        crashed," not "images are flowing." Verify actual data, every time — the same
+        <code>ros2 topic hz</code> discipline as §13.13.
+      </p>
+    </div>
+
+    <h4>The cause</h4>
+    <p>
+      Since 2020, Raspberry Pi has used a camera stack based on <strong>libcamera</strong>, whose kernel driver is
+      <code>bcm2835-unicam</code>. <code>ros2_v4l2_camera</code> does not speak that stack — it expects the older
+      <strong><code>bm2835 mmal</code></strong> driver. The mismatch produces no error because nothing has failed;
+      the node opened a device node that simply never delivers frames.
+    </p>
+
+    <h4>The fix</h4>
+    <p>Force the Pi back onto the legacy stack in its boot configuration:</p>
+    <ol class="steps">
+      <li>Edit <code>/boot/firmware/config.txt</code>.</li>
+      <li>Set <code>camera_auto_detect=0</code>, to stop the overlays that load the unicam driver.</li>
+      <li>Add <code>start_x=1</code> at the end of the file, enabling the camera through the legacy driver.</li>
+      <li>Reboot. The camera stack is selected at boot, not at runtime.</li>
+    </ol>
+
+    <div class="filename">/boot/firmware/config.txt (relevant excerpt)</div>
+    <pre><code>[all]
+# Enable audio, I2C and SPI on the GPIO header. These relate to the base
+# device-tree so they must appear *before* any other dtoverlay= line.
+dtparam=audio=on
+dtparam=i2c_arm=on
+dtparam=spi=on
+
+disable_overscan=1
+
+# Enable the serial pins
+enable_uart=1
+
+# Autoload overlays for recognized cameras/displays on the CSI/DSI ports.
+# Note this is for libcamera support, *not* the legacy camera stack.
+camera_auto_detect=0        &lt;-- was 1
+
+display_auto_detect=1
+
+# Config settings specific to arm64
+arm_64bit=1
+dtoverlay=dwc2
+
+[cm4]
+dtoverlay=dwc2,dr_mode=host
+
+[all]
+start_x=1                   &lt;-- add this</code></pre>
+
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> sudo reboot
+<span class="term-out"># ... wait, then ssh back in ...</span>
+<span class="term-prompt">$</span> v4l2-ctl -D
+<span class="term-out">Driver Info:
+    Driver name      : bm2835 mmal
+    Card type        : mmal service 16.1
+    Bus info         : platform:bcm2835-v4l2-0
+    Driver version   : 5.15.173
+    Capabilities     : 0x85200005
+        Video Capture
+        Video Overlay
+        Read/Write
+        Streaming
+        Extended Pix Format
+        Device Capabilities
+    Device Caps      : 0x05200005
+        Video Capture
+        Video Overlay
+        Read/Write
+        Streaming
+        Extended Pix Format</span></div>
+    </div>
+    <p>
+      <code>Driver name : bm2835 mmal</code> is the confirmation you're looking for. If it instead reads something
+      like <code>unicam</code>, the change hasn't taken effect — check you edited
+      <code>/boot/firmware/config.txt</code> (not <code>/boot/config.txt</code>, which is a different file on
+      Ubuntu) and that you actually rebooted.
+    </p>
+
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> ros2 launch fastbot_bringup bringup.launch.xml
+<span class="term-prompt">$</span> ros2 topic hz /fastbot_1/image_raw
+<span class="term-out">average rate: 29.87   min: 0.031s max: 0.036s std dev: 0.00097s window: 100</span>
+<span class="term-prompt">$</span> ros2 topic list | grep image
+<span class="term-out">/fastbot_1/image_raw
+/fastbot_1/image_raw/compressed
+/fastbot_1/camera_info</span></div>
+    </div>
+    <p>
+      ✅ Forge now publishes <code>Image</code> and <code>CompressedImage</code> messages. View them from your
+      workstation with <code>rqt_image_view</code> — the same tool you used on LIMO in Lecture 8.
+    </p>
+
+    <div class="exercise">
+      <div class="level">Exercise · Harder — predict before you fix</div>
+      <p>
+        <strong>Before</strong> making the <code>config.txt</code> change, launch the camera node and, using only
+        <code>v4l2-ctl -D</code> and <code>ros2 topic hz /fastbot_1/image_raw</code>, write down what you expect each
+        command to report while the bug is still present. Then apply the fix, reboot, and re-run both to check your
+        prediction. Specifically: what does <code>ros2 topic hz</code> print when <em>no</em> messages are
+        publishing — an error, or silence? Why is that distinction the whole lesson of this section?
+      </p>
+    </div>
+
+    <div class="assignment">
+      <div class="label">Assignment</div>
+      <p>
+        Write a bring-up checklist for Forge, explicitly modelled on Lecture 11's LIMO physical bring-up checklist:
+        visual inspection first, then power, then a wheels-off-ground motor test, then sensor sanity checks last.
+        Adapt each step to Forge's own components from this session and Lecture 12. For every sensor step, state
+        the <em>specific command</em> that verifies real data flow rather than mere absence of errors — and explain
+        why that order matters.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="summary">
+    <h2><span class="num">13.15</span>Summary, checkpoint, quiz &amp; glossary</h2>
+    <p>
+      Forge went from a bare compute board with a motor MCU attached to a robot with a real ROS 2 nervous system, a
+      formally described body, and two working senses. You built a colcon workspace and custom messages, derived
+      differential-drive kinematics by hand before reading the code that implements them, wrote a namespaced driver
+      and a single bringup launch file, designed a chassis in CAD and generated its URDF automatically rather than
+      transcribing it, published a TF tree, made two USB devices addressable by identity instead of enumeration
+      order, and brought up a LiDAR and a camera — the camera via a genuinely instructive silent failure you
+      diagnosed rather than were handed.
+    </p>
+    <p>
+      Lecture 14 takes this exact URDF and these exact sensors into Gazebo, adds a 3D-printed cover, and closes out
+      the course.
+    </p>
+
+    <div class="box think">
+      <div class="box-title">🤔 Think About It</div>
+      <p>
+        The LiDAR and camera both attach directly to the Pi, completely bypassing the Arduino Nano — while the
+        motors are only reachable <em>through</em> it. What distinguishes those two categories of device? Where
+        exactly have you seen this same architectural split before in this course?
+      </p>
+    </div>
+
+    <div class="checkpoint">
+      <strong style="color:var(--text); display:block; margin-bottom:10px;">✅ Learning checkpoint</strong>
+      <ul>
+        <li>I created a colcon workspace and understand which directories are generated and safe to delete.</li>
+        <li>I can explain why message definitions live in their own <code>ament_cmake</code> package, and I verified mine with <code>ros2 interface show</code>.</li>
+        <li>I can derive the four-step conversion from a <code>Twist</code> to encoder counts per PID loop, on paper, without the code.</li>
+        <li>I can read <code>motor_driver.py</code> and explain what each method does — including why <code>send_command</code> needs a mutex under a multi-threaded executor.</li>
+        <li>I found and fixed the commented-out <code>publish_odometry()</code> call, and verified <code>/odom</code> against a tape measure.</li>
+        <li>I can explain why namespacing every topic and frame with <code>robot_name</code> matters beyond avoiding naming collisions.</li>
+        <li>I drove real wheels from <code>/cmd_vel</code> using <code>teleop_twist_keyboard</code>.</li>
+        <li>I designed parts and an assembly in CAD, and I know why mate names and types determine URDF joint names and types.</li>
+        <li>I generated a URDF with <code>onshape-to-robot</code>, and I know why the "no mass" warnings matter for Lecture 14.</li>
+        <li>I know why an API key pair must never be committed, and I added it to <code>.gitignore</code> before it existed.</li>
+        <li>I brought up <code>robot_state_publisher</code> and inspected the resulting TF tree in RViz.</li>
+        <li>I can perform the four-step udev workflow for any USB serial device.</li>
+        <li>I brought up a LiDAR and verified it with <code>ros2 topic hz</code>, not just the launch log.</li>
+        <li>I diagnosed a "clean launch, zero data" camera failure by checking the bound kernel driver with <code>v4l2-ctl -D</code>.</li>
+      </ul>
+    </div>
+
+    <div class="quiz">
+      <div class="quiz-title">🧠 Quick Quiz — Session 13</div>
+      <div class="quiz-q">
+        <p><strong>Q1.</strong> A <code>Twist</code> with <code>linear.x = 0</code> and <code>angular.z = 1.0</code> arrives. What do the differential-drive equations produce, and what does the robot do?</p>
+        <details><summary>Reveal answer</summary><p><code>v_L = &minus;&omega;L/2</code> and <code>v_R = +&omega;L/2</code> — equal and opposite wheel speeds, so the robot rotates in place about its own centre.</p></details>
+      </div>
+      <div class="quiz-q">
+        <p><strong>Q2.</strong> Why does <code>send_command</code> take a <code>Lock</code> before writing to the serial port?</p>
+        <details><summary>Reveal answer</summary><p>The node runs on a <code>MultiThreadedExecutor</code> with a reentrant callback group, so the <code>/cmd_vel</code> callback and the 10&nbsp;Hz encoder timer can execute simultaneously. Two interleaved writes to one serial port produce corrupted commands and mismatched replies. The mutex serialises access.</p></details>
+      </div>
+      <div class="quiz-q">
+        <p><strong>Q3.</strong> In the CAD-to-URDF export, what determines the name and type of each resulting URDF joint?</p>
+        <details><summary>Reveal answer</summary><p>The mate in the CAD assembly. Its <em>name</em> becomes the joint name, and its <em>type</em> determines the joint type — a fasten mate becomes <code>fixed</code>, a revolute mate becomes <code>continuous</code>.</p></details>
+      </div>
+      <div class="quiz-q">
+        <p><strong>Q4.</strong> Why must the Onshape API access/secret key pair never be committed to version control?</p>
+        <details><summary>Reveal answer</summary><p>It's a credential, not project data — anyone holding it can act on your CAD account through the API. A key committed to a repo, even briefly or privately, should be treated as compromised and rotated.</p></details>
+      </div>
+      <div class="quiz-q">
+        <p><strong>Q5.</strong> Why does a udev rule beat hardcoding <code>/dev/ttyUSB0</code> in a launch file?</p>
+        <details><summary>Reveal answer</summary><p><code>/dev/ttyUSBn</code> names are assigned by enumeration order, not device identity. Plugging devices in a different order, or adding one, can silently reassign which physical sensor a hardcoded path points to. A rule keyed to vendor/product ID creates a stable symlink instead.</p></details>
+      </div>
+      <div class="quiz-q">
+        <p><strong>Q6.</strong> The LiDAR driver launches, prints "Successfully initialize driver", and <code>/scan</code> appears in <code>ros2 topic list</code>. Is the LiDAR working?</p>
+        <details><summary>Reveal answer</summary><p>Unproven. A topic existing means something advertised it. Run <code>ros2 topic hz /scan</code> and confirm a sane rate (~10&nbsp;Hz for the N-10). Only then is it working.</p></details>
+      </div>
+      <div class="quiz-q">
+        <p><strong>Q7. (Gotcha)</strong> The camera node launches with zero errors and <code>/image_raw</code> exists, but no frames arrive. What's the cause, and what one command confirms it?</p>
+        <details><summary>Reveal answer</summary><p>The Pi is running the modern libcamera stack (<code>bcm2835-unicam</code>), which <code>ros2_v4l2_camera</code> doesn't speak. Confirm with <code>v4l2-ctl -D</code>: it should report <code>bm2835 mmal</code>. Fix by setting <code>camera_auto_detect=0</code> and adding <code>start_x=1</code> in <code>/boot/firmware/config.txt</code>, then rebooting.</p></details>
+      </div>
+      <div class="quiz-q">
+        <p><strong>Q8.</strong> Why are Forge's motor bodies attached with <code>fixed</code> joints rather than <code>continuous</code> ones?</p>
+        <details><summary>Reveal answer</summary><p>The motor housing is bolted rigidly to the chassis and doesn't move relative to it. What rotates is the output shaft — and that rotation is modelled by the wheel joint, which is a child of the motor link.</p></details>
+      </div>
+    </div>
+
+    <h3>Glossary</h3>
+    <dl class="glossary">
+      <dt>colcon workspace</dt><dd>A directory holding <code>src/</code> plus the generated <code>build/</code>, <code>install/</code> and <code>log/</code> directories produced by <code>colcon build</code>.</dd>
+      <dt>ROS 2 driver</dt><dd>A node that exposes a piece of hardware through ROS 2 topics, services and actions instead of its native protocol.</dd>
+      <dt>Differential drive</dt><dd>A two-wheel drive arrangement with no steering mechanism; heading changes come from the difference between wheel speeds.</dd>
+      <dt>Wheel separation (<code>L</code>)</dt><dd>The distance between the two driven wheels' contact points. Errors here show up as turn-angle errors in odometry.</dd>
+      <dt>Dead reckoning</dt><dd>Estimating position by integrating measured motion from a known start, with no external reference. Drifts without bound — which is why Lecture 9's EKF and Lecture 10's AMCL exist.</dd>
+      <dt>Namespacing</dt><dd>Prefixing every topic, frame and node name with a shared identifier so multiple instances can coexist on one ROS 2 graph.</dd>
+      <dt>Bringup package</dt><dd>The package holding the single top-level launch file that starts a robot's whole software stack.</dd>
+      <dt>Mate (CAD)</dt><dd>A geometric constraint between parts in a CAD assembly. Its name and type determine the exported URDF joint's name and type.</dd>
+      <dt>Inertial properties</dt><dd>Mass and the inertia tensor of a link. Ignored by RViz, essential to Gazebo — which is why "no mass" export warnings matter.</dd>
+      <dt><code>robot_state_publisher</code></dt><dd>The node that reads a URDF plus <code>/joint_states</code> and broadcasts the corresponding TF tree.</dd>
+      <dt>udev rule</dt><dd>A Linux rule that creates a stable device symlink based on a device's vendor/product ID, so software never depends on enumeration order.</dd>
+      <dt>V4L2 (Video4Linux2)</dt><dd>The Linux kernel's generic camera device API, and the layer a generic ROS 2 camera driver targets.</dd>
+      <dt>Legacy camera stack</dt><dd>The older <code>bm2835 mmal</code> driver that V4L2-based tools expect. Modern Pi images default to libcamera/unicam instead, requiring an explicit boot-config change.</dd>
+      <dt>Silent failure</dt><dd>A fault mode where a system reports no error while still not doing its job — the hardest kind of bug to catch without deliberately verifying real output.</dd>
+    </dl>
+
+    <h3>Common mistakes</h3>
+    <ul>
+      <li>Forgetting to <code>source install/setup.bash</code> after building, then getting "package not found" for a package you can see.</li>
+      <li>Message filename, <code>CMakeLists.txt</code> entry and Python import disagreeing on singular vs plural (<code>MotorCommand</code> vs <code>MotorCommands</code>).</li>
+      <li>Trusting a hardcoded <code>encoder_cpr</code> default (2500 or 2550) instead of passing your measured value.</li>
+      <li>Leaving <code>use_sim_time: True</code> hardcoded in <code>robot_state_publisher.launch.py</code> on real hardware, then debugging phantom TF extrapolation errors.</li>
+      <li>Feeding <code>onshape-to-robot</code> the full assembly instead of the simplified one, producing a link per screw.</li>
+      <li>Ignoring the "has no mass" export warnings, then finding the Gazebo model unusable in Lecture 14.</li>
+      <li>Committing an API key pair to a git repository, even a private one.</li>
+      <li>Hardcoding <code>/dev/ttyUSB0</code> instead of a udev symlink, then being confused when it points elsewhere after a re-plug.</li>
+      <li>Copying the example udev vendor/product IDs instead of reading your own from <code>dmesg</code>.</li>
+      <li>Treating a clean launch log as proof a sensor works, instead of checking <code>ros2 topic hz</code>.</li>
+      <li>Streaming full-resolution raw images over WiFi and starving every other topic on the robot.</li>
+      <li>Editing <code>/boot/config.txt</code> instead of <code>/boot/firmware/config.txt</code> on Ubuntu, then wondering why the reboot changed nothing.</li>
+    </ul>
+  </section>
+
+  <div class="footer-nav">
+    <a href="12-diy-robot-motors-power-compute.html">&larr; Lecture 12: Build Your Own Robot I</a>
+    <a href="index.html">Table of Contents</a>
+    <a href="14-diy-robot-simulation-3dprint-capstone.html">Lecture 14: Build Your Own Robot III &rarr;</a>
+  </div>
+
+</div>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      background: '#f1efe8', primaryColor: '#eef0ff', primaryTextColor: '#211f1a',
+      primaryBorderColor: '#3d4bf5', lineColor: '#0e9e6e', secondaryColor: '#f1efe8',
+      tertiaryColor: '#fffefb', textColor: '#211f1a', fontFamily: 'Inter, -apple-system, sans-serif'
+    },
+    flowchart: { curve: 'basis' },
+    securityLevel: 'loose'
+  });
+</script>
+<script>
+(function(){
+  var btn = document.getElementById('theme-toggle');
+  var icon = document.getElementById('theme-toggle-icon');
+  function updateIcon(){
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    icon.textContent = isDark ? '☀️' : '🌙';
+  }
+  updateIcon();
+  btn.addEventListener('click', function(){
+    var cur = document.documentElement.getAttribute('data-theme');
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try{ localStorage.setItem('limo-book-theme', next); }catch(e){}
+    updateIcon();
+  });
+})();
+</script>
+<script>
+(function(){
+  var lb = document.getElementById('lightbox');
+  var lbImg = lb.querySelector('img');
+  var lbCap = lb.querySelector('.lb-cap');
+  document.querySelectorAll('.figure img').forEach(function(img){
+    img.addEventListener('click', function(){
+      lbImg.src = img.currentSrc || img.src;
+      lbImg.alt = img.alt || '';
+      var cap = img.parentElement.querySelector('figcaption');
+      lbCap.textContent = cap ? cap.textContent : (img.alt || '');
+      lb.classList.add('on');
+    });
+  });
+  function close(){ lb.classList.remove('on'); lbImg.src = ''; }
+  lb.addEventListener('click', close);
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') close(); });
+})();
+</script>
+<script src="annotate.js" defer></script>
+</body>
+</html>

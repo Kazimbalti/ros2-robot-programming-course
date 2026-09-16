@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<script>
+(function(){
+  try{
+    var t = localStorage.getItem('limo-book-theme');
+    if(!t){ t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+    document.documentElement.setAttribute('data-theme', t);
+  }catch(e){}
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 8 — Robot Perception: OpenCV &amp; Object Detection</title>
+<meta name="description" content="Turn LIMO's camera feed into understanding: cv_bridge and OpenCV fundamentals, HSV colour thresholding, feature-based detection with Find-Object-2D, deep-learning detection with YOLO, and projecting a 2D detection into a real 3D world position.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<style>
+  :root{
+    --bg:#f6f4ef; --panel:#fffefb; --panel2:#f1efe8; --border:#e6e1d6;
+    --text:#211f1a; --muted:#7a7568; --accent:#3d4bf5; --accent-ink:#2732b8;
+    --accent2:#0e9e6e; --gold:#c8862c; --danger:#d64a3c; --purple:#8b5cf6; --radius:14px;
+  }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--bg); color:var(--text); font-family:'Inter', -apple-system, sans-serif; line-height:1.85; font-size:17.5px; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:880px; margin:0 auto; padding:48px 24px 120px;}
+  .cover{border-radius:28px; background:#12142b; padding:64px 44px; margin-bottom:56px; position:relative; overflow:hidden; isolation:isolate;}
+  .cover::before{content:""; position:absolute; inset:-40%; background:
+      radial-gradient(38% 45% at 15% 20%, rgba(61,75,245,0.55), transparent 70%),
+      radial-gradient(35% 40% at 85% 15%, rgba(139,92,246,0.45), transparent 70%),
+      radial-gradient(45% 50% at 60% 90%, rgba(14,158,110,0.35), transparent 70%);
+    filter:blur(60px); z-index:0;}
+  .cover::after{content:""; position:absolute; inset:0; background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px); background-size: 20px 20px; z-index:0;}
+  .cover > *{position:relative; z-index:1;}
+  .kicker{display:inline-block; color:#c9cdff; font-weight:600; letter-spacing:.4px; font-size:13px; margin-bottom:18px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); padding:6px 14px; border-radius:999px;}
+  .cover h1{font-size:2.7em; margin:0 0 12px; font-weight:800; line-height:1.3; color:#ffffff; letter-spacing:-.5px;}
+  .cover .subtitle{color:#aeb2d6; font-size:1.2em; margin-bottom:30px; font-weight:400;}
+  .meta-row{display:flex; flex-wrap:wrap; gap:10px; margin-top:18px;}
+  .chip{background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.14); color:#d4d7f0; padding:7px 15px; border-radius:999px; font-size:.83em;}
+  h2{font-size:1.9em; font-weight:800; margin:72px 0 22px; display:flex; align-items:center; gap:14px; letter-spacing:-.3px;}
+  h2 .num{display:inline-flex; align-items:center; justify-content:center; min-width:40px; height:40px; padding:0 12px; border-radius:12px; background:var(--accent); box-shadow:0 6px 16px -4px rgba(61,75,245,0.5); color:#ffffff; font-size:.62em; font-weight:800; flex-shrink:0; white-space:nowrap;}
+  h3{font-size:1.3em; font-weight:700; margin:36px 0 14px; color:var(--accent-ink); letter-spacing:-.2px;}
+  h4{font-size:1.08em; font-weight:700; margin:24px 0 10px; color:var(--purple);}
+  p{margin:0 0 16px; color:#3c382f;}
+  strong{color:var(--text); font-weight:700;}
+  a{color:var(--accent);}
+  .box{border-radius:16px; padding:20px 24px; margin:22px 0; border:1px solid var(--border); background:var(--panel); position:relative; box-shadow:0 1px 2px rgba(33,31,26,0.03);}
+  .box-title{font-weight:800; margin-bottom:9px; display:flex; align-items:center; gap:8px; font-size:.96em; letter-spacing:.1px;}
+  .box p:last-child{margin-bottom:0;}
+  .box.idea{background:#eef0ff;border-color:#d6dafc;} .box.idea .box-title{color:var(--accent-ink);}
+  .box.mistake{background:#fdeeec; border-color:#f6d2cd;} .box.mistake .box-title{color:var(--danger);}
+  .box.eng{background:#f4effe; border-color:#e2d6fb;} .box.eng .box-title{color:var(--purple);}
+  .box.real{background:#eafaf3; border-color:#c9eeda;} .box.real .box-title{color:var(--accent2);}
+  .box.def{background:#fdf3e4; border-color:#f2ddb3;} .box.def .box-title{color:var(--gold);}
+  .box.hw{background:#fdeee4; border-color:#f2c9a3;} .box.hw .box-title{color:#c8622c;}
+  code, pre{font-family:'JetBrains Mono', monospace; direction:ltr; text-align:left;}
+  code{background:#eceaf9; border:1px solid #dcdaf3; border-radius:6px; padding:2px 7px; font-size:.87em; color:var(--accent-ink); display:inline-block;}
+  pre{background:#181a2e; border-radius:16px; padding:18px 20px; overflow-x:auto; margin:18px 0; font-size:.88em; line-height:1.65; box-shadow:0 12px 28px -16px rgba(24,26,46,0.5);}
+  pre code{background:none; border:none; padding:0; color:#d8dcff; display:block;}
+  table{width:100%; border-collapse:separate; border-spacing:0; margin:22px 0; font-size:.92em; border-radius:14px; overflow:hidden; border:1px solid var(--border);}
+  th, td{border-bottom:1px solid var(--border); padding:12px 15px; text-align:left;}
+  th{background:#eceaf9; color:var(--accent-ink); font-weight:700; font-size:.9em;}
+  tr:last-child td{border-bottom:none;}
+  tr:nth-child(even) td{background:rgba(33,31,26,0.02);}
+  ul, ol{margin:0 0 16px; padding-inline-start:26px; color:#3c382f;}
+  li{margin-bottom:7px;}
+  .figure{margin:28px 0; text-align:center;}
+  .figure img, .figure svg{max-width:100%; height:auto; background:#fffefb; border:1px solid var(--border); border-radius:16px; box-shadow:0 1px 2px rgba(33,31,26,0.03), 0 16px 32px -20px rgba(33,31,26,0.14);}
+  .figure figcaption{color:var(--muted); font-size:.87em; margin-top:12px;}
+  .mermaid{background:#fffefb; border:1px solid var(--border); border-radius:16px; padding:18px; margin:24px 0; text-align:center; box-shadow:0 1px 2px rgba(33,31,26,0.03), 0 16px 32px -20px rgba(33,31,26,0.14);}
+  .checkpoint{border-radius:16px; padding:22px 24px; margin:26px 0; background:#eafaf3; border:1px solid #c9eeda;}
+  .checkpoint ul{list-style:none; padding:0; margin:0;}
+  .checkpoint li{padding:9px 0; border-bottom:1px solid rgba(33,31,26,0.06); display:flex; gap:10px; align-items:flex-start;}
+  .checkpoint li:last-child{border-bottom:none;}
+  .checkpoint li::before{content:"◻"; color:var(--accent2); font-size:1.2em; line-height:1;}
+  .exercise{border-radius:14px; padding:18px 22px; margin:16px 0; background:var(--panel); border:1px solid var(--border); border-inline-start:4px solid var(--gold);}
+  .exercise .level{font-size:.76em; color:var(--gold); font-weight:800; text-transform:uppercase; letter-spacing:.6px;}
+  .glossary dt{font-weight:800; color:var(--accent-ink); margin-top:16px;}
+  .glossary dd{margin:4px 0 0; color:var(--muted);}
+  .toc{background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:26px 30px;}
+  .toc a{display:block; padding:8px 0; color:#3c382f; text-decoration:none; border-bottom:1px solid rgba(33,31,26,.06); transition:color .15s;}
+  .toc a:last-child{border-bottom:none;}
+  .toc a:hover{color:var(--accent-ink);}
+  .toc a span{color:var(--muted); font-size:.85em; margin-inline-end:10px; font-weight:600;}
+  .divider{height:1px; background:linear-gradient(90deg, transparent, var(--border), transparent); margin:52px 0;}
+  .footer-nav{display:flex; justify-content:space-between; align-items:center; gap:16px; margin-top:64px; padding-top:26px; border-top:1px solid var(--border); color:var(--muted); font-size:.9em;}
+  .footer-nav a{color:var(--text); text-decoration:none; font-weight:600;}
+  .footer-nav a:hover{color:var(--accent-ink);}
+  .badge-project{display:inline-block; background:#fdf3e4; border:1px solid #f2ddb3; color:var(--gold); border-radius:8px; padding:3px 11px; font-size:.78em; font-weight:700;}
+  .term{background:#181a2e; border-radius:16px; overflow:hidden; margin:22px 0; box-shadow:0 12px 28px -16px rgba(24,26,46,0.5);}
+  .term-bar{display:flex; align-items:center; gap:7px; padding:12px 16px; background:#20223a;}
+  .term-dot{width:11px; height:11px; border-radius:50%;}
+  .term-body{padding:16px 20px; font-family:'JetBrains Mono', monospace; direction:ltr; text-align:left; font-size:.87em; line-height:1.75; color:#d8dcff; white-space:pre-wrap;}
+  .term-prompt{color:#7ee7c7;}
+  .term-out{color:#9aa0c8;}
+  @media print{ body{background:#fff; color:#000;} }
+  html[data-theme="dark"]{
+    --bg:#12141c; --panel:#1b1e2a; --panel2:#20232f; --border:#2d3142;
+    --text:#e7e8f2; --muted:#9498b3; --accent:#7c86ff; --accent-ink:#aab1ff;
+    --accent2:#34d399; --gold:#e3a548; --danger:#f0685a; --purple:#a78bfa; --radius:14px;
+  }
+  html[data-theme="dark"] p, html[data-theme="dark"] ul, html[data-theme="dark"] ol, html[data-theme="dark"] .toc a{color:#c7c9dc;}
+  html[data-theme="dark"] code{background:#262a45; border-color:#3a3f5c;}
+  html[data-theme="dark"] th{background:#262a45;}
+  html[data-theme="dark"] tr:nth-child(even) td{background:rgba(255,255,255,0.03);}
+  html[data-theme="dark"] .box.idea{background:#1f2242; border-color:#383d6b;}
+  html[data-theme="dark"] .box.mistake{background:#3a2220; border-color:#5c332e;}
+  html[data-theme="dark"] .box.eng{background:#2a2340; border-color:#453a63;}
+  html[data-theme="dark"] .box.real{background:#16302a; border-color:#1f4a3d;}
+  html[data-theme="dark"] .box.def{background:#3a2f18; border-color:#5c4826;}
+  html[data-theme="dark"] .box.hw{background:#3a2618; border-color:#5c3f26;}
+  html[data-theme="dark"] .checkpoint{background:#16302a; border-color:#1f4a3d;}
+  html[data-theme="dark"] .checkpoint li{border-bottom-color:rgba(255,255,255,0.08);}
+  html[data-theme="dark"] .badge-project{background:#3a2f18; border-color:#5c4826;}
+  html[data-theme="dark"] .chapter-num{background:#1f2242;}
+  html[data-theme="dark"] .chapter-card{box-shadow:0 1px 2px rgba(0,0,0,0.25);}
+  html[data-theme="dark"] .chapter-card:hover{border-color:#454a7a; box-shadow:0 16px 32px -20px rgba(0,0,0,0.55);}
+  body, .box, .chapter-card, .exercise, .checkpoint, .toc, table, code, th{transition:background-color .25s ease, border-color .25s ease, color .25s ease;}
+  #theme-toggle{position:fixed; top:18px; left:18px; z-index:999; width:46px; height:46px; border-radius:50%; border:1px solid var(--border); background:var(--panel); color:var(--text); font-size:19px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px -8px rgba(0,0,0,0.35); transition:transform .15s ease, background-color .25s ease, border-color .25s ease;}
+  #theme-toggle:hover{transform:scale(1.08);}
+  @media (max-width:640px){ #theme-toggle{top:12px; left:12px; width:42px; height:42px; font-size:17px;} }
+</style>
+<link rel="stylesheet" href="projector.css">
+</head>
+<body>
+<style>
+.coursenav{position:sticky;top:0;z-index:900;background:rgba(255,254,251,0.88);backdrop-filter:saturate(160%) blur(10px);border-bottom:1px solid var(--border);}
+.coursenav .inner{max-width:1000px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;padding:10px 20px 10px 74px;}
+.coursenav .brand{font-weight:800;color:var(--accent-ink);margin-inline-end:12px;font-size:.9em;letter-spacing:-.2px;}
+.coursenav a{color:#3c382f;text-decoration:none;font-weight:600;font-size:.82em;padding:6px 10px;border-radius:999px;transition:background-color .15s,color .15s;}
+.coursenav a:hover{background:#eef0ff;color:var(--accent-ink);}
+.coursenav a.active{background:var(--accent);color:#fff;}
+html[data-theme="dark"] .coursenav{background:rgba(27,30,42,0.9);}
+html[data-theme="dark"] .coursenav a{color:#c7c9dc;}
+html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
+@media print{.coursenav{display:none;}}
+</style>
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html">Home</a>
+  <a href="syllabus.html">Syllabus</a>
+  <a href="schedule.html">Schedule</a>
+  <a href="assignments.html">Assignments</a>
+  <a href="index.html#lectures" class="active">Lectures</a>
+</div></nav>
+<button id="theme-toggle" aria-label="Toggle light/dark mode" title="Light/dark mode">
+  <span id="theme-toggle-icon">🌙</span>
+</button>
+<div class="wrap">
+
+  <div class="cover">
+    <div class="kicker">LIMO Robotics &amp; ROS 2 Lecture &nbsp;·&nbsp; Session 8 of 14</div>
+    <h1>Lecture 8: Robot Perception — OpenCV &amp; Object Detection</h1>
+    <div class="subtitle">From raw pixels to a labelled point on the map — cv_bridge, classical CV, feature matching, and YOLO</div>
+    <div class="meta-row">
+      <div class="chip">Duration: 3 hours</div>
+      <div class="chip">Prerequisite: Lecture 7 (Sensors)</div>
+      <div class="chip">Stack: cv_bridge, OpenCV, Find-Object-2D, YOLO</div>
+    </div>
+  </div>
+
+  <div class="toc">
+    <strong style="color:var(--text)">In this session</strong>
+    <a href="#pipeline"><span>8.1</span>From pixels to understanding — the perception pipeline</a>
+    <a href="#cvbridge"><span>8.2</span>cv_bridge — converting sensor_msgs/Image to OpenCV</a>
+    <a href="#classical"><span>8.3</span>Classical CV: HSV thresholding &amp; contour detection</a>
+    <a href="#watching"><span>8.4</span>Watching the pipeline live with rqt_image_view</a>
+    <a href="#findobject"><span>8.5</span>Feature-based detection with Find-Object-2D</a>
+    <a href="#yolo"><span>8.6</span>Deep-learning detection with YOLO</a>
+    <a href="#localisation"><span>8.7</span>From detection to a real-world position</a>
+    <a href="#wrapup"><span>8.8</span>Summary &amp; checkpoint</a>
+  </div>
+
+  <section id="pipeline">
+    <h2><span class="num">8.1</span>From pixels to understanding</h2>
+    <p>Every sensor we've used so far — LiDAR, IMU, wheel odometry — reports numbers that are already fairly close to what you want: a distance, an angular velocity, a pose. A camera is different. It reports a grid of a few hundred thousand raw brightness values per frame, and none of them mean "pothole" or "cone" or "person" on their own. <strong>Perception</strong> is the process of turning that grid of numbers into something a robot can act on: a label, a pixel location, and eventually a position in the world it can navigate towards, avoid, or log.</p>
+    <p>This lecture builds that pipeline end to end, in increasing sophistication. We start with the plumbing (getting a ROS image into OpenCV at all), move through classical computer vision (colour thresholds and contours — no training required), through feature-matching (one reference photo, no training required either, but touchier), and finish with a real deep-learning detector (YOLO) that generalises far better at the cost of needing a trained model. Every stage answers the same three questions in the end: <em>what is it, where is it in the image, and where is it in the world.</em></p>
+    <p>Notice, too, that all of this builds directly on Lecture 7. The depth camera and its <code>CameraInfo</code> topic — which you calibrated your understanding of while doing obstacle avoidance with the LiDAR and IMU — are exactly what §8.7's localisation step depends on. Perception isn't a new sensor stack bolted onto the robot; it's a new way of reading the same camera and depth sensor you already have, using image content rather than just raw geometry.</p>
+    <div class="mermaid">
+flowchart LR
+    A["Camera driver<br/>publishes sensor_msgs/Image"] --> B["cv_bridge<br/>imgmsg_to_cv2()"]
+    B --> C["OpenCV / model<br/>HSV+contours, ORB, or YOLO"]
+    C --> D["2D detection<br/>pixel bbox / centroid + label"]
+    D --> E["Depth lookup<br/>at that pixel"]
+    E --> F["3D point in<br/>camera frame"]
+    F --> G["tf2 transform<br/>to odom / map"]
+    G --> H["De-duplication<br/>same object seen twice?"]
+    H --> I["Logged world-frame<br/>detection"]
+    style A fill:#eef0ff,stroke:#3d4bf5
+    style I fill:#eafaf3,stroke:#0e9e6e
+    </div>
+    <div class="box idea">
+      <div class="box-title">💡 The big idea</div>
+      <p>Stages A–D are "computer vision" in the everyday sense — turning an image into a 2D detection. Stages E–I are what makes it <em>robotics</em>: fusing that 2D detection with depth and the robot's own pose (from Lecture 5's tf2 tree) to place it correctly in a shared, persistent world frame. Skip the second half and you have a fun camera demo. Do the second half properly and you have a survey robot.</p>
+    </div>
+    <p>Keep this diagram in mind for the rest of the session — sections 8.2 through 8.6 are all different ways of producing box D (the 2D detection); section 8.7 is entirely about boxes E through I, and it's the one this whole lecture has been building towards.</p>
+    <p>It's worth being explicit about why we teach three different detection methods rather than jumping straight to the most powerful one. Each sits at a different point on the same trade-off: how much setup effort it needs versus how well it generalises to conditions it hasn't seen before.</p>
+    <table>
+      <tr><th>Stage</th><th>Method</th><th>Setup cost</th><th>Generalises well?</th></tr>
+      <tr><td>§8.3</td><td>HSV threshold + contours</td><td>Minutes — just tune 6 numbers</td><td>No — one colour, one lighting condition</td></tr>
+      <tr><td>§8.5</td><td>Find-Object-2D (ORB features)</td><td>Minutes — one reference photo</td><td>Somewhat — sensitive to angle/scale</td></tr>
+      <tr><td>§8.6</td><td>YOLO (deep learning)</td><td>Hours — install + model download/training</td><td>Yes — trained on huge, varied datasets</td></tr>
+    </table>
+    <p>None of the three is strictly "better" in isolation — a colour threshold that takes five minutes to tune is often the right engineering choice for a well-controlled task (find the bright orange traffic cone), while YOLO is the right choice when the object class varies in appearance and you can't hand-pick a distinguishing colour or shape. Knowing when each is appropriate is as much a part of this lecture as knowing how to run each one.</p>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="cvbridge">
+    <h2><span class="num">8.2</span>cv_bridge — converting sensor_msgs/Image to OpenCV</h2>
+    <p>LIMO's camera driver publishes frames as <code>sensor_msgs/msg/Image</code> — a ROS message containing raw byte data, a width, a height, and an encoding string (usually <code>bgr8</code>, meaning 8-bit Blue-Green-Red channels). OpenCV, on the other hand, expects a plain NumPy array. <code>cv_bridge</code> is the small, purpose-built package that converts between the two, in both directions.</p>
+    <div class="box def">
+      <div class="box-title">📘 Definition</div>
+      <p><strong>cv_bridge</strong> exposes two methods you'll use constantly: <code>imgmsg_to_cv2(msg, desired_encoding='bgr8')</code> turns a ROS <code>Image</code> into an OpenCV/NumPy array, and <code>cv2_to_imgmsg(cv_image, encoding='bgr8')</code> does the reverse — handy if you want to publish an annotated debug image back onto a topic.</p>
+    </div>
+    <p>That reverse direction is worth using from the start rather than only relying on local <code>cv2.imshow</code> windows: a published debug image can be viewed remotely with <code>rqt_image_view</code> (§8.4), recorded to a bag file for later review, or shown live in RViz2 alongside everything else — none of which work with a local OpenCV GUI window running on the robot itself.</p>
+    <pre><code># publishing an annotated debug image instead of (or as well as) cv2.imshow
+self.debug_pub = self.create_publisher(Image, '/opencv_bridge/debug_image', 10)
+...
+annotated = cv_image.copy()
+cv2.putText(annotated, "canny edges", (10, 30),
+            cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
+self.debug_pub.publish(self.br.cv2_to_imgmsg(annotated, encoding='bgr8'))</code></pre>
+    <p>Here is the minimal working node — a direct simplification of this course's own <code>opencv_bridge.py</code> lab file. It subscribes to the camera topic, converts every incoming frame, and runs three classic OpenCV operations on it: greyscale conversion, blurring, and Canny edge detection.</p>
+    <pre><code>#!/usr/bin/env python
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge
+import cv2
+
+class OpencvBridge(Node):
+    def __init__(self):
+        super().__init__('opencv_bridge')
+        self.create_subscription(Image, '/limo_camera/image', self.camera_callback, 10)
+        self.br = CvBridge()
+
+    def camera_callback(self, data):
+        # Convert the ROS Image message into an OpenCV BGR image
+        cv_image = self.br.imgmsg_to_cv2(data, desired_encoding='bgr8')
+
+        gray_img  = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
+        blur_img  = cv2.blur(gray_img, (3, 3))
+        canny_img = cv2.Canny(gray_img, 10, 200)
+
+        cv2.imshow("Image window", cv_image)
+        cv2.imshow("blur",  blur_img)
+        cv2.imshow("canny", canny_img)
+        cv2.waitKey(1)          # required — lets OpenCV's GUI event loop run
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = OpencvBridge()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()</code></pre>
+    <div class="box mistake">
+      <div class="box-title">⚠️ Don't forget cv2.waitKey(1)</div>
+      <p>Every <code>cv2.imshow()</code> call needs a following <code>cv2.waitKey(n)</code> somewhere in the loop, or the OpenCV window will never actually repaint — it just sits there grey or frozen. <code>waitKey(1)</code> means "wait at most 1&nbsp;ms for a keypress, then continue" — long enough for OpenCV's internal window manager to process its redraw queue, short enough not to visibly slow your callback down.</p>
+    </div>
+    <p>Once you can reliably get a NumPy array out of a ROS topic, every OpenCV tutorial you've ever seen becomes usable inside a ROS node — the bridge is the only ROS-specific part.</p>
+    <div class="box eng">
+      <div class="box-title">🔧 Engineering note — imshow and the executor</div>
+      <p><code>cv2.imshow</code> opens a real OS-level GUI window, which is a slightly unusual thing to do from inside a ROS callback. It works fine with the default single-threaded executor used by <code>rclpy.spin()</code>, because the callback (and therefore the window's redraw) always runs on the same thread. If you later move to a multi-threaded executor for performance reasons, GUI calls like <code>imshow</code> can become unreliable — plan to strip debug windows out (or move them to a dedicated visualisation node) before that point, rather than debugging flaky window behaviour under load.</p>
+    </div>
+    <table>
+      <tr><th>Encoding string</th><th>Meaning</th><th>Typical source</th></tr>
+      <tr><td><code>bgr8</code></td><td>8-bit Blue-Green-Red, 3 channels</td><td>Standard colour camera</td></tr>
+      <tr><td><code>rgb8</code></td><td>8-bit Red-Green-Blue, 3 channels</td><td>Some camera drivers / RViz displays</td></tr>
+      <tr><td><code>mono8</code></td><td>8-bit single greyscale channel</td><td>Greyscale-only cameras</td></tr>
+      <tr><td><code>32FC1</code></td><td>32-bit float, 1 channel, metres</td><td>Depth image (used in §8.7)</td></tr>
+    </table>
+    <div class="box eng">
+      <div class="box-title">🔧 Engineering note — resize before you imshow</div>
+      <p>LIMO's camera can publish frames at a resolution far higher than any debug window needs to be. Rendering full-resolution <code>cv2.imshow</code> windows on every callback is one of the easiest ways to silently overload a callback thread and start dropping frames elsewhere in your node. A quick <code>cv2.resize(cv_image, (0,0), fx=0.5, fy=0.5)</code> before display keeps the debug view responsive without touching the resolution you actually process detections at.</p>
+    </div>
+    <div class="exercise">
+      <div class="level">Exercise · Easy</div>
+      <p>Extend the node above: add a fourth OpenCV window that applies <code>cv2.GaussianBlur</code> followed by <code>cv2.Canny</code> with different threshold pairs (try <code>(50, 150)</code> and <code>(10, 60)</code> side by side). Note how much noisier the edge map gets as you lower the thresholds, and relate that back to why §8.3 uses a colour mask rather than edges to find objects.</p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="classical">
+    <h2><span class="num">8.3</span>Classical CV: HSV thresholding &amp; contour detection</h2>
+    <p>The simplest possible "find an object" pipeline needs no training data and no model file at all: pick a colour, threshold the image for pixels close to that colour, and find the blobs. It is the right starting point for perception because every failure mode is visible and fixable by eye — there's no black box to debug.</p>
+    <p>The trick is doing the thresholding in the right colour space. Raw camera images arrive in <strong>BGR</strong> (Blue-Green-Red — note OpenCV's historically odd channel order, opposite to RGB). BGR mixes colour and brightness into all three channels, so a threshold tuned indoors under fluorescent light often fails outdoors in sunlight. <strong>HSV</strong> (Hue, Saturation, Value) separates "what colour" (Hue) from "how vivid" (Saturation) and "how bright" (Value) — so a Hue-based threshold survives lighting changes far better.</p>
+    <div class="box def">
+      <div class="box-title">📘 Definition — HSV</div>
+      <p>OpenCV represents Hue on a 0–179 scale (not 0–360, to fit in one byte), Saturation and Value each on 0–255. Green, for example, sits around Hue 40–80. A free online colour picker such as redketchup.io's colour picker is the fastest way to read off a rough Hue/Sat/Val range for your target object before you start tuning in code.</p>
+    </div>
+    <p>Here is the full node, closely following this course's <code>colour_contours_detector.py</code> lab file, tuned here to detect a bright green object:</p>
+    <pre><code>#!/usr/bin/env python
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Image
+from geometry_msgs.msg import Polygon, PolygonStamped, Point32
+from cv_bridge import CvBridge, CvBridgeError
+import cv2
+import numpy as np
+
+class ColourContoursDetector(Node):
+    def __init__(self):
+        super().__init__('colour_contours_detector')
+        self.object_pub = self.create_publisher(PolygonStamped, '/object_polygon', 10)
+        self.create_subscription(Image, '/limo_camera/image', self.camera_callback, 10)
+        self.contour_color = (255, 255, 0)   # cyan box, drawn for visualisation
+        self.contour_width = 1
+        self.br = CvBridge()
+
+    def camera_callback(self, data):
+        try:
+            bgr_image = self.br.imgmsg_to_cv2(data, "bgr8")
+        except CvBridgeError as e:
+            self.get_logger().error(str(e))
+            return
+
+        # BGR -> HSV: separates colour (Hue) from lighting (Value)
+        hsv_img = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2HSV)
+
+        # threshold for "bright green" -- tune these four numbers for your object
+        hsv_thresh = cv2.inRange(hsv_img,
+                                  np.array((40, 100, 50)),
+                                  np.array((80, 255, 255)))
+
+        contours, hierarchy = cv2.findContours(
+            hsv_thresh.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+        detected_objects = []
+        for contour in contours:
+            area = cv2.contourArea(contour)
+            if area > 100.0:                 # ignore tiny noise blobs
+                cv2.drawContours(bgr_image, contour, -1, (0, 0, 255), 3)
+                bbx, bby, bbw, bbh = cv2.boundingRect(contour)
+                detected_objects.append(Polygon(points=[
+                    Point32(x=float(bbx), y=float(bby)),
+                    Point32(x=float(bbw), y=float(bbh))]))
+                cv2.rectangle(bgr_image, (bbx, bby), (bbx + bbw, bby + bbh),
+                              self.contour_color, self.contour_width)
+
+        for polygon in detected_objects:
+            self.object_pub.publish(PolygonStamped(polygon=polygon, header=data.header))
+
+        cv2.imshow("colour image",   bgr_image)
+        cv2.imshow("detection mask", hsv_thresh)
+        cv2.waitKey(1)
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = ColourContoursDetector()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()</code></pre>
+    <div class="box eng">
+      <div class="box-title">🔧 Engineering note — why area-filter the contours?</div>
+      <p><code>cv2.findContours</code> will happily return dozens of tiny contours from JPEG compression artefacts, dust on the lens, or a single stray green pixel. The <code>if area &gt; 100.0</code> check is a crude but effective noise filter — anything smaller than 100 pixels² is assumed to be sensor noise rather than a real object. Raise the threshold if you're getting spurious detections; lower it if your real object is small or far away.</p>
+    </div>
+    <p>The node publishes each detected blob as a <code>geometry_msgs/PolygonStamped</code> on <code>/object_polygon</code> rather than just printing it — this is a deliberate habit. Any other node in the system (a navigation costmap layer, a logging node, the localisation pipeline in §8.7) can subscribe to that topic without needing to know anything about OpenCV, HSV ranges, or how the detection was produced. Publishing structured ROS messages, not just <code>print()</code> statements, is what makes a detector composable with the rest of the stack.</p>
+    <table>
+      <tr><th>Target colour</th><th>Approx. Hue range (OpenCV 0–179)</th><th>Notes</th></tr>
+      <tr><td>Red</td><td>0–10 and 170–179</td><td>Wraps around 0 — needs two ranges combined</td></tr>
+      <tr><td>Orange</td><td>10–25</td><td>Common traffic-cone colour</td></tr>
+      <tr><td>Yellow</td><td>25–35</td><td>&nbsp;</td></tr>
+      <tr><td>Green</td><td>40–80</td><td>Used in the example above</td></tr>
+      <tr><td>Blue</td><td>100–130</td><td>&nbsp;</td></tr>
+    </table>
+    <div class="exercise">
+      <div class="level">Exercise · Easy</div>
+      <p>Run the node above pointed at a plain-coloured object (a green cup, a red ball, a blue folder). Use an online HSV colour picker to read off an approximate Hue for your object, then tune the four <code>hsv_thresh</code> bounds until <code>detection mask</code> shows a clean white blob over the object and black everywhere else.</p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="watching">
+    <h2><span class="num">8.4</span>Watching the pipeline live with rqt_image_view</h2>
+    <p>Before trusting any detector's output, look at the raw feed it's working from. <code>rqt_image_view</code> is a generic, reusable image viewer — you point it at any <code>sensor_msgs/Image</code> topic with a remap, and it just works, without writing a single line of subscriber code.</p>
+    <div class="term">
+      <div class="term-bar"><div class="term-dot" style="background:#ff5f57"></div><div class="term-dot" style="background:#febc2e"></div><div class="term-dot" style="background:#28c840"></div></div>
+      <div class="term-body"><span class="term-prompt">$</span> sudo apt-get install ros-humble-rqt-image-view
+<span class="term-out">[...apt output omitted...]</span>
+<span class="term-prompt">$</span> ros2 run rqt_image_view rqt_image_view --ros-args -r image:=/limo_camera/image
+<span class="term-out">[INFO] [rqt_gui_py]: opening image viewer, subscribed to /limo_camera/image</span></div>
+    </div>
+    <p>The <code>-r image:=/limo_camera/image</code> remap is doing the useful work here: <code>rqt_image_view</code>'s internal subscriber is hard-coded to a generic topic name (<code>image</code>), and the remap redirects it to whatever real topic you need — the depth image, a debug annotated image published by your own node, or the raw colour feed. This is the same remap pattern from Lecture 4 (renaming topics at launch time) applied to a GUI tool instead of a launch file.</p>
+    <div class="figure">
+      <img src="./images/rqt_image.png" alt="rqt_image_view showing the raw LIMO camera feed">
+      <figcaption>rqt_image_view subscribed to /limo_camera/image — always sanity-check the raw feed before debugging a detector.</figcaption>
+    </div>
+    <div class="figure">
+      <img src="./images/color_detector.png" alt="Colour thresholding output showing a detected coloured object with bounding box">
+      <figcaption>The colour_contours_detector.py output from §8.3 — mask on the left, bounding box drawn on the source image on the right.</figcaption>
+    </div>
+    <div class="box real">
+      <div class="box-title">🤖 Real-world habit</div>
+      <p>When a detector "isn't working," the first ten seconds of debugging should always be: open <code>rqt_image_view</code> on the raw feed. Is the camera even publishing? Is the lens covered, out of focus, or wildly overexposed? A huge fraction of "my code is broken" perception bugs are actually "the sensor never had a usable image to begin with."</p>
+    </div>
+    <p>It's also worth confirming <em>which</em> image topics actually exist before remapping to one — a typo in a topic name is a silent failure (the tool just sits there with a blank window and no error), not a crash.</p>
+    <div class="term">
+      <div class="term-bar"><div class="term-dot" style="background:#ff5f57"></div><div class="term-dot" style="background:#febc2e"></div><div class="term-dot" style="background:#28c840"></div></div>
+      <div class="term-body"><span class="term-prompt">$</span> ros2 topic list | grep -i image
+<span class="term-out">/limo_camera/image
+/limo_camera/depth/image_raw
+/limo_camera/camera_info_raw
+/limo_camera/depth/camera_info</span>
+<span class="term-prompt">$</span> ros2 topic hz /limo_camera/image
+<span class="term-out">average rate: 29.873
+        min: 0.031s max: 0.035s std dev: 0.00089s window: 30</span></div>
+    </div>
+    <p><code>ros2 topic hz</code> is the second half of the habit: a topic that lists but publishes at 0&nbsp;Hz (or drops well below the expected frame rate) points to a driver, USB bandwidth, or CPU-load problem upstream of anything you're about to debug in your own detection code.</p>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="findobject">
+    <h2><span class="num">8.5</span>Feature-based detection with Find-Object-2D</h2>
+    <p>Colour thresholding only works if your target object has a distinctive, unique colour. Most real objects don't (cardboard boxes, tools, road defects, most packaging). <strong>Feature-based detection</strong> takes a different approach: it finds distinctive local <em>keypoints</em> in an image — corners, blobs, sharp intensity changes — describes each one numerically (a <em>descriptor</em>), and matches those descriptors between a trained reference photo and the live camera feed.</p>
+    <div class="box def">
+      <div class="box-title">📘 Definition — feature detectors</div>
+      <p><strong>ORB</strong>, <strong>FAST</strong>, <strong>SIFT</strong>, and <strong>BRISK</strong> are classical algorithms for finding and describing keypoints. They need <em>zero training</em> beyond a single reference photo of the object you want to find — no dataset, no GPU, no epochs. The trade-off: they're sensitive to scale changes, viewpoint changes, and lighting changes, because they're matching literal local pixel patterns rather than a learned, generalised concept of "what a mug looks like."</p>
+    </div>
+    <p><strong>Find-Object-2D</strong> packages this whole workflow (keypoint extraction, descriptor matching, and a live GUI for adding reference objects) into a ready-to-run ROS 2 node.</p>
+    <div class="term">
+      <div class="term-bar"><div class="term-dot" style="background:#ff5f57"></div><div class="term-dot" style="background:#febc2e"></div><div class="term-dot" style="background:#28c840"></div></div>
+      <div class="term-body"><span class="term-prompt">$</span> sudo apt-get install ros-humble-find-object-2d
+<span class="term-out">[...apt output omitted...]</span>
+<span class="term-prompt">$</span> ros2 run find_object_2d find_object_2d image:=/limo_camera/image
+<span class="term-out">[INFO] find_object_2d: waiting for images on topic /limo_camera/image
+[INFO] find_object_2d: GUI ready -- right-click the object panel to add a reference object</span></div>
+    </div>
+    <p>Once running, right-click in the "objects" panel and add a reference image (you can crop one directly from the live feed). From then on, every incoming frame is scanned for matching keypoint clusters against every registered reference object, and matches are drawn live and published on a ROS topic. A good reference photo:</p>
+    <ul>
+      <li>Fills as much of the frame as possible, with minimal background clutter.</li>
+      <li>Is taken at a similar distance and angle to how the object will actually be viewed by LIMO's camera.</li>
+      <li>Shows genuine surface texture — printed text, patterns, or irregular edges — rather than a single flat colour.</li>
+      <li>Is captured under lighting similar to where detection will actually run.</li>
+    </ul>
+    <div class="figure">
+      <img src="./images/find_object.png" alt="Find-Object-2D GUI showing keypoint matches between a reference image and the live camera feed">
+      <figcaption>Find-Object-2D matching ORB keypoints between a reference photo (left panel) and the live LIMO camera feed.</figcaption>
+    </div>
+    <table>
+      <tr><th>Approach</th><th>Training needed</th><th>Robust to viewpoint/scale change</th><th>Compute cost</th></tr>
+      <tr><td>HSV threshold (§8.3)</td><td>None</td><td>Poor</td><td>Very low</td></tr>
+      <tr><td>Find-Object-2D (ORB/SIFT)</td><td>1 reference photo</td><td>Moderate</td><td>Low</td></tr>
+      <tr><td>YOLO (§8.6)</td><td>Pretrained / fine-tuned model</td><td>Good</td><td>Moderate–high</td></tr>
+    </table>
+    <div class="box mistake">
+      <div class="box-title">⚠️ Common failure — flat, textureless objects</div>
+      <p>Feature detectors need <em>texture</em> to find keypoints. A plain matte-coloured box or a smooth wall gives ORB almost nothing to latch onto, and matches will be sparse and unreliable. Objects with printed labels, patterns, or sharp edges work far better as Find-Object-2D reference images than plain-coloured ones.</p>
+    </div>
+    <div class="exercise">
+      <div class="level">Exercise · Intermediate</div>
+      <p>Register two reference objects in Find-Object-2D: one with a lot of surface texture (a book cover, a snack packet) and one with almost none (a plain mug, a smooth block). Move the camera to vary distance and viewing angle for each, and note the angle/distance at which matching starts to fail for each object. Write down roughly how much more forgiving the textured object is.</p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="yolo">
+    <h2><span class="num">8.6</span>Deep-learning detection with YOLO</h2>
+    <p>Both previous approaches share a limitation: they only recognise the exact colour or the exact reference photo you gave them. <strong>YOLO</strong> ("You Only Look Once") is a deep convolutional neural network trained on hundreds of thousands of labelled images, and it generalises — it can recognise "a person" or "a chair" across wildly different lighting, angles, and backgrounds it has never literally seen before, because it learned the underlying visual concept rather than matching pixels.</p>
+    <div class="box def">
+      <div class="box-title">📘 Definition — inference</div>
+      <p><strong>Inference</strong> is running a trained model forward on new input to get a prediction (as opposed to <em>training</em>, which is the process of learning the model's weights in the first place). Every YOLO detection you see at runtime is one inference pass over one camera frame — no learning happens on the robot; the model was already trained beforehand.</p>
+    </div>
+    <p>This course uses <code>yolo_ros</code>, a ROS 2 wrapper around Ultralytics YOLO models. Before installing, it's worth knowing what the package actually gives you:</p>
+    <ul>
+      <li>A ROS 2 node that subscribes to a camera topic and runs YOLO inference on every incoming frame.</li>
+      <li>A published detection topic (<code>/yolo/detections</code>) carrying class labels, confidence scores, and pixel bounding boxes.</li>
+      <li>Ready-made RViz2 marker/image publishers so detections can be viewed live without writing any visualisation code yourself.</li>
+      <li>Launch arguments for model selection, confidence threshold, class filtering, and inference device (CPU/GPU).</li>
+    </ul>
+    <p>Setup and launch:</p>
+    <div class="term">
+      <div class="term-bar"><div class="term-dot" style="background:#ff5f57"></div><div class="term-dot" style="background:#febc2e"></div><div class="term-dot" style="background:#28c840"></div></div>
+      <div class="term-body"><span class="term-prompt">$</span> git clone https://github.com/mgonzs13/yolo_ros.git
+<span class="term-out">Cloning into 'yolo_ros'...</span>
+<span class="term-prompt">$</span> sudo pip3 install -r yolo_ros/requirements.txt
+<span class="term-out">[...installing ultralytics, torch, etc...]</span>
+<span class="term-prompt">$</span> colcon build --packages-select yolo_ros yolo_bringup yolo_msgs
+<span class="term-prompt">$</span> source install/setup.bash
+<span class="term-prompt">$</span> ros2 launch yolo_bringup yolo.launch.py
+<span class="term-out">[INFO] [yolo_node]: model loaded (yolov8m.pt), running inference on /limo_camera/image
+[INFO] [yolo_node]: publishing detections on /yolo/detections</span></div>
+    </div>
+    <p>Detections publish as a <code>yolo_msgs/DetectionArray</code> on <code>/yolo/detections</code> — each entry carries a class label, a confidence score, and a 2D bounding box in pixel coordinates. Add the provided detection-visualisation markers in RViz2 and you'll see labelled boxes overlaid live on the camera feed, exactly the same view you've been building intuition for since Lecture 6.</p>
+    <div class="figure">
+      <img src="./images/rviz_yolo.png" alt="RViz2 showing YOLO detection bounding boxes overlaid on the camera image">
+      <figcaption>YOLO detections visualised live in RViz2 — labelled bounding boxes drawn over the camera feed.</figcaption>
+    </div>
+    <div class="figure">
+      <img src="./images/yolo_result.png" alt="YOLO detection result showing multiple labelled objects with confidence scores">
+      <figcaption>Raw YOLO output: each box carries a class label and a confidence score.</figcaption>
+    </div>
+    <div class="box hw">
+      <div class="box-title">🖥️ Hardware note — CPU vs GPU inference</div>
+      <p><code>yolo_bringup</code> exposes a launch argument to select the inference device. On LIMO's onboard computer (CPU-only, typically) inference will run noticeably slower per frame than on a development laptop with a CUDA-capable GPU — for live demos, consider a smaller model variant (e.g. YOLOv8n "nano" instead of the larger "m"/"l" variants) to keep frame rate usable, trading some accuracy for speed.</p>
+    </div>
+    <table>
+      <tr><th>Model variant</th><th>Relative size</th><th>Typical use here</th></tr>
+      <tr><td>YOLOv8n (nano)</td><td>Smallest, fastest</td><td>Live demo on LIMO's onboard CPU</td></tr>
+      <tr><td>YOLOv8s / YOLOv8m</td><td>Medium</td><td>Development laptop, balance of speed/accuracy</td></tr>
+      <tr><td>YOLOv8l / YOLOv8x</td><td>Largest, slowest</td><td>Offline/GPU evaluation, best accuracy</td></tr>
+    </table>
+    <p>The launch file also accepts arguments for the confidence threshold and the specific class list to detect — restricting detection to only the classes relevant to your task (rather than the full 80-class COCO set) both speeds up post-processing and reduces false positives from irrelevant background objects.</p>
+    <div class="box real">
+      <div class="box-title">🤖 Real-world path — beyond the pretrained model</div>
+      <p>The default YOLO weights are trained on COCO, a general-purpose dataset of everyday objects (people, cars, chairs, bottles) — they won't recognise something task-specific like a particular road-defect type out of the box. The usual path for a custom class is: collect and label a few hundred example images (tools such as Roboflow make this fast), fine-tune a YOLO checkpoint on that labelled set, then point <code>yolo_bringup</code>'s model-path argument at your fine-tuned weights instead of the stock ones. This is exactly the step the Lecture 14 capstone's pothole-detection model goes through before it's usable on LIMO.</p>
+    </div>
+    <div class="figure">
+      <img src="./images/detected_object.png" alt="A single detected object highlighted with its bounding box and label">
+      <figcaption>A single YOLO detection isolated — this is the box that feeds §8.7's localisation pipeline.</figcaption>
+    </div>
+    <div class="term">
+      <div class="term-bar"><div class="term-dot" style="background:#ff5f57"></div><div class="term-dot" style="background:#febc2e"></div><div class="term-dot" style="background:#28c840"></div></div>
+      <div class="term-body"><span class="term-prompt">$</span> ros2 topic echo /yolo/detections --field detections
+<span class="term-out">- class_name: bottle
+  score: 0.87
+  bbox:
+    center: {x: 412.5, y: 268.0}
+    size: {x: 96.0, y: 210.0}
+- class_name: chair
+  score: 0.63
+  bbox:
+    center: {x: 120.0, y: 340.0}
+    size: {x: 180.0, y: 260.0}
+---</span></div>
+    </div>
+    <p>Each entry in the array is one detection for the current frame: a class label, a confidence score between 0 and 1, and a bounding box given as a pixel centre and size — exactly the <code>image_coords</code> input the localisation pipeline in §8.7 needs next.</p>
+    <div class="exercise">
+      <div class="level">Exercise · Intermediate</div>
+      <p>Launch <code>yolo_bringup</code> against LIMO's camera feed and echo <code>/yolo/detections</code> with <code>ros2 topic echo</code>. Walk a common object (a bottle, a chair, a person) through the frame at different distances and note at what distance the confidence score drops below roughly 0.5. Compare that to how the same object performed under the HSV thresholding node from §8.3.</p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="localisation">
+    <h2><span class="num">8.7</span>From detection to a real-world position</h2>
+    <p>Every method in this lecture so far ends in the same place: a pixel location in an image (a bounding-box centre, or a contour centroid) plus a label. That is still only a 2D fact about a 2D image — useful for a demo overlay, useless for navigation or a survey log. Turning it into a usable 3D fact needs four more steps, closely following this course's <code>object_localisation.py</code> and <code>object_counter.py</code> lab files.</p>
+    <table>
+      <tr><th>Step</th><th>Input</th><th>Output</th><th>Tool</th></tr>
+      <tr><td>1. Depth lookup</td><td>Pixel coords in colour image</td><td>Depth value (metres)</td><td><code>32FC1</code> depth image</td></tr>
+      <tr><td>2. 3D projection</td><td>Pixel coords + depth</td><td>3D point, camera frame</td><td><code>image_geometry.PinholeCameraModel</code></td></tr>
+      <tr><td>3. Frame transform</td><td>3D point, camera frame</td><td>3D point, map/odom frame</td><td>tf2 <code>lookup_transform</code> + <code>do_transform_pose</code></td></tr>
+      <tr><td>4. De-duplication</td><td>New world point + history</td><td>Unique object count/list</td><td>Proximity distance check</td></tr>
+    </table>
+    <h3>Step 1 — look up depth at the detection pixel</h3>
+    <p>LIMO's depth camera publishes a <code>32FC1</code> image where every pixel value is a distance in metres rather than a colour. Once you have a detection's pixel coordinates in the colour image, you look up the corresponding depth reading at (roughly) the same pixel in the depth image — "roughly" because the colour and depth sensors sit at slightly different positions and have different fields of view, so a small aspect-ratio correction is applied first.</p>
+    <h3>Step 2 — project into a 3D point in the camera frame</h3>
+    <p>Using the camera's intrinsics (focal length and principal point, delivered on the <code>CameraInfo</code> topic and wrapped by <code>image_geometry.PinholeCameraModel</code>), the pixel coordinates are projected into a 3D ray from the camera, then scaled by the depth reading to land on an actual 3D point — in the camera's own local frame.</p>
+    <h3>Step 3 — transform into odom or map using tf2</h3>
+    <p>That point is still expressed relative to the camera, which is only useful if the robot never moves. Using the exact tf2 lookup pattern from Lecture 5 — <code>tf_buffer.lookup_transform(target_frame, source_frame, time)</code> followed by <code>do_transform_pose</code> — the point is re-expressed in a fixed frame (<code>odom</code> or <code>map</code>), giving a world position that stays meaningful as LIMO keeps driving.</p>
+    <div class="box mistake">
+      <div class="box-title">⚠️ Wrong source frame in the tf2 lookup</div>
+      <p>The <code>source_frame</code> argument to <code>lookup_transform</code> must be the frame the point is actually expressed in — for LIMO's depth camera this is typically <code>depth_link</code>, <em>not</em> <code>base_link</code> or <code>camera_link</code>. Mixing these up doesn't usually throw an error; it silently applies the wrong offset, so your detected object appears a small but consistent distance away from its true position — a frustrating bug because it "mostly works." Run <code>ros2 run tf2_tools view_frames</code> (from Lecture 5) if you're unsure of the exact frame name your depth image is published in.</p>
+    </div>
+    <p>Why not skip depth entirely and estimate distance from how large the bounding box appears? It's tempting, and works passably for a known, fixed-size object (a bounding box for a standard traffic cone shrinks predictably with distance). But it breaks down for anything with variable real-world size or an unusual viewing angle, and it needs a calibration step per object class. The depth-camera approach in Steps 1–2 needs no per-object calibration at all — it measures distance directly, regardless of what the object is.</p>
+    <pre><code># condensed from object_localisation.py -- inside the image callback, after
+# finding a contour/bbox centroid `image_coords` and camera intrinsics model:
+
+depth_value = image_depth[int(depth_coords[0]), int(depth_coords[1])]
+camera_ray  = np.array(ccamera_model.projectPixelTo3dRay(
+                  (image_coords[1], image_coords[0])))
+camera_ray /= camera_ray[2]                 # normalise so z = 1
+camera_point = camera_ray * depth_value     # scale by measured depth
+
+camera_pose = Pose(position=Point(x=camera_point[0], y=camera_point[1],
+                                   z=camera_point[2]),
+                    orientation=Quaternion(w=1.0))
+
+transform   = tf_buffer.lookup_transform('map', 'depth_link', rclpy.time.Time())
+global_pose = do_transform_pose(camera_pose, transform)
+# global_pose.position is now a real map-frame (x, y, z) for this detection</code></pre>
+    <div class="box mistake">
+      <div class="box-title">⚠️ Depth of zero or NaN</div>
+      <p>Depth cameras routinely report 0.0 or NaN at pixels that are too close, too far, on a reflective/transparent surface, or simply outside the sensor's valid range. Multiplying a projected ray by a bogus depth value silently produces a nonsense world position (often sitting exactly at the camera origin). Always guard: check <code>depth_value &gt; 0</code> and <code>not math.isnan(depth_value)</code> before trusting a localisation result, and simply skip that detection on this frame if the check fails — there will usually be a good reading on the next frame.</p>
+    </div>
+    <div class="box idea">
+      <div class="box-title">💡 Why not just use the depth camera's own frame directly?</div>
+      <p>You could publish detections in <code>depth_link</code> and skip the tf2 transform — but then every downstream consumer (a map, a log, a navigation goal) would need to know the robot's exact pose at the exact instant of each detection to make sense of the numbers. Transforming into <code>map</code> once, at the source, means every other node in the system can treat a detection's position as a plain, static fact — the same discipline Lecture 5 introduced for costmaps and Lecture 6 relied on for navigation goals.</p>
+    </div>
+    <h3>Step 4 — de-duplicate across frames</h3>
+    <p>A robot driving slowly past a stationary object will detect it dozens of times across consecutive frames — each one independently localised to (nearly) the same world position. Left alone, this means your "object count" is really a "frame count," badly overcounting. <code>object_counter.py</code> fixes this with a simple proximity check: keep a running list of already-logged world positions, and before adding a new detection, check whether it falls within a small distance threshold (e.g. 0.2&nbsp;m) of one already in the list.</p>
+    <pre><code># condensed from object_counter.py
+detection_threshold = 0.2   # metres
+
+def counter_callback(self, data):
+    new_object = data.pose
+    for existing in self.detected_objects:
+        d = math.sqrt((existing.position.x - new_object.position.x) ** 2 +
+                       (existing.position.y - new_object.position.y) ** 2 +
+                       (existing.position.z - new_object.position.z) ** 2)
+        if d < self.detection_threshold:
+            return   # same physical object, already logged -- don't double count
+
+    self.detected_objects.append(new_object)   # genuinely new object
+    self.get_logger().info(f'total unique objects: {len(self.detected_objects)}')</code></pre>
+    <div class="box idea">
+      <div class="box-title">💡 This is the Lecture 14 capstone</div>
+      <p>Detect → localise → de-duplicate is <em>exactly</em> the pipeline the Lecture 14 capstone mission is built on: a road-defect / pothole survey task where LIMO drives a route, detects defects with a vision model, projects each one into map-frame coordinates, and reports a de-duplicated count and location list — not "we saw a pothole 40 times," but "there are 6 distinct potholes, here is where each one is." Everything you build in this section is capstone infrastructure, not a side exercise.</p>
+    </div>
+    <div class="exercise">
+      <div class="level">Exercise · Harder</div>
+      <p>Combine §8.3's colour-threshold detector with the localisation pattern above: publish the contour centroid as a pixel coordinate, look up depth at that pixel, project to a <code>PoseStamped</code> in <code>map</code> frame, and log it through a de-duplication check with a 0.2&nbsp;m threshold. Drive LIMO slowly past a single coloured object twice from different angles and confirm your counter still reports exactly one detected object, not two.</p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="wrapup">
+    <h2><span class="num">8.8</span>Summary &amp; checkpoint</h2>
+    <p>You now have four different ways to answer "what is in this image, and where" — colour thresholding for the simplest possible zero-training case, feature matching for textured objects with one reference photo, and YOLO for open-set, robust, trained recognition — plus the depth-lookup, tf2-transform, and de-duplication pipeline that turns any one of them into a durable, world-frame fact the rest of the robot's stack can use.</p>
+    <p>The methods in this lecture are not mutually exclusive in a real system, either. It's common to run a fast, cheap detector (HSV thresholding, or a lightweight YOLO-nano pass) continuously for reactive behaviour, while a slower but more accurate detector runs less often, or only when the fast detector flags something worth a closer look — a layered approach that trades a little latency for a lot of saved compute, which matters a great deal on an embedded onboard computer like LIMO's.</p>
+    <div class="checkpoint">
+      <strong style="color:var(--text)">Checkpoint — you should now be able to:</strong>
+      <ul>
+        <li>Convert a <code>sensor_msgs/Image</code> to an OpenCV array with cv_bridge, and run basic OpenCV operations on it inside a ROS 2 node.</li>
+        <li>Publish an annotated OpenCV image back onto a ROS topic with <code>cv2_to_imgmsg</code>, rather than relying only on local imshow windows.</li>
+        <li>Write an HSV colour-threshold + contour detector, and tune its bounds by eye using the mask window.</li>
+        <li>Point rqt_image_view at any image topic with a remap, and use <code>ros2 topic hz</code> to sanity-check a camera feed before debugging further.</li>
+        <li>Install and run Find-Object-2D, register a reference image, and explain why feature detectors need no training but are viewpoint-sensitive.</li>
+        <li>Install and launch yolo_ros, read detections from <code>/yolo/detections</code>, and view them live in RViz2.</li>
+        <li>Explain, step by step, how a 2D pixel detection becomes a de-duplicated 3D world position using depth, camera intrinsics, and tf2.</li>
+      </ul>
+    </div>
+    <div class="box real">
+      <div class="box-title">🔗 Connection to the course</div>
+      <p>This lecture sits directly between Lecture 7 (sensors, including the depth camera you now rely on for localisation) and the hardware/testing focus of Lecture 9. Perception is also the last major building block before navigation (Lecture 10+) — LIMO can now not only sense obstacles geometrically via LiDAR, but recognise and locate specific labelled objects in the world, which is exactly what the Lecture 14 road-defect survey capstone depends on. Nothing here is a detour; it's the sensing layer the capstone mission is built on.</p>
+    </div>
+    <dl class="glossary">
+      <dt>cv_bridge</dt>
+      <dd>ROS package converting between <code>sensor_msgs/Image</code> messages and OpenCV/NumPy arrays, via <code>imgmsg_to_cv2()</code> and <code>cv2_to_imgmsg()</code>.</dd>
+      <dt>HSV</dt>
+      <dd>Hue-Saturation-Value colour space; separates colour identity from brightness, making colour thresholds more robust to lighting change than raw BGR/RGB.</dd>
+      <dt>Contour</dt>
+      <dd>A closed outline traced around a connected blob of pixels in a binary mask, found with <code>cv2.findContours</code>; its area and bounding box give a simple object detection.</dd>
+      <dt>ORB / feature detector</dt>
+      <dd>A classical algorithm (ORB, FAST, SIFT, BRISK) that finds and numerically describes distinctive local keypoints, enabling matching between a reference photo and a live frame with zero training.</dd>
+      <dt>Inference</dt>
+      <dd>Running a trained model forward on new input to produce a prediction — as opposed to training, which learns the model's weights beforehand.</dd>
+      <dt>De-duplication</dt>
+      <dd>Checking whether a newly localised detection lies within a small distance of an already-logged one, to avoid counting the same physical object multiple times across frames.</dd>
+    </dl>
+    <h3>Quick troubleshooting reference</h3>
+    <table>
+      <tr><th>Symptom</th><th>Likely cause</th><th>Where to look</th></tr>
+      <tr><td>OpenCV window is grey/frozen</td><td>Missing <code>cv2.waitKey(1)</code></td><td>§8.2</td></tr>
+      <tr><td>Colours look swapped (sky is orange)</td><td>BGR/RGB channel mix-up</td><td>§8.3, Common Mistakes</td></tr>
+      <tr><td>Detection mask is all black or all white</td><td>HSV bounds don't match current lighting</td><td>§8.3</td></tr>
+      <tr><td>rqt_image_view shows nothing</td><td>Wrong topic name in the remap, or camera not publishing</td><td>§8.4</td></tr>
+      <tr><td>Find-Object-2D never matches</td><td>Reference image too flat/textureless, or wrong scale</td><td>§8.5</td></tr>
+      <tr><td>YOLO detections look right but confidence is low</td><td>Object class not well represented in training data, or object too far/occluded</td><td>§8.6</td></tr>
+      <tr><td>Localised object appears offset from its real position</td><td>Wrong tf2 source frame, or unguarded NaN depth</td><td>§8.7</td></tr>
+      <tr><td>Object count keeps climbing while robot is stationary</td><td>Missing or too-tight de-duplication threshold</td><td>§8.7</td></tr>
+    </table>
+    <h3>Common mistakes</h3>
+    <ul>
+      <li><strong>BGR vs RGB channel-order confusion.</strong> OpenCV loads and expects images in BGR order, not RGB. Feeding a BGR array into a function that expects RGB (or vice versa) silently swaps red and blue in your output — colours look wrong but no error is raised.</li>
+      <li><strong>HSV thresholds that only work in one lighting condition.</strong> Bounds tuned indoors under fluorescent light often fail outdoors in daylight or under LIMO's onboard LED ring. Always re-check your mask window after changing location or time of day, not just once at the start of the session.</li>
+      <li><strong>Forgetting to guard against a depth reading of 0 or NaN</strong> at the detection pixel — this silently produces a nonsense world position rather than a visible error, and is one of the hardest localisation bugs to spot without an explicit sanity check.</li>
+      <li><strong>Double-counting the same object across frames</strong> by skipping the proximity de-duplication check — a slow-moving robot will otherwise "detect" a single stationary pothole dozens of times as it drives past, wrecking any survey count.</li>
+    </ul>
+  </section>
+
+  <div class="footer-nav">
+    <a href="07-sensors-lidar-imu-camera-obstacle-avoidance.html">&larr; Lecture 7: Sensors &amp; Obstacle Avoidance</a>
+    <a href="index.html">Table of Contents</a>
+    <a href="09-odometry-ekf-amcl-localization.html">Lecture 9: Odometry, EKF &amp; AMCL &rarr;</a>
+  </div>
+
+</div>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      background: '#f1efe8', primaryColor: '#eef0ff', primaryTextColor: '#211f1a',
+      primaryBorderColor: '#3d4bf5', lineColor: '#0e9e6e', secondaryColor: '#f1efe8',
+      tertiaryColor: '#fffefb', textColor: '#211f1a', fontFamily: 'Inter, -apple-system, sans-serif'
+    },
+    flowchart: { curve: 'basis' },
+    securityLevel: 'loose'
+  });
+</script>
+<script>
+(function(){
+  var btn = document.getElementById('theme-toggle');
+  var icon = document.getElementById('theme-toggle-icon');
+  function updateIcon(){
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    icon.textContent = isDark ? '☀️' : '🌙';
+  }
+  updateIcon();
+  btn.addEventListener('click', function(){
+    var cur = document.documentElement.getAttribute('data-theme');
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try{ localStorage.setItem('limo-book-theme', next); }catch(e){}
+    updateIcon();
+  });
+})();
+</script>
+<script src="annotate.js" defer></script>
+</body>
+</html>

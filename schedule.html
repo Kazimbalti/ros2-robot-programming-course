@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<script>
+(function(){
+  try{
+    var t = localStorage.getItem('limo-book-theme');
+    if(!t){ t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+    document.documentElement.setAttribute('data-theme', t);
+  }catch(e){}
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schedule — ROS and Robot Programming</title>
+<meta name="description" content="Week-by-week schedule for ROS and Robot Programming — 14 lectures across the term, with readings, labs, assignment deadlines, midterm, and final.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="book.css">
+<link rel="stylesheet" href="projector.css">
+</head>
+<body>
+<button id="theme-toggle" aria-label="Toggle light/dark mode" title="Light/Dark mode"><span id="theme-toggle-icon">🌙</span></button>
+
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html">Home</a>
+  <a href="syllabus.html">Syllabus</a>
+  <a href="schedule.html" class="active">Schedule</a>
+  <a href="assignments.html">Assignments</a>
+  <a href="index.html#lectures">Lectures</a>
+</div></nav>
+
+<div class="wrap">
+
+  <div class="cover">
+    <div class="kicker">Course Schedule &nbsp;·&nbsp; 14 Weekly Sessions + Finals</div>
+    <h1>Schedule</h1>
+    <div class="subtitle">Three sections, one weekly lecture. <strong>Section B</strong> meets <strong>Mondays</strong>; <strong>Sections A &amp; C</strong> meet <strong>Thursdays</strong>. Each session is ~3&nbsp;h (1.5&nbsp;h concept + 1.5&nbsp;h supervised lab), except the extended labs (Wk 9–10) and the build sessions (Wk 12–14).</div>
+    <div class="meta-row">
+      <div class="chip">Term: 31 Aug – 11 Dec 2026</div>
+      <div class="chip">Section B: Mondays · A &amp; C: Thursdays</div>
+      <div class="chip">Midterm: Wk 8</div>
+      <div class="chip">Final: Wk 15</div>
+    </div>
+  </div>
+
+  <div class="box idea">
+    <div class="box-title">👥 Section meeting times</div>
+    <p style="margin-bottom:8px;">The same weekly lecture, labs, and deadlines are delivered to three sections:</p>
+    <ul style="margin:0 0 8px;">
+      <li><strong>Section B</strong> — <strong>Mondays</strong>, Robotics Lab. First session: <strong>Mon 31 Aug 2026</strong>, then every Monday.</li>
+      <li><strong>Section A</strong> — <strong>Thursdays</strong>, Robotics Lab. First session: <strong>Thu 3 Sep 2026</strong>, then every Thursday.</li>
+      <li><strong>Section C</strong> — <strong>Thursdays</strong>, Robotics Lab (separate time slot). First session: <strong>Thu 3 Sep 2026</strong>, then every Thursday.</li>
+    </ul>
+    <p style="margin:0;">The <em>Date</em> column below is the <strong>Section&nbsp;B (Monday)</strong> date for each week. <strong>Sections&nbsp;A &amp; C meet on the Thursday of that same week</strong> (three days later) with identical content. Exact start times are on the LMS.</p>
+  </div>
+
+  <div class="box def">
+    <div class="box-title">📖 Reading key</div>
+    <p style="margin:0;">
+      <strong>ROS2</strong> = official ROS 2 Humble tutorials (docs.ros.org) &nbsp;·&nbsp;
+      <strong>LIMO</strong> = AgileX LIMO User Manual &nbsp;·&nbsp;
+      <strong>S</strong> = Siegwart, <em>Introduction to Autonomous Mobile Robots</em> 2e &nbsp;·&nbsp;
+      <strong>TBF</strong> = Thrun/Burgard/Fox, <em>Probabilistic Robotics</em> &nbsp;·&nbsp;
+      <strong>TC</strong> = The Construct, <em>Build Your First ROS 2 Based Robot</em>
+    </p>
+  </div>
+
+  <h2>🗓️ Weekly Plan</h2>
+  <div class="table-scroll">
+  <table>
+    <tr>
+      <th>Wk</th><th>Date <span style="font-weight:400;font-size:.9em;">(B&nbsp;Mon /<br>A&amp;C&nbsp;+3d Thu)</span></th><th>Lecture &amp; topic</th><th>Readings</th><th>Lab</th><th>Assessment / deadlines</th>
+    </tr>
+    <tr>
+      <td>1</td><td>31 Aug / 3 Sep</td>
+      <td><a href="01-installation-vmware-ros2-limo-intro.html">L1 — Getting Started: VMware, Ubuntu 22.04 &amp; ROS 2 Humble</a>. Meet the LIMO and its four drive modes.</td>
+      <td>ROS2: Installation, Configuring environment</td>
+      <td>Lab 1 — build the VM, install ROS 2 Humble, first <code>talker</code>/<code>listener</code>, launch LIMO in Gazebo</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>2</td><td>7 Sep / 10 Sep</td>
+      <td><a href="02-ros2-architecture-first-simulation.html">L2 — ROS 2 Architecture &amp; Your First LIMO Simulation</a>. Nodes, topics, services, actions, parameters.</td>
+      <td>ROS2: Nodes, Topics, Services, Actions, Parameters</td>
+      <td>Lab 2 — turtlesim + terminator, <code>ros2 topic/service/action</code> CLI, drive LIMO with <code>teleop_twist_keyboard</code></td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>3</td><td>14 Sep / 17 Sep</td>
+      <td><a href="03-dev-environment-drive-modes.html">L3 — The ROS 2 Dev Environment &amp; LIMO's Drive Modes</a>. Workspaces, packages, <code>colcon</code>, first Python node.</td>
+      <td>ROS2: Workspaces, Creating a package, Writing a publisher (Python)</td>
+      <td>Lab 3 — create <code>limo_ws</code>, a Python <code>cmd_vel</code> node, switch differential / Ackermann / Mecanum</td>
+      <td><span class="tag due">A1 issued</span></td>
+    </tr>
+    <tr>
+      <td>4</td><td>21 Sep / 24 Sep</td>
+      <td><a href="04-urdf-xacro-limo-body.html">L4 — LIMO's Body: URDF &amp; Xacro</a>. Links, joints, wheels, sensors, the <code>limo_description</code> package.</td>
+      <td>ROS2: URDF tutorials; S ch. 2–3</td>
+      <td>Lab 4 — read <code>limo_description</code>, add a sensor link in Xacro, view in RViz across all four chassis</td>
+      <td><span class="tag due">A1 due</span></td>
+    </tr>
+    <tr>
+      <td>5</td><td>28 Sep / 1 Oct</td>
+      <td><a href="05-tf2-frames-rviz.html">L5 — TF2, Coordinate Frames &amp; RViz</a>. The TF tree, static/dynamic transforms, map → odom → base_link.</td>
+      <td>ROS2: tf2 tutorials; S ch. 3</td>
+      <td>Lab 5 — <code>tf2_echo</code> / <code>view_frames</code>, write a static transform publisher, watch LIMO's TF live in RViz</td>
+      <td><span class="tag due">A2 issued</span></td>
+    </tr>
+    <tr>
+      <td>6</td><td>5 Oct / 8 Oct</td>
+      <td><a href="06-gazebo-ros2-control-path-controllers.html">L6 — Gazebo, ros2_control &amp; Path-Following Controllers</a>. Physics sim, <code>controller_manager</code>.</td>
+      <td>ROS2 / Gazebo: ros2_control, Gazebo Classic; S ch. 3.5</td>
+      <td>Lab 6 — bring up controllers, build on/off, proportional, and kinematic path controllers</td>
+      <td><span class="tag due">A2 due</span></td>
+    </tr>
+    <tr>
+      <td>7</td><td>12 Oct / 15 Oct</td>
+      <td><a href="07-sensors-lidar-imu-camera-obstacle-avoidance.html">L7 — Sensors: LiDAR, IMU, Depth Camera &amp; Reactive Avoidance</a>.</td>
+      <td>ROS2: sensor_msgs; S ch. 4; LIMO §LiDAR/IMU/Camera</td>
+      <td>Lab 7 — read <code>LaserScan</code>/<code>Imu</code>/<code>Image</code>, TF-transform points, safe-stop avoidance node</td>
+      <td><span class="tag due">A3 issued</span></td>
+    </tr>
+    <tr>
+      <td>8</td><td>19 Oct / 22 Oct</td>
+      <td><a href="08-computer-vision-opencv-object-detection.html">L8 — Robot Perception: OpenCV &amp; Object Detection</a>. <code>cv_bridge</code>, HSV/contours, Find-Object-2D, YOLO.</td>
+      <td>OpenCV-Python tutorials; S ch. 4.3</td>
+      <td>Lab 8 — HSV colour + contour detector, then YOLO on LIMO's camera feed</td>
+      <td><span class="tag exam">Midterm (20)</span> &nbsp; <span class="tag due">A3 due</span></td>
+    </tr>
+    <tr>
+      <td>9</td><td>26 Oct / 29 Oct</td>
+      <td><a href="09-odometry-ekf-amcl-localization.html">L9 — Odometry, Sensor Fusion (EKF) &amp; AMCL Localisation</a> <em>(extended lab)</em>.</td>
+      <td>TBF ch. 3, 5, 8; ROS2: robot_localization, nav2_amcl</td>
+      <td>Lab 9 — quantify odometry drift, fuse IMU/scan with <code>robot_localization</code>, tune AMCL</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>10</td><td>2 Nov / 5 Nov</td>
+      <td><a href="10-slam-nav2-capstone-mission.html">L10 — SLAM, Navigation2 &amp; the Simulated Capstone Mission</a> <em>(extended lab)</em>.</td>
+      <td>TBF ch. 9–10; Nav2 docs; ROS2: slam_toolbox</td>
+      <td>Lab 10 — map with <code>slam_toolbox</code>, configure Nav2, run waypoint following + frontier exploration</td>
+      <td><span class="tag exam">Capstone Part 1 — demo</span></td>
+    </tr>
+    <tr>
+      <td>11</td><td>9 Nov / 12 Nov</td>
+      <td><a href="11-limo-hardware-six-systems.html">L11 — LIMO Hardware Deep-Dive: The Six Real Systems</a>.</td>
+      <td>AgileX LIMO User Manual (full)</td>
+      <td>Lab 11 — six subsystem labs on the physical robot: chassis &amp; drive modules, compute, LiDAR, depth camera, IMU, battery/power</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>12</td><td>16 Nov / 19 Nov</td>
+      <td><a href="12-diy-robot-motors-power-compute.html">L12 — Build Your Own Robot I: Motors, Power &amp; Compute</a> <em>(build session)</em>.</td>
+      <td>TC units 2–4; L298N &amp; <code>ros_arduino_bridge</code> docs</td>
+      <td>Lab 12 — wire L298N ↔ Arduino Nano, flash firmware, closed-loop wheel spin + CPR calibration, power budget, headless Ubuntu Server + ROS 2</td>
+      <td><span class="tag due">A4 issued</span></td>
+    </tr>
+    <tr>
+      <td>13</td><td>23 Nov / 26 Nov</td>
+      <td><a href="13-diy-robot-ros2-driver-urdf-lidar-camera.html">L13 — Build Your Own Robot II: ROS 2 Driver, CAD, URDF, LiDAR &amp; Camera</a> <em>(build session)</em>.</td>
+      <td>TC units 5–9; ROS2: custom messages, udev</td>
+      <td>Lab 13 — diff-drive kinematics by hand → full driver node, bringup launch, Onshape → URDF, <code>robot_state_publisher</code>, udev for USB sensors, camera debug</td>
+      <td><span class="tag due">A4 due</span></td>
+    </tr>
+    <tr>
+      <td>14</td><td>30 Nov / 3 Dec</td>
+      <td><a href="14-diy-robot-simulation-3dprint-capstone.html">L14 — Build Your Own Robot III: Simulation, 3D-Printed Cover &amp; Capstone</a> <em>(build session)</em>.</td>
+      <td>TC units 10–11; Gazebo plugin docs</td>
+      <td>Lab 14 — parameterised Xacro, Gazebo diff-drive/LiDAR/camera plugins, four-file launch hierarchy, publish to GitHub, design a 3D-printed cover</td>
+      <td><span class="tag exam">Capstone Part 2 — build review</span></td>
+    </tr>
+    <tr>
+      <td>15</td><td>7 Dec / 10 Dec</td>
+      <td><strong>Finals week</strong> — no new lecture.</td>
+      <td>Review all</td>
+      <td>—</td>
+      <td><span class="tag exam">Final Exam (40) + capstone defence</span> &nbsp; <span class="tag due">Capstone report due</span></td>
+    </tr>
+  </table>
+  </div>
+
+  <div class="box mistake">
+    <div class="box-title">⚠️ Note</div>
+    <p style="margin:0;">Dates and lab scope may shift by up to a week for holidays or hardware availability. Any change is announced in class and reflected here — this page is the source of truth.</p>
+  </div>
+
+  <div class="footer-nav">
+    <a href="syllabus.html">&larr; Syllabus</a>
+    <a href="assignments.html">Assignments &rarr;</a>
+  </div>
+
+  <p class="footer-note">ROS and Robot Programming &nbsp;·&nbsp; Schedule &nbsp;·&nbsp; Dr. Muhammad Kazim</p>
+
+</div>
+
+<script>
+(function(){
+  var btn = document.getElementById('theme-toggle');
+  var icon = document.getElementById('theme-toggle-icon');
+  function updateIcon(){ icon.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙'; }
+  updateIcon();
+  btn.addEventListener('click', function(){
+    var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try{ localStorage.setItem('limo-book-theme', next); }catch(e){}
+    updateIcon();
+  });
+})();
+</script>
+<script src="annotate.js" defer></script>
+</body>
+</html>

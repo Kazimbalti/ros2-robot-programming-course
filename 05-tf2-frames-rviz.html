@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<script>
+(function(){
+  try{
+    var t = localStorage.getItem('limo-book-theme');
+    if(!t){ t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+    document.documentElement.setAttribute('data-theme', t);
+  }catch(e){}
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 5 — TF2, Coordinate Frames &amp; RViz</title>
+<meta name="description" content="How the LIMO tracks every sensor and wheel in a common coordinate system with tf2, and how to watch it happen live in RViz2.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<style>
+  :root{
+    --bg:#f6f4ef; --panel:#fffefb; --panel2:#f1efe8; --border:#e6e1d6;
+    --text:#211f1a; --muted:#7a7568; --accent:#3d4bf5; --accent-ink:#2732b8;
+    --accent2:#0e9e6e; --gold:#c8862c; --danger:#d64a3c; --purple:#8b5cf6; --radius:14px;
+  }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--bg); color:var(--text); font-family:'Inter', -apple-system, sans-serif; line-height:1.85; font-size:17.5px; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:880px; margin:0 auto; padding:48px 24px 120px;}
+  .cover{border-radius:28px; background:#12142b; padding:64px 44px; margin-bottom:56px; position:relative; overflow:hidden; isolation:isolate;}
+  .cover::before{content:""; position:absolute; inset:-40%; background:
+      radial-gradient(38% 45% at 15% 20%, rgba(61,75,245,0.55), transparent 70%),
+      radial-gradient(35% 40% at 85% 15%, rgba(139,92,246,0.45), transparent 70%),
+      radial-gradient(45% 50% at 60% 90%, rgba(14,158,110,0.35), transparent 70%);
+    filter:blur(60px); z-index:0;}
+  .cover::after{content:""; position:absolute; inset:0; background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px); background-size: 20px 20px; z-index:0;}
+  .cover > *{position:relative; z-index:1;}
+  .kicker{display:inline-block; color:#c9cdff; font-weight:600; letter-spacing:.4px; font-size:13px; margin-bottom:18px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); padding:6px 14px; border-radius:999px;}
+  .cover h1{font-size:2.7em; margin:0 0 12px; font-weight:800; line-height:1.3; color:#ffffff; letter-spacing:-.5px;}
+  .cover .subtitle{color:#aeb2d6; font-size:1.2em; margin-bottom:30px; font-weight:400;}
+  .meta-row{display:flex; flex-wrap:wrap; gap:10px; margin-top:18px;}
+  .chip{background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.14); color:#d4d7f0; padding:7px 15px; border-radius:999px; font-size:.83em;}
+  h2{font-size:1.9em; font-weight:800; margin:72px 0 22px; display:flex; align-items:center; gap:14px; letter-spacing:-.3px;}
+  h2 .num{display:inline-flex; align-items:center; justify-content:center; min-width:40px; height:40px; padding:0 12px; border-radius:12px; background:var(--accent); box-shadow:0 6px 16px -4px rgba(61,75,245,0.5); color:#ffffff; font-size:.62em; font-weight:800; flex-shrink:0; white-space:nowrap;}
+  h3{font-size:1.3em; font-weight:700; margin:36px 0 14px; color:var(--accent-ink); letter-spacing:-.2px;}
+  h4{font-size:1.08em; font-weight:700; margin:24px 0 10px; color:var(--purple);}
+  p{margin:0 0 16px; color:#3c382f;}
+  strong{color:var(--text); font-weight:700;}
+  a{color:var(--accent);}
+  .box{border-radius:16px; padding:20px 24px; margin:22px 0; border:1px solid var(--border); background:var(--panel); position:relative; box-shadow:0 1px 2px rgba(33,31,26,0.03);}
+  .box-title{font-weight:800; margin-bottom:9px; display:flex; align-items:center; gap:8px; font-size:.96em; letter-spacing:.1px;}
+  .box p:last-child{margin-bottom:0;}
+  .box.idea{background:#eef0ff;border-color:#d6dafc;} .box.idea .box-title{color:var(--accent-ink);}
+  .box.mistake{background:#fdeeec; border-color:#f6d2cd;} .box.mistake .box-title{color:var(--danger);}
+  .box.eng{background:#f4effe; border-color:#e2d6fb;} .box.eng .box-title{color:var(--purple);}
+  .box.real{background:#eafaf3; border-color:#c9eeda;} .box.real .box-title{color:var(--accent2);}
+  .box.def{background:#fdf3e4; border-color:#f2ddb3;} .box.def .box-title{color:var(--gold);}
+  .box.hw{background:#fdeee4; border-color:#f2c9a3;} .box.hw .box-title{color:#c8622c;}
+  code, pre{font-family:'JetBrains Mono', monospace; direction:ltr; text-align:left;}
+  code{background:#eceaf9; border:1px solid #dcdaf3; border-radius:6px; padding:2px 7px; font-size:.87em; color:var(--accent-ink); display:inline-block;}
+  pre{background:#181a2e; border-radius:16px; padding:18px 20px; overflow-x:auto; margin:18px 0; font-size:.88em; line-height:1.65; box-shadow:0 12px 28px -16px rgba(24,26,46,0.5);}
+  pre code{background:none; border:none; padding:0; color:#d8dcff; display:block;}
+  table{width:100%; border-collapse:separate; border-spacing:0; margin:22px 0; font-size:.92em; border-radius:14px; overflow:hidden; border:1px solid var(--border);}
+  th, td{border-bottom:1px solid var(--border); padding:12px 15px; text-align:left;}
+  th{background:#eceaf9; color:var(--accent-ink); font-weight:700; font-size:.9em;}
+  tr:last-child td{border-bottom:none;}
+  tr:nth-child(even) td{background:rgba(33,31,26,0.02);}
+  ul, ol{margin:0 0 16px; padding-inline-start:26px; color:#3c382f;}
+  li{margin-bottom:7px;}
+  .figure{margin:28px 0; text-align:center;}
+  .figure img, .figure svg{max-width:100%; height:auto; background:#fffefb; border:1px solid var(--border); border-radius:16px; box-shadow:0 1px 2px rgba(33,31,26,0.03), 0 16px 32px -20px rgba(33,31,26,0.14);}
+  .figure figcaption{color:var(--muted); font-size:.87em; margin-top:12px;}
+  .mermaid{background:#fffefb; border:1px solid var(--border); border-radius:16px; padding:18px; margin:24px 0; text-align:center; box-shadow:0 1px 2px rgba(33,31,26,0.03), 0 16px 32px -20px rgba(33,31,26,0.14);}
+  .checkpoint{border-radius:16px; padding:22px 24px; margin:26px 0; background:#eafaf3; border:1px solid #c9eeda;}
+  .checkpoint ul{list-style:none; padding:0; margin:0;}
+  .checkpoint li{padding:9px 0; border-bottom:1px solid rgba(33,31,26,0.06); display:flex; gap:10px; align-items:flex-start;}
+  .checkpoint li:last-child{border-bottom:none;}
+  .checkpoint li::before{content:"◻"; color:var(--accent2); font-size:1.2em; line-height:1;}
+  .exercise{border-radius:14px; padding:18px 22px; margin:16px 0; background:var(--panel); border:1px solid var(--border); border-inline-start:4px solid var(--gold);}
+  .exercise .level{font-size:.76em; color:var(--gold); font-weight:800; text-transform:uppercase; letter-spacing:.6px;}
+  .glossary dt{font-weight:800; color:var(--accent-ink); margin-top:16px;}
+  .glossary dd{margin:4px 0 0; color:var(--muted);}
+  .toc{background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:26px 30px;}
+  .toc a{display:block; padding:8px 0; color:#3c382f; text-decoration:none; border-bottom:1px solid rgba(33,31,26,.06); transition:color .15s;}
+  .toc a:last-child{border-bottom:none;}
+  .toc a:hover{color:var(--accent-ink);}
+  .toc a span{color:var(--muted); font-size:.85em; margin-inline-end:10px; font-weight:600;}
+  .divider{height:1px; background:linear-gradient(90deg, transparent, var(--border), transparent); margin:52px 0;}
+  .footer-nav{display:flex; justify-content:space-between; align-items:center; gap:16px; margin-top:64px; padding-top:26px; border-top:1px solid var(--border); color:var(--muted); font-size:.9em;}
+  .footer-nav a{color:var(--text); text-decoration:none; font-weight:600;}
+  .footer-nav a:hover{color:var(--accent-ink);}
+  .badge-project{display:inline-block; background:#fdf3e4; border:1px solid #f2ddb3; color:var(--gold); border-radius:8px; padding:3px 11px; font-size:.78em; font-weight:700;}
+  .term{background:#181a2e; border-radius:16px; overflow:hidden; margin:22px 0; box-shadow:0 12px 28px -16px rgba(24,26,46,0.5);}
+  .term-bar{display:flex; align-items:center; gap:7px; padding:12px 16px; background:#20223a;}
+  .term-dot{width:11px; height:11px; border-radius:50%;}
+  .term-body{padding:16px 20px; font-family:'JetBrains Mono', monospace; direction:ltr; text-align:left; font-size:.87em; line-height:1.75; color:#d8dcff; white-space:pre-wrap;}
+  .term-prompt{color:#7ee7c7;}
+  .term-out{color:#9aa0c8;}
+  @media print{ body{background:#fff; color:#000;} }
+  html[data-theme="dark"]{
+    --bg:#12141c; --panel:#1b1e2a; --panel2:#20232f; --border:#2d3142;
+    --text:#e7e8f2; --muted:#9498b3; --accent:#7c86ff; --accent-ink:#aab1ff;
+    --accent2:#34d399; --gold:#e3a548; --danger:#f0685a; --purple:#a78bfa; --radius:14px;
+  }
+  html[data-theme="dark"] p, html[data-theme="dark"] ul, html[data-theme="dark"] ol, html[data-theme="dark"] .toc a{color:#c7c9dc;}
+  html[data-theme="dark"] code{background:#262a45; border-color:#3a3f5c;}
+  html[data-theme="dark"] th{background:#262a45;}
+  html[data-theme="dark"] tr:nth-child(even) td{background:rgba(255,255,255,0.03);}
+  html[data-theme="dark"] .box.idea{background:#1f2242; border-color:#383d6b;}
+  html[data-theme="dark"] .box.mistake{background:#3a2220; border-color:#5c332e;}
+  html[data-theme="dark"] .box.eng{background:#2a2340; border-color:#453a63;}
+  html[data-theme="dark"] .box.real{background:#16302a; border-color:#1f4a3d;}
+  html[data-theme="dark"] .box.def{background:#3a2f18; border-color:#5c4826;}
+  html[data-theme="dark"] .box.hw{background:#3a2618; border-color:#5c3f26;}
+  html[data-theme="dark"] .checkpoint{background:#16302a; border-color:#1f4a3d;}
+  html[data-theme="dark"] .checkpoint li{border-bottom-color:rgba(255,255,255,0.08);}
+  html[data-theme="dark"] .badge-project{background:#3a2f18; border-color:#5c4826;}
+  html[data-theme="dark"] .chapter-num{background:#1f2242;}
+  html[data-theme="dark"] .chapter-card{box-shadow:0 1px 2px rgba(0,0,0,0.25);}
+  html[data-theme="dark"] .chapter-card:hover{border-color:#454a7a; box-shadow:0 16px 32px -20px rgba(0,0,0,0.55);}
+  body, .box, .chapter-card, .exercise, .checkpoint, .toc, table, code, th{transition:background-color .25s ease, border-color .25s ease, color .25s ease;}
+  #theme-toggle{position:fixed; top:18px; left:18px; z-index:999; width:46px; height:46px; border-radius:50%; border:1px solid var(--border); background:var(--panel); color:var(--text); font-size:19px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px -8px rgba(0,0,0,0.35); transition:transform .15s ease, background-color .25s ease, border-color .25s ease;}
+  #theme-toggle:hover{transform:scale(1.08);}
+  @media (max-width:640px){ #theme-toggle{top:12px; left:12px; width:42px; height:42px; font-size:17px;} }
+</style>
+<link rel="stylesheet" href="projector.css">
+</head>
+<body>
+<style>
+.coursenav{position:sticky;top:0;z-index:900;background:rgba(255,254,251,0.88);backdrop-filter:saturate(160%) blur(10px);border-bottom:1px solid var(--border);}
+.coursenav .inner{max-width:1000px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;padding:10px 20px 10px 74px;}
+.coursenav .brand{font-weight:800;color:var(--accent-ink);margin-inline-end:12px;font-size:.9em;letter-spacing:-.2px;}
+.coursenav a{color:#3c382f;text-decoration:none;font-weight:600;font-size:.82em;padding:6px 10px;border-radius:999px;transition:background-color .15s,color .15s;}
+.coursenav a:hover{background:#eef0ff;color:var(--accent-ink);}
+.coursenav a.active{background:var(--accent);color:#fff;}
+html[data-theme="dark"] .coursenav{background:rgba(27,30,42,0.9);}
+html[data-theme="dark"] .coursenav a{color:#c7c9dc;}
+html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
+@media print{.coursenav{display:none;}}
+</style>
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html">Home</a>
+  <a href="syllabus.html">Syllabus</a>
+  <a href="schedule.html">Schedule</a>
+  <a href="assignments.html">Assignments</a>
+  <a href="index.html#lectures" class="active">Lectures</a>
+</div></nav>
+<button id="theme-toggle" aria-label="Toggle light/dark mode" title="Light/dark mode">
+  <span id="theme-toggle-icon">🌙</span>
+</button>
+<div class="wrap">
+
+  <div class="cover">
+    <div class="kicker">LIMO Robotics &amp; ROS 2 Lecture &nbsp;·&nbsp; Session 5 of 14</div>
+    <h1>Lecture 5: TF2, Coordinate Frames &amp; RViz</h1>
+    <div class="subtitle">Teaching the LIMO where everything is — and watching it think, live</div>
+    <div class="meta-row">
+      <div class="chip">Duration: 3 hours</div>
+      <div class="chip">Prerequisite: Lecture 4 (URDF &amp; Xacro)</div>
+      <div class="chip">Focus: tf2_ros + RViz2</div>
+    </div>
+  </div>
+
+  <div class="toc">
+    <strong style="color:var(--text)">In this session</strong>
+    <a href="#sec1"><span>5.1</span>The problem TF2 solves</a>
+    <a href="#sec2"><span>5.2</span>REP-105's four core frames</a>
+    <a href="#sec3"><span>5.3</span>Static vs dynamic transforms</a>
+    <a href="#sec4"><span>5.4</span>Inspecting TF live</a>
+    <a href="#sec5"><span>5.5</span>tf2_ros in code: Buffer and TransformListener</a>
+    <a href="#sec6"><span>5.6</span>Walkthrough: closest_scan_marker.py</a>
+    <a href="#sec7"><span>5.7</span>RViz2 as the visual dashboard</a>
+    <a href="#sec8"><span>5.8</span>Summary, glossary &amp; exercises</a>
+  </div>
+
+  <section id="sec1">
+    <h2><span class="num">5.1</span>The problem TF2 solves</h2>
+    <p>Look back at the URDF you built in Lecture 4. It described the LIMO as a tree of rigid <code>&lt;link&gt;</code> elements connected by <code>&lt;joint&gt;</code> elements — <code>base_link</code>, four wheel links, <code>laser_link</code>, <code>depth_camera_link</code>, <code>imu_link</code>, and so on. That tree tells the robot how its parts are <em>connected</em>. It does not, by itself, tell any node running on the robot where any of those parts currently <em>are</em> in the real world, or where they are relative to each other at this exact instant.</p>
+    <p>Every sensor on the LIMO reports data in its own local bubble. The 2D lidar publishes ranges measured from the sensor's own origin, angle zero pointing wherever the sensor happens to be mounted facing. The depth camera publishes points relative to its own optical center. The IMU reports orientation relative to its own mounting. None of these numbers mean anything to each other until something ties them into one shared coordinate system — and that "something" has to keep working as the chassis drives, the steering hinge swings, and the wheels spin, because none of those relationships are fixed once the robot moves.</p>
+    <p><strong>TF2</strong> (the ROS 2 transform library, package <code>tf2_ros</code>) is that shared coordinate system. Every part of the robot that has a pose gets a named <strong>frame</strong>. Every pair of adjacent frames is connected by a <strong>transform</strong> — a translation and rotation describing how to get from one frame to the other. Nodes broadcast these transforms continuously onto a tree, and any other node can ask tf2 "where is frame A relative to frame B, right now?" without needing to know how that chain of transforms was computed.</p>
+    <div class="box idea">
+      <div class="box-title">💡 The mental model</div>
+      <p>Think of TF2 as a living, constantly-updated family tree of coordinate frames. Each frame has exactly one parent. tf2 walks the tree and multiplies transforms together to answer "where is X relative to Y" for any two frames in the tree — even frames that aren't directly connected, as long as there's a path between them.</p>
+    </div>
+    <p>Here is the full TF tree the LIMO's software stack maintains once URDF, odometry, and (eventually) localization are all running:</p>
+    <div class="mermaid">
+graph TD
+  map["map<br/><small>global, corrected by localization</small>"] -->|dynamic, jumps| odom["odom<br/><small>local, continuous</small>"]
+  odom -->|dynamic, smooth| base_link["base_link<br/><small>robot body</small>"]
+  base_link -->|static, fixed| base_footprint["base_footprint<br/><small>ground projection</small>"]
+  base_link -->|static, fixed| laser_link["laser_link<br/><small>2D lidar</small>"]
+  base_link -->|static, fixed| depth_camera_link["depth_camera_link<br/><small>RGB-D camera</small>"]
+  depth_camera_link -->|static, fixed| depth_link["depth_link<br/><small>optical frame</small>"]
+  base_link -->|static, fixed| imu_link["imu_link<br/><small>IMU</small>"]
+  base_link -->|dynamic, continuous| fl["front_left_wheel_link"]
+  base_link -->|dynamic, continuous| fr["front_right_wheel_link"]
+  base_link -->|dynamic, continuous| rl["rear_left_wheel_link"]
+  base_link -->|dynamic, continuous| rr["rear_right_wheel_link"]
+    </div>
+    <p>This session is entirely about that diagram: what each frame means, who broadcasts each arrow, how to inspect it live, how to use it correctly from a Python node, and how to watch the whole thing move in RViz2.</p>
+    <div class="box real">
+      <div class="box-title">✅ A concrete example</div>
+      <p>Suppose the LIMO's lidar reports an obstacle 0.6m away, straight ahead of the sensor. If the sensor happens to be mounted 12cm behind and 12cm above the chassis centre, and the chassis is currently rotated 30° from where it started, "straight ahead of the sensor" is not the same direction as "straight ahead of the robot," which is not the same as "north" in the room. TF2 is what lets a node ask "where is that obstacle relative to <code>base_link</code>" or "relative to <code>odom</code>" and get a correct answer without that node needing to know anything about lidar mounting offsets or the robot's current heading — it just asks the tree.</p>
+    </div>
+    <div class="figure">
+      <img src="./images/frames.png" alt="TF frame tree for the LIMO rendered by view_frames">
+      <figcaption>A view_frames-style render of the LIMO's live TF tree — the same structure as the diagram above, generated from real broadcasts.</figcaption>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="sec2">
+    <h2><span class="num">5.2</span>REP-105's four core frames</h2>
+    <p>ROS has a standard (<strong>REP-105</strong>) for naming the frames every mobile robot stack should provide, precisely so that navigation, SLAM, and visualization tools all agree on what <code>map</code>, <code>odom</code>, and <code>base_link</code> mean without each robot inventing its own convention. The LIMO stack follows it exactly.</p>
+
+    <h3>map</h3>
+    <p><code>map</code> is the outermost, globally-consistent frame. It is anchored to a fixed point in the world (usually wherever a saved map's origin is) and does not drift — but it is only as good as the localization algorithm feeding it. Later in the course, a node like AMCL will compare live lidar scans against a saved map and periodically publish a correction as the <code>map → odom</code> transform. That correction can make the robot's reported position <em>jump</em> — not because the robot physically teleported, but because the estimate of where <code>odom</code> sits inside <code>map</code> just got revised.</p>
+
+    <h3>odom</h3>
+    <p><code>odom</code> is the frame of dead-reckoning. It is built purely by integrating wheel encoder ticks (and on the LIMO, IMU data) over time — "the robot moved 3cm forward and turned 2 degrees since the last tick." Because it is a running sum with no external correction, <code>odom</code> is guaranteed to be <strong>locally smooth</strong> (no jumps, no teleporting, perfect for short-term motion planning and control loops) but it will slowly <strong>drift</strong> from ground truth the farther and longer the robot drives, because small errors in wheel slip and encoder resolution accumulate.</p>
+
+    <h3>base_link</h3>
+    <p><code>base_link</code> is the LIMO's own body frame — the same frame you defined as the root link in Lecture 4's URDF. It is rigidly fixed to the chassis: as the robot drives, <code>base_link</code>'s pose relative to <code>odom</code> changes continuously, but everything rigidly bolted to the chassis (the lidar, the IMU, the camera mount) stays at a constant offset from <code>base_link</code> forever.</p>
+
+    <h3>base_footprint</h3>
+    <p><code>base_footprint</code> is <code>base_link</code> projected straight down onto the ground plane — same x/y position, but z is pinned to zero and roll/pitch are usually zeroed too, even if the chassis itself pitches slightly. Costmaps and 2D navigation planners work in this frame because they reason about the ground plane, not the 3D pose of the chassis; it lets the nav stack ignore small vibration-induced tilt that the IMU would otherwise report.</p>
+
+    <table>
+      <tr><th>Frame</th><th>Anchored to</th><th>Behavior</th><th>Who publishes it</th></tr>
+      <tr><td><code>map</code></td><td>the world / saved map</td><td>globally accurate, can jump on correction</td><td>a localization node (e.g. AMCL, later)</td></tr>
+      <tr><td><code>odom</code></td><td>wherever the robot was powered on</td><td>locally smooth, drifts over time/distance</td><td>the odometry source (wheel/IMU fusion)</td></tr>
+      <tr><td><code>base_link</code></td><td>the chassis itself</td><td>rigid body frame, moves with the robot</td><td>the odometry node, relative to odom</td></tr>
+      <tr><td><code>base_footprint</code></td><td>ground projection of base_link</td><td>static offset from base_link</td><td>robot_state_publisher (fixed joint)</td></tr>
+    </table>
+
+    <div class="box def">
+      <div class="box-title">📖 Why not just use one frame?</div>
+      <p>You could try to publish everything directly in <code>map</code>. The problem is that <code>map</code> corrections happen in discrete jumps whenever localization runs — great for long-term accuracy, terrible for a control loop that needs continuous, jump-free numbers every cycle. Splitting the chain into <code>map→odom</code> (jumpy, accurate) and <code>odom→base_link</code> (smooth, drifting) lets each consumer pick the guarantee it actually needs.</p>
+    </div>
+    <div class="box eng">
+      <div class="box-title">🔧 base_footprint on the LIMO specifically</div>
+      <p>Looking at the LIMO's own URDF (Lecture 4), <code>base_footprint</code> is added with a single <code>fixed</code> joint named <code>base_joint</code> connecting it to <code>base_link</code>, with a small vertical offset so that <code>base_footprint</code>'s origin sits exactly at ground height under the chassis's centre. It carries no visual or collision geometry of its own — it exists purely as a coordinate reference. When Lecture 6 introduces <code>ros2_control</code> and later lectures introduce costmaps, this is the frame those layers will attach to, not <code>base_link</code>, precisely so a small amount of suspension travel or IMU-measured tilt on the real hardware doesn't feed noise into the 2D navigation planner.</p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="sec3">
+    <h2><span class="num">5.3</span>Static vs dynamic transforms</h2>
+    <p>Every arrow in the TF tree diagram is either <strong>static</strong> or <strong>dynamic</strong>, and the distinction maps directly onto joint types from your Lecture 4 URDF.</p>
+    <ul>
+      <li><strong>Static transforms</strong> never change once the robot is physically built. A <code>fixed</code> joint in the URDF — the lidar bolted to the chassis, the IMU screwed to a mounting plate, <code>base_footprint</code>'s offset from <code>base_link</code> — produces a static transform. <code>robot_state_publisher</code> reads these directly from the URDF and broadcasts them once (on the <code>/tf_static</code> topic), because they will never need updating.</li>
+      <li><strong>Dynamic transforms</strong> change every control cycle. Wheel joints are <code>continuous</code> (they spin forever), and on the Ackermann-steering LIMO the steering hinge is <code>revolute</code> (it swings back and forth within limits) — both get republished on every joint state update. The <code>odom → base_link</code> transform is dynamic too, but for a different reason: it isn't driven by a URDF joint at all, it's continuously recomputed by the odometry node from wheel encoder ticks and republished on <code>/tf</code> many times a second as the robot moves. <code>map → odom</code> is also dynamic, but updates far less often — only when a localization node has a new correction.</li>
+    </ul>
+    <table>
+      <tr><th>URDF joint (Lecture 4)</th><th>Type</th><th>TF broadcast</th><th>Broadcast by</th></tr>
+      <tr><td><code>base_joint</code> (base_link → base_footprint)</td><td>fixed</td><td>static</td><td>robot_state_publisher</td></tr>
+      <tr><td><code>laser_joint</code> (base_link → laser_link)</td><td>fixed</td><td>static</td><td>robot_state_publisher</td></tr>
+      <tr><td><code>depth_camera_joint</code> (base_link → depth_camera_link)</td><td>fixed</td><td>static</td><td>robot_state_publisher</td></tr>
+      <tr><td><code>depth_camera_link → depth_link</code></td><td>fixed</td><td>static</td><td>robot_state_publisher</td></tr>
+      <tr><td><code>imu_joint</code> (base_link → imu_link)</td><td>fixed</td><td>static</td><td>robot_state_publisher</td></tr>
+      <tr><td><code>*_wheel</code> (each wheel link)</td><td>continuous</td><td>dynamic</td><td>robot_state_publisher (from /joint_states)</td></tr>
+      <tr><td><code>main_steering</code> / <code>*_steering</code> (Ackermann)</td><td>revolute</td><td>dynamic</td><td>robot_state_publisher (from /joint_states)</td></tr>
+      <tr><td>odom → base_link</td><td><em>not a URDF joint</em></td><td>dynamic, high rate</td><td>odometry node</td></tr>
+      <tr><td>map → odom</td><td><em>not a URDF joint</em></td><td>dynamic, low rate</td><td>localization node (e.g. AMCL)</td></tr>
+    </table>
+    <div class="box eng">
+      <div class="box-title">🔧 Under the hood</div>
+      <p><code>robot_state_publisher</code> is the node doing more work than it gets credit for here: it subscribes to <code>/joint_states</code> (published by whatever is driving the wheels — a real encoder driver on hardware, or <code>ros2_control</code> in Gazebo, covered next lecture), combines each joint angle with the fixed geometry from your URDF, and broadcasts the entire resulting set of transforms — static ones once on <code>/tf_static</code>, dynamic ones continuously on <code>/tf</code>.</p>
+    </div>
+    <p>Occasionally you need a transform that exists for a reason other than a URDF joint — for example, publishing a fixed offset for a temporary calibration rig, or bridging a frame from a third-party driver that doesn't follow REP-105 naming. For exactly that case, tf2_ros ships a small command-line utility that broadcasts a single static transform without writing any code:</p>
+    <div class="term">
+      <div class="term-bar"><span class="term-dot" style="background:#f0685a"></span><span class="term-dot" style="background:#e3a548"></span><span class="term-dot" style="background:#34d399"></span></div>
+      <div class="term-body"><span class="term-prompt">$</span> ros2 run tf2_ros static_transform_publisher \
+    --x 0.1 --y 0.0 --z 0.05 --roll 0 --pitch 0 --yaw 0 \
+    --frame-id base_link --child-frame-id calibration_rig
+<span class="term-out">[INFO] [static_transform_publisher]: Spinning until killed publishing transform from
+'base_link' to 'calibration_rig'</span></div>
+    </div>
+    <p>This is a genuinely static transform in every sense used in this section — it publishes once on <code>/tf_static</code> and stays constant for as long as the process runs — but it is a good reminder that "static" describes the <em>relationship</em>, not the mechanism: it doesn't have to come from a URDF joint at all.</p>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="sec4">
+    <h2><span class="num">5.4</span>Inspecting TF live</h2>
+    <p>Before writing a single line of tf2 code, get comfortable looking at the tree from the command line. Two tools cover almost everything you need.</p>
+    <h3>rqt_tf_tree — the whole tree, visually</h3>
+    <p>With the LIMO's description stack (or Gazebo sim) running, launch:</p>
+    <div class="term">
+      <div class="term-bar"><span class="term-dot" style="background:#f0685a"></span><span class="term-dot" style="background:#e3a548"></span><span class="term-dot" style="background:#34d399"></span></div>
+      <div class="term-body"><span class="term-prompt">$</span> ros2 run rqt_tf_tree rqt_tf_tree
+<span class="term-out">[INFO] rqt_tf_tree: querying tf tree...</span>
+<span class="term-out">[INFO] a window opens showing every currently-broadcast frame as a box,
+ connected by arrows labelled with broadcaster node and update rate]</span></div>
+    </div>
+    <p>This opens a live graphical window: every frame currently being broadcast appears as a box, with arrows showing parent→child relationships, which node is publishing each link, and how recently it last updated. It is the fastest way to answer "is my new sensor frame actually connected to the tree, or is it floating disconnected because I forgot a joint?" — a disconnected frame shows up as its own separate little tree with no path back to <code>base_link</code>.</p>
+
+    <h3>tf2_echo — one specific relationship, in numbers</h3>
+    <p>When you know exactly which two frames you care about, <code>tf2_echo</code> prints the live translation and rotation between them, refreshed continuously:</p>
+    <div class="term">
+      <div class="term-bar"><span class="term-dot" style="background:#f0685a"></span><span class="term-dot" style="background:#e3a548"></span><span class="term-dot" style="background:#34d399"></span></div>
+      <div class="term-body"><span class="term-prompt">$</span> ros2 run tf2_ros tf2_echo map base_link
+<span class="term-out">[INFO] [tf2_echo]: Waiting for transform map -&gt;  base_link: Invalid frame ID "map" passed to canTransform argument target_frame - frame does not exist</span>
+<span class="term-out">At time 1755000012.401
+- Translation: [1.203, 0.481, 0.000]
+- Rotation: in Quaternion [0.000, 0.000, 0.183, 0.983]
+- Rotation: in RPY (radian) [0.000, 0.000, 0.368]
+- Rotation: in RPY (degree) [0.000, 0.000, 21.09]</span>
+
+<span class="term-prompt">$</span> ros2 run tf2_ros tf2_echo laser_link base_link
+<span class="term-out">At time 1755000013.108
+- Translation: [-0.103, 0.000, -0.121]
+- Rotation: in Quaternion [0.000, 0.000, 0.000, 1.000]
+- Rotation: in RPY (radian) [0.000, 0.000, 0.000]
+- Rotation: in RPY (degree) [0.000, 0.000, 0.000]</span></div>
+    </div>
+    <p>Two details worth noticing in that transcript. First, before any <code>map</code> frame exists (no localization node running yet) <code>tf2_echo</code> just waits and warns — it does not crash, it patiently retries. Second, the argument order is <code>tf2_echo &lt;source_frame&gt; &lt;target_frame&gt;</code>: the output is "the pose of <em>target_frame</em> expressed in <em>source_frame</em>'s coordinates" — read it as "where is base_link, as seen from laser_link." Getting this order backwards is one of the most common tf2 mistakes (see 5.8).</p>
+    <div class="figure">
+      <img src="./images/frames.png" alt="rqt_tf_tree output showing the LIMO frame hierarchy">
+      <figcaption>rqt_tf_tree output for a running LIMO stack — every box is a live frame, every arrow a broadcast transform.</figcaption>
+    </div>
+
+    <h3>ros2 topic echo /tf_static — seeing the raw messages once</h3>
+    <p>It can also help to see the raw transform messages tf2 is built from. Static transforms are only published once (or on a latched/transient-local basis), so a single echo shows you every fixed offset in the tree at once:</p>
+    <div class="term">
+      <div class="term-bar"><span class="term-dot" style="background:#f0685a"></span><span class="term-dot" style="background:#e3a548"></span><span class="term-dot" style="background:#34d399"></span></div>
+      <div class="term-body"><span class="term-prompt">$</span> ros2 topic echo /tf_static --once
+<span class="term-out">transforms:
+- header:
+    frame_id: base_link
+  child_frame_id: laser_link
+  transform:
+    translation: {x: -0.103, y: 0.0, z: 0.121}
+    rotation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}
+- header:
+    frame_id: base_link
+  child_frame_id: imu_link
+  transform:
+    translation: {x: 0.0, y: 0.0, z: 0.05}
+    rotation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}
+- header:
+    frame_id: base_link
+  child_frame_id: base_footprint
+  transform:
+    translation: {x: 0.0, y: 0.0, z: -0.121}
+    rotation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}</span></div>
+    </div>
+    <p>Compare that against <code>ros2 topic echo /tf --once</code> while the robot is stationary but powered — you'll see a stream of <code>odom → base_link</code> messages arriving at whatever rate the odometry node publishes, each with a slightly different translation/rotation as noise and small drift accumulate even while sitting still.</p>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="sec5">
+    <h2><span class="num">5.5</span>tf2_ros in code: Buffer and TransformListener</h2>
+    <p>Command-line tools are for humans. A node needs to ask the same question — "where is frame A relative to frame B, right now?" — programmatically. <code>tf2_ros</code> gives you exactly two objects to set up, once, in your node's constructor:</p>
+    <pre><code>from tf2_ros import Buffer, TransformListener
+
+# in __init__:
+self.tf_buffer = Buffer()
+self.tf_listener = TransformListener(self.tf_buffer, self, spin_thread=True)</code></pre>
+    <p>The <strong>Buffer</strong> is a rolling cache of every transform tf2 has seen recently (by default it keeps roughly the last 10 seconds). The <strong>TransformListener</strong> is what actually subscribes to <code>/tf</code> and <code>/tf_static</code> in the background and fills that buffer as messages arrive. Passing <code>spin_thread=True</code> tells the listener to run its subscription callbacks on a separate background thread, so the buffer keeps filling even while your node's main thread is busy doing other work (like processing a laser scan) — without that, you'd have to interleave spinning manually and it's easy to starve the listener.</p>
+    <p>Once the buffer has data, asking for a transform is one call:</p>
+    <pre><code>transform = self.tf_buffer.lookup_transform(
+    target_frame,          # the frame you want the answer expressed in
+    source_frame,          # the frame your data currently lives in
+    rclpy.time.Time()      # the time you want the transform at
+)</code></pre>
+    <div class="box mistake">
+      <div class="box-title">⚠️ target_frame vs source_frame</div>
+      <p><code>lookup_transform(target_frame, source_frame, time)</code> returns the transform that converts a point <em>from</em> <code>source_frame</code> <em>into</em> <code>target_frame</code>. If your data was measured by the lidar, <code>source_frame='laser_link'</code>. If you want it expressed in the smooth odometry frame, <code>target_frame='odom'</code>. Swap the two arguments and everything still "works" — you just get numbers transformed in the wrong direction, which is a much nastier bug than a crash because it often still looks plausible.</p>
+    </div>
+    <p>The third argument, a <code>Time</code>, deserves its own explanation. <code>rclpy.time.Time()</code> with no arguments constructs the special "time zero," which tf2 interprets as <strong>"give me the latest transform you have, whatever timestamp that is."</strong> As a beginner this is almost always what you want: it avoids asking for a transform at some exact past timestamp that might not exist yet in the buffer. If you instead pass a specific stamp — say, the timestamp on an incoming sensor message — tf2 will try to find (or interpolate) the transform at that exact instant, which is more precise but can fail if that data hasn't arrived yet or has already scrolled out of the buffer.</p>
+    <h3>The three exceptions you will actually hit</h3>
+    <table>
+      <tr><th>Exception</th><th>Means</th><th>Typical cause</th></tr>
+      <tr><td><code>LookupException</code></td><td>one of the two frames doesn't exist in the tree at all</td><td>typo in a frame name, or that broadcaster node hasn't started yet</td></tr>
+      <tr><td><code>ConnectivityException</code></td><td>both frames exist, but there's no path between them</td><td>a disconnected sub-tree — e.g. forgetting a fixed joint in the URDF</td></tr>
+      <tr><td><code>ExtrapolationException</code></td><td>the requested time is outside the data the buffer currently has</td><td>calling lookup_transform() too soon after startup, before any /tf messages have arrived — or asking for a timestamp too far in the past/future</td></tr>
+    </table>
+    <div class="box real">
+      <div class="box-title">✅ Real-world pattern</div>
+      <p>Always wrap <code>lookup_transform</code> in a <code>try/except</code>. On a freshly-launched robot there is a brief window — often under a second — where your node is running but the TF tree hasn't been populated yet. Catching the exception, logging a warning, and simply skipping that one callback (rather than crashing the node) is standard practice, and it's exactly what the real node in the next section does.</p>
+    </div>
+    <p>Spelled out with the specific exception types instead of a bare <code>except Exception</code>, the same pattern looks like this — useful while you're still learning, so you can see in your logs exactly which failure mode you hit:</p>
+    <pre><code>from tf2_ros import LookupException, ConnectivityException, ExtrapolationException
+
+try:
+    transform = self.tf_buffer.lookup_transform(target_frame, source_frame, rclpy.time.Time())
+    point = do_transform_point(point, transform)
+except LookupException:
+    self.get_logger().warning('One of the frames does not exist yet — is the broadcaster running?')
+    return
+except ConnectivityException:
+    self.get_logger().warning('No path between these frames — check for a disconnected TF sub-tree.')
+    return
+except ExtrapolationException:
+    self.get_logger().warning('No TF data at this time yet — buffer is still filling, try again next scan.')
+    return</code></pre>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="sec6">
+    <h2><span class="num">5.6</span>Walkthrough: closest_scan_marker.py</h2>
+    <p>Everything from the last two sections comes together in a real node from the course repository. Its job: read the live lidar scan, find the single closest obstacle point, and drop a visible marker at that point's location — not relative to the spinning sensor, but relative to the smooth <code>odom</code> frame, so the marker holds still in the world as the robot turns.</p>
+    <div class="box idea">
+      <div class="box-title">💡 Why this needs tf2 at all</div>
+      <p>The raw <code>LaserScan</code> message only gives you range and angle measured from the sensor's own zero heading. If you plotted the closest point directly using those numbers, the "obstacle" would appear to spin around the origin every time the LIMO turns — because you'd be plotting it in <code>laser_link</code>, and <code>laser_link</code> itself is rotating with the chassis. To reason about where that obstacle actually is in the world — to react to it with a <code>/cmd_vel</code> command, or eventually plot it on a map — you first need <code>laser_link</code>'s own pose in a stable frame. That is precisely what <code>tf_buffer.lookup_transform()</code> supplies.</p>
+    </div>
+    <pre><code># file: closest_scan_marker_node.py
+import math
+
+import rclpy
+from rclpy.node import Node
+
+from sensor_msgs.msg import LaserScan
+from visualization_msgs.msg import Marker
+from geometry_msgs.msg import PointStamped
+from builtin_interfaces.msg import Duration
+
+from tf2_ros import Buffer, TransformListener
+from tf2_geometry_msgs import do_transform_point
+
+
+class ClosestScanMarker(Node):
+    def __init__(self):
+        super().__init__('closest_scan_marker')
+
+        self.declare_parameter('output_frame', 'odom')   # publish in odom by default
+        self.declare_parameter('min_range', 0.02)
+        self.declare_parameter('max_range', 50.0)
+
+        self.marker_pub = self.create_publisher(Marker, '/closest_obstacle_marker', 10)
+        self.scan_sub = self.create_subscription(LaserScan, '/scan', self.on_scan, 1)
+
+        # TF setup
+        self.tf_buffer = Buffer()
+        self.tf_listener = TransformListener(self.tf_buffer, self, spin_thread=True)
+
+    def on_scan(self, msg: LaserScan):
+        # Find closest reading and its angle
+        closest_range = min(msg.ranges)
+        closest_angle = msg.angle_min + msg.ranges.index(closest_range) * msg.angle_increment
+
+        # Convert to (x, y) in the scan's own frame (laser_link)
+        x = closest_range * math.cos(closest_angle)
+        y = closest_range * math.sin(closest_angle)
+        z = 0.0
+
+        point = PointStamped()
+        point.header = msg.header      # source frame = the scan's own frame_id
+        point.point.x = x
+        point.point.y = y
+        point.point.z = z
+
+        target_frame = 'odom'
+        source_frame = 'laser_link'
+
+        try:
+            transform = self.tf_buffer.lookup_transform(target_frame, source_frame, rclpy.time.Time())
+            point = do_transform_point(point, transform)
+        except Exception as e:
+            self.get_logger().warning(f"Failed to lookup transform: {str(e)}")
+
+        # Build marker (in odom)
+        marker = Marker()
+        marker.header.stamp = self.get_clock().now().to_msg()
+        marker.header.frame_id = 'odom'
+        marker.ns = 'closest_scan'
+        marker.id = 0
+        marker.type = Marker.SPHERE
+        marker.action = Marker.ADD
+        marker.pose.orientation.w = 1.0
+        marker.pose.position.x = point.point.x
+        marker.pose.position.y = point.point.y
+        marker.pose.position.z = point.point.z
+        marker.scale.x = 0.08
+        marker.scale.y = 0.08
+        marker.scale.z = 0.08
+        marker.color.r = 0.1
+        marker.color.g = 1.0
+        marker.color.b = 0.1
+        marker.color.a = 0.9
+        self.marker_pub.publish(marker)
+
+
+def main():
+    rclpy.init()
+    node = ClosestScanMarker()
+    try:
+        rclpy.spin(node)
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()</code></pre>
+
+    <h3>Reading it top to bottom</h3>
+    <p><strong>Parameters.</strong> Three declared parameters make the node reusable without editing code: <code>output_frame</code> (defaults to <code>'odom'</code> — where you want the marker expressed), and <code>min_range</code>/<code>max_range</code> as sane bounds matching the LIMO's 2D lidar spec (values below <code>min_range</code> or above <code>max_range</code> in a real deployment should be filtered as invalid readings — this teaching version keeps the filtering logic out to stay focused on the tf2 pattern).</p>
+    <p><strong>Publisher and subscription.</strong> A <code>Marker</code> publisher on <code>/closest_obstacle_marker</code> for RViz to display, and a <code>LaserScan</code> subscription on <code>/scan</code> with a small queue depth of 1 — for a live sensor stream, you almost always want the newest reading, not a backlog of stale ones.</p>
+    <p><strong>Finding the closest point.</strong> <code>msg.ranges</code> is a flat array of range readings, one per angular step. <code>min(msg.ranges)</code> finds the smallest — closest — range, and <code>msg.ranges.index(closest_range)</code> finds where in the array it sits. Multiplying that index by <code>msg.angle_increment</code> and adding <code>msg.angle_min</code> converts "which array slot" back into "which angle," matching how the driver originally laid the scan out.</p>
+    <p><strong>Polar to Cartesian.</strong> Standard trigonometry — <code>x = range·cos(angle)</code>, <code>y = range·sin(angle)</code> — turns (range, angle) into an (x, y) point, but that point is still expressed in <code>laser_link</code>'s own coordinate frame at this stage.</p>
+    <p><strong>The PointStamped trick.</strong> Setting <code>point.header = msg.header</code> is doing real work: it copies the scan's <code>frame_id</code> (which is <code>laser_link</code> on the LIMO) directly onto the point, so tf2 knows unambiguously which frame these x/y/z numbers were measured in — without that, <code>do_transform_point</code> would have no way to know where to transform <em>from</em>.</p>
+    <p><strong>lookup_transform + do_transform_point.</strong> This is the pattern from 5.5 in action: <code>target_frame='odom'</code>, <code>source_frame='laser_link'</code>, and <code>rclpy.time.Time()</code> for "give me the latest available transform." <code>do_transform_point</code> (from <code>tf2_geometry_msgs</code>) then applies that transform's rotation and translation to the point, returning a new <code>PointStamped</code> now expressed in <code>odom</code>. The whole lookup is wrapped in a <code>try/except</code> exactly as recommended in 5.5, so a brief startup window with no TF data yet just produces one skipped/logged callback instead of a crash.</p>
+    <p><strong>Publishing the Marker.</strong> The marker's <code>header.frame_id</code> is set to <code>'odom'</code> to match where the point now lives — RViz uses this field to know which frame to draw the marker in, and it must match reality or the sphere renders in the wrong place (or nowhere visible). A green (<code>r=0.1, g=1.0, b=0.1</code>) 8cm sphere (<code>scale.x/y/z = 0.08</code>) at the transformed position gives an unmistakable, easy-to-spot marker in RViz.</p>
+    <p>You'll also notice a <code>from builtin_interfaces.msg import Duration</code> import at the top that never gets used in the body of the node. That field exists on <code>Marker</code> as <code>marker.lifetime</code>, and leaving it unset (as this node does) defaults to zero, which RViz interprets as "persist forever, until explicitly overwritten." Since this node republishes the same <code>id</code>/<code>ns</code> on every scan callback, each new marker simply replaces the last one — the same effect a short lifetime would achieve, just driven by publish rate instead of a timeout. Setting an explicit <code>marker.lifetime = Duration(sec=1)</code> becomes useful once you publish markers less frequently than the scan rate, so stale ones auto-expire instead of lingering.</p>
+    <div class="figure">
+      <img src="./images/laser_ranges.png" alt="LaserScan ranges array visualized with the closest reading highlighted">
+      <figcaption>The LaserScan ranges array: angle_min to angle_max in angle_increment steps, with the single closest reading highlighted.</figcaption>
+    </div>
+    <div class="figure">
+      <img src="./images/nearest_laser.png" alt="Closest obstacle marker rendered in RViz in the odom frame">
+      <figcaption>The published SPHERE marker sitting at the closest obstacle's position, expressed in odom — it stays put in the world as the chassis rotates.</figcaption>
+    </div>
+    <div class="box hw">
+      <div class="box-title">🛠 Try it on the real LIMO</div>
+      <p>Run this node alongside the LIMO's base driver and lidar driver, then rotate the robot in place by hand or with a small <code>/cmd_vel</code> twist. Watch <code>/closest_obstacle_marker</code> in RViz (Fixed Frame set to <code>odom</code>): the marker should stay anchored near the real nearest object in the room rather than swinging around with the chassis — that's the transform doing its job.</p>
+    </div>
+    <div class="box mistake">
+      <div class="box-title">⚠️ Reusing marker.id across different obstacles</div>
+      <p>Notice the marker always publishes with <code>marker.id = 0</code> and the same <code>ns = 'closest_scan'</code>. That's intentional here — each new message is meant to <em>replace</em> the previous marker, giving you one live-updating sphere rather than an ever-growing pile of spheres. If you extend this node to track several obstacles at once, each one needs its own unique <code>id</code> within the namespace, or later markers will silently overwrite earlier ones instead of appearing alongside them.</p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="sec7">
+    <h2><span class="num">5.7</span>RViz2 as the visual dashboard</h2>
+    <p>RViz2 is where all of this becomes visible instead of a scroll of numbers in a terminal. It subscribes to topics and TF and renders them as a live 3D scene — the single most useful debugging tool in this entire course.</p>
+    <h3>Fixed Frame: the one setting that matters most</h3>
+    <p>The very first thing RViz2 asks (top-left, under <strong>Global Options</strong>) is <strong>Fixed Frame</strong>. Every other display in RViz gets transformed into this frame before being drawn, so the choice changes what you see:</p>
+    <ul>
+      <li><strong><code>odom</code></strong> — smooth, jump-free motion. Good default while developing and debugging a single session, since nothing will suddenly snap.</li>
+      <li><strong><code>map</code></strong> — globally consistent across the whole run, but everything visually "snaps" whenever a localization node corrects <code>odom</code>'s drift. Confusing the first time you see it — the robot didn't move, the correction just re-anchored where <code>odom</code> sits inside <code>map</code>.</li>
+    </ul>
+    <div class="box mistake">
+      <div class="box-title">⚠️ Picking the wrong Fixed Frame</div>
+      <p>If you set Fixed Frame to <code>map</code> before any localization node is running, RViz has no way to place <code>odom</code> (and everything under it) inside <code>map</code> — you'll get a red "Fixed Frame [map] does not exist" error and an empty view, even though your sensors and TF are all working fine. Set Fixed Frame to <code>odom</code> until a map/localization stack is actually running.</p>
+    </div>
+    <h3>Standard first displays</h3>
+    <table>
+      <tr><th>Display</th><th>Reads from</th><th>Shows</th></tr>
+      <tr><td>RobotModel</td><td><code>robot_description</code> parameter + TF</td><td>the full 3D URDF mesh, posed by the live TF tree</td></tr>
+      <tr><td>TF</td><td><code>/tf</code>, <code>/tf_static</code></td><td>every frame as a small axis triad, with names and links between them</td></tr>
+      <tr><td>LaserScan</td><td><code>/scan</code></td><td>the lidar's points, plotted at their live position via laser_link's TF</td></tr>
+      <tr><td>Marker</td><td>any <code>visualization_msgs/Marker</code> topic</td><td>custom shapes — e.g. <code>/closest_obstacle_marker</code> from 5.6</td></tr>
+    </table>
+    <p>Add displays with the <strong>Add</strong> button in the bottom-left Displays panel, "By topic" tab is usually the quickest way to find one once a node is already publishing. RobotModel in particular is worth adding first — if the LIMO's mesh doesn't appear posed correctly, that's your signal to go check TF (via rqt_tf_tree) before debugging anything else.</p>
+    <div class="figure">
+      <img src="./images/rviz_plugin.png" alt="RViz2 Displays panel with RobotModel, TF, LaserScan and Marker added">
+      <figcaption>A typical LIMO debugging layout: RobotModel + TF + LaserScan + Marker, Fixed Frame set to odom.</figcaption>
+    </div>
+    <h3>Loading a saved configuration</h3>
+    <p>Re-adding the same four displays every session gets old fast. RViz2 configs (<code>.rviz</code> files) save the entire Displays panel layout, camera position, and Fixed Frame choice. Both <code>limo_description</code> and <code>limo_gazebosim</code> in the course repo ship ready-made configs under their <code>rviz/</code> directories — load one directly from the command line instead of building it by hand:</p>
+    <div class="term">
+      <div class="term-bar"><span class="term-dot" style="background:#f0685a"></span><span class="term-dot" style="background:#e3a548"></span><span class="term-dot" style="background:#34d399"></span></div>
+      <div class="term-body"><span class="term-prompt">$</span> rviz2 -d /path/to/limo_description/rviz/limo_default.rviz
+<span class="term-out">[INFO] [rviz2]: Loading display config from "/path/to/limo_description/rviz/limo_default.rviz"
+[INFO] [rviz2]: Stereo is NOT SUPPORTED
+[INFO] [rviz2]: OpenGl version: 4.6</span></div>
+    </div>
+    <p>Most LIMO launch files pass this same <code>-d</code> flag internally when they launch RViz for you, which is why <code>ros2 launch</code> on the LIMO stack usually opens RViz already correctly configured with Fixed Frame and displays pre-set.</p>
+    <div class="figure">
+      <img src="./images/rviz_map.png" alt="RViz2 showing the LIMO robot model with lidar scan overlaid, Fixed Frame set to map">
+      <figcaption>Fixed Frame set to map once a localization stack is running — note this only makes sense after Lecture sessions covering SLAM/AMCL later in the course.</figcaption>
+    </div>
+
+    <h3>Basic viewport navigation</h3>
+    <p>RViz2's 3D viewport is mouse-driven and takes a minute to get comfortable with the first time:</p>
+    <table>
+      <tr><th>Action</th><th>Control</th></tr>
+      <tr><td>Rotate camera around focus point</td><td>Left-click + drag</td></tr>
+      <tr><td>Pan camera</td><td>Middle-click + drag (or Shift + Left-click + drag)</td></tr>
+      <tr><td>Zoom in / out</td><td>Scroll wheel, or Right-click + drag</td></tr>
+      <tr><td>Re-center on the robot</td><td>Select the "Focus Camera" tool in the toolbar, then click the robot</td></tr>
+    </table>
+    <div class="box mistake">
+      <div class="box-title">⚠️ "My RobotModel is grey and doesn't match the URDF"</div>
+      <p>If RobotModel shows only a rough grey placeholder instead of your LIMO meshes, the <code>robot_description</code> parameter usually hasn't been published yet — check that <code>robot_state_publisher</code> is actually running (<code>ros2 node list</code> should show it) before assuming RViz is broken. This is the same <code>robot_state_publisher</code> node from Lecture 4 that turns your URDF/Xacro into both the visual model and the static TF broadcasts covered in 5.3.</p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="sec8">
+    <h2><span class="num">5.8</span>Summary, glossary &amp; exercises</h2>
+    <p>TF2 is the shared coordinate system that lets every sensor, every wheel, and every localization estimate on the LIMO agree on where things are, even as the robot drives and steers continuously. REP-105 defines the standard chain — <code>map → odom → base_link → base_footprint</code> — with sensor frames branching off <code>base_link</code> via static transforms. Static transforms come from fixed URDF joints and are broadcast once; dynamic transforms come from continuous/revolute joints, plus the odometry and localization nodes, and are broadcast continuously. In code, a <code>Buffer</code> + <code>TransformListener</code> pair lets any node ask <code>lookup_transform(target, source, time)</code> for the current relationship between any two frames, which is exactly how <code>closest_scan_marker.py</code> turns a laser-frame obstacle reading into a stable, world-anchored marker. RViz2 makes the entire tree visible in real time, provided you pick a sensible Fixed Frame.</p>
+
+    <div class="checkpoint">
+      <strong style="color:var(--text)">Checkpoint — you should now be able to:</strong>
+      <ul>
+        <li>Explain the difference between map, odom, base_link, and base_footprint, and why map→odom can jump while odom→base_link stays smooth.</li>
+        <li>Classify any LIMO joint from Lecture 4's URDF as producing a static or dynamic TF broadcast.</li>
+        <li>Use rqt_tf_tree and tf2_echo to inspect a live TF tree from the command line.</li>
+        <li>Set up a tf2_ros Buffer and TransformListener in a node and correctly call lookup_transform.</li>
+        <li>Read and explain every line of closest_scan_marker.py, including why it needs tf2 at all.</li>
+        <li>Configure RViz2's Fixed Frame and add RobotModel, TF, LaserScan and Marker displays.</li>
+      </ul>
+    </div>
+
+    <p><strong>Connection to the course.</strong> Every remaining lecture leans on this session. Gazebo and ros2_control (Lecture 6) will be what actually drives the dynamic joint transforms you classified in 5.3. Navigation and SLAM later in the course are, underneath, mostly a matter of correctly maintaining <code>map → odom</code> — the exact relationship you just learned to read with <code>tf2_echo</code>. And any custom perception or reactive-behavior node you write from here on will very likely open with the same <code>Buffer</code> + <code>TransformListener</code> setup you just walked through in <code>closest_scan_marker.py</code>.</p>
+
+    <dl class="glossary">
+      <dt>TF2</dt>
+      <dd>The ROS 2 library and set of conventions for tracking coordinate frames and the transforms between them over time.</dd>
+      <dt>Static transform</dt>
+      <dd>A transform that never changes once the robot is built — comes from a fixed URDF joint, broadcast once on /tf_static.</dd>
+      <dt>Dynamic transform</dt>
+      <dd>A transform that is continuously recomputed and rebroadcast on /tf — wheel/steering joints, and the odom→base_link and map→odom links.</dd>
+      <dt>Fixed Frame</dt>
+      <dd>RViz2's Global Option specifying which frame every other display is transformed into before rendering.</dd>
+      <dt>lookup_transform</dt>
+      <dd>The tf2_ros Buffer method that returns the current transform between a target_frame and a source_frame at a given time.</dd>
+      <dt>PointStamped</dt>
+      <dd>A geometry_msgs point paired with a header carrying a frame_id and timestamp, so tf2 knows what frame the point was measured in.</dd>
+      <dt>REP-105</dt>
+      <dd>The ROS Enhancement Proposal defining the standard map/odom/base_link/base_footprint frame chain for mobile robots.</dd>
+    </dl>
+
+    <h3>Quick command reference</h3>
+    <table>
+      <tr><th>Command</th><th>Use it to...</th></tr>
+      <tr><td><code>ros2 run rqt_tf_tree rqt_tf_tree</code></td><td>see the whole TF tree as a graph, spot disconnected frames</td></tr>
+      <tr><td><code>ros2 run tf2_ros tf2_echo &lt;source&gt; &lt;target&gt;</code></td><td>print the live translation/rotation between two named frames</td></tr>
+      <tr><td><code>ros2 topic echo /tf_static --once</code></td><td>dump every static (fixed-joint) transform currently broadcast</td></tr>
+      <tr><td><code>ros2 run tf2_ros static_transform_publisher ...</code></td><td>publish a one-off static transform without writing a node</td></tr>
+      <tr><td><code>rviz2 -d &lt;file&gt;.rviz</code></td><td>open RViz2 with a saved Fixed Frame + Displays layout</td></tr>
+    </table>
+
+    <h3>Common Mistakes</h3>
+    <ul>
+      <li><strong>Calling lookup_transform() before any TF data has been published.</strong> Right after node startup the Buffer is empty; this throws an ExtrapolationException (or LookupException). Always wrap the call in try/except and treat a failure as "skip this cycle," not a crash.</li>
+      <li><strong>Swapping source_frame and target_frame.</strong> <code>lookup_transform(target, source, time)</code> transforms <em>from</em> source <em>into</em> target — get the order backwards and your data silently ends up transformed the wrong way, which often still looks plausible enough to miss during a quick test.</li>
+      <li><strong>Forgetting to set header.stamp / header.frame_id on a Marker.</strong> RViz uses frame_id to know which frame to draw the marker in and stamp to decide if it's still valid — get either wrong and the marker either doesn't render or appears in the wrong place with no error message.</li>
+      <li><strong>Picking the wrong Fixed Frame in RViz.</strong> Setting Fixed Frame to map before any localization node is running gives an empty view with a "Fixed Frame does not exist" error; setting it to map afterward and expecting perfectly smooth motion leads to confusion the first time a correction makes the view visibly jump.</li>
+    </ul>
+
+    <div class="exercise">
+      <div class="level">Easy</div>
+      <p>With the LIMO description stack running, run <code>ros2 run tf2_ros tf2_echo base_link laser_link</code> and <code>ros2 run tf2_ros tf2_echo base_link imu_link</code>. Record the translation printed for each. Are these numbers changing over time, or fixed? Explain why, referencing 5.3.</p>
+    </div>
+    <div class="exercise">
+      <div class="level">Intermediate</div>
+      <p>Open <code>rqt_tf_tree</code> while the stack is running and sketch (on paper or in a text file) the tree it shows you. Compare it against the mermaid diagram in 5.1 — are all the frames you expect present? If <code>map</code> is missing, explain why, and what node would need to run to add it.</p>
+    </div>
+    <div class="exercise">
+      <div class="level">Harder</div>
+      <p>Modify <code>closest_scan_marker.py</code> so that it reads the <code>output_frame</code> parameter (already declared but unused in the version shown) instead of hardcoding <code>'odom'</code> in both the <code>lookup_transform</code> call and the marker's <code>header.frame_id</code>. Test it by running the node with <code>--ros-args -p output_frame:=base_link</code> and confirm in RViz that the marker now visibly spins with the chassis instead of holding a fixed world position — this demonstrates concretely why <code>odom</code> was the right default.</p>
+    </div>
+  </section>
+
+  <div class="footer-nav">
+    <a href="04-urdf-xacro-limo-body.html">&larr; Lecture 4: URDF &amp; Xacro</a>
+    <a href="06-gazebo-ros2-control-path-controllers.html">Lecture 6: Gazebo &amp; ros2_control &rarr;</a>
+  </div>
+
+</div>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      background: '#f1efe8', primaryColor: '#eef0ff', primaryTextColor: '#211f1a',
+      primaryBorderColor: '#3d4bf5', lineColor: '#0e9e6e', secondaryColor: '#f1efe8',
+      tertiaryColor: '#fffefb', textColor: '#211f1a', fontFamily: 'Inter, -apple-system, sans-serif'
+    },
+    flowchart: { curve: 'basis' },
+    securityLevel: 'loose'
+  });
+</script>
+<script>
+(function(){
+  var btn = document.getElementById('theme-toggle');
+  var icon = document.getElementById('theme-toggle-icon');
+  function updateIcon(){
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    icon.textContent = isDark ? '☀️' : '🌙';
+  }
+  updateIcon();
+  btn.addEventListener('click', function(){
+    var cur = document.documentElement.getAttribute('data-theme');
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try{ localStorage.setItem('limo-book-theme', next); }catch(e){}
+    updateIcon();
+  });
+})();
+</script>
+<script src="annotate.js" defer></script>
+</body>
+</html>

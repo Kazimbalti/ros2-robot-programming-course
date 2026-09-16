@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<script>
+(function(){
+  try{
+    var t = localStorage.getItem('limo-book-theme');
+    if(!t){ t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+    document.documentElement.setAttribute('data-theme', t);
+  }catch(e){}
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Syllabus — ROS and Robot Programming</title>
+<meta name="description" content="Course syllabus for ROS and Robot Programming: a 14-lecture hands-on Robotics and ROS 2 Humble course built around the AgileX LIMO robot — outcomes, grading, textbooks, and policies.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="book.css">
+<link rel="stylesheet" href="projector.css">
+</head>
+<body>
+<button id="theme-toggle" aria-label="Toggle light/dark mode" title="Light/Dark mode"><span id="theme-toggle-icon">🌙</span></button>
+
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html">Home</a>
+  <a href="syllabus.html" class="active">Syllabus</a>
+  <a href="schedule.html">Schedule</a>
+  <a href="assignments.html">Assignments</a>
+  <a href="index.html#lectures">Lectures</a>
+</div></nav>
+
+<div class="wrap">
+
+  <div class="cover">
+    <div class="kicker">Course Syllabus &nbsp;·&nbsp; 14 Lectures &nbsp;·&nbsp; ~51 Contact Hours</div>
+    <h1>ROS and Robot Programming</h1>
+    <div class="subtitle">A hands-on Robotics and ROS&nbsp;2 Humble course built around the AgileX LIMO robot — from an empty laptop to a robot you designed and built yourself.</div>
+    <div class="meta-row">
+      <div class="chip">Term: 31 Aug – 11 Dec 2026 (14 weeks + finals)</div>
+      <div class="chip">Section B: Mondays · Sections A &amp; C: Thursdays</div>
+      <div class="chip">Robotics Lab · in person</div>
+      <div class="chip">ROS 2 Humble · Ubuntu 22.04 · Gazebo Classic</div>
+    </div>
+  </div>
+
+  <h2>📋 Course at a Glance</h2>
+  <div class="table-scroll">
+  <table>
+    <tr><th>Item</th><th>Detail</th></tr>
+    <tr><td>Course title</td><td>ROS and Robot Programming (Applied Mobile Robotics with ROS&nbsp;2)</td></tr>
+    <tr><td>Format</td><td>14 weekly sessions — most 3 hours (1.5&nbsp;h concept + 1.5&nbsp;h lab); Lectures 9–10 are extended labs; Lectures 12–14 are 4–6&nbsp;h build sessions</td></tr>
+    <tr><td>Sections &amp; meeting days</td><td>Three sections, one weekly lecture with identical content, labs, and deadlines. <strong>Section&nbsp;B</strong> — Mondays, first class <strong>Mon 31 Aug 2026</strong>. <strong>Sections&nbsp;A &amp; C</strong> — Thursdays, first class <strong>Thu 3 Sep 2026</strong>. Sections A &amp; C meet the Thursday of the same week as Section B. See the <a href="schedule.html">Schedule</a>.</td></tr>
+    <tr><td>Robot</td><td>AgileX LIMO — differential / Ackermann / Mecanum / tracked on one chassis; plus a from-scratch build ("Forge") in Lectures 12–14</td></tr>
+    <tr><td>Stack</td><td>Ubuntu 22.04 LTS · ROS 2 Humble Hawksbill · Gazebo Classic · RViz2 · Python &amp; C++ · OpenCV · Nav2 · slam_toolbox · robot_localization</td></tr>
+    <tr><td>Instructor</td><td>Dr. Muhammad Kazim — Assistant Professor, Department of Intelligent Systems, University of Lahore</td></tr>
+    <tr><td>Contact</td><td>muhammad.kazim@is.uol.edu.pk · office hours by appointment (Robotics Lab)</td></tr>
+    <tr><td>Prerequisites</td><td>Basic Python and command-line comfort. No prior ROS or Linux experience assumed — Lecture&nbsp;1 starts from a blank Windows/macOS/Linux machine.</td></tr>
+  </table>
+  </div>
+
+  <h2>🎯 Course Description</h2>
+  <p>
+    This is a complete, hands-on robotics and ROS&nbsp;2 curriculum built specifically around the
+    <strong>AgileX LIMO</strong>. It merges the conceptual spine of the official ROS&nbsp;2 documentation
+    (Nodes → Topics → URDF → TF2 → Gazebo → Nav2 → Behaviour Trees) with tested university lab exercises,
+    the official AgileX LIMO hardware manual, and a second, from-scratch robot build. Lectures 1–10 run
+    start-to-finish in Gazebo so no one waits for lab time on a physical robot; Lecture 11 puts LIMO's real
+    electronics in your hands subsystem by subsystem; Lectures 12–14 have you build your own ROS&nbsp;2 robot
+    from a bare motor and an empty microSD card.
+  </p>
+  <div class="box idea">
+    <div class="box-title">🧩 What this course is built from</div>
+    <p style="margin-bottom:8px;"><strong>1. Conceptual depth</strong> — ROS&nbsp;2 terminology and mental models from <em>docs.ros.org</em>, rebuilt line-by-line around LIMO.</p>
+    <p style="margin-bottom:8px;"><strong>2. Tested lab exercises</strong> — real package names, launch files, and CLI commands from a university LIMO + ROS&nbsp;2 module.</p>
+    <p style="margin-bottom:8px;"><strong>3. The AgileX LIMO manual</strong> — Lecture 11's six-subsystem hardware deep-dive is grounded in AgileX's own documentation.</p>
+    <p style="margin-bottom:0;"><strong>4. A from-scratch build</strong> — Lectures 12–14 follow The Construct's <em>Build Your First ROS&nbsp;2 Based Robot</em> reference design end to end.</p>
+  </div>
+
+  <h2>🧠 Course Learning Outcomes</h2>
+  <p>On successful completion of this course, a student will be able to:</p>
+  <div class="table-scroll">
+  <table>
+    <tr><th>#</th><th>Outcome</th><th>Assessed in</th></tr>
+    <tr><td>CLO1</td><td>Install and maintain a Linux + ROS&nbsp;2 Humble robotics workstation, and build a multi-package workspace with <code>colcon</code>.</td><td>Lec 1–3, A1</td></tr>
+    <tr><td>CLO2</td><td>Explain and use the ROS&nbsp;2 computation graph — nodes, topics, services, actions, parameters — and write Python/C++ nodes that publish and subscribe.</td><td>Lec 2–3, A1, Midterm</td></tr>
+    <tr><td>CLO3</td><td>Model a robot in URDF/Xacro and reason about coordinate frames and the TF2 tree (map → odom → base_link).</td><td>Lec 4–5, A2, Midterm</td></tr>
+    <tr><td>CLO4</td><td>Simulate a robot in Gazebo with <code>ros2_control</code> and implement path-following controllers.</td><td>Lec 6, A2</td></tr>
+    <tr><td>CLO5</td><td>Ingest and process sensor data — LaserScan, IMU, images — and build reactive perception (obstacle avoidance, colour/object detection).</td><td>Lec 7–8, A3, Midterm</td></tr>
+    <tr><td>CLO6</td><td>Estimate robot state with wheel odometry, EKF sensor fusion, and AMCL localisation.</td><td>Lec 9</td></tr>
+    <tr><td>CLO7</td><td>Map an environment with SLAM and run autonomous navigation with Nav2 (costmaps, planners, behaviour trees, waypoint following).</td><td>Lec 10, Capstone</td></tr>
+    <tr><td>CLO8</td><td>Bring up real robot hardware — LIMO's six subsystems, and a self-designed differential-drive robot with a custom driver node, URDF, sensors, and a Gazebo digital twin.</td><td>Lec 11–14, Capstone, Final</td></tr>
+  </table>
+  </div>
+
+  <h2>💻 Software &amp; Hardware</h2>
+  <div class="table-scroll">
+  <table>
+    <tr><th>Category</th><th>Details</th></tr>
+    <tr><td>Host machine</td><td>Laptop/desktop, 8&nbsp;GB+ RAM, 60&nbsp;GB+ free disk — Windows, macOS, or Linux. Lecture 1 covers VMware Workstation Pro / Fusion setup.</td></tr>
+    <tr><td>Operating system</td><td>Ubuntu 22.04 LTS "Jammy Jellyfish" (in a VM) — full install walkthrough in Lecture 1.</td></tr>
+    <tr><td>Middleware</td><td>ROS 2 Humble Hawksbill · Gazebo Classic 11 · RViz2 · rqt · <code>colcon</code> · <code>rosdep</code>.</td></tr>
+    <tr><td>Libraries</td><td>OpenCV, cv_bridge, Nav2, slam_toolbox, robot_localization, ros2_control, xacro, tf2.</td></tr>
+    <tr><td>Robot (recommended)</td><td>An AgileX LIMO. Lectures 1–10 work fully in simulation; Lecture 11 is a hands-on hardware lab on a physical LIMO.</td></tr>
+    <tr><td>DIY parts (Lectures 12–14, optional)</td><td>Gear motor with encoder, H-bridge (L298N), Arduino Nano, Raspberry Pi (SBC), 2D LiDAR, USB/CSI camera, LiPo battery — every step also works as a design-only exercise.</td></tr>
+  </table>
+  </div>
+
+  <h2>📚 Textbooks &amp; References</h2>
+  <div class="table-scroll">
+  <table>
+    <tr><th>Use</th><th>Title</th><th>Author(s) / Source</th></tr>
+    <tr><td>Primary</td><td>Official ROS 2 Documentation (Humble)</td><td>Open Robotics — docs.ros.org</td></tr>
+    <tr><td>Primary</td><td>AgileX LIMO User Manual</td><td>AgileX Robotics</td></tr>
+    <tr><td>Primary</td><td>Build Your First ROS 2 Based Robot (FastBot reference build)</td><td>The Construct</td></tr>
+    <tr><td>Reference</td><td>Programming Robots with ROS</td><td>Quigley, Gerkey &amp; Smart</td></tr>
+    <tr><td>Reference</td><td>Introduction to Autonomous Mobile Robots, 2nd ed.</td><td>Siegwart, Nourbakhsh &amp; Scaramuzza</td></tr>
+    <tr><td>Reference</td><td>Probabilistic Robotics</td><td>Thrun, Burgard &amp; Fox</td></tr>
+    <tr><td>Practical</td><td>Gazebo Classic &amp; Nav2 documentation</td><td>Open Robotics / Nav2 project</td></tr>
+  </table>
+  </div>
+  <p>All primary sources are free and online. No book purchase is required.</p>
+
+  <h2>📊 Assessment &amp; Grading</h2>
+  <div class="table-scroll">
+  <table>
+    <tr><th>Component</th><th>Marks</th><th>Details</th></tr>
+    <tr><td>Final Exam</td><td>40</td><td>Cumulative; emphasises Lectures 8–14 (perception, localisation, SLAM/Nav2, hardware, DIY build). Written section + practical capstone defence. <a href="final.html">Details →</a></td></tr>
+    <tr><td>Midterm Exam</td><td>20</td><td>Week 8; covers Lectures 1–7 (install → architecture → URDF/TF2 → Gazebo/control → sensors). Written + short practical. <a href="midterm.html">Details →</a></td></tr>
+    <tr><td>Capstone Project</td><td>30</td><td>Two parts — the simulated Nav2 mission (Lecture 10) and the DIY-robot capstone build review (Lecture 14). Live demo + written report. <a href="assignments.html#capstone">Details →</a></td></tr>
+    <tr><td>Quizzes &amp; Assignments</td><td>10</td><td>Four graded assignments (A1–A4) plus short in-class quizzes. <a href="assignments.html">Details →</a></td></tr>
+    <tr><td><strong>Total</strong></td><td><strong>100</strong></td><td>—</td></tr>
+  </table>
+  </div>
+
+  <h3>Grade Scale</h3>
+  <div class="grade-scale">
+    <span><b>A</b> ≥ 90</span><span><b>A−</b> 86–89</span><span><b>B+</b> 82–85</span><span><b>B</b> 78–81</span>
+    <span><b>B−</b> 74–77</span><span><b>C+</b> 70–73</span><span><b>C</b> 66–69</span><span><b>C−</b> 62–65</span>
+    <span><b>D</b> 50–61</span><span><b>F</b> &lt; 50</span>
+  </div>
+  <p style="font-size:.9em;color:var(--muted)">A minimum of <strong>75% attendance</strong> is required to sit the final exam — see the <a href="attendance.html">Attendance</a> page.</p>
+
+  <h2>📝 Course Policies</h2>
+
+  <h3>Attendance</h3>
+  <p>
+    Lecture attendance is expected; <strong>laboratory attendance is mandatory</strong> because of shared robots,
+    hardware checkouts, and safety procedures. Notify the instructor <em>before</em> missing a lab to arrange a
+    make-up. Full policy on the <a href="attendance.html">Attendance</a> page.
+  </p>
+
+  <h3>Late Work</h3>
+  <p>
+    Each student has a budget of <strong>four late days</strong> per term, applied in whole-day units, maximum
+    <strong>2 per assignment</strong>. After the budget is exhausted, submissions lose <strong>15% per day</strong>
+    for up to three days, then receive zero credit. Exams, the capstone demo, and final presentations cannot use
+    late days.
+  </p>
+
+  <h3>Collaboration &amp; Academic Integrity</h3>
+  <p>
+    Discussing concepts, error messages, and approaches is encouraged. The code and written answers you submit
+    must be your own. Copying code between individuals or teams, sharing solutions, or submitting generated text
+    as your own analysis are integrity violations and are reported per institutional policy. Cite any external
+    code, tutorial, or dataset you build on.
+  </p>
+
+  <h3>AI Tool Use</h3>
+  <p>
+    AI assistants are permitted for debugging, boilerplate, and explanation. They are <strong>not</strong>
+    permitted for generating complete lab reports, full driver nodes submitted as your work, or exam answers.
+    Every submission must include a one-line note stating where and how AI tools were used.
+  </p>
+
+  <h3>Safety</h3>
+  <p>
+    Lectures 11–14 involve LiPo batteries, spinning wheels, a Class&nbsp;1 LiDAR, soldering, and 3D printing.
+    Follow the lab safety brief: never charge LiPo cells unattended, power down before rewiring, keep fingers
+    clear of drivetrains, and never stare into the LiDAR aperture. Report any damaged battery or frayed wiring
+    immediately.
+  </p>
+
+  <h3>Accommodations &amp; Well-being</h3>
+  <p>
+    Students with approved accommodations should share documentation within the first two weeks so arrangements
+    can be made. If anything — illness, workload, or circumstances — is getting in the way, contact the
+    instructor early; timely support is far easier to arrange than retroactive relief.
+  </p>
+
+  <h2>🗓️ Weekly Topic Map</h2>
+  <p>Abbreviated — see the full <a href="schedule.html">Schedule</a> for dates, readings, labs, and deadlines.</p>
+  <div class="table-scroll">
+  <table>
+    <tr><th>Weeks</th><th>Focus</th><th>Milestones</th></tr>
+    <tr><td>1–3</td><td>Foundations — VMware/Ubuntu/ROS 2 install, the computation graph, workspaces &amp; <code>colcon</code>, first Python controller, LIMO's drive modes</td><td>A1 issued (Wk 3)</td></tr>
+    <tr><td>4–6</td><td>Building &amp; moving LIMO's body — URDF/Xacro, TF2 &amp; RViz, Gazebo + <code>ros2_control</code> + path controllers</td><td>A2 issued (Wk 5), A1 due (Wk 4)</td></tr>
+    <tr><td>7–8</td><td>Perception — LiDAR/IMU/depth camera, reactive avoidance, OpenCV &amp; object detection</td><td>A3 issued (Wk 7), A2 due (Wk 6); <strong>Midterm (Wk 8)</strong>, A3 due</td></tr>
+    <tr><td>9–10</td><td>State estimation &amp; autonomy — odometry, EKF fusion, AMCL; SLAM, Nav2, simulated capstone mission</td><td>Capstone Part 1 demo (Wk 10)</td></tr>
+    <tr><td>11</td><td>Real hardware — LIMO's six subsystems, hands-on</td><td>—</td></tr>
+    <tr><td>12–14</td><td>Build your own ROS 2 robot — motors/power/compute, driver node/CAD/URDF/sensors, simulation/3D-printed cover/capstone</td><td>A4 issued (Wk 12), A4 due (Wk 13); Capstone Part 2 review (Wk 14)</td></tr>
+    <tr><td>15</td><td>Finals week</td><td><strong>Final Exam &amp; capstone defence</strong></td></tr>
+  </table>
+  </div>
+
+  <div class="footer-nav">
+    <a href="index.html">&larr; Home</a>
+    <a href="schedule.html">Schedule &rarr;</a>
+  </div>
+
+  <p class="footer-note">ROS and Robot Programming &nbsp;·&nbsp; Syllabus &nbsp;·&nbsp; Dr. Muhammad Kazim</p>
+
+</div>
+
+<script>
+(function(){
+  var btn = document.getElementById('theme-toggle');
+  var icon = document.getElementById('theme-toggle-icon');
+  function updateIcon(){ icon.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙'; }
+  updateIcon();
+  btn.addEventListener('click', function(){
+    var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try{ localStorage.setItem('limo-book-theme', next); }catch(e){}
+    updateIcon();
+  });
+})();
+</script>
+<script src="annotate.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<script>
+(function(){
+  try{
+    var t = localStorage.getItem('limo-book-theme');
+    if(!t){ t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+    document.documentElement.setAttribute('data-theme', t);
+  }catch(e){}
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Midterm Exam — ROS and Robot Programming</title>
+<meta name="description" content="Format, coverage, date, and preparation guidance for the ROS and Robot Programming midterm exam (20 marks, Week 8).">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="book.css">
+<link rel="stylesheet" href="projector.css">
+</head>
+<body>
+<button id="theme-toggle" aria-label="Toggle light/dark mode" title="Light/Dark mode"><span id="theme-toggle-icon">🌙</span></button>
+
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html">Home</a>
+  <a href="syllabus.html">Syllabus</a>
+  <a href="schedule.html">Schedule</a>
+  <a href="assignments.html">Assignments</a>
+  <a href="index.html#lectures">Lectures</a>
+</div></nav>
+
+<div class="wrap">
+
+  <div class="cover">
+    <div class="kicker">Midterm Exam &nbsp;·&nbsp; 20 Marks &nbsp;·&nbsp; Week 8</div>
+    <h1>Midterm Exam</h1>
+    <div class="subtitle">A checkpoint on the foundations — install and workspace hygiene, the ROS 2 computation graph, robot description and frames, simulation and control, and the sensor pipeline. Sat in each section's own Week 8 session.</div>
+    <div class="meta-row">
+      <div class="chip">Week 8 — Section B: Mon 19 Oct · Sections A &amp; C: Thu 22 Oct 2026</div>
+      <div class="chip">In the first 90 min of the session</div>
+      <div class="chip">Covers Lectures 1–7</div>
+      <div class="chip">Weight: 20% of the final grade</div>
+    </div>
+  </div>
+
+  <h2>🧾 Format</h2>
+  <div class="table-scroll">
+  <table>
+    <tr><th>Part</th><th>Marks</th><th>Style</th></tr>
+    <tr><td>A — Short answer &amp; concepts</td><td>8</td><td>6–8 questions: define terms, read a <code>ros2 topic info</code> / TF tree, spot the bug in a snippet, explain <em>why</em></td></tr>
+    <tr><td>B — Applied reasoning</td><td>7</td><td>2–3 scenarios: choose topic vs service vs action; fix a broken URDF joint; predict what a launch file does</td></tr>
+    <tr><td>C — Short practical</td><td>5</td><td>At a lab machine: create a package, write a working publisher or subscriber to spec, run it, show the output</td></tr>
+  </table>
+  </div>
+  <p><strong>Materials:</strong> closed book. One A4 handwritten cheat-sheet (both sides) allowed. A ROS 2 CLI cheat-sheet is provided with the paper. Laptops used only for Part C, on the lab image.</p>
+
+  <h2>📚 Coverage by Lecture</h2>
+  <div class="table-scroll">
+  <table>
+    <tr><th>Lecture</th><th>You should be able to…</th></tr>
+    <tr><td>L1 — Install &amp; workspace</td><td>Explain the VM model, what <code>source</code>-ing does, what <code>colcon</code>/<code>rosdep</code> are for, the layout of a workspace</td></tr>
+    <tr><td>L2 — Architecture</td><td>Contrast nodes/topics/services/actions/parameters; read/interpret <code>ros2</code> CLI output; describe the LIMO node graph</td></tr>
+    <tr><td>L3 — Dev environment &amp; drive modes</td><td>Write a minimal Python publisher/subscriber; explain package structure; describe differential vs Ackermann vs Mecanum control</td></tr>
+    <tr><td>L4 — URDF &amp; Xacro</td><td>Read a URDF; identify links/joints/origins/inertials; explain what Xacro macros and parameters buy you</td></tr>
+    <tr><td>L5 — TF2 &amp; RViz</td><td>Explain the TF tree, static vs dynamic transforms, and the map → odom → base_link chain; use <code>tf2_echo</code> conceptually</td></tr>
+    <tr><td>L6 — Gazebo &amp; ros2_control</td><td>Describe the sim loop, <code>controller_manager</code>, and the idea behind on/off, proportional, and kinematic path controllers</td></tr>
+    <tr><td>L7 — Sensors</td><td>Interpret <code>LaserScan</code>/<code>Imu</code>/<code>Image</code> fields; explain why sensor data must be TF-transformed; outline a safe-stop node</td></tr>
+  </table>
+  </div>
+
+  <h2>🎯 Sample Questions</h2>
+  <div class="box idea">
+    <div class="box-title">Representative of the real paper — not exhaustive</div>
+    <ol style="margin:0;">
+      <li>A teammate says "topics and services are basically the same, just pick one." Give two concrete situations from this course — one where a topic is correct and one where a service is — and justify each in one sentence.</li>
+      <li>Here is a URDF joint. It won't spawn the wheel where expected. Identify the error and write the corrected <code>&lt;origin&gt;</code>.</li>
+      <li>Sketch the TF tree for LIMO in a Nav2 run. Which transform does AMCL provide, and which does the wheel-odometry source provide?</li>
+      <li>Write a ROS 2 Python node that subscribes to <code>/scan</code> and prints a warning when any range in the forward 30° arc is below 0.4&nbsp;m. State your assumptions about the message.</li>
+      <li>You run <code>ros2 launch limo_gazebosim limo_gazebo_diff.launch.py</code> and Gazebo opens but <code>ros2 topic list</code> shows nothing from the robot. List three things you would check, in order.</li>
+    </ol>
+  </div>
+
+  <h2>✅ How to Prepare</h2>
+  <ul>
+    <li>Re-run Labs 1–7 from a clean workspace without looking at the solutions.</li>
+    <li>Be fluent with the CLI: <code>ros2 node/topic/service/action/param</code>, <code>ros2 run</code>, <code>ros2 launch</code>, <code>colcon build</code>, <code>tf2_echo</code>, <code>view_frames</code>.</li>
+    <li>Practise writing a publisher and a subscriber from a blank file — no template.</li>
+    <li>Review the "Common Mistakes" box at the end of each of Lectures 1–7.</li>
+    <li>Bring your student ID, a pen, and your one-page cheat-sheet.</li>
+  </ul>
+
+  <div class="box mistake">
+    <div class="box-title">⚠️ Missing the midterm</div>
+    <p style="margin:0;">A make-up is offered only for a documented emergency and must be arranged with the instructor <em>before</em> the exam where at all possible. See the <a href="attendance.html">Attendance</a> page.</p>
+  </div>
+
+  <div class="footer-nav">
+    <a href="assignments.html">&larr; Assignments</a>
+    <a href="final.html">Final &rarr;</a>
+  </div>
+
+  <p class="footer-note">ROS and Robot Programming &nbsp;·&nbsp; Midterm Exam &nbsp;·&nbsp; Dr. Muhammad Kazim</p>
+
+</div>
+
+<script>
+(function(){
+  var btn = document.getElementById('theme-toggle');
+  var icon = document.getElementById('theme-toggle-icon');
+  function updateIcon(){ icon.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙'; }
+  updateIcon();
+  btn.addEventListener('click', function(){
+    var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try{ localStorage.setItem('limo-book-theme', next); }catch(e){}
+    updateIcon();
+  });
+})();
+</script>
+<script src="annotate.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<script>
+(function(){
+  try{
+    var t = localStorage.getItem('limo-book-theme');
+    if(!t){ t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+    document.documentElement.setAttribute('data-theme', t);
+  }catch(e){}
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 3 — The ROS 2 Dev Environment &amp; LIMO's Drive Modes</title>
+<meta name="description" content="Build a real ROS 2 workspace and package, write and run your first LIMO controller node, then drive LIMO through its four physical drive modes — differential, Ackermann, Mecanum, and tracked.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<style>
+  :root{
+    --bg:#f6f4ef; --panel:#fffefb; --panel2:#f1efe8; --border:#e6e1d6;
+    --text:#211f1a; --muted:#7a7568; --accent:#3d4bf5; --accent-ink:#2732b8;
+    --accent2:#0e9e6e; --gold:#c8862c; --danger:#d64a3c; --purple:#8b5cf6; --radius:14px;
+  }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--bg); color:var(--text); font-family:'Inter', -apple-system, sans-serif; line-height:1.85; font-size:17.5px; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:880px; margin:0 auto; padding:48px 24px 120px;}
+  .cover{border-radius:28px; background:#12142b; padding:64px 44px; margin-bottom:56px; position:relative; overflow:hidden; isolation:isolate;}
+  .cover::before{content:""; position:absolute; inset:-40%; background:
+      radial-gradient(38% 45% at 15% 20%, rgba(61,75,245,0.55), transparent 70%),
+      radial-gradient(35% 40% at 85% 15%, rgba(139,92,246,0.45), transparent 70%),
+      radial-gradient(45% 50% at 60% 90%, rgba(14,158,110,0.35), transparent 70%);
+    filter:blur(60px); z-index:0;}
+  .cover::after{content:""; position:absolute; inset:0; background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px); background-size: 20px 20px; z-index:0;}
+  .cover > *{position:relative; z-index:1;}
+  .kicker{display:inline-block; color:#c9cdff; font-weight:600; letter-spacing:.4px; font-size:13px; margin-bottom:18px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); padding:6px 14px; border-radius:999px;}
+  .cover h1{font-size:2.7em; margin:0 0 12px; font-weight:800; line-height:1.3; color:#ffffff; letter-spacing:-.5px;}
+  .cover .subtitle{color:#aeb2d6; font-size:1.2em; margin-bottom:30px; font-weight:400;}
+  .meta-row{display:flex; flex-wrap:wrap; gap:10px; margin-top:18px;}
+  .chip{background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.14); color:#d4d7f0; padding:7px 15px; border-radius:999px; font-size:.83em;}
+  h2{font-size:1.9em; font-weight:800; margin:72px 0 22px; display:flex; align-items:center; gap:14px; letter-spacing:-.3px;}
+  h2 .num{display:inline-flex; align-items:center; justify-content:center; min-width:40px; height:40px; padding:0 12px; border-radius:12px; background:var(--accent); box-shadow:0 6px 16px -4px rgba(61,75,245,0.5); color:#ffffff; font-size:.62em; font-weight:800; flex-shrink:0; white-space:nowrap;}
+  h3{font-size:1.3em; font-weight:700; margin:36px 0 14px; color:var(--accent-ink); letter-spacing:-.2px;}
+  h4{font-size:1.08em; font-weight:700; margin:24px 0 10px; color:var(--purple);}
+  p{margin:0 0 16px; color:#3c382f;}
+  strong{color:var(--text); font-weight:700;}
+  a{color:var(--accent);}
+  .box{border-radius:16px; padding:20px 24px; margin:22px 0; border:1px solid var(--border); background:var(--panel); position:relative; box-shadow:0 1px 2px rgba(33,31,26,0.03);}
+  .box-title{font-weight:800; margin-bottom:9px; display:flex; align-items:center; gap:8px; font-size:.96em; letter-spacing:.1px;}
+  .box p:last-child{margin-bottom:0;}
+  .box.idea{background:#eef0ff;border-color:#d6dafc;} .box.idea .box-title{color:var(--accent-ink);}
+  .box.mistake{background:#fdeeec; border-color:#f6d2cd;} .box.mistake .box-title{color:var(--danger);}
+  .box.eng{background:#f4effe; border-color:#e2d6fb;} .box.eng .box-title{color:var(--purple);}
+  .box.real{background:#eafaf3; border-color:#c9eeda;} .box.real .box-title{color:var(--accent2);}
+  .box.def{background:#fdf3e4; border-color:#f2ddb3;} .box.def .box-title{color:var(--gold);}
+  .box.hw{background:#fdeee4; border-color:#f2c9a3;} .box.hw .box-title{color:#c8622c;}
+  code, pre{font-family:'JetBrains Mono', monospace; direction:ltr; text-align:left;}
+  code{background:#eceaf9; border:1px solid #dcdaf3; border-radius:6px; padding:2px 7px; font-size:.87em; color:var(--accent-ink); display:inline-block;}
+  pre{background:#181a2e; border-radius:16px; padding:18px 20px; overflow-x:auto; margin:18px 0; font-size:.88em; line-height:1.65; box-shadow:0 12px 28px -16px rgba(24,26,46,0.5);}
+  pre code{background:none; border:none; padding:0; color:#d8dcff; display:block;}
+  table{width:100%; border-collapse:separate; border-spacing:0; margin:22px 0; font-size:.92em; border-radius:14px; overflow:hidden; border:1px solid var(--border);}
+  th, td{border-bottom:1px solid var(--border); padding:12px 15px; text-align:left;}
+  th{background:#eceaf9; color:var(--accent-ink); font-weight:700; font-size:.9em;}
+  tr:last-child td{border-bottom:none;}
+  tr:nth-child(even) td{background:rgba(33,31,26,0.02);}
+  ul, ol{margin:0 0 16px; padding-inline-start:26px; color:#3c382f;}
+  li{margin-bottom:7px;}
+  .figure{margin:28px 0; text-align:center;}
+  .figure img, .figure svg{max-width:100%; height:auto; background:#fffefb; border:1px solid var(--border); border-radius:16px; box-shadow:0 1px 2px rgba(33,31,26,0.03), 0 16px 32px -20px rgba(33,31,26,0.14);}
+  .figure figcaption{color:var(--muted); font-size:.87em; margin-top:12px;}
+  .mermaid{background:#fffefb; border:1px solid var(--border); border-radius:16px; padding:18px; margin:24px 0; text-align:center; box-shadow:0 1px 2px rgba(33,31,26,0.03), 0 16px 32px -20px rgba(33,31,26,0.14);}
+  .checkpoint{border-radius:16px; padding:22px 24px; margin:26px 0; background:#eafaf3; border:1px solid #c9eeda;}
+  .checkpoint ul{list-style:none; padding:0; margin:0;}
+  .checkpoint li{padding:9px 0; border-bottom:1px solid rgba(33,31,26,0.06); display:flex; gap:10px; align-items:flex-start;}
+  .checkpoint li:last-child{border-bottom:none;}
+  .checkpoint li::before{content:"◻"; color:var(--accent2); font-size:1.2em; line-height:1;}
+  .exercise{border-radius:14px; padding:18px 22px; margin:16px 0; background:var(--panel); border:1px solid var(--border); border-inline-start:4px solid var(--gold);}
+  .exercise .level{font-size:.76em; color:var(--gold); font-weight:800; text-transform:uppercase; letter-spacing:.6px;}
+  .glossary dt{font-weight:800; color:var(--accent-ink); margin-top:16px;}
+  .glossary dd{margin:4px 0 0; color:var(--muted);}
+  .toc{background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:26px 30px;}
+  .toc a{display:block; padding:8px 0; color:#3c382f; text-decoration:none; border-bottom:1px solid rgba(33,31,26,.06); transition:color .15s;}
+  .toc a:last-child{border-bottom:none;}
+  .toc a:hover{color:var(--accent-ink);}
+  .toc a span{color:var(--muted); font-size:.85em; margin-inline-end:10px; font-weight:600;}
+  .divider{height:1px; background:linear-gradient(90deg, transparent, var(--border), transparent); margin:52px 0;}
+  .footer-nav{display:flex; justify-content:space-between; align-items:center; gap:16px; margin-top:64px; padding-top:26px; border-top:1px solid var(--border); color:var(--muted); font-size:.9em;}
+  .footer-nav a{color:var(--text); text-decoration:none; font-weight:600;}
+  .footer-nav a:hover{color:var(--accent-ink);}
+  .badge-project{display:inline-block; background:#fdf3e4; border:1px solid #f2ddb3; color:var(--gold); border-radius:8px; padding:3px 11px; font-size:.78em; font-weight:700;}
+  .term{background:#181a2e; border-radius:16px; overflow:hidden; margin:22px 0; box-shadow:0 12px 28px -16px rgba(24,26,46,0.5);}
+  .term-bar{display:flex; align-items:center; gap:7px; padding:12px 16px; background:#20223a;}
+  .term-dot{width:11px; height:11px; border-radius:50%;}
+  .term-body{padding:16px 20px; font-family:'JetBrains Mono', monospace; direction:ltr; text-align:left; font-size:.87em; line-height:1.75; color:#d8dcff; white-space:pre-wrap;}
+  .term-prompt{color:#7ee7c7;}
+  .term-out{color:#9aa0c8;}
+  @media print{ body{background:#fff; color:#000;} }
+  html[data-theme="dark"]{
+    --bg:#12141c; --panel:#1b1e2a; --panel2:#20232f; --border:#2d3142;
+    --text:#e7e8f2; --muted:#9498b3; --accent:#7c86ff; --accent-ink:#aab1ff;
+    --accent2:#34d399; --gold:#e3a548; --danger:#f0685a; --purple:#a78bfa; --radius:14px;
+  }
+  html[data-theme="dark"] p, html[data-theme="dark"] ul, html[data-theme="dark"] ol, html[data-theme="dark"] .toc a{color:#c7c9dc;}
+  html[data-theme="dark"] code{background:#262a45; border-color:#3a3f5c;}
+  html[data-theme="dark"] th{background:#262a45;}
+  html[data-theme="dark"] tr:nth-child(even) td{background:rgba(255,255,255,0.03);}
+  html[data-theme="dark"] .box.idea{background:#1f2242; border-color:#383d6b;}
+  html[data-theme="dark"] .box.mistake{background:#3a2220; border-color:#5c332e;}
+  html[data-theme="dark"] .box.eng{background:#2a2340; border-color:#453a63;}
+  html[data-theme="dark"] .box.real{background:#16302a; border-color:#1f4a3d;}
+  html[data-theme="dark"] .box.def{background:#3a2f18; border-color:#5c4826;}
+  html[data-theme="dark"] .box.hw{background:#3a2618; border-color:#5c3f26;}
+  html[data-theme="dark"] .checkpoint{background:#16302a; border-color:#1f4a3d;}
+  html[data-theme="dark"] .checkpoint li{border-bottom-color:rgba(255,255,255,0.08);}
+  html[data-theme="dark"] .badge-project{background:#3a2f18; border-color:#5c4826;}
+  html[data-theme="dark"] .chapter-num{background:#1f2242;}
+  html[data-theme="dark"] .chapter-card{box-shadow:0 1px 2px rgba(0,0,0,0.25);}
+  html[data-theme="dark"] .chapter-card:hover{border-color:#454a7a; box-shadow:0 16px 32px -20px rgba(0,0,0,0.55);}
+  body, .box, .chapter-card, .exercise, .checkpoint, .toc, table, code, th{transition:background-color .25s ease, border-color .25s ease, color .25s ease;}
+  #theme-toggle{position:fixed; top:18px; left:18px; z-index:999; width:46px; height:46px; border-radius:50%; border:1px solid var(--border); background:var(--panel); color:var(--text); font-size:19px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px -8px rgba(0,0,0,0.35); transition:transform .15s ease, background-color .25s ease, border-color .25s ease;}
+  #theme-toggle:hover{transform:scale(1.08);}
+  @media (max-width:640px){ #theme-toggle{top:12px; left:12px; width:42px; height:42px; font-size:17px;} }
+</style>
+<link rel="stylesheet" href="projector.css">
+</head>
+<body>
+<style>
+.coursenav{position:sticky;top:0;z-index:900;background:rgba(255,254,251,0.88);backdrop-filter:saturate(160%) blur(10px);border-bottom:1px solid var(--border);}
+.coursenav .inner{max-width:1000px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;padding:10px 20px 10px 74px;}
+.coursenav .brand{font-weight:800;color:var(--accent-ink);margin-inline-end:12px;font-size:.9em;letter-spacing:-.2px;}
+.coursenav a{color:#3c382f;text-decoration:none;font-weight:600;font-size:.82em;padding:6px 10px;border-radius:999px;transition:background-color .15s,color .15s;}
+.coursenav a:hover{background:#eef0ff;color:var(--accent-ink);}
+.coursenav a.active{background:var(--accent);color:#fff;}
+html[data-theme="dark"] .coursenav{background:rgba(27,30,42,0.9);}
+html[data-theme="dark"] .coursenav a{color:#c7c9dc;}
+html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
+@media print{.coursenav{display:none;}}
+</style>
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html">Home</a>
+  <a href="syllabus.html">Syllabus</a>
+  <a href="schedule.html">Schedule</a>
+  <a href="assignments.html">Assignments</a>
+  <a href="index.html#lectures" class="active">Lectures</a>
+</div></nav>
+<button id="theme-toggle" aria-label="Toggle light/dark mode" title="Light/dark mode">
+  <span id="theme-toggle-icon">🌙</span>
+</button>
+<div class="wrap">
+
+  <div class="cover">
+    <div class="kicker">LIMO Robotics &amp; ROS 2 Lecture &nbsp;·&nbsp; Session 3 of 14</div>
+    <h1>Lecture 3: The ROS 2 Dev Environment &amp; LIMO's Drive Modes</h1>
+    <div class="subtitle">From an empty workspace to a real controller node — then four very different ways for LIMO to move</div>
+    <div class="meta-row">
+      <div class="chip">Duration: 3 hours</div>
+      <div class="chip">Prerequisite: Lecture 2</div>
+      <div class="chip">Robot: AgileX LIMO — all four drive modes</div>
+    </div>
+  </div>
+
+  <div class="toc">
+    <strong style="color:var(--text)">In this session</strong>
+    <a href="#workspace"><span>3.1</span>Workspace — the project's factory</a>
+    <a href="#package"><span>3.2</span>Package — the buildable unit</a>
+    <a href="#clone-build"><span>3.3</span>Cloning and building the LIMO workspace, properly this time</a>
+    <a href="#first-node"><span>3.4</span>Your first real LIMO controller node</a>
+    <a href="#drive-modes"><span>3.5</span>LIMO's four drive modes, conceptually</a>
+    <a href="#driving"><span>3.6</span>Driving all four modes back to back</a>
+    <a href="#choosing"><span>3.7</span>Choosing a drive mode for a real task</a>
+    <a href="#summary"><span>3.8</span>Summary, checkpoint, and glossary</a>
+  </div>
+
+  <section id="workspace">
+    <h2><span class="num">3.1</span>Workspace — The Project's Factory</h2>
+    <p>
+      In Lecture 2 you launched LIMO in Gazebo and watched Topics and TF frames appear without worrying too
+      much about where any of it lived on disk. Now we open the hood. Every piece of ROS 2 code you write or
+      run — the URDF that describes LIMO's body, the launch files that start Gazebo, the node that will
+      eventually drive the robot around a warehouse — lives inside a <strong>workspace</strong>. Understanding
+      this folder structure properly is the difference between "I typed the commands and it worked" and
+      "I know exactly what happened when I typed the commands."
+    </p>
+
+    <div class="box def">
+      <div class="box-title">📖 Definition: Workspace</div>
+      <p>
+        A <strong>workspace</strong> is the top-level folder that holds all of a project's ROS 2 packages,
+        the intermediate files produced while building them, and the final runnable output. A single LIMO
+        project — say <code>~/limo_ws</code> — typically holds every package you need: the robot description,
+        the Gazebo simulation, the custom messages, and your own lab code, all side by side.
+      </p>
+    </div>
+
+    <p>Every ROS 2 workspace, once built at least once, has exactly four top-level folders:</p>
+    <pre><code>limo_ws/
+├── src/       # your source code — packages you write or clone
+├── build/     # intermediate compilation artifacts (scratch space)
+├── install/   # the final, runnable product of the build
+└── log/       # build and run reports</code></pre>
+
+    <table>
+      <tr><th>Folder</th><th>Role</th><th>Do you edit it by hand?</th></tr>
+      <tr><td><code>src/</code></td><td>Home of every package: URDF, launch files, Python/C++ nodes, message definitions</td><td>Yes — almost all of your work happens here</td></tr>
+      <tr><td><code>build/</code></td><td>Scratch space colcon uses while compiling each package</td><td>Almost never — safe to delete and rebuild</td></tr>
+      <tr><td><code>install/</code></td><td>The finished, runnable product — this is what gets <code>source</code>d</td><td>Only to source <code>setup.bash</code></td></tr>
+      <tr><td><code>log/</code></td><td>Detailed text logs of every <code>colcon build</code> and diagnostic output</td><td>Only when a build fails and you need to see why</td></tr>
+    </table>
+
+    <div class="box idea">
+      <div class="box-title">🧠 Analogy: The Factory Floor</div>
+      <p>
+        <code>src</code> is the design office where engineers draft blueprints. <code>build</code> is the
+        assembly line — messy, full of half-finished parts, and nobody ships from there. <code>install</code>
+        is the warehouse: only finished, tested products get shelved there, and that's the only place a
+        customer (your terminal, running <code>ros2 run</code>) is allowed to pick something up from. <code>log</code>
+        is the factory's incident ledger — when something on the line goes wrong, you go read the log, not
+        guess.
+      </p>
+    </div>
+
+    <p>
+      This is exactly why, after every <code>colcon build</code>, you must <code>source install/setup.bash</code>
+      again: you are telling the current terminal session where the warehouse is. Skip this step and ROS 2
+      behaves as if the package you just built doesn't exist, even though the files are sitting right there
+      in <code>install</code>.
+    </p>
+
+    <div class="box real">
+      <div class="box-title">🌍 In the Real Course</div>
+      <p>
+        For this lecture series you'll work almost entirely inside one shared workspace — something like
+        <code>~/limo_ws/src/KV6022_limo_ros2</code> — which already bundles the robot description, the Gazebo
+        simulation, custom messages, teaching examples, and the capstone assessment package as siblings under
+        one <code>src</code> folder. This mirrors how real robotics teams work: one workspace per robot
+        platform, many packages inside it, each with a narrow job.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="package">
+    <h2><span class="num">3.2</span>Package — The Buildable Unit</h2>
+    <p>
+      If the workspace is the factory, a <strong>package</strong> is one production line inside it — the
+      smallest unit ROS 2's build tool understands and compiles independently. A LIMO project is never one
+      giant folder of files; it's split into focused packages, each responsible for one concern.
+    </p>
+
+    <div class="box def">
+      <div class="box-title">📖 Definition: Package</div>
+      <p>
+        A <strong>package</strong> is the smallest organized, independently buildable unit in ROS 2. It can
+        contain nodes, launch files, URDF/xacro models, message definitions, RViz configs, parameter files,
+        and tests — but it always declares its own identity and dependencies through a <code>package.xml</code>
+        file at its root.
+      </p>
+    </div>
+
+    <p>Every package has an identity card and a build recipe. Which recipe it uses depends on its <em>build type</em>:</p>
+
+    <table>
+      <tr><th>Build type</th><th>Language</th><th>Extra files</th></tr>
+      <tr><td><code>ament_python</code></td><td>Python nodes</td><td><code>setup.py</code> (entry points) + <code>setup.cfg</code></td></tr>
+      <tr><td><code>ament_cmake</code></td><td>C++ nodes, or pure data/description packages</td><td><code>CMakeLists.txt</code></td></tr>
+    </table>
+
+    <p>A quick way to check which kind a package is, without opening every file:</p>
+    <pre><code>grep build_type package.xml
+# &lt;build_type&gt;ament_python&lt;/build_type&gt;   → Python package, has setup.py
+# &lt;build_type&gt;ament_cmake&lt;/build_type&gt;    → C++ or description package, has CMakeLists.txt</code></pre>
+
+    <p>
+      For an <code>ament_python</code> package, <code>setup.py</code> contains an <code>entry_points</code>
+      block that maps a human-friendly runnable name to a Python module and function — this is exactly what
+      makes <code>ros2 run my_package my_node</code> work. We'll dissect a real one in section 3.4.
+    </p>
+
+    <div class="box eng">
+      <div class="box-title">🔧 The LIMO Course Workspace, Package by Package</div>
+      <p>Here's the roster you'll be working with across this whole lecture series, all living under one <code>src/</code>:</p>
+      <table>
+        <tr><th>Package</th><th>Build type</th><th>Role</th></tr>
+        <tr><td><code>limo_description</code></td><td>ament_cmake</td><td>URDF/xacro model of the LIMO body — wheels, sensors, and the four drive-mode variants</td></tr>
+        <tr><td><code>limo_gazebosim</code></td><td>ament_cmake + ament_cmake_python</td><td>Gazebo Classic launch files and worlds; spawns LIMO and depends on gazebo_ros, gazebo_plugins, limo_description, limo_msgs</td></tr>
+        <tr><td><code>limo_msgs</code></td><td>ament_cmake</td><td>Custom message definitions, including <code>LimoStatus.msg</code> for battery/mode telemetry</td></tr>
+        <tr><td><code>example_codes</code></td><td>ament_python</td><td>Small teaching-example nodes used across the lectures</td></tr>
+        <tr><td><code>trajectory_skeleton</code> / <code>trajectory_referee</code></td><td>ament_python</td><td>Path-following lab exercise and its automated grading node</td></tr>
+        <tr><td><code>KV6022_assessment</code></td><td>ament_python</td><td>The capstone package you'll build out over the rest of the course</td></tr>
+      </table>
+    </div>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ Package ≠ Node</div>
+      <p>
+        Don't collapse these two ideas. A workspace can hold many packages, and a single package can hold
+        many nodes — <code>limo_gazebosim</code>, for example, holds four separate launch files, one per
+        drive mode, but no node code of its own. Keep each package's job narrow; a package that tries to do
+        everything becomes impossible to reuse or test in isolation.
+      </p>
+    </div>
+
+    <div class="exercise">
+      <div class="level">Easy Exercise</div>
+      <p>
+        Inside your cloned workspace, run <code>grep build_type src/*/package.xml</code> (or check each
+        package.xml individually) for <code>limo_description</code>, <code>limo_gazebosim</code>, and
+        <code>example_codes</code>. Confirm each matches the build type listed in the table above.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="clone-build">
+    <h2><span class="num">3.3</span>Cloning and Building the LIMO Workspace, Properly This Time</h2>
+    <p>
+      In Lecture 1 you ran a handful of setup commands to get LIMO on screen quickly. Now that you understand
+      what a workspace and a package actually are, let's redo that sequence and understand <em>why</em> each
+      step is necessary rather than just typing it from memory.
+    </p>
+
+    <div class="mermaid">
+flowchart LR
+    A["git clone<br/>KV6022_limo_ros2 into src/"] --> B["rosdep install<br/>resolve system dependencies"]
+    B --> C["colcon build<br/>--symlink-install"]
+    C --> D["source install/setup.bash"]
+    D --> E["ros2 launch limo_gazebosim ..."]
+    style A fill:#eef0ff,stroke:#3d4bf5,color:#211f1a
+    style C fill:#fdf3e4,stroke:#c8862c,color:#211f1a,font-weight:bold
+    style E fill:#eafaf3,stroke:#0e9e6e,color:#211f1a
+    </div>
+
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dot" style="background:#ff5f57;"></div>
+        <div class="term-dot" style="background:#febc2e;"></div>
+        <div class="term-dot" style="background:#28c840;"></div>
+      </div>
+      <div class="term-body">
+<span class="term-prompt">student@limo:~$</span> mkdir -p ~/limo_ws/src
+<span class="term-prompt">student@limo:~$</span> cd ~/limo_ws/src
+<span class="term-prompt">student@limo:~/limo_ws/src$</span> git clone https://github.com/your-org/KV6022_limo_ros2.git
+<span class="term-out">Cloning into 'KV6022_limo_ros2'...
+remote: Enumerating objects... done.
+Receiving objects: 100% done.</span>
+
+<span class="term-prompt">student@limo:~/limo_ws/src$</span> cd ~/limo_ws
+<span class="term-prompt">student@limo:~/limo_ws$</span> rosdep install --from-paths src --ignore-src -r -y
+<span class="term-out">#All required rosdeps installed successfully</span>
+
+<span class="term-prompt">student@limo:~/limo_ws$</span> colcon build --symlink-install
+<span class="term-out">Starting &gt;&gt;&gt; limo_msgs
+Starting &gt;&gt;&gt; limo_description
+Finished &lt;&lt;&lt; limo_msgs [4.1s]
+Finished &lt;&lt;&lt; limo_description [6.8s]
+Starting &gt;&gt;&gt; limo_gazebosim
+Finished &lt;&lt;&lt; limo_gazebosim [3.2s]
+Summary: 6 packages finished [22.4s]</span>
+
+<span class="term-prompt">student@limo:~/limo_ws$</span> source install/setup.bash
+      </div>
+    </div>
+
+    <p>Each of the four commands has a distinct job, now that you know the vocabulary:</p>
+    <table>
+      <tr><th>Command</th><th>What it actually does</th></tr>
+      <tr><td><code>git clone ...</code></td><td>Populates <code>src/</code> with the course packages — this step only touches <code>src</code>, nothing else</td></tr>
+      <tr><td><code>rosdep install ...</code></td><td>Reads every package's <code>package.xml</code> dependency list and installs the missing system libraries (e.g. gazebo_ros)</td></tr>
+      <tr><td><code>colcon build --symlink-install</code></td><td>Compiles every package in <code>src</code> into <code>build</code>, then produces the finished product in <code>install</code></td></tr>
+      <tr><td><code>source install/setup.bash</code></td><td>Tells this terminal where the freshly built <code>install</code> warehouse is</td></tr>
+    </table>
+
+    <div class="box idea">
+      <div class="box-title">🧠 Why <code>--symlink-install</code>?</div>
+      <p>
+        Without it, <code>colcon build</code> <em>copies</em> your Python files from <code>src</code> into
+        <code>install</code>. Edit a node afterward and nothing changes at run time — you're still running the
+        stale copy — until you rebuild. With <code>--symlink-install</code>, colcon creates a symbolic link
+        instead of a copy for Python files, so edits in <code>src</code> take effect immediately on the next
+        <code>ros2 run</code>, no rebuild needed. It costs nothing and saves you from a very confusing class of
+        "why isn't my change showing up" bugs, so make it a habit for every LIMO workspace you build.
+      </p>
+    </div>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ Building Just One Package</div>
+      <p>
+        As the workspace grows across the course, rebuilding all six packages every time gets slow. Once you're
+        only touching one package, scope the build:
+      </p>
+      <pre><code>colcon build --packages-select example_codes --symlink-install</code></pre>
+      <p>This still requires re-sourcing if it's a new terminal, but it skips recompiling everything else.</p>
+    </div>
+
+    <div class="exercise">
+      <div class="level">Easy Exercise</div>
+      <p>
+        From a brand-new terminal (don't reuse one you've already sourced in), run <code>ros2 pkg list | grep limo</code>
+        before sourcing <code>install/setup.bash</code>, then again after. Explain the difference in the output.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="first-node">
+    <h2><span class="num">3.4</span>Your First Real LIMO Controller Node</h2>
+    <p>
+      Time to write code that actually moves the robot. We'll create a brand-new package for this week's lab,
+      write a node that publishes velocity commands on a timer, register it as a runnable executable, build it,
+      and run it against the simulated LIMO from Lecture 2.
+    </p>
+
+    <h3>Step 1 — Create the package</h3>
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dot" style="background:#ff5f57;"></div>
+        <div class="term-dot" style="background:#febc2e;"></div>
+        <div class="term-dot" style="background:#28c840;"></div>
+      </div>
+      <div class="term-body">
+<span class="term-prompt">student@limo:~/limo_ws/src$</span> ros2 pkg create --build-type ament_python week3_lab --dependencies rclpy geometry_msgs
+<span class="term-out">going to create a new package
+package name: week3_lab
+destination directory: /home/student/limo_ws/src
+package format: 3
+version: 0.0.0
+description: TODO
+maintainer: ['student &lt;student@todo.todo&gt;']
+licenses: ['TODO: License declaration']
+build type: ament_python
+dependencies: ['rclpy', 'geometry_msgs']
+creating folder ./week3_lab
+creating ./week3_lab/package.xml
+creating ./week3_lab/setup.py
+creating ./week3_lab/setup.cfg
+creating folder ./week3_lab/resource
+creating ./week3_lab/week3_lab/__init__.py
+creating folder ./week3_lab/test</span>
+      </div>
+    </div>
+
+    <p>
+      <code>--dependencies rclpy geometry_msgs</code> automatically writes the right <code>&lt;depend&gt;</code>
+      tags into <code>package.xml</code> — no manual editing needed for those two.
+    </p>
+
+    <h3>Step 2 — Write the node</h3>
+    <p>Create <code>week3_lab/week3_lab/command_publisher.py</code>:</p>
+    <pre><code>import rclpy
+from rclpy.node import Node
+from geometry_msgs.msg import Twist
+
+
+class CommandPublisher(Node):
+    def __init__(self):
+        super().__init__('command_publisher')
+        self.publisher_ = self.create_publisher(Twist, '/cmd_vel', 10)
+        self.timer_period = 0.5  # seconds
+        self.timer = self.create_timer(self.timer_period, self.timer_callback)
+        self.get_logger().info('command_publisher started — publishing to /cmd_vel every 0.5s')
+
+    def timer_callback(self):
+        msg = Twist()
+        msg.linear.x = 0.15    # drive forward at 0.15 m/s
+        msg.angular.z = 0.2    # gentle left turn
+        self.publisher_.publish(msg)
+        self.get_logger().info(
+            f'Publishing: linear.x={msg.linear.x:.2f}  angular.z={msg.angular.z:.2f}'
+        )
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = CommandPublisher()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()</code></pre>
+
+    <div class="box idea">
+      <div class="box-title">🧠 Reading This Node</div>
+      <p>
+        Nothing here is new machinery from Lecture 2 — it's the same publisher + timer pattern applied to a
+        real topic. <code>create_publisher(Twist, '/cmd_vel', 10)</code> opens a publisher on the exact topic
+        every LIMO drive mode listens to, with a queue depth of 10. <code>create_timer(0.5, ...)</code> calls
+        <code>timer_callback</code> twice a second for as long as <code>rclpy.spin(node)</code> keeps the node
+        alive. Every drive mode you'll meet in section 3.5 is, underneath, just something subscribed to this
+        same <code>/cmd_vel</code> topic.
+      </p>
+    </div>
+
+    <h3>Step 3 — Register it as a runnable executable</h3>
+    <p>Open <code>setup.py</code> and edit the <code>entry_points</code> block:</p>
+    <pre><code>entry_points={
+    'console_scripts': [
+        'command_publisher = week3_lab.command_publisher:main',
+    ],
+},</code></pre>
+    <table>
+      <tr><th>Part</th><th>Meaning</th></tr>
+      <tr><td><code>command_publisher</code> (left side)</td><td>The name you'll type after <code>ros2 run week3_lab</code></td></tr>
+      <tr><td><code>week3_lab.command_publisher</code></td><td>The Python module path: <code>week3_lab/week3_lab/command_publisher.py</code></td></tr>
+      <tr><td><code>:main</code></td><td>The function ROS 2 calls to start the node</td></tr>
+    </table>
+
+    <h3>Step 4 — Build and run</h3>
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dot" style="background:#ff5f57;"></div>
+        <div class="term-dot" style="background:#febc2e;"></div>
+        <div class="term-dot" style="background:#28c840;"></div>
+      </div>
+      <div class="term-body">
+<span class="term-prompt">student@limo:~/limo_ws$</span> colcon build --packages-select week3_lab --symlink-install
+<span class="term-out">Starting &gt;&gt;&gt; week3_lab
+Finished &lt;&lt;&lt; week3_lab [1.9s]
+Summary: 1 package finished [2.1s]</span>
+
+<span class="term-prompt">student@limo:~/limo_ws$</span> source install/setup.bash
+<span class="term-prompt">student@limo:~/limo_ws$</span> ros2 run week3_lab command_publisher
+<span class="term-out">[INFO] [command_publisher]: command_publisher started — publishing to /cmd_vel every 0.5s
+[INFO] [command_publisher]: Publishing: linear.x=0.15  angular.z=0.20
+[INFO] [command_publisher]: Publishing: linear.x=0.15  angular.z=0.20</span>
+      </div>
+    </div>
+
+    <p>
+      With a differential-drive LIMO already spawned in Gazebo from Lecture 2, this node alone is enough to
+      make it roll forward in a gentle curve — the same principle every teleop tool, navigation stack, and
+      autonomy pipeline you'll build for the rest of the course ultimately relies on.
+    </p>
+
+    <div class="box hw">
+      <div class="box-title">🛠️ On the Physical LIMO</div>
+      <p>
+        Everything in this section runs unmodified against the real robot. Swap the simulated LIMO for the
+        physical chassis over SSH and the same <code>ros2 run week3_lab command_publisher</code> drives it —
+        <code>/cmd_vel</code> is the same interface either way. Always test new controller nodes in Gazebo
+        first; a 0.15 m/s bug in simulation is a shrug, the same bug on hardware is a robot rolling off a table.
+      </p>
+    </div>
+
+    <div class="exercise">
+      <div class="level">Intermediate Exercise</div>
+      <p>
+        Modify <code>timer_callback</code> so the node alternates between driving straight
+        (<code>angular.z = 0.0</code>) for 2 seconds and turning in place (<code>linear.x = 0.0</code>,
+        <code>angular.z = 0.5</code>) for 2 seconds, using a counter incremented each callback. Rebuild with
+        <code>--packages-select week3_lab</code> and confirm the behavior in Gazebo.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="drive-modes">
+    <h2><span class="num">3.5</span>LIMO's Four Drive Modes, Conceptually</h2>
+    <p>
+      Here is the fact that makes LIMO special as a teaching platform: it is not one robot but four, sharing a
+      single chassis footprint and a single command interface. AgileX ships four separate xacro assemblies —
+      one per physical drivetrain — and every one of them is built from the same shared macro library in
+      <code>limo_properties.xacro</code> (<code>limo_wheel</code>, <code>limo_mecanum_wheel_1/2</code>,
+      <code>limo_left_steering_hinge</code>, <code>limo_right_steering_hinge</code>, <code>limo_laser</code>,
+      <code>limo_depth_camera</code>, <code>limo_imu</code>). What differs between modes is purely which
+      macros get assembled and how the wheel joints are defined.
+    </p>
+
+    <div class="mermaid">
+flowchart TD
+    P["limo_properties.xacro<br/>shared macros: wheels, hinges, laser, depth camera, imu"]
+    P --> D["limo_diff.xacro<br/>Differential"]
+    P --> A["limo_ackerman.xacro<br/>Ackermann"]
+    P --> M["limo_mecanum.xacro<br/>Mecanum"]
+    P --> T["limo_track.xacro<br/>Tracked"]
+    D --> LD["limo_gazebo_diff.launch.py"]
+    A --> LA["limo_gazebo_ackerman_drive.launch.py"]
+    M --> LM["limo_gazebo_mecanum_drive.launch.py"]
+    T --> LT["limo_gazebo_track_drive.launch.py"]
+    LD --> C["/cmd_vel  (geometry_msgs/Twist)"]
+    LA --> C
+    LM --> C
+    LT --> C
+    style P fill:#eef0ff,stroke:#3d4bf5,color:#211f1a
+    style C fill:#eafaf3,stroke:#0e9e6e,color:#211f1a,font-weight:bold
+    </div>
+
+    <p>Let's look at what's actually different in each xacro file.</p>
+
+    <h3>1. Differential — <code>limo_diff.xacro</code></h3>
+    <p>
+      The classic setup: two pairs of drive wheels (left pair, right pair) joined to the chassis by
+      <code>continuous</code> joints — free-spinning, no angle limit. Steering is done entirely by spinning
+      the left and right pairs at different speeds. Because there's no separate steering geometry, differential
+      LIMO can rotate on the spot: a zero turning radius.
+    </p>
+
+    <h3>2. Ackermann — <code>limo_ackerman.xacro</code></h3>
+    <p>
+      The front wheels are no longer rigidly mounted — each connects through a <code>revolute</code>
+      <code>steering_hinge</code> joint (<code>limo_left_steering_hinge</code> / <code>limo_right_steering_hinge</code>),
+      with rotation axis <code>0 0 ±1</code>, limited to <strong>±0.523598767 rad (≈ ±30°)</strong>, effort limit
+      1000, velocity limit 1.0, zero joint damping and 2.0 friction. The rear wheels stay simple continuous
+      drive joints, exactly like the differential mode. This is a real car-like steering geometry: LIMO can no
+      longer spin in place, and it has a minimum turning radius set by that ±30° hinge limit.
+    </p>
+    <pre><code>&lt;joint name="left_steering_hinge_joint" type="revolute"&gt;
+  &lt;axis xyz="0 0 1"/&gt;
+  &lt;limit lower="-0.523598767" upper="0.523598767"
+         effort="1000" velocity="1.0"/&gt;
+  &lt;dynamics damping="0.0" friction="2.0"/&gt;
+&lt;/joint&gt;</code></pre>
+
+    <h3>3. Mecanum — <code>limo_mecanum.xacro</code></h3>
+    <p>
+      All four wheels are replaced with Mecanum rollers using the <code>limo_mecanum_wheel_1</code> and
+      <code>limo_mecanum_wheel_2</code> macros — distinct front-left/front-right meshes, since the diagonal
+      roller pattern is mirrored between the two sides and baked directly into the <code>.dae</code> mesh
+      geometry. Each wheel is driven independently, and the combination of four independently-controlled
+      angled rollers gives LIMO full holonomic freedom: it can strafe sideways or move diagonally without
+      rotating its heading first.
+    </p>
+
+    <h3>4. Tracked — <code>limo_track.xacro</code></h3>
+    <p>
+      Wheels are replaced entirely by continuous rubber tracks. Like the differential mode, steering comes
+      from driving the left and right tracks at different speeds — but the much larger ground-contact area
+      and friction give dramatically better traction on loose or uneven terrain, at the cost of a less crisp
+      pivot (the tracks scrub and drag against the ground during a turn rather than rotating cleanly like
+      wheels).
+    </p>
+
+    <div class="box def">
+      <div class="box-title">📖 Definition: Holonomic vs. Non-Holonomic</div>
+      <p>
+        A <strong>holonomic</strong> drivetrain can move instantaneously in any direction on the ground plane —
+        Mecanum LIMO can strafe sideways without turning. A <strong>non-holonomic</strong> drivetrain is
+        constrained: it can only move along directions its wheels currently allow — differential, Ackermann,
+        and tracked LIMO must all rotate (or, for Ackermann, arc) before they can translate sideways.
+      </p>
+    </div>
+
+    <div class="box eng">
+      <div class="box-title">🔧 One Topic, Four Interpretations</div>
+      <p>
+        Every mode's <code>ros_control</code> plugin subscribes to the same <code>/cmd_vel</code>
+        (<code>geometry_msgs/msg/Twist</code>) topic — the exact topic your <code>command_publisher</code>
+        node from section 3.4 already publishes to. What changes between modes is purely how
+        <code>linear.x</code> and <code>angular.z</code> get converted into wheel motion — and for Mecanum
+        only, <code>linear.y</code> is also honored, since it's the one mode that can actually move sideways.
+        This is a deliberate design choice: your controller code from section 3.4 doesn't need to change at
+        all to drive any of the four modes.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="driving">
+    <h2><span class="num">3.6</span>Driving All Four Modes Back to Back</h2>
+    <p>
+      Reading about the difference between a zero-radius spin and a minimum-radius arc is one thing; feeling
+      it through a teleop controller is another. This section's goal is purely experiential: launch each mode,
+      drive it, and pay close attention to how the same forward/turn stick input produces a completely
+      different motion.
+    </p>
+
+    <table>
+      <tr><th>Mode</th><th>Launch file</th><th>Turning behavior</th><th>Best traction</th></tr>
+      <tr><td>Differential</td><td><code>limo_gazebo_diff.launch.py</code></td><td>Spins in place — zero turning radius</td><td>Good on flat, even ground</td></tr>
+      <tr><td>Ackermann</td><td><code>limo_gazebo_ackerman_drive.launch.py</code></td><td>Car-like arc — has a minimum turning radius, cannot spin in place</td><td>Good, road-like surfaces</td></tr>
+      <tr><td>Mecanum</td><td><code>limo_gazebo_mecanum_drive.launch.py</code></td><td>Can strafe sideways / move diagonally without rotating heading</td><td>Lower — more slip on rough surfaces</td></tr>
+      <tr><td>Tracked</td><td><code>limo_gazebo_track_drive.launch.py</code></td><td>Differential-style pivot, but drags/scrubs due to track contact</td><td>Best — rough or loose terrain</td></tr>
+    </table>
+
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dot" style="background:#ff5f57;"></div>
+        <div class="term-dot" style="background:#febc2e;"></div>
+        <div class="term-dot" style="background:#28c840;"></div>
+      </div>
+      <div class="term-body">
+<span class="term-prompt">student@limo:~/limo_ws$</span> ros2 launch limo_gazebosim limo_gazebo_diff.launch.py
+<span class="term-out">[INFO] [gzserver-1]: process started
+[INFO] [spawn_entity.py-3]: spawn_entity: LIMO diff mode spawned</span>
+
+<span class="term-prompt">student@limo:~/limo_ws$</span> ros2 run teleop_twist_keyboard teleop_twist_keyboard
+<span class="term-out">Reading from the keyboard and publishing to /cmd_vel!
+---------------------------
+Moving around:
+   u    i    o
+   j    k    l
+   m    ,    .</span>
+      </div>
+    </div>
+
+    <figure class="figure">
+      <img src="./images/gazebo_limo.jpg" alt="LIMO robot model spawned in the Gazebo simulator">
+      <figcaption>Figure 3.1 — LIMO spawned in Gazebo. The visual model looks identical across drive modes; the difference lives entirely in the wheel joints beneath it.</figcaption>
+    </figure>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ Only Ever Run One Drive-Mode World at a Time</div>
+      <p>
+        Each launch file starts its own <code>gzserver</code>, its own <code>robot_state_publisher</code>, and
+        publishes to the same names (<code>/cmd_vel</code>, <code>/tf</code>, <code>/scan</code>). Launching a
+        second drive mode before shutting down the first (<code>Ctrl+C</code>, and wait for the process to
+        actually exit) causes duplicate node name errors, TF conflicts between two competing robot models, and
+        a <code>/cmd_vel</code> that's being interpreted by two different drivetrains simultaneously. Always
+        fully close one world before opening the next.
+      </p>
+    </div>
+
+    <p>To sanity-check the TF tree and URDF for whichever mode is currently running, open the shipped RViz config:</p>
+    <pre><code>rviz2 -d ~/limo_ws/src/KV6022_limo_ros2/src/limo_gazebosim/rviz/urdf.rviz</code></pre>
+    <p>
+      This is the rviz config shipped inside <code>limo_gazebosim/rviz/</code> — it's pre-configured to show
+      the robot model and TF frames, so you can visually confirm the front wheels are actually hinged in
+      Ackermann mode, or that all four wheels are independent in Mecanum mode.
+    </p>
+
+    <div class="box idea">
+      <div class="box-title">🧠 What to Actually Feel For</div>
+      <ul>
+        <li><strong>Differential:</strong> hold the turn-in-place key — the robot rotates around its own center, never translating.</li>
+        <li><strong>Ackermann:</strong> try the same turn-in-place key — nothing happens (or barely anything); you must be moving forward to turn at all, and the arc is wide.</li>
+        <li><strong>Mecanum:</strong> use the strafe key — the robot slides sideways while facing the same direction the whole time.</li>
+        <li><strong>Tracked:</strong> turn in place like differential, but notice the motion feels heavier and less crisp — that's the tracks scrubbing against the ground.</li>
+      </ul>
+    </div>
+
+    <div class="exercise">
+      <div class="level">Harder Exercise</div>
+      <p>
+        Launch differential mode, then Ackermann mode (fully closing the first), and teleop each through an
+        identical 90° left turn starting from rest. Record roughly how much forward travel each mode needed to
+        complete the turn. Explain, in terms of the steering_hinge joint limits, why Ackermann needed more
+        space.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="choosing">
+    <h2><span class="num">3.7</span>Choosing a Drive Mode for a Real Task</h2>
+    <p>
+      In a real deployment you don't pick a drive mode because it's fun to try — you pick it because it fits
+      the environment. Since all four modes share the same chassis, sensors, and <code>/cmd_vel</code>
+      interface, the choice is purely about the physical task in front of the robot.
+    </p>
+
+    <div class="box real">
+      <div class="box-title">🌍 Matching Mode to Environment</div>
+      <ul>
+        <li><strong>Tight warehouse aisles, parking between shelves:</strong> Mecanum — the ability to strafe sideways and slide into a slot without a three-point turn is decisive when floor space is scarce.</li>
+        <li><strong>Outdoor paths, road-following, campus delivery:</strong> Ackermann — its car-like turning geometry is the most realistic match for structured, road-like environments, and its steering behavior directly resembles what students will meet later with real autonomous vehicles.</li>
+        <li><strong>Uneven, loose, or outdoor rough terrain:</strong> Tracked — maximum ground contact and traction wins over turning precision when the surface itself is the main challenge.</li>
+        <li><strong>General-purpose lab or classroom use:</strong> Differential — mechanically the simplest, cheapest to maintain, and the easiest to reason about, which is exactly why it's the default mode for most of this course's early exercises.</li>
+      </ul>
+    </div>
+
+    <p>
+      Notice this is an engineering trade-off, not a hierarchy — Mecanum's holonomic freedom comes at the cost
+      of traction and mechanical complexity (more joints, more rollers, more that can wear out); Ackermann's
+      realism comes at the cost of maneuverability in tight spaces. There's no universally "best" mode, only
+      the one that fits the task.
+    </p>
+
+    <div class="exercise">
+      <div class="level">Easy Exercise</div>
+      <p>
+        For each of these tasks, name the drive mode you'd choose and give one sentence of justification:
+        (a) inspecting a gravel construction site, (b) following painted lane markings on a closed outdoor
+        test track, (c) restocking narrow supermarket aisles, (d) a beginner's first-ever teleop lesson.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="summary">
+    <h2><span class="num">3.8</span>Summary, Checkpoint, and Glossary</h2>
+    <p>
+      You now understand the machinery beneath every command you've been typing since Lecture 1. A
+      <strong>workspace</strong> holds <strong>packages</strong>; packages declare their identity in
+      <code>package.xml</code> and their build type as <code>ament_python</code> or <code>ament_cmake</code>;
+      <code>colcon build --symlink-install</code> turns source into a runnable <code>install</code> tree that
+      must be sourced into every new terminal. You wrote and ran a real controller node — <code>command_publisher</code>
+      — that publishes <code>Twist</code> messages on <code>/cmd_vel</code>, and you saw that this exact same
+      topic is the single entry point every one of LIMO's four drive modes listens on, no matter how
+      differently each one turns that command into wheel motion underneath.
+    </p>
+
+    <div class="checkpoint">
+      <strong style="color:var(--text); display:block; margin-bottom:10px;">✅ Learning Checkpoint</strong>
+      <ul>
+        <li>I can explain the role of src, build, install, and log inside a ROS 2 workspace.</li>
+        <li>I can tell an ament_python package from an ament_cmake package and know what file each uses to build.</li>
+        <li>I can clone, rosdep-install, and colcon-build a full workspace from scratch, and explain why each step is needed.</li>
+        <li>I wrote, built, and ran a real rclpy node that publishes Twist messages on a timer.</li>
+        <li>I can register a node as a runnable executable via setup.py's entry_points.</li>
+        <li>I can name all four LIMO drive modes, their xacro files, their launch files, and how each converts /cmd_vel into wheel motion.</li>
+        <li>I have personally teleop-driven all four modes and can describe the difference in turning behavior between them.</li>
+      </ul>
+    </div>
+
+    <h3>Connection to the course</h3>
+    <p>
+      Everything from here forward assumes you're comfortable creating packages and nodes on demand — Lecture
+      4 goes deeper into the URDF/xacro files you only skimmed today, dissecting exactly how <code>limo_properties.xacro</code>'s
+      shared macros get assembled into a full robot body, which is the missing piece behind why the four drive
+      modes look identical from the outside but behave so differently underneath.
+    </p>
+
+    <dl class="glossary">
+      <dt>Workspace</dt><dd>The top-level folder (src/build/install/log) holding all of a ROS 2 project's packages and build output.</dd>
+      <dt>Package</dt><dd>The smallest independently buildable unit in ROS 2, identified by a package.xml at its root.</dd>
+      <dt>entry_points</dt><dd>The section of setup.py in an ament_python package that maps a runnable name to a module:function pair.</dd>
+      <dt>colcon</dt><dd>The official ROS 2 build tool; compiles every package under src into build, producing the finished install tree.</dd>
+      <dt>ament_python / ament_cmake</dt><dd>The two package build types in ROS 2 — Python packages use setup.py, C++ (or pure-data) packages use CMakeLists.txt.</dd>
+      <dt>Holonomic vs. non-holonomic</dt><dd>A holonomic drivetrain (Mecanum) can move in any direction instantly; a non-holonomic one (differential, Ackermann, tracked) is constrained by its wheel geometry.</dd>
+      <dt>Ackermann steering</dt><dd>A car-like steering geometry where the front wheels pivot on hinge joints within an angle limit, giving the vehicle a minimum turning radius instead of a zero-radius spin.</dd>
+    </dl>
+
+    <h3>Common Mistakes</h3>
+    <ul>
+      <li>Forgetting <code>--symlink-install</code> on the first build, then editing a Python node and wondering why the change never shows up at run time.</li>
+      <li>Editing or rebuilding a package but forgetting to re-<code>source install/setup.bash</code> in the terminal you're actually running from.</li>
+      <li>Launching a second drive-mode Gazebo world before fully closing the first one, causing duplicate node names and TF/topic conflicts.</li>
+      <li>Mixing up which xacro macro belongs to which mode — remember: <code>limo_left/right_steering_hinge</code> is Ackermann-only, <code>limo_mecanum_wheel_1/2</code> is Mecanum-only, and differential/tracked both use plain continuous drive joints.</li>
+    </ul>
+  </section>
+
+  <div class="footer-nav">
+    <a href="02-ros2-architecture-first-simulation.html">&larr; Lecture 2: ROS 2 Architecture</a>
+    <a href="04-urdf-xacro-limo-body.html">Lecture 4: URDF &amp; Xacro &rarr;</a>
+  </div>
+
+</div>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      background: '#f1efe8', primaryColor: '#eef0ff', primaryTextColor: '#211f1a',
+      primaryBorderColor: '#3d4bf5', lineColor: '#0e9e6e', secondaryColor: '#f1efe8',
+      tertiaryColor: '#fffefb', textColor: '#211f1a', fontFamily: 'Inter, -apple-system, sans-serif'
+    },
+    flowchart: { curve: 'basis' },
+    securityLevel: 'loose'
+  });
+</script>
+<script>
+(function(){
+  var btn = document.getElementById('theme-toggle');
+  var icon = document.getElementById('theme-toggle-icon');
+  function updateIcon(){
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    icon.textContent = isDark ? '☀️' : '🌙';
+  }
+  updateIcon();
+  btn.addEventListener('click', function(){
+    var cur = document.documentElement.getAttribute('data-theme');
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try{ localStorage.setItem('limo-book-theme', next); }catch(e){}
+    updateIcon();
+  });
+})();
+</script>
+<script src="annotate.js" defer></script>
+</body>
+</html>

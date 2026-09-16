@@ -1,0 +1,1751 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<script>
+(function(){
+  try{
+    var t = localStorage.getItem('limo-book-theme');
+    if(!t){ t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+    document.documentElement.setAttribute('data-theme', t);
+  }catch(e){}
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 11 — LIMO Hardware Deep-Dive: The Six Real Systems</title>
+<meta name="description" content="A complete real-hardware lab built directly on AgileX's official LIMO ROS 2 Humble manual: the six real systems (chassis &amp; drive modes, the Intel NUC11 onboard computer, the EAI T-mini Pro LiDAR, the DaBai depth camera, the HI226 IMU, and battery/power), plus Cartographer SLAM, Nav2 navigation, RTAB-Map visual SLAM, the real vision-module demos, and headless bring-up — with every real image from the manual.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<style>
+  :root{
+    --bg:#f6f4ef; --panel:#fffefb; --panel2:#f1efe8; --border:#e6e1d6;
+    --text:#211f1a; --muted:#7a7568; --accent:#3d4bf5; --accent-ink:#2732b8;
+    --accent2:#0e9e6e; --gold:#c8862c; --danger:#d64a3c; --purple:#8b5cf6; --radius:14px;
+  }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--bg); color:var(--text); font-family:'Inter', -apple-system, sans-serif; line-height:1.85; font-size:17.5px; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:880px; margin:0 auto; padding:48px 24px 120px;}
+  .cover{border-radius:28px; background:#12142b; padding:64px 44px; margin-bottom:56px; position:relative; overflow:hidden; isolation:isolate;}
+  .cover::before{content:""; position:absolute; inset:-40%; background:
+      radial-gradient(38% 45% at 15% 20%, rgba(61,75,245,0.55), transparent 70%),
+      radial-gradient(35% 40% at 85% 15%, rgba(139,92,246,0.45), transparent 70%),
+      radial-gradient(45% 50% at 60% 90%, rgba(14,158,110,0.35), transparent 70%);
+    filter:blur(60px); z-index:0;}
+  .cover::after{content:""; position:absolute; inset:0; background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px); background-size: 20px 20px; z-index:0;}
+  .cover > *{position:relative; z-index:1;}
+  .kicker{display:inline-block; color:#c9cdff; font-weight:600; letter-spacing:.4px; font-size:13px; margin-bottom:18px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); padding:6px 14px; border-radius:999px;}
+  .cover h1{font-size:2.7em; margin:0 0 12px; font-weight:800; line-height:1.3; color:#ffffff; letter-spacing:-.5px;}
+  .cover .subtitle{color:#aeb2d6; font-size:1.2em; margin-bottom:30px; font-weight:400;}
+  .meta-row{display:flex; flex-wrap:wrap; gap:10px; margin-top:18px;}
+  .chip{background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.14); color:#d4d7f0; padding:7px 15px; border-radius:999px; font-size:.83em;}
+  h2{font-size:1.9em; font-weight:800; margin:72px 0 22px; display:flex; align-items:center; gap:14px; letter-spacing:-.3px;}
+  h2 .num{display:inline-flex; align-items:center; justify-content:center; min-width:40px; height:40px; padding:0 12px; border-radius:12px; background:var(--accent); box-shadow:0 6px 16px -4px rgba(61,75,245,0.5); color:#ffffff; font-size:.62em; font-weight:800; flex-shrink:0; white-space:nowrap;}
+  h3{font-size:1.3em; font-weight:700; margin:36px 0 14px; color:var(--accent-ink); letter-spacing:-.2px;}
+  h4{font-size:1.08em; font-weight:700; margin:24px 0 10px; color:var(--purple);}
+  p{margin:0 0 16px; color:#3c382f;}
+  strong{color:var(--text); font-weight:700;}
+  a{color:var(--accent);}
+  .box{border-radius:16px; padding:20px 24px; margin:22px 0; border:1px solid var(--border); background:var(--panel); position:relative; box-shadow:0 1px 2px rgba(33,31,26,0.03);}
+  .box-title{font-weight:800; margin-bottom:9px; display:flex; align-items:center; gap:8px; font-size:.96em; letter-spacing:.1px;}
+  .box p:last-child{margin-bottom:0;}
+  .box.idea{background:#eef0ff;border-color:#d6dafc;} .box.idea .box-title{color:var(--accent-ink);}
+  .box.mistake{background:#fdeeec; border-color:#f6d2cd;} .box.mistake .box-title{color:var(--danger);}
+  .box.eng{background:#f4effe; border-color:#e2d6fb;} .box.eng .box-title{color:var(--purple);}
+  .box.real{background:#eafaf3; border-color:#c9eeda;} .box.real .box-title{color:var(--accent2);}
+  .box.def{background:#fdf3e4; border-color:#f2ddb3;} .box.def .box-title{color:var(--gold);}
+  .box.hw{background:#fdeee4; border-color:#f2c9a3;} .box.hw .box-title{color:#c8622c;}
+  .box.think{background:#eafcfb; border-color:#bfeae6;} .box.think .box-title{color:#0e8a7d;}
+  code, pre{font-family:'JetBrains Mono', monospace; direction:ltr; text-align:left;}
+  code{background:#eceaf9; border:1px solid #dcdaf3; border-radius:6px; padding:2px 7px; font-size:.87em; color:var(--accent-ink); display:inline-block;}
+  pre{background:#181a2e; border-radius:16px; padding:18px 20px; overflow-x:auto; margin:18px 0; font-size:.88em; line-height:1.65; box-shadow:0 12px 28px -16px rgba(24,26,46,0.5);}
+  pre code{background:none; border:none; padding:0; color:#d8dcff; display:block;}
+  table{width:100%; border-collapse:separate; border-spacing:0; margin:22px 0; font-size:.92em; border-radius:14px; overflow:hidden; border:1px solid var(--border);}
+  th, td{border-bottom:1px solid var(--border); padding:12px 15px; text-align:left;}
+  th{background:#eceaf9; color:var(--accent-ink); font-weight:700; font-size:.9em;}
+  tr:last-child td{border-bottom:none;}
+  tr:nth-child(even) td{background:rgba(33,31,26,0.02);}
+  ul, ol{margin:0 0 16px; padding-inline-start:26px; color:#3c382f;}
+  li{margin-bottom:7px;}
+  .figure{margin:28px 0; text-align:center;}
+  .figure img, .figure svg{max-width:100%; height:auto; background:#fffefb; border:1px solid var(--border); border-radius:16px; box-shadow:0 1px 2px rgba(33,31,26,0.03), 0 16px 32px -20px rgba(33,31,26,0.14);}
+  .figure figcaption{color:var(--muted); font-size:.87em; margin-top:12px;}
+  .mermaid{background:#fffefb; border:1px solid var(--border); border-radius:16px; padding:18px; margin:24px 0; text-align:center; box-shadow:0 1px 2px rgba(33,31,26,0.03), 0 16px 32px -20px rgba(33,31,26,0.14);}
+  .checkpoint{border-radius:16px; padding:22px 24px; margin:26px 0; background:#eafaf3; border:1px solid #c9eeda;}
+  .checkpoint ul{list-style:none; padding:0; margin:0;}
+  .checkpoint li{padding:9px 0; border-bottom:1px solid rgba(33,31,26,0.06); display:flex; gap:10px; align-items:flex-start;}
+  .checkpoint li:last-child{border-bottom:none;}
+  .checkpoint li::before{content:"◻"; color:var(--accent2); font-size:1.2em; line-height:1;}
+  .exercise{border-radius:14px; padding:18px 22px; margin:16px 0; background:var(--panel); border:1px solid var(--border); border-inline-start:4px solid var(--gold);}
+  .exercise .level{font-size:.76em; color:var(--gold); font-weight:800; text-transform:uppercase; letter-spacing:.6px;}
+  .assignment{border-radius:14px; padding:18px 22px; margin:16px 0; background:var(--panel); border:1px solid var(--border); border-inline-start:4px solid var(--accent2);}
+  .assignment .label{font-size:.76em; color:var(--accent2); font-weight:800; text-transform:uppercase; letter-spacing:.6px;}
+  .glossary dt{font-weight:800; color:var(--accent-ink); margin-top:16px;}
+  .glossary dd{margin:4px 0 0; color:var(--muted);}
+  .toc{background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:26px 30px;}
+  .toc a{display:block; padding:8px 0; color:#3c382f; text-decoration:none; border-bottom:1px solid rgba(33,31,26,.06); transition:color .15s;}
+  .toc a:last-child{border-bottom:none;}
+  .toc a:hover{color:var(--accent-ink);}
+  .toc a span{color:var(--muted); font-size:.85em; margin-inline-end:10px; font-weight:600;}
+  .divider{height:1px; background:linear-gradient(90deg, transparent, var(--border), transparent); margin:52px 0;}
+  .footer-nav{display:flex; justify-content:space-between; align-items:center; gap:16px; margin-top:64px; padding-top:26px; border-top:1px solid var(--border); color:var(--muted); font-size:.9em;}
+  .footer-nav a{color:var(--text); text-decoration:none; font-weight:600;}
+  .footer-nav a:hover{color:var(--accent-ink);}
+  .badge-project{display:inline-block; background:#fdf3e4; border:1px solid #f2ddb3; color:var(--gold); border-radius:8px; padding:3px 11px; font-size:.78em; font-weight:700;}
+  .term{background:#181a2e; border-radius:16px; overflow:hidden; margin:22px 0; box-shadow:0 12px 28px -16px rgba(24,26,46,0.5);}
+  .term-bar{display:flex; align-items:center; gap:7px; padding:12px 16px; background:#20223a;}
+  .term-dot{width:11px; height:11px; border-radius:50%;}
+  .term-body{padding:16px 20px; font-family:'JetBrains Mono', monospace; direction:ltr; text-align:left; font-size:.87em; line-height:1.75; color:#d8dcff; white-space:pre-wrap;}
+  .term-prompt{color:#7ee7c7;}
+  .term-out{color:#9aa0c8;}
+  @media print{ body{background:#fff; color:#000;} }
+  html[data-theme="dark"]{
+    --bg:#12141c; --panel:#1b1e2a; --panel2:#20232f; --border:#2d3142;
+    --text:#e7e8f2; --muted:#9498b3; --accent:#7c86ff; --accent-ink:#aab1ff;
+    --accent2:#34d399; --gold:#e3a548; --danger:#f0685a; --purple:#a78bfa; --radius:14px;
+  }
+  html[data-theme="dark"] p, html[data-theme="dark"] ul, html[data-theme="dark"] ol, html[data-theme="dark"] .toc a{color:#c7c9dc;}
+  html[data-theme="dark"] code{background:#262a45; border-color:#3a3f5c;}
+  html[data-theme="dark"] th{background:#262a45;}
+  html[data-theme="dark"] tr:nth-child(even) td{background:rgba(255,255,255,0.03);}
+  html[data-theme="dark"] .box.idea{background:#1f2242; border-color:#383d6b;}
+  html[data-theme="dark"] .box.mistake{background:#3a2220; border-color:#5c332e;}
+  html[data-theme="dark"] .box.eng{background:#2a2340; border-color:#453a63;}
+  html[data-theme="dark"] .box.real{background:#16302a; border-color:#1f4a3d;}
+  html[data-theme="dark"] .box.def{background:#3a2f18; border-color:#5c4826;}
+  html[data-theme="dark"] .box.hw{background:#3a2618; border-color:#5c3f26;}
+  html[data-theme="dark"] .box.think{background:#0f2e2c; border-color:#1d4a45;}
+  html[data-theme="dark"] .checkpoint{background:#16302a; border-color:#1f4a3d;}
+  html[data-theme="dark"] .checkpoint li{border-bottom-color:rgba(255,255,255,0.08);}
+  html[data-theme="dark"] .badge-project{background:#3a2f18; border-color:#5c4826;}
+  html[data-theme="dark"] .chapter-num{background:#1f2242;}
+  html[data-theme="dark"] .chapter-card{box-shadow:0 1px 2px rgba(0,0,0,0.25);}
+  html[data-theme="dark"] .chapter-card:hover{border-color:#454a7a; box-shadow:0 16px 32px -20px rgba(0,0,0,0.55);}
+  body, .box, .chapter-card, .exercise, .assignment, .checkpoint, .toc, table, code, th{transition:background-color .25s ease, border-color .25s ease, color .25s ease;}
+  #theme-toggle{position:fixed; top:18px; left:18px; z-index:999; width:46px; height:46px; border-radius:50%; border:1px solid var(--border); background:var(--panel); color:var(--text); font-size:19px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px -8px rgba(0,0,0,0.35); transition:transform .15s ease, background-color .25s ease, border-color .25s ease;}
+  #theme-toggle:hover{transform:scale(1.08);}
+  @media (max-width:640px){ #theme-toggle{top:12px; left:12px; width:42px; height:42px; font-size:17px;} }
+</style>
+<link rel="stylesheet" href="projector.css">
+</head>
+<body>
+<style>
+.coursenav{position:sticky;top:0;z-index:900;background:rgba(255,254,251,0.88);backdrop-filter:saturate(160%) blur(10px);border-bottom:1px solid var(--border);}
+.coursenav .inner{max-width:1000px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;padding:10px 20px 10px 74px;}
+.coursenav .brand{font-weight:800;color:var(--accent-ink);margin-inline-end:12px;font-size:.9em;letter-spacing:-.2px;}
+.coursenav a{color:#3c382f;text-decoration:none;font-weight:600;font-size:.82em;padding:6px 10px;border-radius:999px;transition:background-color .15s,color .15s;}
+.coursenav a:hover{background:#eef0ff;color:var(--accent-ink);}
+.coursenav a.active{background:var(--accent);color:#fff;}
+html[data-theme="dark"] .coursenav{background:rgba(27,30,42,0.9);}
+html[data-theme="dark"] .coursenav a{color:#c7c9dc;}
+html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
+@media print{.coursenav{display:none;}}
+</style>
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html">Home</a>
+  <a href="syllabus.html">Syllabus</a>
+  <a href="schedule.html">Schedule</a>
+  <a href="assignments.html">Assignments</a>
+  <a href="index.html#lectures" class="active">Lectures</a>
+</div></nav>
+<button id="theme-toggle" aria-label="Toggle light/dark mode" title="Light/dark mode">
+  <span id="theme-toggle-icon">🌙</span>
+</button>
+<div class="wrap">
+
+  <div class="cover">
+    <div class="kicker">LIMO Robotics &amp; ROS 2 Lecture &nbsp;·&nbsp; Session 11 of 14 — Real Hardware</div>
+    <h1>Lecture 11: LIMO Hardware Deep-Dive — The Six Real Systems</h1>
+    <div class="subtitle">Opening up the real robot, subsystem by subsystem, then driving it for real — built directly on AgileX's own official LIMO ROS 2 Humble manual, images included</div>
+    <div class="meta-row">
+      <div class="chip">Duration: 3 hours (dense — plan for a long lab session)</div>
+      <div class="chip">Prerequisite: Lecture 10</div>
+      <div class="chip">Focus: real hardware, real commands, real screenshots</div>
+    </div>
+  </div>
+
+  <div class="toc">
+    <strong style="color:var(--text)">In this session</strong>
+    <a href="#sim-to-silicon"><span>11.1</span>From simulation to silicon</a>
+    <a href="#intro-specs"><span>11.2</span>Meet the real robot: intro &amp; tech specifications</a>
+    <a href="#architecture"><span>11.3</span>LIMO's real hardware architecture</a>
+    <a href="#limostatus"><span>11.4</span>LimoStatus: your hardware diagnostics window</a>
+    <a href="#motors-encoders"><span>11.5</span>Motor drivers &amp; encoders 101</a>
+    <a href="#driver-files"><span>11.6</span>The real chassis driver: topics, services &amp; actions</a>
+    <a href="#power"><span>11.7</span>System 6: Battery &amp; the real power budget</a>
+    <a href="#bringup"><span>11.8</span>The physical bring-up checklist</a>
+    <a href="#testing"><span>11.9</span>Structured hardware test procedures</a>
+    <a href="#calibration"><span>11.10</span>Calibration: trusting the numbers</a>
+    <a href="#chassis-modes"><span>11.11</span>System 1: Chassis &amp; the four drive modules</a>
+    <a href="#lidar-lab"><span>11.12</span>System 3: LiDAR &amp; Cartographer SLAM</a>
+    <a href="#camera-lab"><span>11.13</span>System 4: Depth camera &amp; RTAB-Map visual SLAM</a>
+    <a href="#imu-lab"><span>11.14</span>System 5: IMU lab</a>
+    <a href="#nav2-lab"><span>11.15</span>Real Nav2 navigation, start to finish</a>
+    <a href="#vision-module"><span>11.16</span>The vision module: four real demos</a>
+    <a href="#headless"><span>11.17</span>Headless bring-up: remote desktop over NoMachine</a>
+    <a href="#summary"><span>11.18</span>Summary, glossary &amp; common mistakes</a>
+  </div>
+
+  <div class="box real" style="margin-top:32px;">
+    <div class="box-title">🌍 This session is now built directly on AgileX's manual</div>
+    <p style="margin:0;">
+      Every spec, package name, topic name, and command from Section 11.2 onward is taken directly from AgileX's
+      official <em>LIMO ROS 2 Humble</em> manual, and every screenshot you'll see in this session is a real image
+      from that manual — not a recreation. Sections 11.1, 11.5, 11.8–11.10 carry forward this course's own
+      bring-up/safety/testing discipline, which layers on top of (and doesn't contradict) AgileX's documentation.
+      LIMO ships in more than one hardware tier; this session follows the exact configuration AgileX's own ROS 2
+      Humble manual documents — an <strong>Intel NUC11</strong> onboard computer, an <strong>EAI T-mini Pro</strong>
+      LiDAR, and an <strong>ORBBEC Dabai</strong> depth camera — and commits to those real numbers throughout
+      without further hedging, because this is now an authoritative source, not an estimate.
+    </p>
+  </div>
+
+  <section id="sim-to-silicon">
+    <h2><span class="num">11.1</span>From simulation to silicon</h2>
+    <p>
+      For the last ten lectures, "the robot" has meant a URDF description spinning inside Gazebo's physics
+      engine. Every command you sent to <code>/cmd_vel</code> was executed by a perfect, noiseless simulated
+      actuator, every sensor reading came back exactly as the physics engine computed it, and nothing ever
+      overheated, sagged, slipped, or failed to respond. That was the right way to learn navigation, TF, and
+      perception without needing a robot on the desk in front of you — but it also means you have never actually
+      had to answer questions like: what happens when the battery gets low mid-mission? What happens when a wheel
+      is physically off the ground and you send it a velocity command? What happens when the LiDAR mount is
+      2&nbsp;cm off from what the URDF claims? Or, new to this session: what actually changes, physically and
+      electrically, when you swap LIMO from four-wheel differential mode to Ackermann mode?
+    </p>
+    <p>
+      This session is where the course crosses that line for good. Everything from here forward assumes you have
+      hands on a physical AgileX LIMO. We are going to open up what's actually inside and around the chassis,
+      learn to read its hardware health from ROS 2 topics, understand the electronics and mechanics well enough to
+      reason about failures instead of just guessing, and build the testing discipline that keeps you — and the
+      people standing near the robot — safe. Then, once the hardware is trusted, we drive it: real SLAM, real
+      navigation, real vision demos.
+    </p>
+    <div class="box eng">
+      <div class="box-title">🔧 What Gazebo doesn't model</div>
+      <p>
+        Simulation is a deliberately simplified model of reality, and several effects that matter enormously on
+        real hardware are usually absent or only crudely approximated in Gazebo:
+      </p>
+      <ul>
+        <li><strong>Motor deadband and backlash</strong> — small commanded velocities that produce zero actual
+        wheel motion because static friction and gear play absorb them.</li>
+        <li><strong>Encoder and sensor noise</strong> — real encoders jitter, real LiDAR returns have range noise,
+        real IMUs drift.</li>
+        <li><strong>Battery voltage sag under load</strong> — motors drawing current cause the pack voltage to dip,
+        which can transiently affect motor torque and even trigger low-voltage protection.</li>
+        <li><strong>Real network and serial latency</strong> — Wi-Fi hiccups, USB re-enumeration, and serial buffer
+        delays that a simulated <code>cmd_vel</code> topic never experiences.</li>
+        <li><strong>Wheel slip on real floor surfaces</strong> — carpet, tile, and thresholds behave nothing like
+        an idealized friction coefficient, and this is different again for four wheels, a track, or Mecanum
+        rollers.</li>
+      </ul>
+    </div>
+    <p>
+      The practical consequence: a path controller you carefully tuned in Lecture 6 against a simulated LIMO will
+      very likely need retuning once it's driving a real one. That is <strong>expected</strong>, not a sign you
+      did something wrong earlier in the course — it is the single most common surprise first-time hardware users
+      run into.
+    </p>
+    <div class="box idea">
+      <div class="box-title">💡 The sim-to-real gap, reframed</div>
+      <p>
+        Don't think of the sim-to-real gap as "simulation was wrong." Think of it as "simulation answered a
+        different, easier question." Gazebo tells you whether your algorithm is logically correct. Real hardware
+        tells you whether your algorithm is <em>robust</em>. You need both answers, in that order.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="intro-specs">
+    <h2><span class="num">11.2</span>Meet the real robot: intro &amp; tech specifications</h2>
+    <p>
+      Straight from AgileX's own words: LIMO is "the world's first ROS development platform that integrates four
+      motion modes." It's a learning platform built to adapt to a wide range of scenarios and meet real industry
+      application requirements — suited to robot education, function research and development, and product
+      development. Its mechanical design enables swift transitions between four-wheel differential, Ackermann,
+      tracked, and Mecanum-wheel motion modes, and it supports multi-scenario simulation teaching and testing using
+      professional sand tables. Equipped with an onboard NUC, an EAI T-mini Pro LiDAR, and a depth camera, LIMO
+      performs precise autonomous positioning, SLAM mapping, route planning, autonomous obstacle avoidance, and
+      even traffic-light recognition — all of which this session puts your hands on directly.
+    </p>
+    <h3>Component list</h3>
+    <table>
+      <tr><th>Name</th><th>Quantity</th></tr>
+      <tr><td>LIMO high-end body (with off-road wheels ×4)</td><td>×1</td></tr>
+      <tr><td>Battery</td><td>×1</td></tr>
+      <tr><td>Charger</td><td>×1</td></tr>
+      <tr><td>APP_Agilex (mobile app)</td><td>×1</td></tr>
+    </table>
+    <div class="figure">
+      <img src="images/limo-manual/component-list.png" alt="LIMO component list — body, battery, charger, and the APP_Agilex mobile app, as shipped">
+      <figcaption>What's in the box, straight from AgileX's manual: the LIMO body, battery, charger, and the APP_Agilex mobile app.</figcaption>
+    </div>
+    <h3>Tech specifications — the real, authoritative spec sheet</h3>
+    <table>
+      <tr><th>Category</th><th>Item</th><th>Value</th></tr>
+      <tr><td rowspan="7">Mechanical</td><td>Overall dimension</td><td>322 × 220 × 251 mm</td></tr>
+      <tr><td>Wheelbase</td><td>200 mm</td></tr>
+      <tr><td>Tread</td><td>175 mm</td></tr>
+      <tr><td>Dead load</td><td>4.8 kg</td></tr>
+      <tr><td>Load</td><td>4 kg</td></tr>
+      <tr><td>Minimum ground clearance</td><td>24 mm</td></tr>
+      <tr><td>Drive type</td><td>Hub motor (4 × 14.4 W)</td></tr>
+      <tr><td rowspan="4">Performance</td><td>No-load max. speed</td><td>1 m/s</td></tr>
+      <tr><td>Ackermann minimum turning radius</td><td>0.4 m</td></tr>
+      <tr><td>Work environment</td><td>-10 ~ +40 °C</td></tr>
+      <tr><td>Max. climbing capacity</td><td>20°</td></tr>
+      <tr><td rowspan="9">System</td><td>Power interface</td><td>DC (5.5 × 2.1 mm)</td></tr>
+      <tr><td>IPC (onboard computer)</td><td><strong>Intel NUC11</strong></td></tr>
+      <tr><td>OS</td><td><strong>Ubuntu 22.04</strong></td></tr>
+      <tr><td>IMU</td><td>HI226</td></tr>
+      <tr><td>CPU</td><td><strong>Intel i7-1135G7 @2.40 GHz × 8</strong></td></tr>
+      <tr><td>GPU</td><td><strong>Intel Xe Graphics</strong></td></tr>
+      <tr><td>Battery</td><td><strong>10 Ah, 12 V</strong></td></tr>
+      <tr><td>Working time</td><td><strong>2.5 h</strong></td></tr>
+      <tr><td>Stand-by time</td><td>4 h</td></tr>
+      <tr><td rowspan="5">Sensor</td><td>LiDAR</td><td><strong>EAI T-mini Pro</strong></td></tr>
+      <tr><td>Depth camera</td><td><strong>DaBai</strong></td></tr>
+      <tr><td>USB-HUB</td><td>Type-C ×1, USB2.0 ×2, HDMI</td></tr>
+      <tr><td>Front display</td><td>1.54 inch 128×64 white OLED</td></tr>
+      <tr><td>Rear display</td><td>7 inch 1024×600 IPS touchscreen</td></tr>
+      <tr><td rowspan="2">Control</td><td>Control mode</td><td>Mobile APP, command control</td></tr>
+      <tr><td>Mobile APP</td><td>Bluetooth, max. distance 10 m</td></tr>
+    </table>
+    <div class="box hw">
+      <div class="box-title">🔩 A quick word on hardware tiers</div>
+      <p>
+        AgileX sells LIMO in more than one configuration, and materials you find online (including earlier drafts
+        of this exact course) sometimes describe a lower-tier build around an NVIDIA Jetson Nano instead of this
+        Intel NUC11. Both are real, both run ROS 2 — but the numbers in this session (CPU, GPU, battery capacity,
+        working time, LiDAR, camera) are the ones AgileX's own ROS 2 Humble manual documents. If a number here ever
+        disagrees with the sticker or datasheet on your specific unit, trust your unit.
+      </p>
+    </div>
+    <h3>Operation instructions</h3>
+    <p>
+      Long-press the power switch to start the robot (short-press pauses the running program). Watch the battery
+      meter and charge or swap the battery promptly once the last indicator light turns red.
+    </p>
+    <div class="figure">
+      <img src="images/limo-manual/power-on-startup.svg" alt="Power-on sequence diagram for LIMO, showing the long-press start / short-press pause behaviour">
+      <figcaption>Power-on / pause behaviour, straight from the manual: long-press to start, short-press to pause the running program.</figcaption>
+    </div>
+    <p>
+      Read the current drive mode two ways at once — the front latch's position and the vehicle light's color —
+      exactly the two-signal habit Section 11.11 builds a full lab around:
+    </p>
+    <div class="figure">
+      <img src="images/limo-manual/mode-identification.svg" alt="Diagram showing how to read LIMO's current drive mode from latch position and light color">
+      <figcaption>Reading the current mode from the front latch and the vehicle light — the manual's own quick-reference diagram.</figcaption>
+    </div>
+    <table>
+      <tr><th>Latch status</th><th>Light color</th><th>Current mode</th></tr>
+      <tr><td>Pushed down</td><td>Yellow</td><td>Four-wheel differential or Track</td></tr>
+      <tr><td>Pulled up</td><td>Green</td><td>Ackermann</td></tr>
+    </table>
+    <p>
+      This is the manual's own quick-reference table for the off-road-wheel bundle it documents; Section 11.11
+      below covers all four modes in full, including Mecanum (Blue light), which this particular component bundle
+      doesn't ship by default but the platform fully supports.
+    </p>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="architecture">
+    <h2><span class="num">11.3</span>LIMO's real hardware architecture</h2>
+    <p>
+      Under the shell, a LIMO is best understood as two computers cooperating, not one. A higher-level onboard
+      computer runs ROS 2 and does all the "thinking" — perception, navigation, path planning, the nodes you've
+      been writing since Lecture 1. It does not, however, directly toggle motor voltages. Instead it hands off
+      low-level motion execution to a separate embedded motion controller dedicated to the tight, real-time job of
+      spinning motors at a commanded velocity and reading encoders back, tens to hundreds of times per second.
+    </p>
+    <div class="box hw">
+      <div class="box-title">🔩 System 2: the onboard computer, by the numbers</div>
+      <p>
+        This LIMO configuration's onboard computer is an <strong>Intel NUC11</strong> running <strong>Ubuntu
+        22.04</strong>: an <strong>Intel i7-1135G7 @2.40 GHz, 8 threads</strong>, paired with integrated
+        <strong>Intel Xe Graphics</strong>. That's real x86 desktop-class compute — enough headroom for the
+        perception and navigation workloads you've been running since Lecture 7, plus the visual-SLAM and
+        vision-module work later in this session — but it is deliberately <em>not</em> the processor closing the
+        real-time motor velocity loop. The motion side runs on a separate embedded motion controller, talking to
+        the NUC over a serial link. Exact firmware versions and serial baud rates can vary by unit — treat any
+        specific chip revision or baud rate as illustrative of this class of hardware, and check your own robot's
+        datasheet before relying on an exact value.
+      </p>
+    </div>
+    <p>
+      The important architectural idea, which <em>is</em> solid regardless of exact part numbers, is the division
+      of labor:
+    </p>
+    <table>
+      <tr><th>Layer</th><th>Runs</th><th>Job</th></tr>
+      <tr><td>IPC — Intel NUC11</td><td>ROS 2 Humble, Ubuntu 22.04</td><td>Navigation, perception, planning, the driver node that bridges ROS 2 to the motion controller</td></tr>
+      <tr><td>Embedded motion controller</td><td>Real-time firmware</td><td>Closes the motor velocity loop, reads encoders, reports faults, executes the last commanded velocity even between ROS 2 message arrivals</td></tr>
+      <tr><td>Motor drivers</td><td>Power electronics</td><td>Convert low-power control signals from the MCU into the current the drive hub motors actually need</td></tr>
+      <tr><td>Sensors (LiDAR, camera, IMU)</td><td>Their own onboard firmware</td><td>Attach directly to the NUC, typically over USB, independent of the motor control loop</td></tr>
+    </table>
+    <p>
+      A <strong>driver node</strong> running on the NUC is the glue: it subscribes to <code>/cmd_vel</code>,
+      translates it into whatever serial protocol the motion controller expects, and on the way back translates
+      the controller's telemetry into ROS 2 topics you already know — <code>/wheel/odom</code>, and the diagnostic
+      topic we cover in the next section, <code>LimoStatus</code>.
+    </p>
+    <div class="mermaid">
+flowchart TB
+    subgraph SBC["Onboard Computer — Intel NUC11, Ubuntu 22.04, ROS 2 Humble"]
+      NAV["Nav2 / your nodes"] --> CMD["/cmd_vel"]
+      CMD --> DRV["limo_base driver node"]
+      DRV --> ODOM["/wheel/odom"]
+      DRV --> STATUS["/limo_status (LimoStatus)"]
+    end
+    subgraph MCU["Embedded motion controller"]
+      SER["Serial protocol handler"] --> LOOP["Real-time velocity loop"]
+      LOOP --> ENC["Encoder reading"]
+    end
+    subgraph POWER["Power electronics"]
+      DRVIC["Motor driver ICs (H-bridges)"] --> M1["Hub motor + encoder"]
+      DRVIC --> M2["Hub motor + encoder"]
+      BATT["12V 10Ah battery + BMS"] --> DRVIC
+      BATT --> MCU
+      BATT --> SBC
+    end
+    DRV <-->|Serial| SER
+    LOOP --> DRVIC
+    ENC --> LOOP
+    LIDAR["EAI T-mini Pro"] -.USB.-> SBC
+    CAM["ORBBEC DaBai"] -.USB.-> SBC
+    IMU["HI226 IMU"] -.USB / I2C.-> SBC
+    style SBC fill:#eef0ff,stroke:#3d4bf5
+    style MCU fill:#f4effe,stroke:#8b5cf6
+    style POWER fill:#fdeee4,stroke:#c8622c
+    </div>
+    <p>
+      Notice what this diagram implies: sensors like the LiDAR, camera, and IMU attach directly to the NUC over
+      USB, <strong>bypassing</strong> the motion controller entirely. That means a sensor fault and a drive fault
+      are, electrically, mostly independent problems — useful to know when you're debugging "the robot won't
+      drive" versus "the robot won't see."
+    </p>
+    <div class="box def">
+      <div class="box-title">📖 Why not just one computer?</div>
+      <p>
+        Running the motor velocity loop on the same general-purpose Linux computer that's also doing SLAM and path
+        planning would risk exactly the kind of scheduling jitter that makes precise motor control unreliable — a
+        garbage-collection pause or a heavy perception callback could delay a velocity update long enough for the
+        robot to behave unpredictably. Splitting the "thinking" and the "moving" onto separate processors, with
+        the fast real-time loop on dedicated embedded hardware, is a standard pattern across this whole class of
+        wheeled research robots, not something unique to LIMO.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="limostatus">
+    <h2><span class="num">11.4</span>LimoStatus: your hardware diagnostics window</h2>
+    <p>
+      Everything in the previous section is invisible from ROS 2 unless something reports it. That something is
+      <code>limo_msgs/msg/LimoStatus</code> — the real diagnostic message published by the LIMO ROS 2 driver, and
+      the single most useful topic you have for answering "is the hardware actually okay?" without opening the
+      chassis. This is the exact, current message definition, straight from the driver's own <code>limo_msgs</code>
+      package:
+    </p>
+    <pre><code>std_msgs/Header header
+
+uint8 vehicle_state
+uint8 control_mode
+float64 battery_voltage
+uint16 error_code
+uint8 motion_mode</code></pre>
+    <table>
+      <tr><th>Field</th><th>Type</th><th>What it tells you</th></tr>
+      <tr><td><code>header</code></td><td><code>std_msgs/Header</code></td><td>Timestamp and frame — use this to confirm the status message is actually fresh, not stale</td></tr>
+      <tr><td><code>vehicle_state</code></td><td><code>uint8</code></td><td>Overall vehicle state reported by the embedded controller</td></tr>
+      <tr><td><code>control_mode</code></td><td><code>uint8</code></td><td>Whether the robot is currently under remote (RC/App) control or command (autonomous / ROS 2) control</td></tr>
+      <tr><td><code>battery_voltage</code></td><td><code>float64</code></td><td>Live pack voltage, in volts — your real-time power health signal, see Section 11.7</td></tr>
+      <tr><td><code>error_code</code></td><td><code>uint16</code></td><td>Nonzero when the embedded controller has flagged a fault condition</td></tr>
+      <tr><td><code>motion_mode</code></td><td><code>uint8</code></td><td>Which drive module — differential, Ackermann, Mecanum, or tracked — is currently mounted and active. Central to Section 11.11.</td></tr>
+    </table>
+    <div class="box real">
+      <div class="box-title">🌍 LIMO is a "four-in-one" robot</div>
+      <p>
+        The same LIMO chassis physically accepts four different bolt-on drive modules: differential, Ackermann
+        (car-like steering), Mecanum (omnidirectional), and tracked. Swapping the drive module changes how the
+        robot actually moves through the world — and <code>motion_mode</code> in <code>LimoStatus</code> reflects
+        which module is currently mounted and electrically active. Before you launch a navigation stack that
+        assumes, say, differential-drive kinematics, echoing <code>LimoStatus</code> and checking
+        <code>motion_mode</code> is a five-second sanity check that saves you from a very confusing debugging
+        session. Section 11.11 puts this to the test directly.
+      </p>
+    </div>
+    <p>Here's what that check looks like in practice, on a robot correctly configured for differential drive:</p>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> ros2 topic echo /limo_status --once
+<span class="term-out">header:
+  stamp:
+    sec: 1755000012
+    nanosec: 431000000
+  frame_id: ''
+vehicle_state: 1
+control_mode: 1
+battery_voltage: 12.34
+error_code: 0
+motion_mode: 0
+---</span>
+<span class="term-prompt">$</span> # motion_mode: 0 == differential drive on this unit's firmware mapping
+<span class="term-prompt">$</span> # control_mode: 1 == command (ROS 2) control, not RC/App remote
+<span class="term-prompt">$</span> # error_code: 0   == no fault flagged, battery_voltage healthy for an 11.1V-nominal pack</span></div>
+    </div>
+    <div class="box hw">
+      <div class="box-title">🔩 Don't hard-code the enum values</div>
+      <p>
+        The exact integer meanings behind <code>vehicle_state</code>, <code>control_mode</code>, and
+        <code>motion_mode</code> are defined by AgileX's driver firmware and can vary between LIMO variants and
+        firmware revisions. Treat the numbers shown above as illustrative of the pattern, not as a universal
+        lookup table — confirm the actual enum mapping for your unit against your LIMO's manual or the driver
+        package's message definitions before writing logic that branches on them.
+      </p>
+    </div>
+    <p>
+      A field worth building a habit around immediately: <code>error_code</code>. It is tempting to only look at
+      it when something is visibly wrong. The better habit is to echo it as part of every bring-up (Section 11.8)
+      and treat any nonzero value as something to investigate before driving, not after.
+    </p>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="motors-encoders">
+    <h2><span class="num">11.5</span>Motor drivers &amp; encoders 101</h2>
+    <p>
+      To reason about <code>LimoStatus</code>, wheel behavior, and the odometry math from Lecture 9, you need a
+      working mental model of two pieces of electronics: the motor driver that actually spins the wheel, and the
+      encoder that reports how far it spun. LIMO drives all four wheels with <strong>hub motors</strong> — the
+      motor is built directly into the wheel hub, 14.4W each, four of them — rather than a single central motor
+      driving wheels through a differential or belt.
+    </p>
+    <h3>H-bridges and PWM</h3>
+    <p>
+      A DC gear motor needs far more current than a microcontroller pin can supply directly, and it needs to be
+      able to run in <em>either</em> direction. An <strong>H-bridge</strong> — a small arrangement of four
+      switching elements, or a dedicated motor-driver IC built around one — solves both problems: it sits between
+      the low-power control signal and the high-current motor supply, and by choosing which pair of switches is
+      closed, it can drive current through the motor in either direction.
+    </p>
+    <p>
+      Speed is controlled separately, using <strong>PWM (pulse-width modulation)</strong>: instead of varying the
+      voltage smoothly, the driver switches the motor supply on and off very rapidly and varies the
+      <em>fraction of time it's on</em> (the duty cycle). A 70% duty cycle delivers roughly 70% of full power to
+      the motor; the motor's own inertia smooths the rapid switching into what feels like a steady, proportional
+      speed.
+    </p>
+    <div class="box hw">
+      <div class="box-title">🔩 PWM and direction, together</div>
+      <p>
+        A typical H-bridge driver interface exposes something like one PWM pin (duty cycle → speed magnitude) and
+        one or two direction pins (which way current flows → rotation sense). On LIMO, this entire layer is
+        internal to the embedded motion controller and motor driver hardware — your ROS 2 code never touches PWM
+        directly. Understanding it matters anyway, because it explains real symptoms you'll see on hardware: a
+        very small commanded velocity that produces no visible motion at all (the PWM duty cycle is below the
+        threshold needed to overcome static friction — this is the "motor deadband" mentioned in Section 11.1).
+      </p>
+    </div>
+    <h3>Quadrature encoders</h3>
+    <p>
+      To know how far a wheel actually turned — as opposed to how far you <em>told</em> it to turn — the motion
+      controller reads a quadrature encoder mounted on the motor shaft. A quadrature encoder outputs two square-wave
+      channels, conventionally called A and B, that are offset from each other in phase. Two properties fall out of
+      that simple setup:
+    </p>
+    <ul>
+      <li><strong>Direction</strong> — comparing which channel's edge arrives first (A leading B, or B leading A)
+      tells you which way the shaft is spinning.</li>
+      <li><strong>Distance / speed</strong> — counting edges on either channel gives you a tick count; more ticks
+      per unit time means faster rotation.</li>
+    </ul>
+    <p>
+      It's also worth knowing the concept split between <strong>incremental</strong> and <strong>absolute</strong>
+      encoders. Incremental encoders (the kind used for this kind of tick-counting) only report relative motion —
+      they reset to an arbitrary zero at boot and only know how far they've moved <em>since then</em>. Absolute
+      encoders, by contrast, know their exact position immediately at power-on. Wheel encoders on a mobile robot
+      like LIMO are typically incremental — which is precisely why the ROS 2 driver has to integrate ticks over
+      time to build <code>/wheel/odom</code>, rather than simply reading a position.
+    </p>
+    <h3>The tick-to-distance formula</h3>
+    <p>
+      This is the actual math a driver firmware/driver node uses to turn a raw encoder tick count into a physical
+      distance, and it's the same math Lecture 9 builds full odometry on:
+    </p>
+    <pre><code>distance_per_tick = (2 * pi * R) / N
+
+R = wheel radius       (LIMO course value: 0.1 m)
+N = encoder ticks per full wheel revolution (consult your unit's datasheet — this varies by encoder/gearbox)</code></pre>
+    <p>
+      Throughout this course we use LIMO's differential-drive kinematic parameters: wheelbase <strong>L = 0.3 m</strong>
+      (the manual's own wheelbase spec is 200&nbsp;mm / 0.2&nbsp;m — a good example of "hedge and check your own
+      unit," since this course's L=0.3m figure was set for the earlier Nav2 costmap footprint and doesn't
+      necessarily match every LIMO variant exactly) and wheel radius <strong>R = 0.1 m</strong>. <code>N</code>,
+      the ticks-per-revolution figure, is a property of the specific encoder and gearbox fitted to your unit —
+      hedge it, check your datasheet, and don't assume a number you saw quoted somewhere online applies to your
+      exact robot.
+    </p>
+    <table>
+      <tr><th>Symbol</th><th>Meaning</th><th>Course value</th></tr>
+      <tr><td>L</td><td>Wheelbase (distance between left/right wheel contact points)</td><td>0.3 m (manual spec: 0.2 m — verify your unit)</td></tr>
+      <tr><td>R</td><td>Wheel radius</td><td>0.1 m</td></tr>
+      <tr><td>N</td><td>Encoder ticks per wheel revolution</td><td>Check your unit's datasheet</td></tr>
+      <tr><td>Footprint</td><td>Nav2 costmap rectangle used earlier in this course</td><td>0.34 m &times; 0.22 m</td></tr>
+      <tr><td>Overall dimensions</td><td>Chassis length &times; width &times; height</td><td>322 &times; 220 &times; 251 mm (manual spec)</td></tr>
+    </table>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="driver-files">
+    <h2><span class="num">11.6</span>The real chassis driver: topics, services &amp; actions</h2>
+    <p>
+      Everything above has been theory and diagnostics. This section opens the actual driver package running on
+      the robot right now — real file structure, real message types, and a genuinely good teaching moment: LIMO's
+      own driver gives you one concrete, working example of <em>all three</em> of ROS 2's communication patterns
+      side by side.
+    </p>
+    <p>
+      The chassis driver lives at <code>~/agilex_ws/src/limo_ros2/limo_base</code>:
+    </p>
+    <pre><code>~/agilex_ws/src/limo_ros2/limo_base
+├── CMakeLists.txt
+├── include
+│   └── limo_base
+├── launch
+│   ├── limo_base.launch.py
+│   ├── open_ydlidar_launch.py
+│   └── start_limo.launch.py
+├── package.xml
+├── scripts
+│   └── tf_pub.py
+└── src
+    ├── limo_base_node.cpp
+    ├── limo_driver.cpp
+    ├── serial_port.cpp
+    └── tf_pub.cpp</code></pre>
+    <p>
+      Its message definitions live in a companion package, <code>~/agilex_ws/src/limo_ros2/limo_msgs</code>, which
+      defines a message, a service, <em>and</em> an action — a rare chance to see the real difference between the
+      three side by side, on the same robot, for the same rough purpose:
+    </p>
+    <table>
+      <tr><th>Pattern</th><th>File</th><th>When you'd use it</th></tr>
+      <tr><td><strong>Topic</strong> (fire-and-forget pub/sub)</td><td><code>msg/LimoStatus.msg</code></td><td>Continuous streaming state — battery voltage, error code — where you just want the latest value, no reply needed</td></tr>
+      <tr><td><strong>Service</strong> (synchronous request/response)</td><td><code>srv/LimoSrv.srv</code></td><td>A one-shot request where you need to know the outcome before continuing — "did this succeed, yes or no"</td></tr>
+      <tr><td><strong>Action</strong> (long-running, async, cancellable, with feedback)</td><td><code>action/LimoAction.action</code></td><td>A goal that takes real time to complete and where you want progress updates along the way, not just a final result</td></tr>
+    </table>
+    <p><strong><code>LimoSrv.srv</code></strong> — a synchronous request/response, real and current:</p>
+    <pre><code># LimoSrv.srv
+float32 x
+float32 y
+float32 z
+---
+std_msgs/Bool success</code></pre>
+    <p>
+      A request carries three coordinate fields (<code>x</code>, <code>y</code>, <code>z</code>); the response is
+      a single <code>std_msgs/Bool success</code>. The caller creates a request, populates the coordinates, sends
+      it, then blocks (or awaits) until the response with <code>success</code> comes back — a genuinely synchronous
+      round-trip, unlike a topic.
+    </p>
+    <p><strong><code>LimoAction.action</code></strong> — long-running, asynchronous, with feedback:</p>
+    <pre><code># LimoAction.action
+float32 x
+float32 y
+float32 z
+---
+std_msgs/Bool success
+---
+uint32 status</code></pre>
+    <p>
+      Same-shaped goal (<code>x</code>, <code>y</code>, <code>z</code>), but now split into three parts: a
+      <strong>Goal</strong> (the request), a <strong>Result</strong> (<code>success</code>, delivered once, at the
+      end), and <strong>Feedback</strong> (<code>status</code>, streamed repeatedly while the action executes). An
+      action client sends the goal, then can keep working while periodically receiving feedback, and can cancel the
+      goal mid-flight — none of which a plain service supports.
+    </p>
+    <h3>The real topic list</h3>
+    <p>Start the chassis driver for real:</p>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> ros2 launch limo_base limo_base.launch.py
+<span class="term-out">[INFO] [limo_base_node]: LIMO driver started, listening for /cmd_vel...</span></div>
+    </div>
+    <p>These are the real topics that come up the moment the driver starts:</p>
+    <table>
+      <tr><th>Topic</th><th>Message type</th><th>Function</th></tr>
+      <tr><td><code>/cmd_vel</code></td><td><code>geometry_msgs/msg/Twist</code></td><td>Controls the robot's speed and direction</td></tr>
+      <tr><td><code>/imu</code></td><td><code>sensor_msgs/msg/Imu</code></td><td>IMU data — acceleration, angular velocity, attitude</td></tr>
+      <tr><td><code>/limo_status</code></td><td><code>limo_msgs/msg/LimoStatus</code></td><td>Robot status — battery, error codes, mode (Section 11.4)</td></tr>
+      <tr><td><code>/parameter_events</code></td><td><code>rcl_interfaces/ParameterEvent</code></td><td>Parameter-server events — modification, addition, deletion</td></tr>
+      <tr><td><code>/rosout</code></td><td><code>rosgraph_msgs/Log</code></td><td>Node log messages</td></tr>
+      <tr><td><code>/tf</code></td><td><code>tf2_msgs/msg/TFMessage</code></td><td>Coordinate-frame transforms</td></tr>
+      <tr><td><code>/tf_static</code></td><td><code>tf2_msgs/msg/TFMessage</code></td><td>Static transforms — don't change over time</td></tr>
+      <tr><td><code>/wheel/odom</code></td><td><code>nav_msgs/msg/Odometry</code></td><td>Wheel-odometry estimate of the robot's motion over the ground</td></tr>
+    </table>
+    <div class="exercise">
+      <div class="level">Exercise · Easy — Hands-On Lab</div>
+      <p>
+        With <code>limo_base.launch.py</code> running, run <code>ros2 topic list</code> in another terminal and
+        confirm every topic in the table above is actually there. Then run <code>ros2 topic hz /wheel/odom</code>
+        and <code>ros2 topic hz /imu</code> — what publish rate does each report, and does that match what you'd
+        expect for a real-time control loop versus a diagnostics topic?
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="power">
+    <h2><span class="num">11.7</span>System 6: Battery &amp; the real power budget</h2>
+    <p>
+      Everything downstream — motors, MCU, NUC, sensors — runs off a single rechargeable <strong>12V, 10Ah
+      lithium battery pack</strong>, the sixth of LIMO's six real hardware systems. A pack this size isn't just
+      cells wired together; it includes a <strong>Battery Management System (BMS)</strong> that protects against
+      over-discharge, over-current draw, and short-circuit conditions, and usually balances charge across
+      individual cells. The battery has two interfaces: a yellow output connector and a black charging connector.
+    </p>
+    <table>
+      <tr><th>Parameter</th><th>Value</th></tr>
+      <tr><td>Typical capacity</td><td>10 Ah</td></tr>
+      <tr><td>Minimum rated capacity</td><td>10 Ah</td></tr>
+      <tr><td>Nominal voltage</td><td>11.1 V</td></tr>
+      <tr><td>Charge cut-off voltage</td><td>12.6 V</td></tr>
+      <tr><td>Discharge cut-off voltage</td><td>8.25 V</td></tr>
+      <tr><td>Maximum continuous discharge current</td><td>10 A</td></tr>
+      <tr><td>Rated working time</td><td>~2.5 h (manual spec, typical mixed workload)</td></tr>
+      <tr><td>Standby time</td><td>~4 h</td></tr>
+    </table>
+    <p>
+      The reason <code>battery_voltage</code> in <code>LimoStatus</code> is worth watching live, rather than
+      checking once at the start of a session, is that pack voltage is not static. It <strong>sags</strong> under
+      heavy load — when motors are accelerating hard, or the robot meets resistance (a snagged wheel, an incline,
+      an obstacle it's pushing against), current draw spikes and voltage measurably dips, then recovers once the
+      load eases. A voltage reading that looks fine at idle but sags sharply and doesn't recover under normal
+      driving load is an early warning sign of a pack that's aging or nearing depletion — long before it fails
+      outright.
+    </p>
+    <div class="mermaid">
+flowchart LR
+    A["Idle: battery_voltage steady ~11-12.6V"] --> B["Motors accelerate: current draw spikes"]
+    B --> C["Voltage sags momentarily"]
+    C --> D{"Recovers once load eases?"}
+    D -->|Yes, normal sag| E["Healthy pack"]
+    D -->|No, stays low / triggers BMS cutoff| F["Investigate pack health before next run"]
+    style E fill:#eafaf3,stroke:#0e9e6e
+    style F fill:#fdeeec,stroke:#d64a3c
+    </div>
+    <h3>The whole-robot power budget</h3>
+    <p>
+      LIMO's power topology is a single 10A budget shared across everything: the chassis motors, the NUC11, and
+      every attached sensor draw from the same 10A ceiling. Cross the ceiling and the system enters
+      <strong>overcurrent protection</strong> to protect the battery and motors — which on real hardware can look
+      like an unexplained brownout or reset under heavy simultaneous load (hard acceleration <em>and</em> a
+      GPU-heavy vision node running, for example).
+    </p>
+    <table>
+      <tr><th>Power rail</th><th>Budget</th></tr>
+      <tr><td>Total (chassis + NUC11 + sensors, combined)</td><td>10 A max — overcurrent protection trips above this</td></tr>
+      <tr><td>USB-HUB (Type-C ×1 + USB2.0 ×2 + HDMI, combined)</td><td>Shared, limited rail — don't assume it's infinite</td></tr>
+    </table>
+    <div class="box eng">
+      <div class="box-title">🔧 Puzzle it out: starved vs. broken</div>
+      <p>
+        The USB-HUB's ports share a limited combined budget, but your LiDAR, depth camera, and any USB accessory
+        you plug in all draw from that same rail if connected there rather than to a dedicated port. Before you
+        assume "if it powers on, it has enough current," work out: what would you actually observe on a sensor
+        that's being current-starved by a shared USB rail — a sensor that fails outright and doesn't appear at
+        all, or a sensor that enumerates fine but behaves erratically under load? What test would tell you which
+        one is happening?
+      </p>
+    </div>
+    <div class="box mistake">
+      <div class="box-title">⚠️ Lithium battery safety is not optional</div>
+      <p>
+        Lithium packs are energy-dense and, mishandled, genuinely dangerous. AgileX's own precautions, verbatim in
+        spirit:
+      </p>
+      <ul>
+        <li><strong>Never leave a lithium pack fully discharged for an extended period</strong> — deep discharge
+        degrades cells and can make them unsafe to recharge. LIMO's discharge cut-off is 8.25V; treat approaching
+        that number as "recharge now," not "keep going."</li>
+        <li><strong>Only use the factory-supplied 12.6V/5A charger</strong> — non-original chargers, and charging
+        below 0°C, are explicitly against the manual's guidance. Charging from 8.25V to full takes about 2.5
+        hours; the charger's LED goes Red (charging) → Green flashing (nearly full) → solid Green (full), after
+        which it trickle-charges at 0.1A for roughly 30 more minutes to prolong pack life.</li>
+        <li><strong>Always disconnect the battery from the chassis to charge it</strong> — never attempt to power
+        the robot and charge the pack at the same time. Connect the charger to the battery, then power on the
+        charger; when done, separate the battery from the charger before disconnecting the charger itself.</li>
+        <li><strong>Disconnect the battery entirely for long-term storage</strong> — LIMO still draws a small
+        standby current even when switched off, which can over-discharge a pack left connected for weeks. Storage
+        temperature range is -25°C to 45°C.</li>
+        <li><strong>Never puncture, crush, or short the terminals</strong>, and watch for physical damage signs —
+        swelling, unusual heat, or a damaged casing means that pack comes out of service, full stop.</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="bringup">
+    <h2><span class="num">11.8</span>The physical bring-up checklist</h2>
+    <p>
+      "Bring-up" is the disciplined sequence of checks you run the <em>first</em> time you power on a piece of
+      hardware — or any time you're not fully confident the last person to touch it left it in a known-good state.
+      The core principle: verify each layer before trusting the layer above it. Visual and electrical checks come
+      before power. Power and E-stop checks come before motion. Motion checks with wheels off the ground come
+      before motion checks on the floor. Sensor sanity checks come before trusting any autonomy stack.
+    </p>
+    <table>
+      <tr><th>#</th><th>Step</th><th>What you're checking</th></tr>
+      <tr><td>1</td><td>Visual inspection</td><td>No loose or disconnected connectors, no pinched or frayed cables, wheels spin freely by hand with no grinding or resistance</td></tr>
+      <tr><td>2</td><td>Battery charge check</td><td>Pack is charged to a safe operating level (well above the 8.25V cut-off), no visible damage or swelling</td></tr>
+      <tr><td>3</td><td>Verify E-stop / power switch</td><td>Physically confirm the switch actually cuts power — don't assume, test it</td></tr>
+      <tr><td>4</td><td>Elevate the robot on a stand</td><td>All drive wheels are off the ground and cannot propel the chassis</td></tr>
+      <tr><td>5</td><td>Power on, echo <code>LimoStatus</code></td><td><code>error_code</code> is 0, <code>battery_voltage</code> looks reasonable, <code>motion_mode</code> matches the mounted drive module</td></tr>
+      <tr><td>6</td><td>Test each drive motor individually, wheels elevated</td><td>Each wheel spins the correct direction at low commanded velocity, with no unusual noise</td></tr>
+      <tr><td>7</td><td>Sensor sanity checks</td><td><code>ros2 topic echo /scan</code>, the depth camera topics, and <code>/imu</code> all publish plausible, non-stale data (Sections 11.12–11.14)</td></tr>
+      <tr><td>8</td><td>Announce and lower</td><td>Only after 1–7 pass: warn everyone nearby, then place the robot on the floor</td></tr>
+    </table>
+    <div class="box hw">
+      <div class="box-title">🔩 Wheels-off-the-ground is not optional, ever</div>
+      <p>
+        Step 4 through 6 are the step most people are tempted to skip once they've done bring-up a few times.
+        Don't. The very first motion test on any newly powered, newly modified, newly mode-switched, or
+        newly firmware-updated robot should always happen with drive wheels elevated on a stand, so an unexpected
+        full-speed command or a reversed motor wiring can't send the robot into a person, a table edge, or off a
+        bench. This single habit prevents the majority of "the robot lurched and I wasn't ready" incidents.
+      </p>
+    </div>
+    <p>
+      Notice that step 5 puts <code>LimoStatus</code> right in the middle of bring-up — it's not a diagnostic tool
+      you reach for only when something's already wrong, it's a routine part of every single power-on.
+    </p>
+    <div class="exercise">
+      <div class="level">Exercise · Easy</div>
+      <p>
+        With your LIMO powered on and safely elevated on a stand, run through bring-up steps 1–7 above and write
+        down the actual values you observe: <code>battery_voltage</code>, <code>error_code</code>,
+        <code>motion_mode</code>, and whether each of <code>/scan</code>, the camera topics, and <code>/imu</code>
+        is publishing. Compare your <code>motion_mode</code> reading against which drive module is actually bolted
+        to the chassis in front of you.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="testing">
+    <h2><span class="num">11.9</span>Structured hardware test procedures</h2>
+    <p>
+      Bring-up gets the robot to a known-good starting state. Beyond that, hardware testing on a mobile robot
+      splits naturally into two categories, and a thorough test pass uses both.
+    </p>
+    <table>
+      <tr><th>Type</th><th>Examples</th><th>Catches</th></tr>
+      <tr><td>Static tests</td><td>Visual/connector inspection; idle current draw check; wheels-off-ground motor spin test</td><td>Loose hardware, wiring faults, obviously broken components — before anything moves</td></tr>
+      <tr><td>Dynamic tests</td><td>Drive a measured distance and compare to <code>/wheel/odom</code>; sweep the LiDAR past a tape-measured object and check reported range; tilt the robot a known angle and check IMU orientation</td><td>Calibration drift, sensor accuracy problems, control loop issues that only appear in motion</td></tr>
+    </table>
+    <p>
+      A dynamic test is only useful if you have an independent ground truth to compare against — a tape measure, a
+      protractor or inclinometer, a known distance marked on the floor. "The robot moved and something was
+      reported" isn't a test; "the robot moved 2.00 m and <code>/wheel/odom</code> reported 1.94 m" is. You'll run
+      exactly this style of test on the LiDAR, camera, and IMU in Sections 11.12–11.14.
+    </p>
+    <div class="box idea">
+      <div class="box-title">💡 Retest after any hardware change — treat it as a regression suite</div>
+      <p>
+        The habit that separates careful hardware teams from unlucky ones: re-run the same checklist after
+        <em>any</em> change to the physical robot, not just at the start of a project. A dropped robot, a newly
+        added or repositioned sensor mount, a firmware update, a battery swap, or — new in this session — a
+        <strong>drive-mode switch</strong>, are all exactly the kind of event that silently breaks a
+        previously-working calibration or connection. Treat your bring-up and test checklist the way you'd treat
+        a software regression suite: cheap to re-run, and far cheaper than discovering the problem mid-demo.
+      </p>
+    </div>
+    <div class="exercise">
+      <div class="level">Exercise · Intermediate</div>
+      <p>
+        Mark a 2.00 m straight line on the floor with tape. Reset the odometry, drive the robot along the
+        line as straight as you can manage (teleop is fine), and record the distance <code>/wheel/odom</code>
+        reports at the endpoint. Repeat three times. How consistent are the three readings? How far off is the
+        average from 2.00 m, and in which direction (over- or under-reporting)?
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="calibration">
+    <h2><span class="num">11.10</span>Calibration: trusting the numbers</h2>
+    <p>
+      The dynamic tests from Section 11.9 aren't just pass/fail checks — their gap between measured ground truth
+      and reported sensor value is the input to calibration. If your 2.00 m drive test in the exercise above
+      consistently reports, say, 1.90 m, that's not necessarily a fault; it may simply mean the effective wheel
+      radius or wheelbase used in the tick-to-distance math (Section 11.5) doesn't quite match reality — tire
+      wear, a slightly different wheel than assumed, or a mismeasured <code>N</code> can all shift it. The fix is
+      to adjust the wheel-radius/wheelbase parameters the driver uses until measured and reported distance agree,
+      then re-run the test to confirm.
+    </p>
+    <table>
+      <tr><th>Symptom</th><th>Likely cause</th><th>Check</th></tr>
+      <tr><td>Odom under-reports straight-line distance</td><td>Effective wheel radius smaller than configured value</td><td>Re-measure actual wheel radius; adjust <code>R</code> parameter</td></tr>
+      <tr><td>Odom over/under-reports turns specifically</td><td>Wheelbase <code>L</code> mismatched with real wheel contact spacing</td><td>Measure real wheelbase; compare with configured value (course uses 0.3 m; manual spec is 0.2 m)</td></tr>
+      <tr><td>LiDAR range reads consistently off vs. tape measure</td><td>Sensor calibration or mounting offset</td><td>Cross-check against the EAI T-mini Pro's stated tolerance (Section 11.12); verify mount is secure</td></tr>
+      <tr><td>Perception output looks "shifted" relative to real objects</td><td>URDF sensor origin doesn't match physical mount</td><td>Extrinsic calibration — see below</td></tr>
+      <tr><td>Depth reading off vs. tape measure by more than the datasheet's stated accuracy</td><td>Mount/extrinsic drift on the DaBai camera</td><td>Section 11.13</td></tr>
+    </table>
+    <div class="box real">
+      <div class="box-title">🌍 Extrinsic calibration ties back to Lecture 4's URDF</div>
+      <p>
+        Back in Lecture 4 you wrote joint origins in the URDF describing exactly where each sensor sits relative
+        to the robot's base frame. Every TF-based calculation from Lecture 5 onward — every costmap, every
+        localization estimate, every point cloud transform — trusts those origins completely. If the physical
+        LiDAR or camera mount is even a few centimeters or a couple of degrees off from what the URDF claims, the
+        error doesn't throw an exception anywhere; it just quietly corrupts every downstream calculation that
+        depends on TF. Whenever you physically remount or replace a sensor — or switch drive modules, which
+        changes the chassis's ride height and geometry — treat updating and re-verifying URDF origins as part of
+        the job, not an afterthought.
+      </p>
+    </div>
+    <div class="exercise">
+      <div class="level">Exercise · Harder</div>
+      <p>
+        Using the distance data you collected in the Section 11.9 exercise, compute the ratio of measured-to-reported
+        distance. If the ratio is not within about 2% of 1.0, propose a corrected wheel-radius value that would
+        bring the odometry in line with ground truth (hint: use the tick-to-distance relationship from
+        Section 11.5 — if distance is under-reported, is the effective radius smaller or larger than the configured
+        0.1 m?). Then physically check whether your LiDAR's mounting position matches its URDF joint origin from
+        Lecture 4, using a tape measure against the robot's base frame origin, and note any discrepancy.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="chassis-modes">
+    <h2><span class="num">11.11</span>System 1: Chassis &amp; the four drive modules</h2>
+    <p>
+      LIMO's headline feature as a teaching platform is mechanical, not electronic: the same chassis physically
+      accepts <strong>four different drive modules</strong> — four-wheel differential, Ackermann, tracked, and
+      Mecanum — each changing how the robot moves through the world without changing anything about the ROS 2
+      software stack you've built so far (beyond, in some cases, the kinematics model a controller assumes).
+    </p>
+    <table>
+      <tr><th>Mode</th><th>How it moves</th><th>Notable trait</th></tr>
+      <tr><td>Four-wheel differential</td><td>All four hub motors driven; steering by differential wheel speed</td><td>Can spin in place, but holding a long in-place rotation causes real tire wear — don't do it for extended periods</td></tr>
+      <tr><td>Ackermann</td><td>Car-like steering geometry; inner/outer wheels turn at slightly different angles</td><td>Cannot spin in place — minimum turning radius is 0.4 m</td></tr>
+      <tr><td>Tracked</td><td>Tracks replace the rear (or all) wheels; slide-steering like the differential mode</td><td>Best off-road performance; official climbing spec on this configuration is 20°</td></tr>
+      <tr><td>Mecanum</td><td>Angled rollers on each wheel hub allow omnidirectional motion — forward, lateral, diagonal, and rotation, independently or combined</td><td>Requires physically swapping to Mecanum wheels (rollers facing the chassis center) — not a software-only switch</td></tr>
+    </table>
+    <h3>The physical switching procedure</h3>
+    <p>
+      Two spring latches on the front of the chassis set differential/track vs. Ackermann geometry:
+    </p>
+    <ul>
+      <li><strong>Ackermann:</strong> pull both latches up and rotate 30° clockwise so the <em>longer</em> line on
+      each latch points toward the front of the vehicle. The latches engage directly (no insertion needed).</li>
+      <li><strong>Four-wheel differential / track:</strong> pull both latches up and rotate 30° clockwise so the
+      <em>shorter</em> line points toward the front — this is the insertion position. Fine-tune the tire angle
+      until the latch hole aligns and the latch drops in.</li>
+      <li><strong>Track mode</strong> is then a physical add-on over the differential-mode wheels: fit the track
+      onto the smaller-clearance rear wheel first, and lift the side doors out of the way to avoid scratching
+      them.</li>
+      <li><strong>Mecanum mode</strong> requires removing the hubcap and tire entirely down to the bare hub motor,
+      then mounting the Mecanum wheel with its small rollers facing the chassis center, using the M3×5 screws
+      supplied in the kit.</li>
+    </ul>
+    <h3>Reading the mode back — two independent signals</h3>
+    <p>
+      LIMO reports its current mode two ways simultaneously, and a careful workflow checks both rather than
+      trusting either alone. AgileX's own quick-reference table for this configuration's off-road bundle covers
+      the two states you'll use most:
+    </p>
+    <table>
+      <tr><th>Latch state</th><th>Light color</th><th>Mode</th></tr>
+      <tr><td>Pulled up</td><td>Green</td><td>Ackermann</td></tr>
+      <tr><td>Pushed down / inserted</td><td>Yellow</td><td>Four-wheel differential or track</td></tr>
+      <tr><td>Pushed down / inserted</td><td>Blue</td><td>Mecanum (if your kit includes the wheel set)</td></tr>
+      <tr><td>—</td><td>Red flashing</td><td>Low battery / master-control alarm (not a drive mode)</td></tr>
+      <tr><td>—</td><td>Solid red</td><td>Software shut down (not a drive mode)</td></tr>
+    </table>
+    <div class="mermaid">
+flowchart TD
+    A["Switch drive module physically"] --> B["Check RGB light color"]
+    A --> C["ros2 topic echo /limo_status --once"]
+    C --> D["Read motion_mode field"]
+    B --> E{"Light color matches expected mode?"}
+    D --> F{"motion_mode matches expected mode?"}
+    E -->|Yes| G{"Both agree?"}
+    F -->|Yes| G
+    G -->|Yes| H["Trust it — safe to launch mode-specific nav stack"]
+    G -->|No| I["Stop — investigate before driving"]
+    style H fill:#eafaf3,stroke:#0e9e6e
+    style I fill:#fdeeec,stroke:#d64a3c
+    </div>
+    <div class="exercise">
+      <div class="level">Exercise · Intermediate — Hands-On Lab</div>
+      <p>
+        With the robot powered off and safely elevated, physically switch LIMO from its current drive mode to a
+        different one following the latch procedure above (Mecanum only if your kit includes the wheel set —
+        otherwise switch between Ackermann and four-wheel differential). Power on, elevate, and run bring-up
+        (Section 11.8). Record: the RGB light color you observe, and the exact <code>motion_mode</code> integer
+        from <code>ros2 topic echo /limo_status --once</code>. Do the two signals agree with the mode you just
+        physically installed? If your unit's <code>motion_mode</code> integer mapping isn't documented anywhere
+        you have access to, build your own lookup table by repeating this test across every mode you can safely
+        test.
+      </p>
+    </div>
+    <div class="box mistake">
+      <div class="box-title">⚠️ A mode switch is a physical-safety event, not just a config change</div>
+      <p>
+        Changing drive modules changes the robot's turning behavior, ground clearance, and in Mecanum's case its
+        entire motion envelope (it can now move sideways). Any navigation stack, footprint, or teleop mapping
+        tuned for one mode should be treated as untrusted until re-verified in the new mode — with wheels elevated
+        first, exactly as in every other bring-up.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="lidar-lab">
+    <h2><span class="num">11.12</span>System 3: LiDAR &amp; Cartographer SLAM</h2>
+    <p>
+      This LIMO configuration's 2D LiDAR is an <strong>EAI T-mini Pro</strong> — a 360° 2D LiDAR from Shenzhen EAI
+      Technology, based on pulse ToF (time-of-flight) ranging rather than the older triangulation-based method,
+      the same class of sensor you've been consuming as <code>/scan</code> since Lecture 7, now with real
+      datasheet numbers to test against instead of Gazebo's idealized ray sensor.
+    </p>
+    <table>
+      <tr><th>Parameter</th><th>Value</th></tr>
+      <tr><td>Ranging frequency</td><td>4000 ranges/second</td></tr>
+      <tr><td>Scanning frequency</td><td>6–12 Hz (6 Hz is the recommended default; needs a PWM signal connected)</td></tr>
+      <tr><td>Ranging range</td><td>0.02–12 m (indoor, ~80% reflectivity target)</td></tr>
+      <tr><td>Scanning angle</td><td>0–360°</td></tr>
+      <tr><td>Ranging accuracy</td><td>20 mm, when 0.05 m &lt; range ≤ 12 m</td></tr>
+      <tr><td>Pitch angle</td><td>0–1.5° (0.75° typical)</td></tr>
+      <tr><td>Angle resolution</td><td>0.54°</td></tr>
+    </table>
+    <p>Bring it up for real:</p>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> ros2 launch ydlidar_ros2_driver ydlidar.launch.py</div>
+    </div>
+    <div class="figure">
+      <img src="images/limo-manual/lidar-launch-log.png" alt="Terminal log output from launching the ydlidar_ros2_driver on LIMO">
+      <figcaption>The real launch log when the LiDAR driver comes up successfully.</figcaption>
+    </div>
+    <p>Then in a second terminal, launch RViz and watch the live scan:</p>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> rviz2</div>
+    </div>
+    <div class="figure">
+      <img src="images/limo-manual/lidar-rviz-scan.png" alt="RViz showing live green LaserScan points from the EAI T-mini Pro LiDAR">
+      <figcaption>Live LiDAR data in RViz — the green points are the real scan, one full 360° sweep at a time.</figcaption>
+    </div>
+    <p>
+      The real <code>/scan</code> message type is <code>sensor_msgs/msg/LaserScan</code>, with these fields:
+      <code>header</code> (timestamp, frame), <code>angle_min</code>/<code>angle_max</code> (scan sweep bounds),
+      <code>angle_increment</code> (angular step between readings), <code>time_increment</code> (time between
+      readings), <code>scan_time</code> (total time for one full scan), <code>range_min</code>/<code>range_max</code>
+      (valid distance bounds), <code>ranges[]</code> (the actual distance array), and <code>intensities[]</code>
+      (optional signal-strength array). Any node that subscribes to <code>/scan</code> — mapping, obstacle
+      detection, navigation, path planning — is reading exactly this structure.
+    </p>
+    <div class="box idea">
+      <div class="box-title">💡 Where does the tolerance spec change shape?</div>
+      <p>
+        The real accuracy spec here is a flat 20mm across the whole 0.05–12m range — simpler than some LiDARs
+        that quote a percentage figure at longer range. Before you design a test for "is my LiDAR accurate," work
+        out: does a flat absolute-mm tolerance make near-range or far-range testing the harder pass condition,
+        proportionally? Where would you place your calibration target to make the test as sensitive as possible?
+      </p>
+    </div>
+    <div class="exercise">
+      <div class="level">Exercise · Easy — Hands-On Lab</div>
+      <p>
+        With the LiDAR bringup running, open <code>ros2 topic echo /scan</code> or view it in RViz as above. Place
+        a flat object (a book, a wall) at a tape-measured distance of exactly 1.00 m directly in front of the
+        LiDAR. Read off the corresponding range value from the scan. Is it within the datasheet's 20mm accuracy
+        spec? Repeat at 6.00 m.
+      </p>
+    </div>
+    <h3>Cartographer SLAM: mapping with the real LiDAR</h3>
+    <p>
+      <strong>Cartographer</strong> is Google's graph-optimization-based SLAM system. It works in two parts:
+      <strong>Local SLAM</strong> builds and maintains a series of <strong>submaps</strong> — small grid maps —
+      from each incoming LaserScan frame, and <strong>Global SLAM</strong> performs loop-closure detection to
+      correct accumulated drift once a submap is finished and no new scans are inserted into it. Real bring-up:
+    </p>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> # Terminal 1: start the LiDAR
+ros2 launch limo_bringup limo_start.launch.py
+
+<span class="term-prompt">$</span> # Terminal 2: start Cartographer mapping
+ros2 launch limo_bringup limo_cartographer.launch.py</span></div>
+    </div>
+    <div class="figure">
+      <img src="images/limo-manual/cartographer-mapping-rviz.png" alt="RViz showing a live Cartographer SLAM map being built from LIMO's real LiDAR data">
+      <figcaption>Cartographer building a real occupancy map live, submap by submap, as the robot drives.</figcaption>
+    </div>
+    <p>Save the finished map:</p>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> ros2 run nav2_map_server map_saver_cli -f map</div>
+    </div>
+    <div class="figure">
+      <img src="images/limo-manual/cartographer-map-saved.png" alt="Terminal output confirming the Cartographer-built map was saved to disk">
+      <figcaption>The saved map — a real <code>.pgm</code>/<code>.yaml</code> pair, ready for Section 11.15's Nav2 lab.</figcaption>
+    </div>
+    <div class="box mistake">
+      <div class="box-title">⚠️ Drive slowly while mapping</div>
+      <p>
+        AgileX's own guidance is explicit: keep LIMO's speed low during mapping. Too fast, and the LiDAR simply
+        can't keep up with the geometry changing underneath it — submaps get built from sparse, motion-blurred
+        data, and loop closure has a harder time reconciling them. This is the same idea as Lecture 10's SLAM
+        driving advice, now with a real sensor's real update rate behind it.
+      </p>
+    </div>
+    <div class="exercise">
+      <div class="level">Exercise · Intermediate — Hands-On Lab</div>
+      <p>
+        Map a real room with Cartographer, driving slowly and covering every wall at least once. Save the map.
+        Compare it by eye against the room's actual layout — are corners square, are walls straight, does the
+        loop close cleanly where you returned to your starting point? If not, what part of AgileX's guidance
+        (driving speed, coverage, revisiting the start) would you change on your next attempt?
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="camera-lab">
+    <h2><span class="num">11.13</span>System 4: Depth camera &amp; RTAB-Map visual SLAM</h2>
+    <p>
+      This LIMO configuration ships with an <strong>ORBBEC DaBai</strong> depth camera — a binocular structured-light
+      3D sensor built from a left IR camera, a right IR camera, an IR projector, and a depth processor. The
+      projector casts a structured speckle pattern onto the scene; both IR cameras capture it from slightly
+      different viewpoints; the depth processor triangulates the two views into a depth image.
+    </p>
+    <table>
+      <tr><th>Parameter</th><th>Value</th></tr>
+      <tr><td>IR baseline (left/right camera separation)</td><td>40 mm</td></tr>
+      <tr><td>Depth distance</td><td>0.3–3 m</td></tr>
+      <tr><td>Power consumption</td><td>&lt;2 W average; &lt;5 W peak (laser on, 3 ms duration); &lt;0.7 W standby</td></tr>
+      <tr><td>Depth map resolution</td><td>640×400 @30fps or 320×200 @30fps</td></tr>
+      <tr><td>Color map resolution</td><td>up to 1920×1080 @30fps (also 1280×720, 640×480)</td></tr>
+      <tr><td>Accuracy</td><td>6 mm @ 1 m (81% FOV area)</td></tr>
+      <tr><td>Depth FOV</td><td>H 67.9° × V 45.3°</td></tr>
+      <tr><td>Color FOV</td><td>H 71° × V 43.7° @1920×1080</td></tr>
+      <tr><td>Delay</td><td>30–45 ms</td></tr>
+      <tr><td>Data transmission</td><td>USB2.0 or above</td></tr>
+      <tr><td>Operating temperature</td><td>10°C – 40°C</td></tr>
+    </table>
+    <p>Bring the camera up and view its RGB stream for real:</p>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> # Terminal 1: start the camera
+ros2 launch astra_camera dabai.launch.py
+
+<span class="term-prompt">$</span> # Terminal 2: view the image
+ros2 run rqt_image_view rqt_image_view</div>
+    </div>
+    <div class="figure">
+      <img src="images/limo-manual/dabai-rgb-view.png" alt="rqt_image_view showing the live RGB stream from the ORBBEC DaBai depth camera">
+      <figcaption>The DaBai's real RGB stream in <code>rqt_image_view</code> — pick the correct image topic from the dropdown.</figcaption>
+    </div>
+    <div class="exercise">
+      <div class="level">Exercise · Intermediate — Hands-On Lab</div>
+      <p>
+        With the camera bringup running, open RViz and add both an Image display (RGB) and a PointCloud2 or
+        DepthCloud display (depth). Place an object at a tape-measured distance within the DaBai's rated 0.3–3m
+        range and read the corresponding depth value from the point cloud or a depth-image pixel probe. How close
+        is it to the datasheet's 6mm@1m accuracy figure?
+      </p>
+    </div>
+    <h3>RTAB-Map: visual SLAM as a second, independent mapping system</h3>
+    <p>
+      <strong>RTAB-Map</strong> (Real-Time Appearance-Based Mapping) is a graph-based SLAM system built for a
+      real-time/map-quality balance, using the depth camera instead of (or alongside) the LiDAR:
+    </p>
+    <ul>
+      <li><strong>Real-time performance</strong> — designed to run live on modest compute, not just offline.</li>
+      <li><strong>Feature-based SLAM</strong> — matches visual keypoints/descriptors across frames to localize and
+      map simultaneously, without needing a precise motion model.</li>
+      <li><strong>Environment awareness</strong> — uses depth and parallax information, which helps in
+      low-texture or repetitive-structure environments where pure vision struggles.</li>
+      <li><strong>Loop-closure detection</strong> — recognizes previously visited areas and corrects accumulated
+      drift across the whole map, the same core idea as Cartographer's Global SLAM but driven by visual
+      appearance instead of laser geometry.</li>
+      <li><strong>Native RGB-D support</strong> — built around exactly this class of sensor.</li>
+    </ul>
+    <p>Real mapping bring-up (LiDAR + camera + RTAB-Map together):</p>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> # Terminal 1: LiDAR
+ros2 launch limo_bringup limo_start.launch.py
+
+<span class="term-prompt">$</span> # Terminal 2: camera
+ros2 launch astra_camera dabai.launch.py
+
+<span class="term-prompt">$</span> # Terminal 3: RTAB-Map mapping mode
+ros2 launch limo_bringup limo_rtab_rgbd.launch.py</div>
+    </div>
+    <div class="figure">
+      <img src="images/limo-manual/rtabmap-mapping.png" alt="RTAB-Map building a dense visual map live from LIMO's depth camera and LiDAR">
+      <figcaption>RTAB-Map building a dense, graph-based visual map live — a genuinely different map representation from Cartographer's occupancy grid.</figcaption>
+    </div>
+    <p>
+      The finished map auto-saves to <code>~/.ros/rtabmap.db</code> (a hidden folder — <code>Ctrl+h</code> in your
+      file browser to reveal it) the moment you terminate the program; there's no separate save step like
+      Cartographer's <code>map_saver_cli</code>.
+    </p>
+    <h3>RTAB-Map navigation</h3>
+    <p>
+      Navigating on a saved RTAB-Map map reuses the same mapping bring-up, switched into localization mode, plus a
+      dedicated navigation launch file:
+    </p>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> # Terminal 1: LiDAR
+ros2 launch limo_bringup limo_start.launch.py
+
+<span class="term-prompt">$</span> # Terminal 2: camera
+ros2 launch astra_camera dabai.launch.py
+
+<span class="term-prompt">$</span> # Terminal 3: RTAB-Map in localization mode
+ros2 launch limo_bringup limo_rtab_rgbd.launch.py localization:=true
+
+<span class="term-prompt">$</span> # Terminal 4: navigation
+ros2 launch limo_bringup limo_rtab_nav2_diff.launch.py
+<span class="term-prompt">$</span> # Ackermann mode instead? use limo_rtab_nav2_ackermann.launch.py</div>
+    </div>
+    <div class="figure">
+      <img src="images/limo-manual/rtabmap-nav-launch.png" alt="RViz showing the RTAB-Map navigation stack launched on real LIMO hardware">
+      <figcaption>RTAB-Map navigation, freshly launched — visual localization against the saved <code>rtabmap.db</code> map.</figcaption>
+    </div>
+    <p>
+      Because RTAB-Map localizes visually rather than by matching live LiDAR geometry to a static grid, there's no
+      initial-pose correction step to perform — set a goal directly and go:
+    </p>
+    <div class="figure">
+      <img src="images/limo-manual/rtabmap-nav-goal.png" alt="RViz showing a navigation goal set and a green planned path under RTAB-Map navigation">
+      <figcaption>A goal set under RTAB-Map navigation — note the green path, distinct from Nav2-on-LiDAR's purple, and no pose-correction dance beforehand.</figcaption>
+    </div>
+    <div class="box think">
+      <div class="box-title">🤔 Think About It</div>
+      <p>
+        LIMO gives you two genuinely independent ways to map and navigate the same room: a LiDAR-only Cartographer
+        + Nav2 stack, and a camera-based RTAB-Map stack. Why would AgileX build and ship both, instead of picking
+        the one that's "better"? What does each one give you that the other structurally can't — think about what
+        happens in a hallway with featureless white walls, and separately what happens in total darkness.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="imu-lab">
+    <h2><span class="num">11.14</span>System 5: IMU lab</h2>
+    <p>
+      LIMO's onboard IMU is an <strong>HI226</strong>, publishing orientation, angular velocity, and linear
+      acceleration on <code>/imu</code> — the same message type you fused into the EKF back in Lecture 9. Unlike
+      the LiDAR and camera, the IMU has no obvious "point it at something and measure" test; instead, you verify
+      it against a known <em>orientation</em>, not a known distance.
+    </p>
+    <div class="exercise">
+      <div class="level">Exercise · Easy — Hands-On Lab</div>
+      <p>
+        With the robot powered on, flat, and stationary, echo <code>/imu</code> and record the reported
+        orientation (as roll/pitch/yaw, converting from quaternion if needed) as your zero baseline. Then tilt the
+        robot — or prop one side up on a book of known height relative to the robot's length, and compute the
+        resulting angle with basic trigonometry — to a known angle, hold it steady, and read the orientation
+        again. Does the reported tilt roughly match your known angle? Note any consistent offset — that's your
+        IMU's mounting-bias error, conceptually the same kind of extrinsic mismatch discussed in Section 11.10.
+      </p>
+    </div>
+    <div class="box eng">
+      <div class="box-title">🔧 Why this test is "roughly match," not "exactly match"</div>
+      <p>
+        Low-cost MEMS IMUs like the class the HI226 belongs to have real bias and noise, and your "known angle"
+        from a book and a tape measure has its own error too. The goal of this lab isn't lab-grade calibration —
+        it's building the habit of never trusting a sensor you haven't personally checked against an independent
+        ground truth at least once, the same discipline behind every other test in this session.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="nav2-lab">
+    <h2><span class="num">11.15</span>Real Nav2 navigation, start to finish</h2>
+    <p>
+      Two packages carry the real weight of navigation: a path-planning package and a localization package.
+      Together, ROS provides a complete navigation framework built around them:
+    </p>
+    <div class="figure">
+      <img src="images/limo-manual/ros-navigation-framework.png" alt="Diagram of the ROS navigation framework, showing how sensor data, localization, and path planning connect">
+      <figcaption>The navigation framework: publish sensor data and a goal position, and the stack handles the rest.</figcaption>
+    </div>
+    <p>
+      Path planning splits into a <strong>global planner</strong> — plans the overall route from a given goal and
+      the global map, typically using Dijkstra or A* to compute the optimal route — and a <strong>local
+      planner</strong> — since a robot often can't strictly follow the global path in practice, it replans what to
+      do <em>this</em> cycle based on live map data and nearby obstacles, staying as close to the global optimum as
+      it safely can. Localization is handled by an adaptive (KLD-sampling) Monte Carlo localization system: a
+      probabilistic particle filter that tracks the robot's pose on a known 2D map — conceptually identical to the
+      AMCL work you did in Lecture 9, now running against this real LiDAR.
+    </p>
+    <p>Two real local-planner options you'll see referenced in LIMO's own navigation stack:</p>
+    <table>
+      <tr><th>Planner</th><th>How it decides where to go</th></tr>
+      <tr><td><strong>DWA</strong> (Dynamic Window Approach)</td><td>Searches multiple candidate paths, scores each against criteria like obstacle collision and time-to-goal, then picks the linear/angular velocity pair that avoids dynamic obstacles best</td></tr>
+      <tr><td><strong>TEB</strong> (Time Elastic Band)</td><td>Takes the global planner's initial trajectory and refines it, optimizing for path length, execution time, obstacle distance, intermediate waypoints, and the robot's real dynamics/kinematics constraints (velocity and acceleration limits) simultaneously</td></tr>
+    </table>
+    <h3>Bringing up real Nav2</h3>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> # Terminal 1: start the LiDAR
+ros2 launch limo_bringup limo_start.launch.py
+
+<span class="term-prompt">$</span> # Terminal 2: start navigation (differential mode)
+ros2 launch limo_bringup limo_nav2_diff.launch.py
+
+<span class="term-prompt">$</span> # Ackermann mode instead? use:
+<span class="term-prompt">$</span> # ros2 launch limo_bringup limo_nav2_ackermann.launch.py</div>
+    </div>
+    <div class="figure">
+      <img src="images/limo-manual/nav2-rviz-launch.png" alt="RViz showing the Nav2 stack freshly launched on real LIMO hardware, with the saved map loaded">
+      <figcaption>Nav2 freshly launched against a real saved map — this is what a clean bring-up looks like.</figcaption>
+    </div>
+    <div class="box def">
+      <div class="box-title">📖 Loading your own map</div>
+      <p>
+        To navigate a map you built yourself (Section 11.12's Cartographer output, for instance) rather than a
+        default one, open the launch file and change its map argument to your saved map's name.
+      </p>
+    </div>
+    <div class="figure">
+      <img src="images/limo-manual/nav2-custom-map.png" alt="A custom saved map loaded into the Nav2 launch file's map argument">
+      <figcaption>Pointing the launch file at your own saved map instead of the default one.</figcaption>
+    </div>
+    <h3>Initial-pose correction</h3>
+    <p>
+      When Nav2 first comes up, the live laser scan usually won't align with the map — the system doesn't yet know
+      exactly where on the map the robot actually is. Use RViz's pose-estimate tool to give an approximate starting
+      position, then rotate the robot in place via teleop until the live scan visibly overlaps the map's walls:
+    </p>
+    <div class="figure">
+      <img src="images/limo-manual/nav2-initial-pose-correction.png" alt="RViz showing the process of correcting LIMO's initial pose estimate by rotating in place">
+      <figcaption>Correcting the initial pose — rotate until the live laser scan overlaps the map's real walls.</figcaption>
+    </div>
+    <div class="figure">
+      <img src="images/limo-manual/nav2-correction-complete.png" alt="RViz showing a corrected pose estimate, with the live scan cleanly overlapping the map">
+      <figcaption>Correction complete — the live scan now cleanly overlaps the map geometry.</figcaption>
+    </div>
+    <h3>Sending a goal</h3>
+    <p>
+      Use RViz's <strong>2D Nav Goal</strong> tool to click a destination on the map. A purple path generates, the
+      controller switches to command mode, and LIMO drives itself there:
+    </p>
+    <div class="figure">
+      <img src="images/limo-manual/nav2-2d-goal.png" alt="RViz showing a 2D Nav Goal set on the map, with a purple planned path to it">
+      <figcaption>A single 2D Nav Goal — click, and the purple path is the planner's real output.</figcaption>
+    </div>
+    <h3>Multi-point navigation</h3>
+    <p>
+      For a full waypoint tour rather than one goal at a time, click the multi-point button, then add several Nav2
+      Goal points on the map before starting:
+    </p>
+    <div class="figure">
+      <img src="images/limo-manual/nav2-multipoint-button.png" alt="RViz interface showing the button to enter multi-point navigation mode">
+      <figcaption>Entering multi-point mode — the button that switches RViz into waypoint-queueing behaviour.</figcaption>
+    </div>
+    <div class="figure">
+      <img src="images/limo-manual/nav2-multipoint-start.png" alt="RViz showing several queued waypoints and the start-navigation button for multi-point mode">
+      <figcaption>Several queued waypoints, ready to go — this is the same multi-goal idea Lecture 10's capstone builds on top of in simulation, now running for real.</figcaption>
+    </div>
+    <div class="exercise">
+      <div class="level">Exercise · Harder — Hands-On Lab</div>
+      <p>
+        Using a map you built yourself in Section 11.12, bring up real Nav2, correct the initial pose, and queue a
+        three-point multi-point navigation run around a real room. Time the full run. Then compare: does the
+        DWA-vs-TEB distinction above predict anything about how LIMO's path looked around a tight corner? If you
+        have access to both planners, try switching and compare the resulting paths directly.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="vision-module">
+    <h2><span class="num">11.16</span>The vision module: four real demos</h2>
+    <p>
+      LIMO's real <code>limo_visions</code> package ships four working perception demos, each launched the same
+      way: bring up the camera, then run the demo node. All four are genuinely useful teaching examples of classic
+      OpenCV techniques wired into ROS 2 — not toy code, the actual package running on the robot.
+    </p>
+    <h3>Vision-based line following</h3>
+    <p>
+      Real code logic: subscribe to the camera image and convert it to OpenCV format &rarr; preprocess (grayscale
+      &rarr; Gaussian blur &rarr; edge detection) &rarr; binarize into black/white &rarr; morphological operations
+      (dilation, erosion, opening) to clean up the line &rarr; Hough transform to detect line segments &rarr; steer
+      based on the detected line's slope and position.
+    </p>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> ros2 launch astra_camera dabai.launch.py
+<span class="term-prompt">$</span> ros2 run limo_visions detect_line</div>
+    </div>
+    <div class="figure">
+      <img src="images/limo-manual/vision-line-following.png" alt="LIMO's camera view with a detected line highlighted for line-following">
+      <figcaption>Real line detection output — the highlighted line is what <code>detect_line</code> is actually steering against.</figcaption>
+    </div>
+    <h3>Color tracking</h3>
+    <p>
+      Real code logic: convert the ROS image to OpenCV via <code>cv_bridge</code> &rarr; define an HSV color range
+      for the target (blue, in the manual's own example) &rarr; <code>inRange()</code> to build a binary mask
+      &rarr; <code>findContours()</code> + <code>boundingRect()</code> to locate the target region and draw a
+      bounding box &rarr; publish the target's position for downstream control/navigation nodes.
+    </p>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> ros2 launch astra_camera dabai.launch.py
+<span class="term-prompt">$</span> ros2 run limo_visions object_detect</div>
+    </div>
+    <div class="figure">
+      <img src="images/limo-manual/vision-color-tracking.png" alt="LIMO's camera view with a colored object detected and bounded by a tracking box">
+      <figcaption>Real color-tracking output — a bounding box drawn live around the detected colored target.</figcaption>
+    </div>
+    <h3>QR / ArUco marker tracking</h3>
+    <p>
+      LIMO uses the real <code>aruco_ros</code> package (OpenCV-based, C++, with a native ROS 2 interface) for
+      marker detection. You can generate your own markers at
+      <a href="http://chev.me/arucogen/" target="_blank" rel="noopener">chev.me/arucogen</a>; here's the actual
+      marker used in AgileX's own example:
+    </p>
+    <div class="figure">
+      <img src="images/limo-manual/aruco-marker-sample.svg" alt="The real ArUco marker used in AgileX's LIMO manual example">
+      <figcaption>The exact ArUco marker from AgileX's own worked example.</figcaption>
+    </div>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> ros2 launch astra_camera dabai.launch.py
+<span class="term-prompt">$</span> ros2 launch aruco_ros single.launch.py
+<span class="term-prompt">$</span> ros2 run limo_visions move_to_ar</div>
+    </div>
+    <div class="figure">
+      <img src="images/limo-manual/vision-qr-tracking.png" alt="LIMO's camera view detecting and tracking an ArUco marker">
+      <figcaption>Real marker detection and tracking — <code>move_to_ar</code> drives LIMO relative to the marker's detected pose.</figcaption>
+    </div>
+    <h3>Traffic-light recognition</h3>
+    <p>
+      Real code logic: initialize the node with an image subscriber and publisher &rarr; convert the image to HSV
+      &rarr; define red and green color ranges and apply <code>inRange()</code> &rarr; morphological cleanup to
+      remove noise and fill holes &rarr; <code>findContours()</code> then <code>minEnclosingCircle()</code> on
+      each contour &rarr; classify a circle as a traffic light if its area exceeds a threshold and its center
+      falls in the predefined traffic-light region &rarr; draw and publish the result &rarr; repeat every frame.
+    </p>
+    <div class="term">
+      <div class="term-bar">
+        <span class="term-dot" style="background:#f2564a"></span>
+        <span class="term-dot" style="background:#e6b32e"></span>
+        <span class="term-dot" style="background:#33c26f"></span>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> ros2 launch astra_camera dabai.launch.py
+<span class="term-prompt">$</span> ros2 run limo_visions traffic_light</div>
+    </div>
+    <div class="figure">
+      <img src="images/limo-manual/vision-traffic-light.png" alt="LIMO's camera view detecting a traffic light using HSV color segmentation">
+      <figcaption>Real traffic-light detection — the classified circle is drawn live on the camera feed.</figcaption>
+    </div>
+    <div class="exercise">
+      <div class="level">Exercise · Easy — Hands-On Lab</div>
+      <p>
+        Run any two of the four vision demos above against real objects/markers you set up yourself. For each,
+        note one condition that broke detection (poor lighting, wrong color, marker too far/angled, background
+        clutter) and relate it back to the real code-logic steps above — which specific step in the pipeline do
+        you think failed first?
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="headless">
+    <h2><span class="num">11.17</span>Headless bring-up: remote desktop over NoMachine</h2>
+    <p>
+      In practice, you will almost never have a monitor plugged into LIMO — the NUC11 lives inside the chassis,
+      and the normal workflow is remote desktop over WiFi from your own laptop. This is the real, official
+      procedure.
+    </p>
+    <p>
+      Download <strong>NoMachine</strong> on your own computer from
+      <a href="https://www.nomachine.com/download" target="_blank" rel="noopener">nomachine.com/download</a>,
+      matching your OS/architecture, and make sure LIMO and your computer are joined to the <strong>same
+      WiFi network</strong>. The first time, you'll need a keyboard and mouse plugged directly into LIMO's
+      USB-HUB (behind the seagull door) to select and join that network:
+    </p>
+    <div class="figure">
+      <img src="images/limo-manual/usb-hub-location.jpg" alt="Photo showing the location of LIMO's USB-HUB behind its side door">
+      <figcaption>The USB-HUB, behind LIMO's side seagull door — where you plug in a keyboard/mouse for the very first WiFi setup.</figcaption>
+    </div>
+    <div class="figure">
+      <img src="images/limo-manual/wifi-connect-1.png" alt="LIMO's desktop showing the WiFi network selection screen">
+      <figcaption>Selecting the WiFi network to join, directly on LIMO's own desktop.</figcaption>
+    </div>
+    <div class="figure">
+      <img src="images/limo-manual/wifi-connect-2.png" alt="LIMO's desktop showing the WiFi password entry screen">
+      <figcaption>Entering the WiFi password.</figcaption>
+    </div>
+    <div class="figure">
+      <img src="images/limo-manual/wifi-connect-3.png" alt="LIMO's desktop confirming a successful WiFi connection">
+      <figcaption>Connected — from here on, everything can be done remotely.</figcaption>
+    </div>
+    <p>
+      From your own computer, open NoMachine, select the LIMO connection, and confirm:
+    </p>
+    <div class="figure">
+      <img src="images/limo-manual/nomachine-connect-1.png" alt="NoMachine showing the LIMO connection to select">
+      <figcaption>Selecting the LIMO connection in NoMachine.</figcaption>
+    </div>
+    <p>
+      Log in with the real default credentials — username <code>agilex</code>, password <code>agx</code> — and
+      choose to save the password so you don't re-enter it every session:
+    </p>
+    <div class="figure">
+      <img src="images/limo-manual/nomachine-connect-2.png" alt="NoMachine login screen for LIMO, username agilex">
+      <figcaption>Logging in — username <code>agilex</code>, password <code>agx</code>.</figcaption>
+    </div>
+    <div class="figure">
+      <img src="images/limo-manual/nomachine-connect-3.png" alt="NoMachine session settings confirmation dialog, defaulting to OK">
+      <figcaption>Accept the default session settings — you're now looking at LIMO's real desktop, remotely.</figcaption>
+    </div>
+    <div class="box mistake">
+      <div class="box-title">⚠️ Default credentials are a real security surface</div>
+      <p>
+        <code>agilex</code> / <code>agx</code> is a real, published default password. On any LIMO that leaves a
+        lab/classroom environment or joins a network you don't fully control, changing this default is a genuine
+        security step, not paranoia — the same class of habit as never shipping default database credentials to
+        production.
+      </p>
+    </div>
+    <div class="exercise">
+      <div class="level">Exercise · Easy</div>
+      <p>
+        Set up NoMachine end to end: join LIMO to your WiFi, connect from your laptop, and run a full bring-up
+        (Section 11.8) entirely over the remote session, with no monitor ever plugged into the robot. Note
+        anything that felt different or laggier over remote desktop versus a direct connection — is there anything
+        in this session you'd specifically avoid doing over a slow/high-latency remote link?
+      </p>
+    </div>
+  </section>
+
+  <div class="box think">
+    <div class="box-title">🤔 Think About It</div>
+    <p>
+      LIMO's LiDAR, depth camera, and IMU all attach directly to the NUC11 over USB, completely bypassing the
+      embedded motion controller that owns the motors. Why does that separation matter when you're debugging "the
+      robot won't drive" versus "the robot won't see" — and can you think of a failure that would take down BOTH
+      at once despite this separation?
+    </p>
+  </div>
+
+  <div class="divider"></div>
+
+  <section id="summary">
+    <h2><span class="num">11.18</span>Summary, glossary &amp; common mistakes</h2>
+    <p>
+      This session moved you from a purely simulated mental model of LIMO to a working, hands-on understanding of
+      all six of its real hardware systems — the <strong>chassis and its four physically-switchable drive
+      modes</strong>, the <strong>Intel NUC11 onboard computer</strong>, the <strong>EAI T-mini Pro LiDAR</strong>,
+      the <strong>ORBBEC DaBai depth camera</strong>, the <strong>HI226 IMU</strong>, and the <strong>12V/10Ah
+      battery and power system</strong> — and then drove the whole real software stack on top of it: the real
+      <code>limo_base</code>/<code>limo_msgs</code> driver architecture with topic/service/action patterns you can
+      point to on this exact robot, Cartographer SLAM, real Nav2 navigation with initial-pose correction and
+      multi-point goals, RTAB-Map visual SLAM as an independent second mapping system, all four
+      <code>limo_visions</code> demos, and headless bring-up over NoMachine. Every fact, command, and image in
+      this session came from AgileX's own official LIMO ROS 2 Humble manual.
+    </p>
+    <div class="checkpoint">
+      <strong style="color:var(--text); display:block; margin-bottom:10px;">✅ Learning checkpoint</strong>
+      <ul>
+        <li>I can describe why LIMO splits ROS 2 logic (NUC11) from real-time motor control (embedded motion controller), and why that separation exists.</li>
+        <li>I can list every field of <code>LimoStatus</code> and explain what a nonzero <code>error_code</code> means for how I should proceed.</li>
+        <li>I can explain the real difference between <code>LimoStatus</code> (topic), <code>LimoSrv</code> (service), and <code>LimoAction</code> (action) using LIMO's own message definitions.</li>
+        <li>I can list the real topics published by <code>limo_base.launch.py</code> and what each one is for.</li>
+        <li>I can explain, in my own words, how PWM controls motor speed and how a quadrature encoder reports direction and distance.</li>
+        <li>I can recite the physical bring-up sequence from memory, including why wheels-off-ground testing comes first.</li>
+        <li>I can physically switch LIMO between drive modes and verify the switch two independent ways: the RGB light color and the <code>motion_mode</code> field.</li>
+        <li>I can state the EAI T-mini Pro's real range and accuracy specs and design a test that checks them against a tape measure.</li>
+        <li>I can bring up Cartographer SLAM, save a map, and explain the difference between Local SLAM (submaps) and Global SLAM (loop closure).</li>
+        <li>I can bring up real Nav2, correct an initial pose estimate, and send both single and multi-point navigation goals.</li>
+        <li>I can explain why RTAB-Map (visual SLAM) exists as a genuinely separate system from Cartographer+Nav2 (LiDAR SLAM), not a redundant alternative.</li>
+        <li>I can run at least two of the four real <code>limo_visions</code> demos and explain their real code logic in my own words.</li>
+        <li>I can set up and use NoMachine to bring up and test LIMO with no monitor ever plugged into the robot.</li>
+      </ul>
+    </div>
+    <div class="assignment">
+      <div class="label">Assignment</div>
+      <p>
+        Write a full hardware-and-software bring-up report for your LIMO, covering: (1) a chassis bring-up
+        checklist run (Section 11.8) with your real observed values; (2) a Cartographer map you built and saved,
+        with a note on its quality; (3) a real Nav2 navigation run on that map, including your initial-pose
+        correction and at least one multi-point route, with timing; and (4) one <code>limo_visions</code> demo run
+        against a real target, with a note on what broke it. Cite the actual commands you ran and the actual
+        values/behavior you observed at every step — not what you expected to see.
+      </p>
+    </div>
+    <div class="box real">
+      <div class="box-title">🌍 Connection to the course</div>
+      <p>
+        <span class="badge-project">LIMO Hardware</span> Everything in this session is load-bearing for the rest
+        of the course. The encoder math and odometry topic feed directly into Lecture 9's EKF and AMCL work; the
+        Cartographer, Nav2, and RTAB-Map work you just did for real is exactly what Lecture 10's simulated
+        capstone rehearsed; and the bring-up/testing/calibration discipline built here — plus the real
+        topic/service/action distinction from Section 11.6 — is the same discipline Lectures 12–14 will ask you
+        to apply to a robot you build entirely from scratch.
+      </p>
+    </div>
+    <h3>Glossary</h3>
+    <dl class="glossary">
+      <dt>H-bridge</dt><dd>A power-electronics arrangement (or IC built around one) that lets a motor be driven in either direction by selecting which pair of switches is closed.</dd>
+      <dt>PWM (Pulse-Width Modulation)</dt><dd>A technique for controlling motor speed by rapidly switching power on and off and varying the fraction of time it's on (duty cycle), rather than varying voltage smoothly.</dd>
+      <dt>Quadrature encoder</dt><dd>A sensor that outputs two phase-offset square-wave channels (A/B), letting a controller determine both rotation direction and distance/speed from edge counts.</dd>
+      <dt>BMS (Battery Management System)</dt><dd>Electronics built into a rechargeable battery pack that protect against over-discharge, over-current, and short-circuit conditions.</dd>
+      <dt>IPC (Industrial PC / onboard computer)</dt><dd>The onboard general-purpose computer — an Intel NUC11 on this LIMO configuration — that runs ROS 2 and handles perception, planning, and navigation.</dd>
+      <dt>Hub motor</dt><dd>A motor built directly into a wheel's hub rather than driving the wheel through an external transmission; LIMO uses four, 14.4W each.</dd>
+      <dt>LimoSrv / LimoAction</dt><dd>LIMO's real custom ROS 2 service and action types — a synchronous request/response and a long-running, cancellable, feedback-streaming goal, respectively — both carrying x/y/z coordinate fields.</dd>
+      <dt>Cartographer</dt><dd>Google's graph-optimization-based SLAM system, splitting work into Local SLAM (building submaps from each scan) and Global SLAM (loop-closure correction across the whole map).</dd>
+      <dt>Submap</dt><dd>A small grid map built from a short sequence of LaserScan frames in Cartographer; the full map is an assembly of many submaps, reconciled by loop closure.</dd>
+      <dt>Loop closure</dt><dd>Recognizing that the robot has returned to a previously-mapped area and using that match to correct accumulated drift across the whole map.</dd>
+      <dt>DWA / TEB</dt><dd>Two real local-planner strategies for Nav2: Dynamic Window Approach (scores candidate velocity commands against obstacles/time) and Time Elastic Band (optimizes the full trajectory against path length, time, obstacles, and robot dynamics together).</dd>
+      <dt>RTAB-Map</dt><dd>Real-Time Appearance-Based Mapping — a feature-based, graph-optimized visual SLAM system built for RGB-D sensors, independent of LiDAR-based SLAM.</dd>
+      <dt>ArUco marker</dt><dd>A printable, uniquely-identifiable square fiducial marker, detected and pose-estimated by the <code>aruco_ros</code> package for marker-relative navigation or tracking.</dd>
+      <dt>Sim-to-real gap</dt><dd>The set of real-world effects — deadband, sensor noise, voltage sag, latency, wheel slip — that simulation does not fully model, causing sim-tuned behavior to differ on physical hardware.</dd>
+      <dt>Extrinsic calibration</dt><dd>Verifying and correcting the physical position/orientation of a sensor relative to the robot's base frame, so it matches what the URDF claims.</dd>
+      <dt>Bring-up</dt><dd>The disciplined, layered sequence of checks run before trusting a piece of hardware — visual inspection, power, wheels-off-ground motion tests, then sensor sanity checks.</dd>
+      <dt>Overcurrent protection</dt><dd>A safety cutoff that trips when total current draw exceeds a rated budget (10A across LIMO's whole system), protecting the battery and motors from damage.</dd>
+    </dl>
+    <h3>Common mistakes</h3>
+    <ul>
+      <li>Driving with wheels off a stand for the first motion test without warning anyone nearby — the single most common cause of "the robot lurched and someone got startled or hurt."</li>
+      <li>Assuming sim-tuned controller gains from Lecture 6 will work unchanged on real hardware, instead of expecting and budgeting time for retuning.</li>
+      <li>Ignoring a nonzero <code>LimoStatus.error_code</code> because the robot "seems to be driving fine anyway."</li>
+      <li>Letting a lithium battery pack sit fully discharged, or connected to the chassis during long-term storage, between sessions.</li>
+      <li>Leaving a URDF sensor joint origin unchanged after physically remounting a sensor, silently corrupting every TF-based calculation downstream without any visible error.</li>
+      <li>Switching drive modules and immediately trusting a navigation stack tuned for the previous mode, without re-verifying <code>motion_mode</code> and the RGB light first.</li>
+      <li>Mapping too fast with Cartographer and getting a distorted map, then blaming the sensor instead of the driving speed.</li>
+      <li>Skipping initial-pose correction before sending a Nav2 goal and being confused when the robot drives confidently to the wrong place.</li>
+      <li>Treating RTAB-Map as "just a backup" for Cartographer/Nav2 instead of recognizing it solves a genuinely different problem (visual, not laser-geometric, localization).</li>
+      <li>Leaving NoMachine's default <code>agilex</code>/<code>agx</code> credentials unchanged on a robot that leaves a controlled classroom/lab network.</li>
+      <li>Treating a shared power budget (10A total) as infinite and being surprised by a brownout under heavy simultaneous load.</li>
+    </ul>
+  </section>
+
+  <div class="footer-nav">
+    <a href="10-slam-nav2-capstone-mission.html">&larr; Lecture 10: SLAM, Navigation2 &amp; Capstone</a>
+    <a href="index.html">Table of Contents</a>
+    <a href="12-diy-robot-motors-power-compute.html">Lecture 12: Build Your Own Robot I &rarr;</a>
+  </div>
+
+</div>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      background: '#f1efe8', primaryColor: '#eef0ff', primaryTextColor: '#211f1a',
+      primaryBorderColor: '#3d4bf5', lineColor: '#0e9e6e', secondaryColor: '#f1efe8',
+      tertiaryColor: '#fffefb', textColor: '#211f1a', fontFamily: 'Inter, -apple-system, sans-serif'
+    },
+    flowchart: { curve: 'basis' },
+    securityLevel: 'loose'
+  });
+</script>
+<script>
+(function(){
+  var btn = document.getElementById('theme-toggle');
+  var icon = document.getElementById('theme-toggle-icon');
+  function updateIcon(){
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    icon.textContent = isDark ? '☀️' : '🌙';
+  }
+  updateIcon();
+  btn.addEventListener('click', function(){
+    var cur = document.documentElement.getAttribute('data-theme');
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try{ localStorage.setItem('limo-book-theme', next); }catch(e){}
+    updateIcon();
+  });
+})();
+</script>
+<script src="annotate.js" defer></script>
+</body>
+</html>

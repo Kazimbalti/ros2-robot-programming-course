@@ -1,0 +1,416 @@
+{
+  "1-1-course-intro_p02_01.png": {
+    "pdf": "1.1 course intro.pdf",
+    "page": 2,
+    "w": 1913,
+    "h": 958
+  },
+  "1-2-fastbot-intro_p02_01.jpeg": {
+    "pdf": "1.2 FastBot Intro.pdf",
+    "page": 2,
+    "w": 1520,
+    "h": 722
+  },
+  "1-3-intro-demo_p02_01.png": {
+    "pdf": "1.3 Intro demo.pdf",
+    "page": 2,
+    "w": 1796,
+    "h": 1058
+  },
+  "1-3-intro-demo_p03_02.png": {
+    "pdf": "1.3 Intro demo.pdf",
+    "page": 3,
+    "w": 371,
+    "h": 333
+  },
+  "1-4-course-outline_p10_09.png": {
+    "pdf": "1.4 course outline.pdf",
+    "page": 10,
+    "w": 468,
+    "h": 452
+  },
+  "1-4-course-outline_p12_11.png": {
+    "pdf": "1.4 course outline.pdf",
+    "page": 12,
+    "w": 1380,
+    "h": 478
+  },
+  "1-4-course-outline_p12_12.png": {
+    "pdf": "1.4 course outline.pdf",
+    "page": 12,
+    "w": 1368,
+    "h": 408
+  },
+  "1-4-course-outline_p13_13.png": {
+    "pdf": "1.4 course outline.pdf",
+    "page": 13,
+    "w": 1362,
+    "h": 418
+  },
+  "1-4-course-outline_p13_14.png": {
+    "pdf": "1.4 course outline.pdf",
+    "page": 13,
+    "w": 1349,
+    "h": 312
+  },
+  "1-5-fastbot-components_p02_01.jpeg": {
+    "pdf": "1.5 FastBot Components.pdf",
+    "page": 2,
+    "w": 3939,
+    "h": 1760
+  },
+  "10-4-simulation-launch-files_p13_01.png": {
+    "pdf": "10.4 Simulation Launch Files.pdf",
+    "page": 13,
+    "w": 425,
+    "h": 323
+  },
+  "11-2-designing-the-cover_p02_01.png": {
+    "pdf": "11.2 Designing the Cover.pdf",
+    "page": 2,
+    "w": 1643,
+    "h": 926
+  },
+  "11-2-designing-the-cover_p03_02.png": {
+    "pdf": "11.2 Designing the Cover.pdf",
+    "page": 3,
+    "w": 1643,
+    "h": 926
+  },
+  "11-2-designing-the-cover_p04_03.png": {
+    "pdf": "11.2 Designing the Cover.pdf",
+    "page": 4,
+    "w": 1643,
+    "h": 926
+  },
+  "11-2-designing-the-cover_p05_04.png": {
+    "pdf": "11.2 Designing the Cover.pdf",
+    "page": 5,
+    "w": 1643,
+    "h": 926
+  },
+  "11-2-designing-the-cover_p06_05.png": {
+    "pdf": "11.2 Designing the Cover.pdf",
+    "page": 6,
+    "w": 1643,
+    "h": 926
+  },
+  "11-3-3d-printing-considerations_p02_01.png": {
+    "pdf": "11.3 3D Printing considerations.pdf",
+    "page": 2,
+    "w": 1643,
+    "h": 926
+  },
+  "2-2-motor-specifications_p03_01.png": {
+    "pdf": "2.2 Motor Specifications.pdf",
+    "page": 3,
+    "w": 341,
+    "h": 267
+  },
+  "2-2-motor-specifications_p04_02.png": {
+    "pdf": "2.2 Motor Specifications.pdf",
+    "page": 4,
+    "w": 542,
+    "h": 169
+  },
+  "2-3-motor-control-hardware_p02_01.png": {
+    "pdf": "2.3 Motor Control Hardware.pdf",
+    "page": 2,
+    "w": 435,
+    "h": 439
+  },
+  "2-3-motor-control-hardware_p03_02.png": {
+    "pdf": "2.3 Motor Control Hardware.pdf",
+    "page": 3,
+    "w": 485,
+    "h": 433
+  },
+  "2-4-wiring_p02_01.png": {
+    "pdf": "2.4 Wiring.pdf",
+    "page": 2,
+    "w": 408,
+    "h": 450
+  },
+  "2-4-wiring_p03_02.jpeg": {
+    "pdf": "2.4 Wiring.pdf",
+    "page": 3,
+    "w": 2590,
+    "h": 520
+  },
+  "2-4-wiring_p05_03.jpeg": {
+    "pdf": "2.4 Wiring.pdf",
+    "page": 5,
+    "w": 576,
+    "h": 1114
+  },
+  "2-4-wiring_p07_05.png": {
+    "pdf": "2.4 Wiring.pdf",
+    "page": 7,
+    "w": 1666,
+    "h": 962
+  },
+  "2-4-wiring_p08_06.jpeg": {
+    "pdf": "2.4 Wiring.pdf",
+    "page": 8,
+    "w": 2050,
+    "h": 1150
+  },
+  "2-4-wiring_p09_07.jpeg": {
+    "pdf": "2.4 Wiring.pdf",
+    "page": 9,
+    "w": 4624,
+    "h": 3432
+  },
+  "2-4-wiring_p10_08.jpeg": {
+    "pdf": "2.4 Wiring.pdf",
+    "page": 10,
+    "w": 605,
+    "h": 2058
+  },
+  "2-4-wiring_p12_09.jpeg": {
+    "pdf": "2.4 Wiring.pdf",
+    "page": 12,
+    "w": 2050,
+    "h": 2281
+  },
+  "2-4-wiring_p14_11.jpeg": {
+    "pdf": "2.4 Wiring.pdf",
+    "page": 14,
+    "w": 2015,
+    "h": 2952
+  },
+  "2-5-serial-communication_p03_01.png": {
+    "pdf": "2.5 Serial Communication.pdf",
+    "page": 3,
+    "w": 497,
+    "h": 594
+  },
+  "2-5-serial-communication_p03_02.png": {
+    "pdf": "2.5 Serial Communication.pdf",
+    "page": 3,
+    "w": 494,
+    "h": 587
+  },
+  "2-5-serial-communication_p04_03.png": {
+    "pdf": "2.5 Serial Communication.pdf",
+    "page": 4,
+    "w": 698,
+    "h": 602
+  },
+  "2-5-serial-communication_p05_04.png": {
+    "pdf": "2.5 Serial Communication.pdf",
+    "page": 5,
+    "w": 698,
+    "h": 602
+  },
+  "2-5-serial-communication_p07_05.png": {
+    "pdf": "2.5 Serial Communication.pdf",
+    "page": 7,
+    "w": 1638,
+    "h": 869
+  },
+  "2-5-serial-communication_p08_06.png": {
+    "pdf": "2.5 Serial Communication.pdf",
+    "page": 8,
+    "w": 1068,
+    "h": 708
+  },
+  "3-1-battery-unit-summary_p02_01.png": {
+    "pdf": "3.1 Battery Unit Summary.pdf",
+    "page": 2,
+    "w": 369,
+    "h": 258
+  },
+  "3-3-battery-selection_p03_01.png": {
+    "pdf": "3.3 Battery Selection.pdf",
+    "page": 3,
+    "w": 436,
+    "h": 384
+  },
+  "3-4-connect-battery-to-robot_p02_01.png": {
+    "pdf": "3.4 connect battery to robot.pdf",
+    "page": 2,
+    "w": 497,
+    "h": 432
+  },
+  "3-4-connect-battery-to-robot_p03_03.png": {
+    "pdf": "3.4 connect battery to robot.pdf",
+    "page": 3,
+    "w": 512,
+    "h": 512
+  },
+  "3-4-connect-battery-to-robot_p04_04.jpeg": {
+    "pdf": "3.4 connect battery to robot.pdf",
+    "page": 4,
+    "w": 2057,
+    "h": 2929
+  },
+  "3-4-connect-battery-to-robot_p05_05.jpeg": {
+    "pdf": "3.4 connect battery to robot.pdf",
+    "page": 5,
+    "w": 2186,
+    "h": 3196
+  },
+  "4-1-computer-unit-summary_p02_01.png": {
+    "pdf": "4.1 Computer unit summary.pdf",
+    "page": 2,
+    "w": 558,
+    "h": 495
+  },
+  "4-1-computer-unit-summary_p03_02.png": {
+    "pdf": "4.1 Computer unit summary.pdf",
+    "page": 3,
+    "w": 462,
+    "h": 310
+  },
+  "4-1-computer-unit-summary_p03_03.png": {
+    "pdf": "4.1 Computer unit summary.pdf",
+    "page": 3,
+    "w": 413,
+    "h": 417
+  },
+  "4-2-install-ubuntu-server_p02_01.png": {
+    "pdf": "4.2 Install Ubuntu Server.pdf",
+    "page": 2,
+    "w": 816,
+    "h": 423
+  },
+  "4-2-install-ubuntu-server_p04_02.png": {
+    "pdf": "4.2 Install Ubuntu Server.pdf",
+    "page": 4,
+    "w": 748,
+    "h": 558
+  },
+  "4-2-install-ubuntu-server_p05_03.png": {
+    "pdf": "4.2 Install Ubuntu Server.pdf",
+    "page": 5,
+    "w": 679,
+    "h": 471
+  },
+  "4-2-install-ubuntu-server_p06_04.png": {
+    "pdf": "4.2 Install Ubuntu Server.pdf",
+    "page": 6,
+    "w": 540,
+    "h": 664
+  },
+  "4-2-install-ubuntu-server_p07_05.png": {
+    "pdf": "4.2 Install Ubuntu Server.pdf",
+    "page": 7,
+    "w": 540,
+    "h": 664
+  },
+  "4-2-install-ubuntu-server_p08_06.png": {
+    "pdf": "4.2 Install Ubuntu Server.pdf",
+    "page": 8,
+    "w": 748,
+    "h": 558
+  },
+  "4-4-connect-rpi-to-df_p04_01.jpeg": {
+    "pdf": "4.4 Connect RPI to DF.pdf",
+    "page": 4,
+    "w": 2073,
+    "h": 3063
+  },
+  "6-2-part-creation_p02_01.png": {
+    "pdf": "6.2 Part Creation.pdf",
+    "page": 2,
+    "w": 1649,
+    "h": 848
+  },
+  "6-2-part-creation_p03_02.png": {
+    "pdf": "6.2 Part Creation.pdf",
+    "page": 3,
+    "w": 1649,
+    "h": 848
+  },
+  "6-2-part-creation_p04_03.png": {
+    "pdf": "6.2 Part Creation.pdf",
+    "page": 4,
+    "w": 1649,
+    "h": 848
+  },
+  "6-2-part-creation_p05_04.png": {
+    "pdf": "6.2 Part Creation.pdf",
+    "page": 5,
+    "w": 1649,
+    "h": 848
+  },
+  "6-3-assembly-creation_p02_01.png": {
+    "pdf": "6.3 Assembly Creation.pdf",
+    "page": 2,
+    "w": 1615,
+    "h": 852
+  },
+  "6-3-assembly-creation_p03_02.png": {
+    "pdf": "6.3 Assembly Creation.pdf",
+    "page": 3,
+    "w": 1615,
+    "h": 852
+  },
+  "6-3-assembly-creation_p04_03.png": {
+    "pdf": "6.3 Assembly Creation.pdf",
+    "page": 4,
+    "w": 1615,
+    "h": 852
+  },
+  "6-4-mate-parts-in-assembly_p02_01.png": {
+    "pdf": "6.4 Mate Parts in Assembly.pdf",
+    "page": 2,
+    "w": 1615,
+    "h": 852
+  },
+  "6-4-mate-parts-in-assembly_p03_02.png": {
+    "pdf": "6.4 Mate Parts in Assembly.pdf",
+    "page": 3,
+    "w": 1615,
+    "h": 852
+  },
+  "6-4-mate-parts-in-assembly_p04_03.png": {
+    "pdf": "6.4 Mate Parts in Assembly.pdf",
+    "page": 4,
+    "w": 1635,
+    "h": 916
+  },
+  "6-4-mate-parts-in-assembly_p05_04.png": {
+    "pdf": "6.4 Mate Parts in Assembly.pdf",
+    "page": 5,
+    "w": 1635,
+    "h": 916
+  },
+  "6-4-mate-parts-in-assembly_p06_05.png": {
+    "pdf": "6.4 Mate Parts in Assembly.pdf",
+    "page": 6,
+    "w": 1635,
+    "h": 916
+  },
+  "7-2-basic-structure-of-a-urdf-file_p06_02.png": {
+    "pdf": "7.2 Basic Structure of a URDF File.pdf",
+    "page": 6,
+    "w": 464,
+    "h": 311
+  },
+  "7-2-basic-structure-of-a-urdf-file_p07_03.png": {
+    "pdf": "7.2 Basic Structure of a URDF File.pdf",
+    "page": 7,
+    "w": 609,
+    "h": 201
+  },
+  "7-2-basic-structure-of-a-urdf-file_p09_04.png": {
+    "pdf": "7.2 Basic Structure of a URDF File.pdf",
+    "page": 9,
+    "w": 1070,
+    "h": 297
+  },
+  "8-2-lslidar-n-10_p01_01.png": {
+    "pdf": "8.2 LSLiDAR N-10.pdf",
+    "page": 1,
+    "w": 401,
+    "h": 363
+  },
+  "9-2-raspicam_p01_01.png": {
+    "pdf": "9.2 Raspicam.pdf",
+    "page": 1,
+    "w": 679,
+    "h": 652
+  }
+}
