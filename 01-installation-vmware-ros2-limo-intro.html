@@ -172,9 +172,8 @@ html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
     <a href="#sec6"><span>1.6</span>Verifying the install</a>
     <a href="#sec7"><span>1.7</span>Programming tools</a>
     <a href="#sec8"><span>1.8</span>Setting up the LIMO workspace</a>
-    <a href="#sec9"><span>1.9</span>Meet the LIMO</a>
-    <a href="#sec10"><span>1.10</span>First smoke test: LIMO in Gazebo</a>
-    <a href="#sec11"><span>1.11</span>Summary, checkpoint &amp; glossary</a>
+    <a href="#sec10"><span>1.9</span>First smoke test: LIMO in Gazebo</a>
+    <a href="#sec11"><span>1.10</span>Summary, checkpoint &amp; glossary</a>
   </div>
 
   <section id="sec0">
@@ -937,75 +936,8 @@ source ~/.bashrc</code></pre>
 
   <div class="divider"></div>
 
-  <section id="sec9">
-    <h2><span class="num">1.9</span>Meet the LIMO</h2>
-    <p>
-      With the software side working, let's finally talk about the hardware this entire course revolves around: the
-      <strong>AgileX LIMO</strong>.
-    </p>
-
-    <div class="box def">
-      <div class="box-title">📖 The "Four-in-One" Robot</div>
-      <p>
-        LIMO's defining feature is that it isn't locked into one drivetrain. The same chassis and electronics
-        accept four interchangeable drive modules, swapped by unbolting one motion base and bolting on another.
-        Each later lecture in this course explores one of these in depth:
-      </p>
-    </div>
-
-    <table>
-      <tr><th>Drive mode</th><th>How it moves</th><th>Typical use case</th></tr>
-      <tr><td>Differential</td><td>Two independently driven wheels, skid-steers like a typical mobile robot</td><td>Indoor navigation, the default mode used in this lecture's smoke test</td></tr>
-      <tr><td>Ackermann</td><td>Car-like front-wheel steering with rear drive</td><td>Simulating road-vehicle behavior, outdoor/vehicle-style navigation</td></tr>
-      <tr><td>Mecanum</td><td>Four Mecanum wheels, can strafe sideways and rotate in place</td><td>Tight warehouse-style maneuvering</td></tr>
-      <tr><td>Tracked</td><td>Rubber tracks instead of wheels</td><td>Rough or uneven terrain, higher traction</td></tr>
-    </table>
-
-    <p>Regardless of which drive module is attached, every LIMO carries the same core sensor and compute suite:</p>
-    <ul>
-      <li>A <strong>2D LiDAR</strong> for obstacle detection and mapping</li>
-      <li>An <strong>RGB-D depth camera</strong> for vision and 3D perception</li>
-      <li>An <strong>IMU</strong> (inertial measurement unit) for orientation and acceleration</li>
-      <li>Wheel encoders feeding an embedded motion controller, which reports the robot's health and mode over ROS 2</li>
-    </ul>
-
-    <p>
-      That embedded controller publishes its status as a <code>limo_msgs/LimoStatus</code> message — this is your
-      first look at a custom ROS 2 message type, something we'll build our own versions of in a later lecture:
-    </p>
-    <pre><code>std_msgs/Header header
-uint8 vehicle_state
-uint8 control_mode
-float32 battery_voltage
-uint8 error_code
-uint8 motion_mode</code></pre>
-    <table>
-      <tr><th>Field</th><th>Meaning</th></tr>
-      <tr><td><code>header</code></td><td>Standard ROS 2 timestamp and frame metadata</td></tr>
-      <tr><td><code>vehicle_state</code></td><td>Whether the robot is currently enabled/movable</td></tr>
-      <tr><td><code>control_mode</code></td><td>Whether commands are coming from remote control, ROS, or the app</td></tr>
-      <tr><td><code>battery_voltage</code></td><td>Live pack voltage — the number to watch so you never deep-discharge the battery</td></tr>
-      <tr><td><code>error_code</code></td><td>Non-zero when the onboard controller has flagged a fault</td></tr>
-      <tr><td><code>motion_mode</code></td><td>Which of the four drive modules is currently active</td></tr>
-    </table>
-
-    <div class="box mistake">
-      <div class="box-title">⚠️ Safety Basics — Read Before You Touch a Real LIMO</div>
-      <p>These apply once you're working with the physical robot in a hands-on session, not the simulator:</p>
-      <ul>
-        <li>Always know where the physical <strong>E-stop / power switch</strong> is before powering LIMO on, and keep a hand near it during first tests.</li>
-        <li>Don't let the battery deep-discharge — watch <code>battery_voltage</code> and recharge well before it bottoms out; lithium packs degrade badly if run flat repeatedly.</li>
-        <li>Run first tests on a clear floor or a table with real clearance on all sides, never near an edge the robot could drive off.</li>
-        <li>Keep cables, straps, and loose clothing clear of the wheels — a spinning drive module will happily wind up anything it catches.</li>
-        <li>Just like every other lecture in this course: prove behavior in Gazebo simulation first, and only move to the real robot once the simulated version does what you expect.</li>
-      </ul>
-    </div>
-  </section>
-
-  <div class="divider"></div>
-
   <section id="sec10">
-    <h2><span class="num">1.10</span>First Smoke Test: LIMO in Gazebo</h2>
+    <h2><span class="num">1.9</span>First Smoke Test: LIMO in Gazebo</h2>
     <p>
       Let's finish this session by seeing LIMO move — in simulation, using the differential-drive model. You don't
       need to understand every piece of this yet; Lecture 2 walks through ROS 2's architecture and this exact
@@ -1097,7 +1029,7 @@ flowchart LR
   <div class="divider"></div>
 
   <section id="sec11">
-    <h2><span class="num">1.11</span>Summary, Checkpoint &amp; Glossary</h2>
+    <h2><span class="num">1.10</span>Summary, Checkpoint &amp; Glossary</h2>
     <p>
       In one session, you went from a bare host laptop to a fully working Linux robotics workstation: a VMware
       virtual machine running Ubuntu 22.04 LTS, ROS 2 Humble installed and sourced automatically, a colcon-built
