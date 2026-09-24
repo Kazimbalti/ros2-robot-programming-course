@@ -12,8 +12,8 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Before You Begin — 2-Hour Linux &amp; ROS 2 Bootcamp</title>
-<meta name="description" content="A 2-hour interactive bootcamp before Lecture 1: flip cards, type-the-command challenges, a permissions calculator, a topic/service/action game, a final speed drill, and a printable ROS 2 Humble cheat sheet.">
+<title>Mission Zero — Linux &amp; ROS 2 Survival Training</title>
+<meta name="description" content="Mission Zero: 2 hours of interactive Linux and ROS 2 survival training before Lecture 1: flip cards, type-the-command challenges, a permissions calculator, a topic/service/action game, a final speed drill, and a printable ROS 2 Humble cheat sheet.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="book.css">
@@ -172,7 +172,7 @@
 <nav class="coursenav"><div class="inner">
   <span class="brand">ROS &amp; Robot Programming</span>
   <a href="index.html">Home</a>
-  <a href="prerequisites.html" class="active">Before You Begin</a>
+  <a href="prerequisites.html" class="active">Mission Zero</a>
   <a href="syllabus.html">Syllabus</a>
   <a href="schedule.html">Schedule</a>
   <a href="assignments.html">Assignments</a>
@@ -182,9 +182,9 @@
 <div class="wrap">
 
   <div class="cover">
-    <div class="kicker">Lecture 0 &nbsp;·&nbsp; Before You Begin</div>
-    <h1>2-Hour Linux &amp; ROS&nbsp;2 Bootcamp</h1>
-    <div class="subtitle">6 short modules. Flip the cards 🃏 → type the commands ⌨️ → beat the final drill ⚡</div>
+    <div class="kicker">🎯 Mission Zero &nbsp;·&nbsp; Complete before Lecture 1</div>
+    <h1>Mission Zero: Linux &amp; ROS&nbsp;2 Survival Training</h1>
+    <div class="subtitle">2 hours · 6 short modules. Flip the cards 🃏 → type the commands ⌨️ → beat the final drill ⚡</div>
     <div class="meta-row">
       <div class="chip">⏱ 120 minutes</div>
       <div class="chip">Ubuntu 22.04 · ROS 2 Humble</div>
@@ -652,7 +652,7 @@ var MATCH = [
     var total = MODULES.length + 1, n = S.done.length;
     var pct = Math.round(n / total * 100);
     document.getElementById('j-fill').style.width = pct + '%';
-    document.getElementById('j-pct').textContent = pct === 100 ? '100% 🎉 Ready for Lecture 1' : pct + '%';
+    document.getElementById('j-pct').textContent = pct === 100 ? '100% 🎉 Mission complete!' : pct + '%';
     MODULES.forEach(function(m){ document.getElementById(m.id).classList.toggle('done', S.done.indexOf(m.id) !== -1); });
     document.querySelectorAll('.j-step').forEach(function(s){
       var id = s.getAttribute('data-go');
@@ -800,7 +800,7 @@ var MATCH = [
     if(!best || D.score > best.score || (D.score === best.score && secs < best.secs)) S.drill = {score: D.score, secs: secs};
     if(D.score >= 8 && S.done.indexOf('drill-sec') === -1) S.done.push('drill-sec');
     save(); render();
-    var msg = D.score === 10 ? '🏆 Perfect! You are ready for Lecture 1.' : D.score >= 8 ? '🎉 Great, you passed! (8+ unlocks the final step)' : '💪 Review the flip cards and try again. 8/10 passes.';
+    var msg = D.score === 10 ? '🏆 Perfect! Mission Zero complete. You are ready for Lecture 1.' : D.score >= 8 ? '🎉 Great, you passed! (8+ unlocks the final step)' : '💪 Review the flip cards and try again. 8/10 passes.';
     document.getElementById('drill-area').innerHTML = '<div class="drill-stats"><div><b>' + D.score + '/10</b>score</div><div><b>' + secs + 's</b>time</div><div><b>' + S.drill.score + '/10 · ' + S.drill.secs + 's</b>best</div></div>' +
       '<p style="margin:14px 0;">' + msg + '</p><button class="btn pri big" id="drill-again">↻ Try again</button>';
     document.getElementById('drill-again').onclick = drillStart;
