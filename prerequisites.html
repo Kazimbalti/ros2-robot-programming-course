@@ -12,103 +12,156 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Before You Begin — Linux &amp; ROS 2 Toolkit</title>
-<meta name="description" content="The prerequisite toolkit for ROS and Robot Programming: the Linux terminal, shell productivity, Git, and the ROS 2 command line — with a readiness checklist, searchable command reference, two warm-up labs with solutions, and downloadable handbooks.">
+<title>Before You Begin — 2-Hour Linux &amp; ROS 2 Bootcamp</title>
+<meta name="description" content="A 2-hour interactive bootcamp before Lecture 1: flip cards, type-the-command challenges, a permissions calculator, a topic/service/action game, a final speed drill, and a printable ROS 2 Humble cheat sheet.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="book.css">
 <style>
-  code, pre{font-family:'JetBrains Mono', monospace; direction:ltr; text-align:left;}
+  .mono, code{font-family:'JetBrains Mono', monospace;}
   code{background:#eceaf9; border:1px solid #dcdaf3; border-radius:6px; padding:1px 6px; font-size:.86em; color:var(--accent-ink);}
-  pre{background:#181a2e; border-radius:16px; padding:18px 20px; overflow-x:auto; margin:18px 0; font-size:.86em; line-height:1.65; box-shadow:0 12px 28px -16px rgba(24,26,46,0.5);}
-  pre code{background:none; border:none; padding:0; color:#d8dcff; display:block;}
-  pre .c{color:#7f86b5;}
-  td code{white-space:nowrap;}
-  td.ex code{white-space:normal; word-break:break-word;}
   html[data-theme="dark"] code{background:#262a45; border-color:#3a3f5c;}
+  .cover{padding:44px 40px;}
+  .cover h1{font-size:2.3em;}
 
-  .toc{background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:22px 28px; columns:2; column-gap:32px;}
-  .toc strong{display:block; column-span:all; margin-bottom:6px;}
-  .toc a{display:block; padding:5px 0; color:var(--text); text-decoration:none; font-size:.92em; break-inside:avoid;}
-  .toc a:hover{color:var(--accent-ink);}
-  .toc a span{color:var(--muted); font-weight:700; margin-inline-end:8px; font-family:'JetBrains Mono', monospace; font-size:.85em;}
-  @media (max-width:640px){ .toc{columns:1;} }
+  /* ---- journey bar ---- */
+  .journey{position:sticky; top:52px; z-index:60; background:var(--bg); padding:10px 0 12px; margin-bottom:18px;}
+  .j-top{display:flex; justify-content:space-between; align-items:center; font-size:.82em; font-weight:700; color:var(--muted); margin-bottom:6px;}
+  .j-top b{color:var(--accent-ink); font-family:'JetBrains Mono', monospace;}
+  .j-bar{height:8px; border-radius:99px; background:var(--panel2); overflow:hidden; margin-bottom:10px;}
+  .j-fill{height:100%; width:0; background:linear-gradient(90deg,var(--accent),var(--purple),var(--accent2)); transition:width .4s ease;}
+  .j-steps{display:flex; gap:6px; flex-wrap:wrap;}
+  .j-step{flex:1; min-width:92px; border:1px solid var(--border); background:var(--panel); border-radius:12px; padding:6px 8px; cursor:pointer; text-align:center; font-size:.74em; font-weight:700; color:var(--muted); line-height:1.35; transition:.15s;}
+  .j-step:hover{border-color:var(--accent);}
+  .j-step .ji{display:block; font-size:1.25em;}
+  .j-step.done{background:#eafaf3; border-color:#9fe0c2; color:var(--accent2);}
+  .j-step.open{border-color:var(--accent); color:var(--accent-ink); box-shadow:0 0 0 2px rgba(61,75,245,.15);}
+  html[data-theme="dark"] .j-step.done{background:#16302a; border-color:#1f4a3d;}
 
-  .num{display:inline-flex; align-items:center; justify-content:center; min-width:38px; height:38px; padding:0 10px; border-radius:11px; background:var(--accent); color:#fff; font-size:.6em; font-weight:800; flex-shrink:0; font-family:'JetBrains Mono', monospace;}
+  /* ---- module panels ---- */
+  .mod{background:var(--panel); border:1px solid var(--border); border-radius:20px; margin:14px 0; overflow:hidden;}
+  .mod-head{display:flex; align-items:center; gap:14px; padding:16px 20px; cursor:pointer; user-select:none;}
+  .mod-ic{width:46px; height:46px; border-radius:14px; background:#eef0ff; display:flex; align-items:center; justify-content:center; font-size:1.4em; flex-shrink:0;}
+  html[data-theme="dark"] .mod-ic{background:#1f2242;}
+  .mod-t{flex:1;}
+  .mod-t b{display:block; font-size:1.05em;}
+  .mod-t span{color:var(--muted); font-size:.85em;}
+  .mod-min{font-family:'JetBrains Mono', monospace; font-size:.78em; font-weight:700; color:var(--gold); background:#fdf3e4; border:1px solid #f2ddb3; padding:3px 10px; border-radius:99px; white-space:nowrap;}
+  html[data-theme="dark"] .mod-min{background:#3a2f18; border-color:#5c4826;}
+  .mod-check{width:28px; height:28px; border-radius:50%; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; color:transparent; font-size:14px; flex-shrink:0;}
+  .mod.done .mod-check{background:var(--accent2); border-color:var(--accent2); color:#fff;}
+  .mod-body{display:none; padding:4px 20px 22px; border-top:1px solid var(--border);}
+  .mod.open .mod-body{display:block;}
+  .lbl{font-size:.74em; font-weight:800; letter-spacing:.8px; text-transform:uppercase; color:var(--muted); margin:22px 0 10px;}
+  .hook{background:#eef0ff; border:1px solid #d6dafc; border-radius:14px; padding:12px 16px; margin-top:16px; font-weight:600; font-size:.95em;}
+  html[data-theme="dark"] .hook{background:#1f2242; border-color:#383d6b;}
 
-  /* roadmap */
-  .roadmap{display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin:22px 0;}
-  .step{background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:16px 18px; position:relative;}
-  .step .sn{font-family:'JetBrains Mono', monospace; font-size:.75em; font-weight:800; color:var(--gold); letter-spacing:.5px;}
-  .step b{display:block; margin:4px 0 4px; font-size:.98em;}
-  .step span{color:var(--muted); font-size:.84em; line-height:1.55; display:block;}
+  /* ---- flip cards ---- */
+  .cards{display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:10px;}
+  .fc{perspective:900px; height:118px; cursor:pointer;}
+  .fc-in{position:relative; width:100%; height:100%; transition:transform .45s; transform-style:preserve-3d;}
+  .fc.flip .fc-in{transform:rotateY(180deg);}
+  .fc-f, .fc-b{position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:14px; padding:12px; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;}
+  .fc-f{background:#181a2e; color:#d8dcff; font-family:'JetBrains Mono', monospace; font-weight:700; font-size:.92em; line-height:1.4; word-break:break-word;}
+  .fc-f small{position:absolute; bottom:7px; font-family:Inter, sans-serif; font-weight:600; font-size:.66em; color:#7f86b5;}
+  .fc-b{background:var(--panel2); border:1px solid var(--border); transform:rotateY(180deg); font-size:.86em; line-height:1.4;}
+  .fc-b b{display:block; margin-bottom:5px;}
+  .fc-b code{font-size:.78em; word-break:break-all;}
+  .deck-tools{display:flex; gap:8px; margin-top:10px;}
 
-  /* downloads */
-  .dl-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px; margin:22px 0;}
-  .dl{display:flex; gap:16px; align-items:flex-start; background:var(--panel); border:1px solid var(--border); border-radius:18px; padding:20px; text-decoration:none; color:var(--text); transition:transform .15s, box-shadow .15s, border-color .15s;}
-  .dl:hover{transform:translateY(-2px); box-shadow:0 16px 32px -20px rgba(33,31,26,0.3); border-color:#c7cbfa;}
-  .dl .pdf{flex-shrink:0; width:48px; height:58px; border-radius:8px; background:#fdeeec; border:1px solid #f6d2cd; color:var(--danger); font-weight:800; font-size:.72em; display:flex; align-items:flex-end; justify-content:center; padding-bottom:8px; font-family:'JetBrains Mono', monospace;}
-  .dl b{display:block; font-size:1.02em; margin-bottom:4px;}
-  .dl span{display:block; color:var(--muted); font-size:.85em; line-height:1.55;}
-  .dl em{display:inline-block; margin-top:8px; font-style:normal; font-size:.8em; font-weight:700; color:var(--accent);}
-  html[data-theme="dark"] .dl .pdf{background:#3a2220; border-color:#5c332e;}
+  /* ---- buttons ---- */
+  .btn{font-family:inherit; font-size:.82em; font-weight:700; border-radius:99px; padding:7px 14px; border:1px solid var(--border); background:var(--panel); color:var(--text); cursor:pointer; transition:.15s;}
+  .btn:hover{border-color:var(--accent); color:var(--accent-ink);}
+  .btn.pri{background:var(--accent); border-color:var(--accent); color:#fff;}
+  .btn.pri:hover{filter:brightness(1.1); color:#fff;}
+  .btn.big{font-size:.95em; padding:11px 22px;}
 
-  /* readiness checklist */
-  .checklist{background:var(--panel); border:1px solid var(--border); border-radius:18px; padding:8px 22px 18px; margin:22px 0;}
-  .checklist .ck-head{display:flex; align-items:center; gap:14px; padding:12px 0 10px; border-bottom:1px solid var(--border); flex-wrap:wrap;}
-  .checklist .ck-bar{flex:1; min-width:160px; height:8px; border-radius:99px; background:var(--panel2); overflow:hidden;}
-  .checklist .ck-fill{height:100%; width:0; background:linear-gradient(90deg,var(--accent),var(--accent2)); transition:width .3s ease;}
-  .checklist .ck-score{font-family:'JetBrains Mono', monospace; font-weight:800; color:var(--accent-ink); font-size:.9em;}
-  .checklist label{display:flex; gap:12px; align-items:flex-start; padding:9px 0; border-bottom:1px solid rgba(33,31,26,0.06); cursor:pointer; font-size:.94em;}
-  .checklist label:last-of-type{border-bottom:none;}
-  .checklist input{margin-top:6px; width:17px; height:17px; accent-color:var(--accent2); flex-shrink:0;}
-  .checklist label .where{margin-inline-start:auto; color:var(--muted); font-size:.8em; white-space:nowrap; padding-inline-start:10px;}
-  .ck-msg{margin-top:10px; font-size:.9em; color:var(--muted);}
-  html[data-theme="dark"] .checklist label{border-bottom-color:rgba(255,255,255,0.07);}
+  /* ---- type-it terminal tasks ---- */
+  .task{background:#181a2e; border-radius:14px; padding:12px 14px; margin:8px 0;}
+  .task-q{color:#c9cdff; font-size:.9em; margin-bottom:8px; display:flex; gap:8px; align-items:flex-start;}
+  .task-q .st{flex-shrink:0;}
+  .task-row{display:flex; gap:6px; align-items:center; flex-wrap:wrap;}
+  .task-row .pr{color:#7ee7c7; font-family:'JetBrains Mono', monospace; font-size:.88em;}
+  .task-row input{flex:1; min-width:180px; background:#0f1122; border:1px solid #2e3252; color:#fff; border-radius:8px; padding:8px 10px; font-family:'JetBrains Mono', monospace; font-size:.88em;}
+  .task-row input:focus{outline:2px solid #7c86ff; outline-offset:0;}
+  .task-row .btn{background:#262a45; border-color:#3a3f5c; color:#d8dcff; padding:6px 11px;}
+  .task-fb{font-family:'JetBrains Mono', monospace; font-size:.82em; margin-top:7px; min-height:1em; color:#9aa0c8;}
+  .task.ok{box-shadow:inset 0 0 0 2px #34d399;}
+  .task.ok input{border-color:#34d399;}
+  .task-fb.ok{color:#7ee7c7;} .task-fb.bad{color:#ff9d91;}
 
-  /* command search */
-  .cmd-search{position:sticky; top:52px; z-index:50; background:var(--bg); padding:10px 0; margin:6px 0 4px;}
-  .cmd-search input{width:100%; padding:11px 16px 11px 38px; border-radius:999px; border:1px solid var(--border); background:var(--panel); color:var(--text); font-family:inherit; font-size:.9em;}
-  .cmd-search input:focus{outline:2px solid var(--accent); outline-offset:1px;}
-  .cmd-search .si{position:absolute; left:15px; top:50%; transform:translateY(-50%); opacity:.55; font-size:.85em; pointer-events:none;}
-  .cmd-search .count{position:absolute; right:16px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:.78em; font-weight:700;}
-  tr.hide{display:none;}
-  .cmd-group.hide{display:none;}
+  /* ---- do it list ---- */
+  .doit label{display:flex; gap:10px; align-items:flex-start; padding:7px 0; font-size:.92em; cursor:pointer;}
+  .doit input{margin-top:5px; accent-color:var(--accent2); width:16px; height:16px; flex-shrink:0;}
+  .doit code{font-size:.82em;}
+  .mod-foot{display:flex; justify-content:flex-end; margin-top:18px;}
 
-  /* labs */
-  .exercise{border-radius:14px; padding:14px 20px; margin:12px 0; background:var(--panel); border:1px solid var(--border); border-inline-start:4px solid var(--gold);}
-  .exercise p{margin:0;}
-  .exercise .n{font-family:'JetBrains Mono', monospace; font-weight:800; color:var(--gold); margin-inline-end:6px;}
-  details{margin-top:10px;}
-  details summary{cursor:pointer; font-size:.84em; font-weight:700; color:var(--accent); list-style:none;}
-  details summary::-webkit-details-marker{display:none;}
-  details summary::before{content:"▸ "; }
-  details[open] summary::before{content:"▾ ";}
-  details pre{margin:10px 0 4px;}
+  /* ---- permission calculator ---- */
+  .perm{display:grid; grid-template-columns:auto repeat(3, 56px) 60px; gap:6px; align-items:center; max-width:380px;}
+  .perm .h{font-size:.74em; font-weight:800; color:var(--muted); text-align:center;}
+  .perm .who{font-weight:700; font-size:.88em; padding-inline-end:8px;}
+  .pbit{height:40px; border-radius:10px; border:1px solid var(--border); background:var(--panel2); font-family:'JetBrains Mono', monospace; font-weight:800; cursor:pointer; color:var(--muted); font-size:.95em;}
+  .pbit.on{background:var(--accent); border-color:var(--accent); color:#fff;}
+  .perm .sum{font-family:'JetBrains Mono', monospace; font-weight:800; font-size:1.3em; color:var(--accent-ink); text-align:center;}
+  .perm-out{margin-top:12px; font-family:'JetBrains Mono', monospace; font-size:.95em;}
+  .perm-goal{margin-top:8px; font-size:.88em; font-weight:700;}
 
-  /* concept diagram */
-  .figure{margin:24px 0; text-align:center;}
-  .figure svg{max-width:100%; height:auto; background:var(--panel); border:1px solid var(--border); border-radius:16px;}
-  .figure figcaption{color:var(--muted); font-size:.86em; margin-top:10px;}
-  .d-node{fill:#eef0ff; stroke:var(--accent); stroke-width:1.6;}
-  .d-topic{fill:#eafaf3; stroke:var(--accent2); stroke-width:1.6;}
-  .d-srv{fill:#fdf3e4; stroke:var(--gold); stroke-width:1.6;}
-  .d-t{fill:var(--text); font:600 13px Inter, sans-serif;}
-  .d-s{fill:var(--muted); font:500 11px 'JetBrains Mono', monospace;}
-  .d-line{stroke:var(--accent2); stroke-width:1.8; fill:none;}
-  .d-line2{stroke:var(--gold); stroke-width:1.8; fill:none; stroke-dasharray:5 4;}
-  html[data-theme="dark"] .d-node{fill:#1f2242;}
-  html[data-theme="dark"] .d-topic{fill:#16302a;}
-  html[data-theme="dark"] .d-srv{fill:#3a2f18;}
+  /* ---- match game ---- */
+  .mg-row{display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--border); flex-wrap:wrap;}
+  .mg-row:last-child{border-bottom:none;}
+  .mg-s{flex:1; min-width:210px; font-size:.92em;}
+  .mg-o{display:flex; gap:5px; flex-wrap:wrap;}
+  .mg-o button{font-family:inherit; font-size:.76em; font-weight:700; padding:5px 10px; border-radius:99px; border:1px solid var(--border); background:var(--panel2); color:var(--text); cursor:pointer;}
+  .mg-o button.right{background:var(--accent2); border-color:var(--accent2); color:#fff;}
+  .mg-o button.wrong{background:var(--danger); border-color:var(--danger); color:#fff; opacity:.75;}
+  .mg-score{font-weight:800; color:var(--accent-ink); margin-top:10px;}
 
-  .qref td:first-child{font-weight:700; white-space:nowrap;}
-  .qref td:last-child{font-family:'JetBrains Mono', monospace; font-size:.86em;}
+  /* ---- graph diagram ---- */
+  .graph{width:100%; height:auto; background:var(--panel2); border-radius:14px; border:1px solid var(--border);}
+  .g-node{fill:var(--panel); stroke:var(--accent); stroke-width:2;}
+  .g-t{fill:var(--text); font:700 13px Inter, sans-serif;}
+  .g-s{fill:var(--muted); font:600 11px 'JetBrains Mono', monospace;}
+  .g-topic{stroke:var(--accent2); stroke-width:2.5; fill:none;}
+  .g-srv{stroke:var(--gold); stroke-width:2.5; fill:none; stroke-dasharray:6 5;}
+
+  /* ---- speed drill ---- */
+  .drill{background:#181a2e; border-radius:20px; padding:26px; color:#d8dcff; text-align:center;}
+  .drill h3{color:#fff; margin:0 0 6px;}
+  .drill p{color:#aeb2d6; margin:0 0 16px;}
+  .drill .task{background:#0f1122; text-align:left; max-width:620px; margin:14px auto;}
+  .drill-stats{display:flex; justify-content:center; gap:26px; font-family:'JetBrains Mono', monospace; font-size:.9em; margin-bottom:6px;}
+  .drill-stats b{color:#7ee7c7; font-size:1.3em; display:block;}
+  .drill .btn{background:#262a45; border-color:#3a3f5c; color:#d8dcff;}
+  .drill .btn.pri{background:var(--accent); border-color:var(--accent); color:#fff;}
+
+  /* ---- Humble cheat sheet ---- */
+  .cs-head{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;}
+  .cs{display:grid; grid-template-columns:repeat(auto-fill, minmax(270px, 1fr)); gap:12px; margin-top:14px;}
+  .cs-box{background:var(--panel); border:1px solid var(--border); border-radius:14px; overflow:hidden; break-inside:avoid;}
+  .cs-box h4{margin:0; padding:7px 12px; background:#22294a; color:#fff; font-size:.8em; letter-spacing:.6px; text-transform:uppercase;}
+  .cs-box.y h4{background:#22314a;}
+  .cs-box pre{margin:0; padding:9px 12px; font-family:'JetBrains Mono', monospace; font-size:.72em; line-height:1.6; white-space:pre-wrap; word-break:break-word; color:var(--text); background:transparent;}
+  .cs-box pre i{font-style:normal; color:var(--muted);}
+  .cs-tag{display:inline-block; background:#e9f0ff; color:#2732b8; border:1px solid #cdd8fb; font-weight:800; font-size:.72em; padding:2px 9px; border-radius:99px;}
+  html[data-theme="dark"] .cs-tag{background:#1f2242; color:#aab1ff; border-color:#383d6b;}
 
   @media (max-width:640px){
-    .cover{padding:40px 24px;}
-    .cover h1{font-size:1.9em;}
-    .checklist label .where{display:none;}
-    .cmd-search{top:0;}
+    .journey{top:0;}
+    .cover{padding:32px 22px;}
+    .cover h1{font-size:1.8em;}
+    .j-step{min-width:70px; font-size:.68em;}
+    .perm{grid-template-columns:auto repeat(3, 44px) 48px;}
+  }
+  @media print{
+    body{background:#fff;}
+    .coursenav, #theme-toggle, #annot-tb, .wrap > *:not(#cheatsheet){display:none !important;}
+    #cheatsheet .btn{display:none;}
+    .wrap{padding:0; max-width:none;}
+    .cs{grid-template-columns:repeat(3, 1fr); gap:6px;}
+    .cs-box{border-color:#bbb;}
+    .cs-box h4{-webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    .cs-box pre{font-size:7.4pt; color:#000; padding:5px 8px;}
+    #cheatsheet h2{margin:0 0 4px; font-size:15pt;}
   }
 </style>
 <link rel="stylesheet" href="projector.css">
@@ -129,788 +182,637 @@
 <div class="wrap">
 
   <div class="cover">
-    <div class="kicker">Lecture 0 &nbsp;·&nbsp; Before You Begin &nbsp;·&nbsp; Self-paced</div>
-    <h1>The Linux &amp; ROS&nbsp;2 Toolkit</h1>
-    <div class="subtitle">Every robot in this course is driven from a terminal. This page gives you the commands, habits and mental models you need before Lecture&nbsp;1, so the lectures can be spent on robotics instead of fighting the shell.</div>
+    <div class="kicker">Lecture 0 &nbsp;·&nbsp; Before You Begin</div>
+    <h1>2-Hour Linux &amp; ROS&nbsp;2 Bootcamp</h1>
+    <div class="subtitle">6 short modules. Flip the cards 🃏 → type the commands ⌨️ → beat the final drill ⚡</div>
     <div class="meta-row">
-      <div class="chip">Time: 4–6 hours, spread over a week</div>
-      <div class="chip">Ubuntu 22.04 · ROS 2 Humble (Jazzy on 24.04)</div>
-      <div class="chip">2 warm-up labs with solutions</div>
-      <div class="chip">2 downloadable handbooks</div>
+      <div class="chip">⏱ 120 minutes</div>
+      <div class="chip">Ubuntu 22.04 · ROS 2 Humble</div>
+      <div class="chip">Progress saves automatically</div>
     </div>
   </div>
 
-  <div class="toc">
-    <strong>On this page</strong>
-    <a href="#why"><span>0.1</span>Why this comes first</a>
-    <a href="#ready"><span>0.2</span>Readiness self-check</a>
-    <a href="#downloads"><span>0.3</span>Handbooks to download</a>
-    <a href="#linux"><span>0.4</span>Linux essentials</a>
-    <a href="#env"><span>0.5</span>Environment &amp; <code>~/.bashrc</code></a>
-    <a href="#shell"><span>0.6</span>Work like an expert: shell, tmux, Git</a>
-    <a href="#ros2"><span>0.7</span>ROS 2 in one page</a>
-    <a href="#ros2cli"><span>0.8</span>The ROS 2 command line</a>
-    <a href="#pkg"><span>0.9</span>Anatomy of a ROS 2 package</a>
-    <a href="#trouble"><span>0.10</span>Troubleshooting checklist</a>
-    <a href="#labs"><span>0.11</span>Warm-up labs A &amp; B</a>
-    <a href="#qref"><span>0.12</span>One-page quick reference</a>
+  <div class="journey" id="journey">
+    <div class="j-top"><span>Your progress</span><b id="j-pct">0%</b></div>
+    <div class="j-bar"><div class="j-fill" id="j-fill"></div></div>
+    <div class="j-steps" id="j-steps"></div>
   </div>
 
-  <!-- ============================================================ -->
-  <section id="why">
-  <h2><span class="num">0.1</span>Why this comes first</h2>
-  <p>
-    ROS&nbsp;2 is not an app you click. It is a set of programs that talk to each other, and you start, inspect and
-    debug them from a Linux terminal. On the real LIMO you will often have no screen at all, only an SSH session over
-    Wi-Fi. Students who struggle in robotics courses rarely struggle with the robotics. They struggle because
-    <code>source</code>, <code>chmod +x</code>, <code>ROS_DOMAIN_ID</code> or a missing <code>colcon build</code>
-    stands between them and a moving robot.
-  </p>
-  <p>Work through the toolkit in this order. Each step is what the next one depends on:</p>
-  <div class="roadmap">
-    <div class="step"><div class="sn">STEP 1</div><b>Navigate &amp; manage files</b><span><code>pwd</code>, <code>ls</code>, <code>cd</code>, <code>mkdir -p</code>, <code>cp</code>, <code>mv</code>, <code>rm</code>: you will live inside <code>~/limo_ws</code>.</span></div>
-    <div class="step"><div class="sn">STEP 2</div><b>Read, search &amp; pipe</b><span><code>cat</code>, <code>less</code>, <code>grep</code>, <code>find</code>, <code>|</code>: turn a wall of log output into the one line you need.</span></div>
-    <div class="step"><div class="sn">STEP 3</div><b>Permissions &amp; processes</b><span><code>chmod +x</code>, <code>sudo</code>, the <code>dialout</code> group, <code>Ctrl+C</code>, <code>kill</code>: run nodes and stop the stuck ones.</span></div>
-    <div class="step"><div class="sn">STEP 4</div><b>Environment variables</b><span><code>source</code>, <code>export</code>, <code>~/.bashrc</code>: this is how ROS 2 finds its packages, and yours.</span></div>
-    <div class="step"><div class="sn">STEP 5</div><b>The ROS 2 CLI</b><span><code>ros2 &lt;verb&gt; &lt;sub-verb&gt;</code>: nodes, topics, services, actions, params, launch, bags, TF.</span></div>
-  </div>
-  <div class="box idea">
-    <div class="box-title">💡 How to study this page</div>
-    <p>Reading commands does not make you fluent. Typing them does. Keep an Ubuntu terminal open next to this page
-    and run every example yourself. Don't have Ubuntu yet? Lecture&nbsp;1 installs it. Until then you can practise the
-    Linux half in any Linux or macOS terminal, or in WSL on Windows.</p>
-  </div>
-  </section>
+  <div id="modules"></div>
 
   <div class="divider"></div>
 
-  <!-- ============================================================ -->
-  <section id="ready">
-  <h2><span class="num">0.2</span>Readiness self-check</h2>
-  <p>Tick each item you can do <strong>without looking it up</strong>. Your ticks are saved in this browser. When you
-  reach 12/12 you are ready for Lecture&nbsp;1. The right-hand column shows which section on this page covers each item.</p>
-  <div class="checklist" id="checklist">
-    <div class="ck-head">
-      <div class="ck-bar"><div class="ck-fill" id="ck-fill"></div></div>
-      <div class="ck-score" id="ck-score">0 / 12</div>
+  <!-- ===== final speed drill ===== -->
+  <section id="drill-sec">
+    <div class="drill" id="drill">
+      <h3>⚡ Final Speed Drill · 5 min</h3>
+      <p>10 random commands from every module. Type them from memory.</p>
+      <div id="drill-area"><button class="btn pri big" id="drill-start">Start the drill</button></div>
     </div>
-    <label><input type="checkbox" data-ck="1">Move around the filesystem and explain <code>/</code>, <code>~</code>, <code>.</code> and <code>..</code><span class="where">0.4</span></label>
-    <label><input type="checkbox" data-ck="2">Create nested folders in one command and copy or delete a whole directory safely<span class="where">0.4</span></label>
-    <label><input type="checkbox" data-ck="3">Edit a file in the terminal with <code>nano</code> (open, save, quit)<span class="where">0.4</span></label>
-    <label><input type="checkbox" data-ck="4">Find every <code>*.launch.py</code> file under a folder, and <code>grep</code> source code for a word<span class="where">0.4</span></label>
-    <label><input type="checkbox" data-ck="5">Chain two commands with a pipe <code>|</code>, and save output to a file with <code>&gt;</code> / <code>&gt;&gt;</code><span class="where">0.4</span></label>
-    <label><input type="checkbox" data-ck="6">Make a script executable and explain what <code>rwxr-xr--</code> means<span class="where">0.4</span></label>
-    <label><input type="checkbox" data-ck="7">Find and kill a stuck process<span class="where">0.4</span></label>
-    <label><input type="checkbox" data-ck="8">Explain what <code>source</code> does and why ROS 2 needs it in every terminal<span class="where">0.5</span></label>
-    <label><input type="checkbox" data-ck="9">SSH into another machine and copy a file to it<span class="where">0.4</span></label>
-    <label><input type="checkbox" data-ck="10">Clone a Git repository, then commit and push a change<span class="where">0.6</span></label>
-    <label><input type="checkbox" data-ck="11">Explain the difference between a topic, a service and an action<span class="where">0.7</span></label>
-    <label><input type="checkbox" data-ck="12">List topics, echo one, and publish a <code>Twist</code> from the terminal<span class="where">0.8</span></label>
-    <div class="ck-msg" id="ck-msg">Start ticking. There's no grade here, only an honest picture of where you are.</div>
-  </div>
   </section>
 
   <div class="divider"></div>
 
-  <!-- ============================================================ -->
-  <section id="downloads">
-  <h2><span class="num">0.3</span>Handbooks to download</h2>
-  <p>Two references go with this page. Print them or keep them open on a second screen. This page is a guided
-  tour through their contents. The PDFs are the full desk reference.</p>
-  <div class="dl-grid">
-    <a class="dl" href="Pre_requisits/Linux_ROS2_Command_Mastery.pdf" target="_blank" rel="noopener">
-      <div class="pdf">PDF</div>
-      <div>
-        <b>Linux &amp; ROS 2 Command Mastery</b>
-        <span>Student handbook by Dr. Muhammad Kazim, 17 pages. Part A covers Linux (31 command sections), Part B covers ROS&nbsp;2. It ends with two hands-on labs and a one-page quick reference.</span>
-        <em>Open handbook ↗</em>
+  <!-- ===== Humble cheat sheet ===== -->
+  <section id="cheatsheet">
+    <div class="cs-head">
+      <h2 style="margin:0;">📄 ROS 2 Humble Cheat Sheet</h2>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <span class="cs-tag">Humble · Ubuntu 22.04 · Python 3.10</span>
+        <button class="btn pri" onclick="window.print()">🖨 Print / Save as PDF</button>
       </div>
-    </a>
-    <a class="dl" href="Pre_requisits/ROS-2-Cheat-Sheet_Jazzy_FINAL.pdf" target="_blank" rel="noopener">
-      <div class="pdf">PDF</div>
-      <div>
-        <b>ROS 2 Cheat Sheet (Jazzy)</b>
-        <span>Two-page poster from Clearpath Robotics: workspaces, package layout, <code>CMakeLists.txt</code> and <code>setup.py</code> skeletons, and the core <code>ros2</code> CLI. Everything except the Jazzy-specific notes applies to Humble.</span>
-        <em>Open cheat sheet ↗</em>
-      </div>
-    </a>
-  </div>
-  <p style="font-size:.85em; color:var(--muted);">The ROS&nbsp;2 cheat sheet is © Clearpath Robotics by Rockwell Automation. The official copy is at <a href="https://www.clearpathrobotics.com/ros-cheat-sheet" target="_blank" rel="noopener">clearpathrobotics.com/ros-cheat-sheet</a>.</p>
-  </section>
-
-  <div class="divider"></div>
-
-  <!-- ============================================================ -->
-  <section id="linux">
-  <h2><span class="num">0.4</span>Linux essentials</h2>
-  <p>These are the commands you will use every week, with examples taken from real robot work. Type in the box
-  to filter every command table on this page, for example <code>grep</code>, <code>ssh</code>, <code>topic</code> or <code>kill</code>.</p>
-
-  <div class="cmd-search">
-    <span class="si">🔎</span>
-    <input type="text" id="cmd-filter" placeholder="Filter commands… (e.g. chmod, ssh, topic, bag)" aria-label="Filter commands">
-    <span class="count" id="cmd-count"></span>
-  </div>
-
-  <div class="cmd-group">
-  <h3>The filesystem &amp; navigation</h3>
-  <p>Linux has one tree that starts at <code>/</code>. Your home is <code>/home/&lt;user&gt;</code>, written <code>~</code>. ROS&nbsp;2 itself lives in <code>/opt/ros/humble</code>, serial devices appear in <code>/dev</code> (<code>/dev/ttyUSB0</code>, <code>/dev/video0</code>), and system logs are in <code>/var/log</code>.</p>
-  <div class="table-scroll"><table class="cmd">
-    <tr><th>Command</th><th>What it does</th><th>Example</th></tr>
-    <tr><td><code>pwd</code></td><td>Print the directory you are in</td><td class="ex"><code>pwd</code></td></tr>
-    <tr><td><code>ls -la</code></td><td>List everything, including hidden dot-files, with details</td><td class="ex"><code>ls -la ~</code></td></tr>
-    <tr><td><code>ls -lh</code> / <code>ls -lt</code></td><td>Human-readable sizes / newest first</td><td class="ex"><code>ls -lt ~/limo_ws/src</code></td></tr>
-    <tr><td><code>cd &lt;dir&gt;</code></td><td>Change directory (<code>cd ..</code> up, <code>cd</code> home, <code>cd -</code> back)</td><td class="ex"><code>cd ~/limo_ws/src</code></td></tr>
-    <tr><td><code>tree -L 2</code></td><td>Show a directory tree two levels deep (<code>sudo apt install tree</code>)</td><td class="ex"><code>tree -L 2 ~/limo_ws</code></td></tr>
-  </table></div>
-  </div>
-
-  <div class="cmd-group">
-  <h3>Working with files &amp; directories</h3>
-  <div class="table-scroll"><table class="cmd">
-    <tr><th>Command</th><th>What it does</th><th>Example</th></tr>
-    <tr><td><code>touch</code></td><td>Create an empty file</td><td class="ex"><code>touch notes.txt</code></td></tr>
-    <tr><td><code>mkdir -p</code></td><td>Create nested directories in one go</td><td class="ex"><code>mkdir -p ~/ros2_ws/src</code></td></tr>
-    <tr><td><code>cp -r</code></td><td>Copy a directory recursively</td><td class="ex"><code>cp -r my_pkg my_pkg_old</code></td></tr>
-    <tr><td><code>mv</code></td><td>Move or rename</td><td class="ex"><code>mv old.py new.py</code></td></tr>
-    <tr><td><code>rm</code> / <code>rm -r</code></td><td>Delete a file / a directory. There is <strong>no recycle bin</strong></td><td class="ex"><code>rm -r build install log</code></td></tr>
-    <tr><td><code>ln -s</code></td><td>Create a symbolic link (shortcut)</td><td class="ex"><code>ln -s ~/datasets data</code></td></tr>
-    <tr><td><code>{a,b}</code> / <code>*</code></td><td>Brace expansion / wildcard</td><td class="ex"><code>mkdir -p pkg/{launch,config,urdf}</code></td></tr>
-  </table></div>
-  <div class="box mistake">
-    <div class="box-title">⚠️ The one command to respect</div>
-    <p><code>rm -rf</code> deletes without asking and cannot be undone. Never run it with <code>sudo</code>, and never on <code>/</code> or <code>~</code>. Run <code>pwd</code> first and check where you are.</p>
-  </div>
-  </div>
-
-  <div class="cmd-group">
-  <h3>Viewing, editing &amp; searching</h3>
-  <div class="table-scroll"><table class="cmd">
-    <tr><th>Command</th><th>What it does</th><th>Example</th></tr>
-    <tr><td><code>cat</code> / <code>less</code></td><td>Print a file / scroll through it (<kbd>q</kbd> quits, <kbd>/</kbd> searches)</td><td class="ex"><code>less /var/log/syslog</code></td></tr>
-    <tr><td><code>head</code> / <code>tail -n 20</code></td><td>First / last 20 lines</td><td class="ex"><code>tail -n 20 build.log</code></td></tr>
-    <tr><td><code>tail -f</code></td><td>Follow a file live as it grows</td><td class="ex"><code>tail -f ~/.ros/log/latest/launch.log</code></td></tr>
-    <tr><td><code>nano</code></td><td>Simple terminal editor (<kbd>Ctrl+O</kbd> save, <kbd>Ctrl+X</kbd> exit)</td><td class="ex"><code>nano ~/.bashrc</code></td></tr>
-    <tr><td><code>code .</code></td><td>Open the current folder in VS Code</td><td class="ex"><code>code ~/limo_ws</code></td></tr>
-    <tr><td><code>find -name</code></td><td>Find files by name</td><td class="ex"><code>find ~/limo_ws -name "*.launch.py"</code></td></tr>
-    <tr><td><code>grep -rn</code></td><td>Search text recursively, with line numbers</td><td class="ex"><code>grep -rn "create_publisher" src/</code></td></tr>
-    <tr><td><code>grep -i</code> / <code>-v</code></td><td>Ignore case / show non-matching lines</td><td class="ex"><code>grep -v DEBUG log.txt</code></td></tr>
-    <tr><td><code>which</code></td><td>Which executable will run?</td><td class="ex"><code>which python3</code></td></tr>
-  </table></div>
-  </div>
-
-  <div class="cmd-group">
-  <h3>Pipes &amp; redirection</h3>
-  <p>A pipe <code>|</code> feeds one command's output into the next. It is how small tools add up to powerful ones, and it is how you'll filter ROS&nbsp;2 output all course long.</p>
-  <div class="table-scroll"><table class="cmd">
-    <tr><th>Command</th><th>What it does</th><th>Example</th></tr>
-    <tr><td><code>cmd1 | cmd2</code></td><td>Pipe output of cmd1 into cmd2</td><td class="ex"><code>ros2 topic list | grep camera</code></td></tr>
-    <tr><td><code>&gt;</code> / <code>&gt;&gt;</code></td><td>Write (overwrite) / append output to a file</td><td class="ex"><code>echo "export ROS_DOMAIN_ID=7" &gt;&gt; ~/.bashrc</code></td></tr>
-    <tr><td><code>2&gt;&amp;1 | tee</code></td><td>Show output <em>and</em> save it, errors included</td><td class="ex"><code>colcon build 2&gt;&amp;1 | tee build.log</code></td></tr>
-    <tr><td><code>sort | uniq -c</code></td><td>Sort lines, count duplicates</td><td class="ex"><code>cat ids.txt | sort | uniq -c</code></td></tr>
-    <tr><td><code>wc -l</code></td><td>Count lines</td><td class="ex"><code>find /opt/ros -name "*.launch.py" | wc -l</code></td></tr>
-    <tr><td><code>sed -i</code></td><td>Find and replace inside a file</td><td class="ex"><code>sed -i 's/humble/jazzy/g' setup.sh</code></td></tr>
-  </table></div>
-  </div>
-
-  <div class="cmd-group">
-  <h3>Users, permissions &amp; ownership</h3>
-  <p>Each file has read (4), write (2) and execute (1) permissions for its <strong>u</strong>ser, <strong>g</strong>roup and <strong>o</strong>thers. <code>-rwxr-xr--</code> means owner <code>rwx</code>=7, group <code>r-x</code>=5, others <code>r--</code>=4, so <code>754</code>.</p>
-  <div class="table-scroll"><table class="cmd">
-    <tr><th>Command</th><th>What it does</th><th>Example</th></tr>
-    <tr><td><code>chmod +x</code></td><td>Make a file executable (needed for Python nodes and scripts)</td><td class="ex"><code>chmod +x my_node.py</code></td></tr>
-    <tr><td><code>chmod 755</code></td><td>Set permissions numerically</td><td class="ex"><code>chmod 755 run.sh</code></td></tr>
-    <tr><td><code>sudo chown -R</code></td><td>Take ownership back (e.g. after an accidental <code>sudo colcon build</code>)</td><td class="ex"><code>sudo chown -R $USER:$USER ~/limo_ws</code></td></tr>
-    <tr><td><code>id</code> / <code>groups</code></td><td>Who am I, and which groups am I in?</td><td class="ex"><code>groups</code></td></tr>
-    <tr><td><code>sudo usermod -aG</code></td><td>Add yourself to a group (log out and back in afterwards)</td><td class="ex"><code>sudo usermod -aG dialout $USER</code></td></tr>
-  </table></div>
-  <div class="box real">
-    <div class="box-title">🤖 Robotics note</div>
-    <p>"Permission denied" on <code>/dev/ttyUSB0</code> or <code>/dev/ttyACM0</code> (Arduino, LiDAR, motor controller) means you are not in the <code>dialout</code> group. You will hit this for real in Lectures 11–13.</p>
-  </div>
-  </div>
-
-  <div class="cmd-group">
-  <h3>Processes &amp; system monitoring</h3>
-  <div class="table-scroll"><table class="cmd">
-    <tr><th>Command</th><th>What it does</th><th>Example</th></tr>
-    <tr><td><kbd>Ctrl+C</kbd></td><td>Stop the running command (how you stop every ROS 2 node)</td><td class="ex"><code>ros2 topic echo /odom</code> → <kbd>Ctrl+C</kbd></td></tr>
-    <tr><td><code>ps aux | grep</code></td><td>Find running processes</td><td class="ex"><code>ps aux | grep gz</code></td></tr>
-    <tr><td><code>htop</code></td><td>Live CPU and memory view (<kbd>q</kbd> quits)</td><td class="ex"><code>htop</code></td></tr>
-    <tr><td><code>kill</code> / <code>kill -9</code></td><td>Ask a process to stop / force-kill it</td><td class="ex"><code>kill -9 4321</code></td></tr>
-    <tr><td><code>pkill -f</code></td><td>Kill by name pattern (great for a Gazebo that won't close)</td><td class="ex"><code>pkill -f gzserver</code></td></tr>
-    <tr><td><code>&amp;</code> / <code>jobs</code> / <code>fg</code></td><td>Run in background / list jobs / bring back to foreground</td><td class="ex"><code>fg %1</code></td></tr>
-    <tr><td><code>df -h</code> / <code>du -sh</code> / <code>free -h</code></td><td>Disk space / folder size / RAM</td><td class="ex"><code>du -sh ~/bags</code></td></tr>
-    <tr><td><code>watch -n 1</code></td><td>Re-run a command every second</td><td class="ex"><code>watch -n 1 "ros2 node list"</code></td></tr>
-  </table></div>
-  </div>
-
-  <div class="cmd-group">
-  <h3>Hardware, devices &amp; networking</h3>
-  <p>Multi-machine ROS&nbsp;2 (your laptop plus the LIMO) depends entirely on the network. These commands diagnose most problems.</p>
-  <div class="table-scroll"><table class="cmd">
-    <tr><th>Command</th><th>What it does</th><th>Example</th></tr>
-    <tr><td><code>lsusb</code></td><td>List USB devices</td><td class="ex"><code>lsusb</code></td></tr>
-    <tr><td><code>ls /dev/tty*</code></td><td>Find serial ports</td><td class="ex"><code>ls /dev/ttyUSB* /dev/ttyACM*</code></td></tr>
-    <tr><td><code>sudo dmesg -w</code></td><td>Watch kernel messages live while you plug a device in</td><td class="ex"><code>sudo dmesg -w</code></td></tr>
-    <tr><td><code>v4l2-ctl</code></td><td>List cameras (<code>sudo apt install v4l-utils</code>)</td><td class="ex"><code>v4l2-ctl --list-devices</code></td></tr>
-    <tr><td><code>ip a</code> / <code>hostname -I</code></td><td>Your network interfaces and IP addresses</td><td class="ex"><code>hostname -I</code></td></tr>
-    <tr><td><code>ping</code></td><td>Is the robot reachable?</td><td class="ex"><code>ping 192.168.1.20</code></td></tr>
-    <tr><td><code>ssh</code></td><td>Log in to the robot</td><td class="ex"><code>ssh agilex@192.168.1.20</code></td></tr>
-    <tr><td><code>scp</code> / <code>rsync -avz</code></td><td>Copy / sync files over SSH</td><td class="ex"><code>rsync -avz src/ agilex@robot:~/limo_ws/src/</code></td></tr>
-    <tr><td><code>sudo ufw status</code></td><td>Firewall status (it can silently block DDS discovery)</td><td class="ex"><code>sudo ufw status</code></td></tr>
-  </table></div>
-  </div>
-
-  <div class="cmd-group">
-  <h3>Packages, software &amp; archives</h3>
-  <div class="table-scroll"><table class="cmd">
-    <tr><th>Command</th><th>What it does</th><th>Example</th></tr>
-    <tr><td><code>sudo apt update</code></td><td>Refresh the package lists (always first)</td><td class="ex"><code>sudo apt update</code></td></tr>
-    <tr><td><code>sudo apt install</code></td><td>Install a package</td><td class="ex"><code>sudo apt install ros-humble-turtlesim</code></td></tr>
-    <tr><td><code>apt search</code></td><td>Search for a package</td><td class="ex"><code>apt search ros-humble-nav2</code></td></tr>
-    <tr><td><code>dpkg -L</code></td><td>Where did a package put its files?</td><td class="ex"><code>dpkg -L ros-humble-turtlesim</code></td></tr>
-    <tr><td><code>python3 -m venv</code></td><td>Create an isolated Python environment</td><td class="ex"><code>python3 -m venv ~/venvs/cv</code></td></tr>
-    <tr><td><code>tar -czvf</code> / <code>-xzvf</code></td><td>Create / extract a compressed archive</td><td class="ex"><code>tar -czvf ws.tar.gz limo_ws/src</code></td></tr>
-  </table></div>
-  </div>
-  </section>
-
-  <div class="divider"></div>
-
-  <!-- ============================================================ -->
-  <section id="env">
-  <h2><span class="num">0.5</span>Environment &amp; <code>~/.bashrc</code></h2>
-  <p>
-    ROS&nbsp;2 is configured almost entirely through <strong>environment variables</strong>. <code>source /opt/ros/humble/setup.bash</code>
-    doesn't install or start anything. It sets variables such as <code>PATH</code>, <code>AMENT_PREFIX_PATH</code> and
-    <code>ROS_DISTRO</code> in <em>the current terminal only</em>, so the <code>ros2</code> command can find its packages.
-    Open a new terminal and those variables are gone. That is the cause of most "package not found" mysteries.
-  </p>
-  <div class="table-scroll"><table class="cmd">
-    <tr><th>Command</th><th>What it does</th><th>Example</th></tr>
-    <tr><td><code>echo $VAR</code></td><td>Print a variable</td><td class="ex"><code>echo $ROS_DISTRO</code></td></tr>
-    <tr><td><code>export VAR=value</code></td><td>Set a variable for this terminal</td><td class="ex"><code>export ROS_DOMAIN_ID=7</code></td></tr>
-    <tr><td><code>printenv | grep ROS</code></td><td>Check which ROS variables are set</td><td class="ex"><code>printenv | grep ROS</code></td></tr>
-    <tr><td><code>source &lt;file&gt;</code></td><td>Run a file inside the current shell</td><td class="ex"><code>source ~/limo_ws/install/setup.bash</code></td></tr>
-    <tr><td><code>alias</code></td><td>Create a shortcut</td><td class="ex"><code>alias cb='colcon build --symlink-install'</code></td></tr>
-  </table></div>
-  <p>Add this block to the end of <code>~/.bashrc</code> (<code>nano ~/.bashrc</code>). It runs in every new terminal, so you only set things up once:</p>
-<pre><code><span class="c"># ---- ROS 2 setup (ROS and Robot Programming) ----</span>
-source /opt/ros/humble/setup.bash                <span class="c"># use jazzy on Ubuntu 24.04</span>
-[ -f ~/limo_ws/install/setup.bash ] &amp;&amp; source ~/limo_ws/install/setup.bash
-export ROS_DOMAIN_ID=7                            <span class="c"># pick a unique number per team (0-101)</span>
-source /usr/share/colcon_argcomplete/hook/colcon-argcomplete.bash
-alias cb='cd ~/limo_ws &amp;&amp; colcon build --symlink-install'
-alias sws='source ~/limo_ws/install/setup.bash'</code></pre>
-  <div class="box def">
-    <div class="box-title">📌 Why ROS_DOMAIN_ID matters in a lab</div>
-    <p>Every ROS&nbsp;2 computer on the same Wi-Fi <em>and</em> the same domain ID sees every other computer's topics.
-    With 30 students on domain 0, your <code>teleop</code> can drive someone else's robot. Pick a unique number per team
-    and keep it in <code>~/.bashrc</code>. On ROS&nbsp;2 Humble, <code>export ROS_LOCALHOST_ONLY=1</code> keeps traffic on
-    your own machine entirely. Jazzy replaces it with <code>ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST</code>.</p>
-  </div>
-  </section>
-
-  <div class="divider"></div>
-
-  <!-- ============================================================ -->
-  <section id="shell">
-  <h2><span class="num">0.6</span>Work like an expert: shell, tmux, Git</h2>
-  <div class="cmd-group">
-  <h3>Shell productivity</h3>
-  <div class="table-scroll"><table class="cmd">
-    <tr><th>Keys / command</th><th>What it does</th><th>Example</th></tr>
-    <tr><td><kbd>Tab</kbd></td><td>Auto-complete commands, paths and ROS 2 topics. Press twice to list options</td><td class="ex"><code>ros2 topic ec</code><kbd>Tab</kbd></td></tr>
-    <tr><td><kbd>Ctrl+R</kbd></td><td>Search your command history interactively</td><td class="ex"><kbd>Ctrl+R</kbd> <code>colcon</code></td></tr>
-    <tr><td><code>!!</code></td><td>Repeat the last command</td><td class="ex"><code>sudo !!</code></td></tr>
-    <tr><td><kbd>Ctrl+A</kbd> / <kbd>Ctrl+E</kbd></td><td>Jump to start / end of line</td><td class="ex"></td></tr>
-    <tr><td><kbd>Ctrl+U</kbd> / <kbd>Ctrl+L</kbd></td><td>Delete to start of line / clear the screen</td><td class="ex"></td></tr>
-    <tr><td><code>&amp;&amp;</code></td><td>Run the second command only if the first succeeds</td><td class="ex"><code>colcon build &amp;&amp; source install/setup.bash</code></td></tr>
-    <tr><td><code>tmux</code></td><td>Split one terminal into panes. Sessions survive SSH drops</td><td class="ex"><code>tmux new -s robot</code></td></tr>
-  </table></div>
-  <div class="box idea">
-    <div class="box-title">💡 On a robot over SSH, always work inside tmux</div>
-    <p>If Wi-Fi drops, your nodes keep running. Reconnect with <code>tmux attach -t robot</code>. Split panes with
-    <kbd>Ctrl+B</kbd> <kbd>%</kbd> (vertical) and <kbd>Ctrl+B</kbd> <kbd>"</kbd> (horizontal), and move between them with <kbd>Ctrl+B</kbd> + arrow.</p>
-  </div>
-  </div>
-
-  <div class="cmd-group">
-  <h3>Git essentials</h3>
-  <p>You will clone the course workspace in Lecture&nbsp;1 and publish your own robot's packages to GitHub in Lecture&nbsp;14.</p>
-  <div class="table-scroll"><table class="cmd">
-    <tr><th>Command</th><th>What it does</th><th>Example</th></tr>
-    <tr><td><code>git clone</code></td><td>Download a repository</td><td class="ex"><code>git clone https://github.com/Kazimbalti/limo_ros2.git ~/limo_ws</code></td></tr>
-    <tr><td><code>git status</code></td><td>What has changed?</td><td class="ex"><code>git status</code></td></tr>
-    <tr><td><code>git add</code> / <code>commit -m</code></td><td>Stage changes / save a snapshot</td><td class="ex"><code>git commit -m "Add lidar node"</code></td></tr>
-    <tr><td><code>git push</code> / <code>pull</code></td><td>Send to / get from the remote</td><td class="ex"><code>git pull origin main</code></td></tr>
-    <tr><td><code>git log --oneline</code></td><td>Compact history</td><td class="ex"><code>git log --oneline -10</code></td></tr>
-    <tr><td><code>git checkout -b</code></td><td>Create and switch to a branch</td><td class="ex"><code>git checkout -b feature/pid</code></td></tr>
-    <tr><td><code>git diff</code></td><td>Show unstaged changes</td><td class="ex"><code>git diff</code></td></tr>
-  </table></div>
-  </div>
-
-  <h3>Your first bash script</h3>
-<pre><code>#!/bin/bash
-<span class="c"># save as start_robot.sh, then: chmod +x start_robot.sh &amp;&amp; ./start_robot.sh</span>
-set -e                                  <span class="c"># stop on the first error</span>
+    </div>
+    <div class="cs">
+      <div class="cs-box"><h4>1 · Setup</h4><pre>sudo apt install ros-humble-desktop
 source /opt/ros/humble/setup.bash
-source ~/limo_ws/install/setup.bash
-echo "Starting LIMO on domain $ROS_DOMAIN_ID ..."
-ros2 launch limo_gazebosim limo_gazebo_diff.launch.py</code></pre>
-  </section>
+echo "source /opt/ros/humble/setup.bash" &gt;&gt; ~/.bashrc
+export ROS_DOMAIN_ID=7        <i># 0–101, one per team</i>
+export ROS_LOCALHOST_ONLY=1   <i># stay on this PC</i>
+printenv | grep ROS           <i># check</i>
+ros2 doctor                   <i># health check</i></pre></div>
 
-  <div class="divider"></div>
-
-  <!-- ============================================================ -->
-  <section id="ros2">
-  <h2><span class="num">0.7</span>ROS 2 in one page</h2>
-  <p>
-    A ROS&nbsp;2 robot is a team of small programs called <strong>nodes</strong>. Each does one job: a camera driver, a
-    planner, a motor controller. They talk through three kinds of connection, and picking the right one is the first
-    design decision in every ROS&nbsp;2 program you'll write.
-  </p>
-  <div class="figure">
-    <svg viewBox="0 0 720 250" role="img" aria-label="ROS 2 computation graph: a LiDAR node publishes /scan to an avoidance node, which publishes /cmd_vel to a base driver node; a teleop node calls a service; a navigator sends an action goal">
-      <defs>
-        <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0e9e6e"/></marker>
-        <marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#c8862c"/></marker>
-      </defs>
-      <rect class="d-node" x="20" y="40" width="130" height="50" rx="12"/><text class="d-t" x="85" y="62" text-anchor="middle">lidar_driver</text><text class="d-s" x="85" y="79" text-anchor="middle">node</text>
-      <rect class="d-topic" x="190" y="48" width="90" height="34" rx="17"/><text class="d-s" x="235" y="70" text-anchor="middle">/scan</text>
-      <rect class="d-node" x="320" y="40" width="130" height="50" rx="12"/><text class="d-t" x="385" y="62" text-anchor="middle">avoidance</text><text class="d-s" x="385" y="79" text-anchor="middle">node</text>
-      <rect class="d-topic" x="480" y="48" width="96" height="34" rx="17"/><text class="d-s" x="528" y="70" text-anchor="middle">/cmd_vel</text>
-      <rect class="d-node" x="600" y="40" width="104" height="50" rx="12"/><text class="d-t" x="652" y="62" text-anchor="middle">base_driver</text><text class="d-s" x="652" y="79" text-anchor="middle">node</text>
-      <path class="d-line" d="M150 65 H186" marker-end="url(#ag)"/>
-      <path class="d-line" d="M280 65 H316" marker-end="url(#ag)"/>
-      <path class="d-line" d="M450 65 H476" marker-end="url(#ag)"/>
-      <path class="d-line" d="M576 65 H596" marker-end="url(#ag)"/>
-      <rect class="d-node" x="20" y="165" width="130" height="50" rx="12"/><text class="d-t" x="85" y="187" text-anchor="middle">you (CLI)</text><text class="d-s" x="85" y="204" text-anchor="middle">client</text>
-      <rect class="d-srv" x="210" y="173" width="120" height="34" rx="8"/><text class="d-s" x="270" y="195" text-anchor="middle">/reset (service)</text>
-      <path class="d-line2" d="M150 190 H206" marker-end="url(#ao)"/>
-      <path class="d-line2" d="M330 190 C 370 190, 370 110, 385 94" marker-end="url(#ao)"/>
-      <rect class="d-node" x="440" y="165" width="120" height="50" rx="12"/><text class="d-t" x="500" y="187" text-anchor="middle">navigator</text><text class="d-s" x="500" y="204" text-anchor="middle">action client</text>
-      <rect class="d-srv" x="584" y="160" width="124" height="60" rx="8"/><text class="d-s" x="646" y="182" text-anchor="middle">/navigate_to_pose</text><text class="d-s" x="646" y="200" text-anchor="middle">goal · feedback</text><text class="d-s" x="646" y="214" text-anchor="middle">· result</text>
-      <path class="d-line2" d="M560 190 H580" marker-end="url(#ao)"/>
-      <text class="d-s" x="20" y="24">green = topic (continuous stream) · dashed = service / action (request-driven)</text>
-    </svg>
-    <figcaption>The ROS 2 computation graph. You will draw the real one for LIMO with <code>rqt_graph</code> in Lecture 2.</figcaption>
-  </div>
-  <div class="table-scroll"><table>
-    <tr><th>Concept</th><th>What it is</th><th>Use it when…</th><th>LIMO example</th></tr>
-    <tr><td><strong>Node</strong></td><td>One program doing one job</td><td>Always. Every piece of the robot is one</td><td><code>/limo_base</code></td></tr>
-    <tr><td><strong>Topic</strong></td><td>Continuous many-to-many stream (publish/subscribe)</td><td>Data flows all the time: sensors, velocity commands</td><td><code>/scan</code>, <code>/cmd_vel</code>, <code>/odom</code></td></tr>
-    <tr><td><strong>Service</strong></td><td>Request → response, quick and one-off</td><td>You want an answer now: reset, spawn, save a map</td><td><code>/reset</code></td></tr>
-    <tr><td><strong>Action</strong></td><td>Long-running goal with feedback and cancel</td><td>The task takes seconds or minutes and might be cancelled</td><td><code>/navigate_to_pose</code></td></tr>
-    <tr><td><strong>Parameter</strong></td><td>A configurable value owned by a node</td><td>Tuning without recompiling</td><td><code>max_speed: 0.5</code></td></tr>
-    <tr><td><strong>Interface</strong></td><td>The message, service or action type definition</td><td>Deciding what data looks like</td><td><code>geometry_msgs/msg/Twist</code></td></tr>
-    <tr><td><strong>Launch file</strong></td><td>Starts and configures many nodes at once</td><td>More than one node (always, in practice)</td><td><code>limo_gazebo_diff.launch.py</code></td></tr>
-    <tr><td><strong>Workspace</strong></td><td>A folder where you build your own packages</td><td>Writing any code of your own</td><td><code>~/limo_ws</code></td></tr>
-    <tr><td><strong>DDS / Domain ID</strong></td><td>The middleware. Nodes only see each other on the same domain</td><td>Several robots or teams share one network</td><td><code>ROS_DOMAIN_ID=7</code></td></tr>
-  </table></div>
-  <div class="box eng">
-    <div class="box-title">🧭 The one pattern to remember</div>
-    <p>Every command follows <code>ros2 &lt;verb&gt; &lt;sub-verb&gt; [args]</code>. Type <code>ros2</code> and press <kbd>Tab</kbd>
-    twice to see all verbs. <code>ros2 topic -h</code> lists the topic sub-verbs. If you are unsure, add <code>-h</code>.</p>
-  </div>
-  </section>
-
-  <div class="divider"></div>
-
-  <!-- ============================================================ -->
-  <section id="ros2cli">
-  <h2><span class="num">0.8</span>The ROS 2 command line</h2>
-
-  <div class="cmd-group">
-  <h3>Environment &amp; workspace</h3>
-<pre><code>mkdir -p ~/ros2_ws/src &amp;&amp; cd ~/ros2_ws
+      <div class="cs-box"><h4>2 · Workspace</h4><pre>mkdir -p ~/ros2_ws/src &amp;&amp; cd ~/ros2_ws
+git clone &lt;url&gt; -b humble src/&lt;repo&gt;
+sudo rosdep init   <i># once per PC</i>
+rosdep update
+rosdep install --from-paths src --ignore-src -r -y
 colcon build --symlink-install
-source install/setup.bash        <span class="c"># 'overlay' your workspace on top of ROS 2</span></code></pre>
-  <div class="table-scroll"><table class="cmd">
-    <tr><th>Command</th><th>What it does</th><th>Example</th></tr>
-    <tr><td><code>ros2 doctor</code></td><td>Check the installation and network for problems</td><td class="ex"><code>ros2 doctor --report</code></td></tr>
-    <tr><td><code>colcon build</code></td><td>Build all packages. Run from the workspace root, <strong>not</strong> <code>src/</code></td><td class="ex"><code>cd ~/limo_ws &amp;&amp; colcon build</code></td></tr>
-    <tr><td><code>--symlink-install</code></td><td>Python, launch and config edits take effect without rebuilding</td><td class="ex"><code>colcon build --symlink-install</code></td></tr>
-    <tr><td><code>--packages-select</code></td><td>Build only the named packages</td><td class="ex"><code>colcon build --packages-select my_pkg</code></td></tr>
-    <tr><td><code>--parallel-workers 1</code></td><td>Limit parallel jobs (stops a Raspberry Pi or a small VM freezing)</td><td class="ex"><code>colcon build --parallel-workers 1</code></td></tr>
-    <tr><td><code>rosdep install</code></td><td>Install every dependency declared in the <code>package.xml</code> files</td><td class="ex"><code>rosdep install --from-paths src --ignore-src -r -y</code></td></tr>
-    <tr><td><code>rm -rf build install log</code></td><td>Clean build. Fixes many strange errors</td><td class="ex"><code>cd ~/limo_ws &amp;&amp; rm -rf build install log</code></td></tr>
-  </table></div>
-  <div class="box mistake">
-    <div class="box-title">⚠️ Most common mistake of the whole course</div>
-    <p>After every build, run <code>source install/setup.bash</code> in <em>each</em> terminal where you will run your nodes.
-    Forgetting this is the #1 cause of <code>Package 'my_pkg' not found</code>.</p>
-  </div>
-  </div>
+source install/setup.bash    <i># every terminal!</i></pre></div>
 
-  <div class="cmd-group">
-  <h3>Packages &amp; nodes</h3>
-  <div class="table-scroll"><table class="cmd">
-    <tr><th>Command</th><th>What it does</th><th>Example</th></tr>
-    <tr><td><code>ros2 pkg create</code></td><td>Create a Python package</td><td class="ex"><code>ros2 pkg create my_py_pkg --build-type ament_python --dependencies rclpy std_msgs</code></td></tr>
-    <tr><td><code>ros2 pkg create</code></td><td>Create a C++ package</td><td class="ex"><code>ros2 pkg create my_cpp_pkg --build-type ament_cmake --dependencies rclcpp</code></td></tr>
-    <tr><td><code>ros2 pkg executables</code></td><td>List the runnable programs in a package</td><td class="ex"><code>ros2 pkg executables turtlesim</code></td></tr>
-    <tr><td><code>ros2 pkg prefix</code></td><td>Where is the package installed?</td><td class="ex"><code>ros2 pkg prefix limo_description</code></td></tr>
-    <tr><td><code>ros2 run</code></td><td>Start a node</td><td class="ex"><code>ros2 run turtlesim turtlesim_node</code></td></tr>
-    <tr><td><code>ros2 node list</code> / <code>info</code></td><td>Running nodes / a node's pubs, subs, services, actions</td><td class="ex"><code>ros2 node info /turtlesim</code></td></tr>
-    <tr><td><code>-r __ns:=</code></td><td>Put a node in a namespace (multi-robot)</td><td class="ex"><code>ros2 run turtlesim turtlesim_node --ros-args -r __ns:=/robot1</code></td></tr>
-    <tr><td><code>-r old:=new</code></td><td>Remap a topic name</td><td class="ex"><code>ros2 run turtlesim turtle_teleop_key --ros-args -r /turtle1/cmd_vel:=/cmd_vel</code></td></tr>
-    <tr><td><code>--log-level</code></td><td>Change logging verbosity</td><td class="ex"><code>ros2 run my_pkg node --ros-args --log-level debug</code></td></tr>
-  </table></div>
-  </div>
+      <div class="cs-box"><h4>3 · Build options</h4><pre>colcon build --packages-select my_pkg
+colcon build --packages-up-to my_pkg
+colcon build --parallel-workers 1  <i># small VM / Pi</i>
+colcon list
+colcon test &amp;&amp; colcon test-result --verbose
+rm -rf build install log           <i># clean build</i></pre></div>
 
-  <div class="cmd-group">
-  <h3>Topics &amp; interfaces</h3>
-  <div class="table-scroll"><table class="cmd">
-    <tr><th>Command</th><th>What it does</th><th>Example</th></tr>
-    <tr><td><code>ros2 topic list -t</code></td><td>List topics with their message types</td><td class="ex"><code>ros2 topic list -t</code></td></tr>
-    <tr><td><code>ros2 topic echo</code></td><td>Print messages as they arrive (<code>--once</code>, <code>--field</code>)</td><td class="ex"><code>ros2 topic echo /odom --field pose.pose.position</code></td></tr>
-    <tr><td><code>ros2 topic info -v</code></td><td>Type, publisher/subscriber count and QoS (debug QoS mismatches)</td><td class="ex"><code>ros2 topic info /scan -v</code></td></tr>
-    <tr><td><code>ros2 topic hz</code> / <code>bw</code></td><td>Measure publish rate / bandwidth</td><td class="ex"><code>ros2 topic hz /camera/image_raw</code></td></tr>
-    <tr><td><code>ros2 topic pub</code></td><td>Publish from the terminal (YAML syntax, <code>-r</code> rate or <code>--once</code>)</td><td class="ex"><code>ros2 topic pub -r 10 /cmd_vel geometry_msgs/msg/Twist "{linear: {x: 0.2}}"</code></td></tr>
-    <tr><td><code>ros2 interface show</code></td><td>Show the fields of a type</td><td class="ex"><code>ros2 interface show geometry_msgs/msg/Twist</code></td></tr>
-    <tr><td><code>ros2 interface proto</code></td><td>A fill-in template, ideal for <code>topic pub</code></td><td class="ex"><code>ros2 interface proto geometry_msgs/msg/Twist</code></td></tr>
-  </table></div>
-  </div>
+      <div class="cs-box"><h4>4 · Create a package</h4><pre>cd ~/ros2_ws/src
+<i># Python</i>
+ros2 pkg create my_pkg --build-type ament_python \
+  --dependencies rclpy std_msgs --node-name my_node
+<i># C++</i>
+ros2 pkg create my_cpp --build-type ament_cmake \
+  --dependencies rclcpp std_msgs
+ros2 pkg list | grep my_
+ros2 pkg executables my_pkg</pre></div>
 
-  <div class="cmd-group">
-  <h3>Services, actions &amp; parameters</h3>
-  <div class="table-scroll"><table class="cmd">
-    <tr><th>Command</th><th>What it does</th><th>Example</th></tr>
-    <tr><td><code>ros2 service list -t</code></td><td>List services with types</td><td class="ex"><code>ros2 service list -t</code></td></tr>
-    <tr><td><code>ros2 service call</code></td><td>Call a service</td><td class="ex"><code>ros2 service call /spawn turtlesim/srv/Spawn "{x: 2.0, y: 2.0, theta: 0.0, name: 'turtle2'}"</code></td></tr>
-    <tr><td><code>ros2 action list -t</code></td><td>List action servers with types</td><td class="ex"><code>ros2 action list -t</code></td></tr>
-    <tr><td><code>ros2 action send_goal</code></td><td>Send a goal (<code>--feedback</code> to watch progress)</td><td class="ex"><code>ros2 action send_goal --feedback /turtle1/rotate_absolute turtlesim/action/RotateAbsolute "{theta: 1.57}"</code></td></tr>
-    <tr><td><code>ros2 param list</code> / <code>get</code> / <code>set</code></td><td>Inspect and change parameters at runtime</td><td class="ex"><code>ros2 param set /turtlesim background_r 150</code></td></tr>
-    <tr><td><code>ros2 param dump</code> / <code>load</code></td><td>Save params to YAML / load them into a running node</td><td class="ex"><code>ros2 param dump /turtlesim &gt; turtlesim.yaml</code></td></tr>
-    <tr><td><code>--params-file</code> / <code>-p</code></td><td>Start a node with a YAML file / a single value</td><td class="ex"><code>ros2 run my_pkg ctrl --ros-args -p kp:=1.2</code></td></tr>
-  </table></div>
-  </div>
+      <div class="cs-box"><h4>5 · Nodes</h4><pre>ros2 run &lt;pkg&gt; &lt;exe&gt;
+ros2 node list
+ros2 node info /turtlesim
+<i># --ros-args options</i>
+  -r old_topic:=new_topic    <i># remap</i>
+  -r __ns:=/robot1           <i># namespace</i>
+  -r __node:=new_name        <i># rename</i>
+  -p speed:=0.5              <i># parameter</i>
+  --log-level debug</pre></div>
 
-  <div class="cmd-group">
-  <h3>Launch, bags, TF &amp; tools</h3>
-  <div class="table-scroll"><table class="cmd">
-    <tr><th>Command</th><th>What it does</th><th>Example</th></tr>
-    <tr><td><code>ros2 launch</code></td><td>Start a launch file with arguments</td><td class="ex"><code>ros2 launch limo_gazebosim limo_gazebo_diff.launch.py use_rviz:=true</code></td></tr>
-    <tr><td><code>--show-args</code></td><td>List the arguments a launch file accepts</td><td class="ex"><code>ros2 launch nav2_bringup navigation_launch.py --show-args</code></td></tr>
-    <tr><td><code>ros2 bag record</code></td><td>Record topics (<code>-o</code> names the bag, <code>-a</code> records everything)</td><td class="ex"><code>ros2 bag record -o run1 /scan /odom /tf</code></td></tr>
-    <tr><td><code>ros2 bag info</code> / <code>play</code></td><td>Inspect / replay (<code>-r 0.5</code> slower, <code>-l</code> loop, <code>--clock</code>)</td><td class="ex"><code>ros2 bag play run1 -r 0.5 -l</code></td></tr>
-    <tr><td><code>view_frames</code></td><td>Generate a PDF of the whole TF tree</td><td class="ex"><code>ros2 run tf2_tools view_frames</code></td></tr>
-    <tr><td><code>tf2_echo</code></td><td>Print the transform between two frames</td><td class="ex"><code>ros2 run tf2_ros tf2_echo odom base_link</code></td></tr>
-    <tr><td><code>static_transform_publisher</code></td><td>Publish a fixed transform (e.g. a sensor mount)</td><td class="ex"><code>ros2 run tf2_ros static_transform_publisher --x 0.1 --z 0.2 --frame-id base_link --child-frame-id laser</code></td></tr>
-    <tr><td><code>rviz2</code></td><td>3D visualisation of robots, maps, point clouds and TF</td><td class="ex"><code>rviz2 -d my_config.rviz</code></td></tr>
-    <tr><td><code>rqt_graph</code></td><td>Graph of nodes and topics: who talks to whom</td><td class="ex"><code>rqt_graph</code></td></tr>
-    <tr><td><code>rqt_console</code> / <code>plotjuggler</code></td><td>Filter log messages / plot topic fields over time</td><td class="ex"><code>ros2 run plotjuggler plotjuggler</code></td></tr>
-    <tr><td><code>ros2 daemon stop</code></td><td>Reset the discovery cache (fixes stale topic and node lists)</td><td class="ex"><code>ros2 daemon stop &amp;&amp; ros2 daemon start</code></td></tr>
-    <tr><td><code>ros2 multicast</code></td><td>Test whether two machines can discover each other</td><td class="ex"><code>ros2 multicast receive</code></td></tr>
-  </table></div>
-  </div>
-  </section>
+      <div class="cs-box"><h4>6 · Topics</h4><pre>ros2 topic list -t
+ros2 topic info /scan -v     <i># + QoS</i>
+ros2 topic echo /odom
+ros2 topic echo /odom --field pose.pose.position
+ros2 topic hz /scan
+ros2 topic bw /camera/image_raw
+ros2 topic pub -r 10 /cmd_vel geometry_msgs/msg/Twist \
+  "{linear: {x: 0.2}, angular: {z: 0.5}}"
+ros2 topic pub --once /topic std_msgs/msg/String "{data: hi}"</pre></div>
 
-  <div class="divider"></div>
+      <div class="cs-box"><h4>7 · Services</h4><pre>ros2 service list -t
+ros2 service type /spawn
+ros2 service call /spawn turtlesim/srv/Spawn \
+  "{x: 2.0, y: 2.0, theta: 0.0, name: 'turtle2'}"
+ros2 service call /reset std_srvs/srv/Empty</pre></div>
 
-  <!-- ============================================================ -->
-  <section id="pkg">
-  <h2><span class="num">0.9</span>Anatomy of a ROS 2 package</h2>
-  <p>Every package you write or clone has the same skeleton. Knowing which file does what tells you where to look when a build fails.</p>
-  <div class="table-scroll"><table>
-    <tr><th>File / folder</th><th>Python package (<code>ament_python</code>)</th><th>C++ package (<code>ament_cmake</code>)</th></tr>
-    <tr><td><code>package.xml</code></td><td colspan="2">Name, version, maintainer and <strong>dependencies</strong>. <code>rosdep</code> reads this</td></tr>
-    <tr><td>Build instructions</td><td><code>setup.py</code> + <code>setup.cfg</code></td><td><code>CMakeLists.txt</code></td></tr>
-    <tr><td>Source code</td><td><code>package_name/*.py</code></td><td><code>src/*.cpp</code> + <code>include/package_name/*.hpp</code></td></tr>
-    <tr><td>Other folders</td><td colspan="2"><code>launch/</code>, <code>config/</code>, <code>urdf/</code>. Custom <code>msg/</code>, <code>srv/</code>, <code>action/</code> definitions go in a CMake package</td></tr>
-  </table></div>
+      <div class="cs-box"><h4>8 · Actions</h4><pre>ros2 action list -t
+ros2 action info /turtle1/rotate_absolute
+ros2 action send_goal --feedback \
+  /turtle1/rotate_absolute \
+  turtlesim/action/RotateAbsolute "{theta: 1.57}"</pre></div>
 
-  <h3>Python: register nodes and install launch files in <code>setup.py</code></h3>
-<pre><code>import os
-from glob import glob
-from setuptools import find_packages, setup
+      <div class="cs-box"><h4>9 · Parameters</h4><pre>ros2 param list /turtlesim
+ros2 param get /turtlesim background_r
+ros2 param set /turtlesim background_r 150
+ros2 param dump /turtlesim &gt; params.yaml
+ros2 param load /turtlesim params.yaml
+ros2 run pkg exe --ros-args --params-file params.yaml</pre></div>
 
-package_name = 'my_pkg'
+      <div class="cs-box"><h4>10 · Interfaces</h4><pre>ros2 interface list
+ros2 interface show geometry_msgs/msg/Twist
+ros2 interface proto geometry_msgs/msg/Twist
+ros2 interface package nav_msgs</pre></div>
 
-setup(
-    name=package_name,
-    packages=find_packages(exclude=['test']),
-    data_files=[
-        ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
-        ('share/' + package_name, ['package.xml']),
-        <span class="c"># without these two lines, 'ros2 launch' can't find your launch/config files</span>
-        (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
-        (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
-    ],
-    install_requires=['setuptools'],
-    entry_points={
-        'console_scripts': [
-            <span class="c"># executable name = module:function  →  ros2 run my_pkg my_node</span>
-            'my_node = my_pkg.my_node:main',
-        ],
-    },
-)</code></pre>
+      <div class="cs-box"><h4>11 · Launch</h4><pre>ros2 launch &lt;pkg&gt; &lt;file&gt;.launch.py arg:=value
+ros2 launch &lt;pkg&gt; &lt;file&gt;.launch.py --show-args
+ros2 launch limo_gazebosim limo_gazebo_diff.launch.py \
+  use_rviz:=true</pre></div>
 
-  <h3>C++: the <code>CMakeLists.txt</code> essentials</h3>
-<pre><code>cmake_minimum_required(VERSION 3.8)
-project(my_cpp_pkg)
+      <div class="cs-box"><h4>12 · Bags</h4><pre>ros2 bag record -o run1 /scan /odom /tf
+ros2 bag record -a              <i># all topics (big!)</i>
+ros2 bag info run1
+ros2 bag play run1 -r 0.5 -l    <i># half speed, loop</i>
+ros2 bag play run1 --clock</pre></div>
+
+      <div class="cs-box"><h4>13 · TF2</h4><pre>ros2 run tf2_tools view_frames      <i># → frames.pdf</i>
+ros2 run tf2_ros tf2_echo odom base_link
+ros2 run tf2_ros static_transform_publisher \
+  --x 0.1 --z 0.2 --frame-id base_link \
+  --child-frame-id laser</pre></div>
+
+      <div class="cs-box"><h4>14 · Tools &amp; debugging</h4><pre>rviz2                 rqt_graph
+rqt                   rqt_console
+ros2 run rqt_image_view rqt_image_view
+ros2 topic echo /rosout
+ros2 daemon stop &amp;&amp; ros2 daemon start
+ros2 multicast receive   <i># PC B</i>
+ros2 multicast send      <i># PC A</i></pre></div>
+
+      <div class="cs-box y"><h4>15 · Python package files</h4><pre>my_pkg/
+├─ package.xml       <i># deps (rosdep)</i>
+├─ setup.py          <i># nodes + data files</i>
+├─ setup.cfg
+├─ resource/my_pkg
+├─ launch/  config/
+└─ my_pkg/my_node.py
+
+<i># setup.py</i>
+entry_points={'console_scripts': [
+  'my_node = my_pkg.my_node:main']},
+data_files=[ ...,
+  (os.path.join('share', package_name, 'launch'),
+   glob('launch/*.launch.py'))]</pre></div>
+
+      <div class="cs-box y"><h4>16 · C++ CMakeLists.txt</h4><pre>cmake_minimum_required(VERSION 3.8)
+project(my_cpp)
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-
 add_executable(my_node src/my_node.cpp)
 ament_target_dependencies(my_node rclcpp)
+install(TARGETS my_node
+  DESTINATION lib/${PROJECT_NAME})
+install(DIRECTORY launch config
+  DESTINATION share/${PROJECT_NAME})
+ament_package()</pre></div>
 
-install(TARGETS my_node DESTINATION lib/${PROJECT_NAME})
-install(DIRECTORY launch config DESTINATION share/${PROJECT_NAME})
-
-ament_package()</code></pre>
-
-  <h3>A minimal Python launch file</h3>
-<pre><code><span class="c"># my_pkg/launch/demo.launch.py</span>
-from launch import LaunchDescription
+      <div class="cs-box y"><h4>17 · Minimal launch file</h4><pre>from launch import LaunchDescription
 from launch_ros.actions import Node
 
 def generate_launch_description():
     return LaunchDescription([
-        Node(package='turtlesim', executable='turtlesim_node', name='sim'),
-        Node(package='turtlesim', executable='turtle_teleop_key',
-             prefix='xterm -e', output='screen'),
-    ])</code></pre>
+        Node(package='turtlesim',
+             executable='turtlesim_node'),
+    ])</pre></div>
+
+      <div class="cs-box y"><h4>18 · Fix it fast</h4><pre>Package not found   → source install/setup.bash
+No executable found → entry_points / install()
+Echo shows nothing  → ros2 topic info -v (QoS)
+Can't see nodes     → same ROS_DOMAIN_ID?
+Build freezes       → --parallel-workers 1
+/dev/ttyUSB0 denied → usermod -aG dialout $USER
+Gazebo won't start  → pkill -f gzserver</pre></div>
+    </div>
+    <p style="font-size:.8em; color:var(--muted); margin-top:12px;">ROS 2 Humble Hawksbill (LTS, supported until May 2027). Using Ubuntu 24.04? Replace <code>humble</code> with <code>jazzy</code>. There, <code>ROS_LOCALHOST_ONLY</code> becomes <code>ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST</code>.</p>
   </section>
 
   <div class="divider"></div>
 
-  <!-- ============================================================ -->
-  <section id="trouble">
-  <h2><span class="num">0.10</span>Troubleshooting checklist</h2>
-  <p>Before you ask for help, run <code>ros2 node list</code>, <code>ros2 topic list -t</code>, <code>ros2 topic info -v</code> and <code>rqt_graph</code>, and read the <em>full</em> error message. Most problems are in this table:</p>
-  <div class="table-scroll"><table class="cmd">
-    <tr><th>Symptom</th><th>Likely cause</th><th>Fix / check</th></tr>
-    <tr><td>Package not found</td><td>Workspace not built or not sourced</td><td class="ex"><code>colcon build &amp;&amp; source install/setup.bash</code></td></tr>
-    <tr><td>No executable found</td><td>Missing <code>entry_points</code> in <code>setup.py</code>, or <code>install()</code> in <code>CMakeLists.txt</code></td><td class="ex"><code>ros2 pkg executables my_pkg</code></td></tr>
-    <tr><td>Topic listed, but echo prints nothing</td><td>QoS mismatch (sensor data is often <code>BEST_EFFORT</code>)</td><td class="ex"><code>ros2 topic info /scan -v</code></td></tr>
-    <tr><td>Nodes can't see each other</td><td>Different <code>ROS_DOMAIN_ID</code>, a firewall, or different networks</td><td class="ex"><code>echo $ROS_DOMAIN_ID ; ros2 multicast receive</code></td></tr>
-    <tr><td>Other people's topics show up on your machine</td><td>Shared Wi-Fi and the same domain</td><td class="ex"><code>export ROS_DOMAIN_ID=23</code></td></tr>
-    <tr><td>TF "extrapolation" errors</td><td>Clock mismatch or a missing <code>use_sim_time</code></td><td class="ex"><code>--ros-args -p use_sim_time:=true</code></td></tr>
-    <tr><td>Build freezes the VM or Pi</td><td>Out of RAM from parallel compiling</td><td class="ex"><code>colcon build --parallel-workers 1</code></td></tr>
-    <tr><td>Serial device: permission denied</td><td>User not in the <code>dialout</code> group</td><td class="ex"><code>sudo usermod -aG dialout $USER</code></td></tr>
-    <tr><td>Stale nodes or topics listed after a crash</td><td>The discovery daemon cached old entries</td><td class="ex"><code>ros2 daemon stop &amp;&amp; ros2 daemon start</code></td></tr>
-    <tr><td>Gazebo won't reopen ("address in use")</td><td>A leftover <code>gzserver</code> is still running</td><td class="ex"><code>pkill -f gzserver ; pkill -f gzclient</code></td></tr>
-  </table></div>
-  </section>
-
-  <div class="divider"></div>
-
-  <!-- ============================================================ -->
-  <section id="labs">
-  <h2><span class="num">0.11</span>Warm-up labs A &amp; B</h2>
-  <p>Do each task without scrolling back up, then open the solution to check. If you finish both labs without
-  opening a solution, you are well prepared for Lecture&nbsp;1.</p>
-
-  <h3>Lab A — Linux fluency challenge</h3>
-  <p>Terminal only. Write down each command you used.</p>
-
-  <div class="exercise"><p><span class="n">A1</span>Create <code>~/labA/{data,scripts,logs}</code> in a single command.</p>
-    <details><summary>Solution</summary><pre><code>mkdir -p ~/labA/{data,scripts,logs}</code></pre></details></div>
-  <div class="exercise"><p><span class="n">A2</span>Create five files <code>sensor_1.csv</code> … <code>sensor_5.csv</code> in <code>data</code> with one command.</p>
-    <details><summary>Solution</summary><pre><code>touch ~/labA/data/sensor_{1..5}.csv</code></pre></details></div>
-  <div class="exercise"><p><span class="n">A3</span>Write the header <code>time,value</code> into <code>sensor_1.csv</code>, then append three data lines.</p>
-    <details><summary>Solution</summary><pre><code>cd ~/labA/data
-echo "time,value" &gt; sensor_1.csv
-printf "0,1.2\n1,1.5\n2,1.9\n" &gt;&gt; sensor_1.csv
-cat sensor_1.csv</code></pre></details></div>
-  <div class="exercise"><p><span class="n">A4</span>Count the lines in all the CSV files together, and find the largest file.</p>
-    <details><summary>Solution</summary><pre><code>cat *.csv | wc -l          <span class="c"># total line count</span>
-ls -lS *.csv | head -n 2   <span class="c"># -S sorts by size, largest first</span></code></pre></details></div>
-  <div class="exercise"><p><span class="n">A5</span>Write a script <code>scripts/hello.sh</code> that prints your name and the date. Make it executable and run it.</p>
-    <details><summary>Solution</summary><pre><code>cd ~/labA
-printf '#!/bin/bash\necho "Hello, I am $USER"\ndate\n' &gt; scripts/hello.sh
-chmod +x scripts/hello.sh
-./scripts/hello.sh</code></pre></details></div>
-  <div class="exercise"><p><span class="n">A6</span>Find every file under <code>/opt/ros</code> whose name ends in <code>.launch.py</code>, and count them.</p>
-    <details><summary>Solution</summary><pre><code>find /opt/ros -name "*.launch.py" | wc -l</code></pre></details></div>
-  <div class="exercise"><p><span class="n">A7</span>Start <code>sleep 500</code> in the background, find its PID with <code>ps</code>, and kill it.</p>
-    <details><summary>Solution</summary><pre><code>sleep 500 &amp;
-ps aux | grep "sleep 500"   <span class="c"># PID is the 2nd column</span>
-kill &lt;PID&gt;                  <span class="c"># or: kill %1</span></code></pre></details></div>
-  <div class="exercise"><p><span class="n">A8</span>Save the output of <code>ip a</code> to <code>logs/net.txt</code> and extract only the lines containing <em>inet</em>.</p>
-    <details><summary>Solution</summary><pre><code>ip a &gt; ~/labA/logs/net.txt
-grep inet ~/labA/logs/net.txt</code></pre></details></div>
-  <div class="exercise"><p><span class="n">A9</span>Create an alias <code>ll</code> for <code>ls -lah</code> that still works after you open a new terminal.</p>
-    <details><summary>Solution</summary><pre><code>echo "alias ll='ls -lah'" &gt;&gt; ~/.bashrc
-source ~/.bashrc</code></pre></details></div>
-  <div class="exercise"><p><span class="n">A10</span>Compress <code>~/labA</code> into <code>labA.tar.gz</code>, delete the folder, then restore it.</p>
-    <details><summary>Solution</summary><pre><code>cd ~
-tar -czvf labA.tar.gz labA
-rm -r labA
-tar -xzvf labA.tar.gz
-ls labA</code></pre></details></div>
-
-  <h3>Lab B — ROS 2 command mastery with turtlesim</h3>
-  <p>Install with <code>sudo apt install ros-humble-turtlesim 'ros-humble-rqt*'</code> (replace <em>humble</em> with <em>jazzy</em> on Ubuntu 24.04). Use a separate terminal for each running node.</p>
-
-  <div class="exercise"><p><span class="n">B1</span>Set <code>ROS_DOMAIN_ID</code> to your roll number modulo 100 and make it permanent.</p>
-    <details><summary>Solution</summary><pre><code>echo "export ROS_DOMAIN_ID=$(( 2345 % 100 ))" &gt;&gt; ~/.bashrc   <span class="c"># replace 2345 with your roll number</span>
-source ~/.bashrc &amp;&amp; echo $ROS_DOMAIN_ID</code></pre></details></div>
-  <div class="exercise"><p><span class="n">B2</span>Start <code>turtlesim_node</code> and <code>turtle_teleop_key</code>. Open <code>rqt_graph</code> and explain every arrow.</p>
-    <details><summary>Solution</summary><pre><code>ros2 run turtlesim turtlesim_node        <span class="c"># terminal 1</span>
-ros2 run turtlesim turtle_teleop_key     <span class="c"># terminal 2</span>
-rqt_graph                                <span class="c"># terminal 3</span>
-<span class="c"># /teleop_turtle --/turtle1/cmd_vel--&gt; /turtlesim : key presses become velocity commands</span></code></pre></details></div>
-  <div class="exercise"><p><span class="n">B3</span>Find the message type of <code>/turtle1/cmd_vel</code> and print its fields.</p>
-    <details><summary>Solution</summary><pre><code>ros2 topic info /turtle1/cmd_vel          <span class="c"># Type: geometry_msgs/msg/Twist</span>
-ros2 interface show geometry_msgs/msg/Twist</code></pre></details></div>
-  <div class="exercise"><p><span class="n">B4</span>Make the turtle drive in a circle at 1&nbsp;Hz using only <code>ros2 topic pub</code>.</p>
-    <details><summary>Solution</summary><pre><code>ros2 topic pub -r 1 /turtle1/cmd_vel geometry_msgs/msg/Twist \
-  "{linear: {x: 2.0}, angular: {z: 1.8}}"</code></pre></details></div>
-  <div class="exercise"><p><span class="n">B5</span>Measure the publishing rate of <code>/turtle1/pose</code>, then print only the x coordinate.</p>
-    <details><summary>Solution</summary><pre><code>ros2 topic hz /turtle1/pose
-ros2 topic echo /turtle1/pose --field x</code></pre></details></div>
-  <div class="exercise"><p><span class="n">B6</span>Spawn <em>turtle2</em> at (3, 3) with a service call, then clear the screen.</p>
-    <details><summary>Solution</summary><pre><code>ros2 service call /spawn turtlesim/srv/Spawn "{x: 3.0, y: 3.0, theta: 0.0, name: 'turtle2'}"
-ros2 service call /clear std_srvs/srv/Empty</code></pre></details></div>
-  <div class="exercise"><p><span class="n">B7</span>Change the background to blue at runtime, dump all parameters to YAML, and restart the node from that file.</p>
-    <details><summary>Solution</summary><pre><code>ros2 param set /turtlesim background_r 0
-ros2 param set /turtlesim background_g 0
-ros2 param set /turtlesim background_b 255
-ros2 param dump /turtlesim &gt; turtlesim.yaml
-<span class="c"># Ctrl+C the node, then:</span>
-ros2 run turtlesim turtlesim_node --ros-args --params-file turtlesim.yaml</code></pre></details></div>
-  <div class="exercise"><p><span class="n">B8</span>Rotate turtle1 to 90° with an action goal while watching the feedback. Then cancel a goal part-way with <kbd>Ctrl+C</kbd>.</p>
-    <details><summary>Solution</summary><pre><code>ros2 action send_goal --feedback /turtle1/rotate_absolute \
-  turtlesim/action/RotateAbsolute "{theta: 1.57}"</code></pre></details></div>
-  <div class="exercise"><p><span class="n">B9</span>Run a second turtlesim in the namespace <code>/robot2</code> and drive it with teleop through remapping.</p>
-    <details><summary>Solution</summary><pre><code>ros2 run turtlesim turtlesim_node --ros-args -r __ns:=/robot2
-ros2 run turtlesim turtle_teleop_key --ros-args -r /turtle1/cmd_vel:=/robot2/turtle1/cmd_vel</code></pre></details></div>
-  <div class="exercise"><p><span class="n">B10</span>Record 20&nbsp;s of <code>/turtle1/cmd_vel</code> while driving, reset the sim, and replay the bag at 2× speed.</p>
-    <details><summary>Solution</summary><pre><code>ros2 bag record -o turtle_run /turtle1/cmd_vel   <span class="c"># drive ~20 s, then Ctrl+C</span>
-ros2 service call /reset std_srvs/srv/Empty
-ros2 bag play turtle_run -r 2.0</code></pre></details></div>
-  <div class="exercise"><p><span class="n">B11</span>Create a Python package <code>lab_b</code> with a launch file that starts both turtlesims from B9. Build it, source it and launch it.</p>
-    <details><summary>Solution outline</summary><pre><code>cd ~/ros2_ws/src
-ros2 pkg create lab_b --build-type ament_python --dependencies rclpy
-mkdir -p lab_b/launch     <span class="c"># write two_sims.launch.py (see 0.9) with namespace='robot2' on the 2nd Node</span>
-<span class="c"># add the launch/ line to data_files in setup.py (see 0.9), then:</span>
-cd ~/ros2_ws &amp;&amp; colcon build --packages-select lab_b
-source install/setup.bash
-ros2 launch lab_b two_sims.launch.py</code></pre></details></div>
-  <div class="exercise"><p><span class="n">B12</span>Break it on purpose: open a new terminal <em>without</em> sourcing and run your launch file. Read the error, then fix it.</p>
-    <details><summary>Solution</summary><pre><code><span class="c"># Error: Package 'lab_b' not found</span>
-source ~/ros2_ws/install/setup.bash   <span class="c"># or add it to ~/.bashrc (section 0.5)</span></code></pre></details></div>
-
-  <div class="box real">
-    <div class="box-title">🚀 The path to expert: weekly habits</div>
-    <ul style="margin-bottom:0;">
-      <li><strong>No GUI file manager for one week.</strong> Do everything in the terminal.</li>
-      <li><strong>Read real launch files.</strong> Run <code>ros2 pkg prefix nav2_bringup</code>, then explore its <code>share/</code> folder.</li>
-      <li><strong>Keep a personal cheat sheet</strong> of every command that solved a problem for you.</li>
-      <li><strong>Press <kbd>Tab</kbd> all the time.</strong> It prevents typos in long topic and type names.</li>
-    </ul>
-  </div>
-  </section>
-
-  <div class="divider"></div>
-
-  <!-- ============================================================ -->
-  <section id="qref">
-  <h2><span class="num">0.12</span>One-page quick reference</h2>
-  <div class="table-scroll"><table class="qref">
-    <tr><th>Area</th><th>Commands</th></tr>
-    <tr><td>Navigate</td><td>pwd · ls -la · cd &lt;dir&gt; · cd .. · cd -</td></tr>
-    <tr><td>Files</td><td>mkdir -p · cp -r · mv · rm -r · touch · ln -s</td></tr>
-    <tr><td>View</td><td>cat · less · head · tail -f · nano</td></tr>
-    <tr><td>Search</td><td>find . -name "*.py" · grep -rn text src/</td></tr>
-    <tr><td>Pipes</td><td>| · &gt; · &gt;&gt; · 2&gt;&amp;1 · tee · xargs</td></tr>
-    <tr><td>Permissions</td><td>chmod +x · chown · sudo · usermod -aG dialout $USER</td></tr>
-    <tr><td>Processes</td><td>ps aux · htop · kill -9 · pkill -f · Ctrl+C · Ctrl+Z · &amp;</td></tr>
-    <tr><td>System</td><td>df -h · du -sh · free -h · lsusb · dmesg -w</td></tr>
-    <tr><td>Network</td><td>ip a · ping · ssh · scp · rsync -avz</td></tr>
-    <tr><td>Packages</td><td>sudo apt update · apt install · apt search</td></tr>
-    <tr><td>ROS env</td><td>source /opt/ros/humble/setup.bash · ROS_DOMAIN_ID · ros2 doctor</td></tr>
-    <tr><td>Build</td><td>colcon build --symlink-install · --packages-select · source install/setup.bash</td></tr>
-    <tr><td>Deps</td><td>rosdep install --from-paths src --ignore-src -r -y</td></tr>
-    <tr><td>Create pkg</td><td>ros2 pkg create &lt;name&gt; --build-type ament_python|ament_cmake</td></tr>
-    <tr><td>Nodes</td><td>ros2 run · ros2 node list · ros2 node info</td></tr>
-    <tr><td>Topics</td><td>list -t · echo · info -v · hz · bw · pub</td></tr>
-    <tr><td>Services</td><td>ros2 service list -t · ros2 service call</td></tr>
-    <tr><td>Actions</td><td>ros2 action list -t · ros2 action send_goal --feedback</td></tr>
-    <tr><td>Params</td><td>ros2 param list · get · set · dump · load</td></tr>
-    <tr><td>Interfaces</td><td>ros2 interface show · ros2 interface proto</td></tr>
-    <tr><td>Launch</td><td>ros2 launch &lt;pkg&gt; &lt;file&gt; arg:=value · --show-args</td></tr>
-    <tr><td>Bags</td><td>ros2 bag record -o name · info · play -r 0.5</td></tr>
-    <tr><td>TF</td><td>view_frames · tf2_echo a b · static_transform_publisher</td></tr>
-    <tr><td>Tools</td><td>rviz2 · rqt_graph · rqt_console · plotjuggler</td></tr>
-    <tr><td>Remap</td><td>--ros-args -r old:=new · -r __ns:=/robot1 · -p key:=val</td></tr>
-  </table></div>
-  </section>
+  <a class="info-card" href="Pre_requisits/Linux_ROS2_Command_Mastery.pdf" target="_blank" rel="noopener">
+    <div class="ic">📘</div>
+    <div class="it"><b>Want more depth? Linux &amp; ROS 2 Command Mastery (PDF)</b><span>The full 17-page handbook by Dr. Muhammad Kazim: every command, two labs and a quick reference.</span></div>
+    <div class="ia">↗</div>
+  </a>
 
   <div class="footer-nav">
     <a href="index.html">&larr; Home</a>
     <a href="01-installation-vmware-ros2-limo-intro.html">Lecture 1: Getting Started &rarr;</a>
   </div>
-
-  <p class="footer-note">ROS and Robot Programming &nbsp;·&nbsp; Before You Begin &nbsp;·&nbsp; Dr. Muhammad Kazim</p>
-
 </div>
 
 <script>
+/* ============================================================
+   Bootcamp content (data-driven — edit here)
+   cards: [command, meaning, example]
+   tasks: {q, a (model answer), re: [accepted regexes]}
+   ============================================================ */
+var MODULES = [
+  { id:'m1', ic:'📁', t:'Navigate & manage files', min:20,
+    why:'You will live inside ~/limo_ws. Move fast and never get lost.',
+    cards:[
+      ['pwd','Where am I?','pwd'],
+      ['ls -la','List everything, hidden files too','ls -la ~'],
+      ['cd','Go to a folder. cd .. = up, cd = home','cd ~/limo_ws'],
+      ['mkdir -p','Make folders, parents too','mkdir -p ws/src'],
+      ['cp -r','Copy a folder','cp -r pkg pkg_old'],
+      ['mv','Move or rename','mv a.py b.py'],
+      ['rm -r','Delete a folder. No recycle bin!','rm -r build'],
+      ['touch','Create an empty file','touch notes.txt']
+    ],
+    tasks:[
+      {q:'Go to your home folder', a:'cd ~', re:[/^cd( ~\/?)?$/]},
+      {q:'Create ~/ros2_ws/src in ONE command', a:'mkdir -p ~/ros2_ws/src', re:[/^mkdir -p ~\/ros2_ws\/src\/?$/, /^mkdir ~\/ros2_ws\/src\/? -p$/]},
+      {q:'List all files (incl. hidden) with details', a:'ls -la', re:[/^ls -(la|al|lah|lha|alh)( \S+)?$/]},
+      {q:'Rename old.py to new.py', a:'mv old.py new.py', re:[/^mv old\.py new\.py$/]}
+    ],
+    doit:['Open a terminal: <code>Ctrl+Alt+T</code>','Run <code>mkdir -p ~/labA/{data,scripts,logs}</code> then <code>ls ~/labA</code>','Delete it again with <code>rm -r ~/labA</code>'],
+    hook:'🧠 mkdir -p = make parents. rm has no undo, so check pwd first.' },
+
+  { id:'m2', ic:'🔎', t:'Read, search & pipe', min:15,
+    why:'Robots print a lot. Find the one line you need.',
+    cards:[
+      ['cat','Print a whole file','cat package.xml'],
+      ['less','Scroll a file (q = quit)','less log.txt'],
+      ['tail -f','Watch a file grow live','tail -f build.log'],
+      ['nano','Edit in the terminal. Ctrl+O save, Ctrl+X exit','nano ~/.bashrc'],
+      ['find -name','Find files by name','find . -name "*.py"'],
+      ['grep -rn','Search text in all files','grep -rn Twist src/'],
+      ['|','Pipe: send output to the next command','ls | grep py'],
+      ['> / >>','Save output: overwrite / add to the end','echo hi >> a.txt']
+    ],
+    tasks:[
+      {q:'Find all *.launch.py files under /opt/ros', a:'find /opt/ros -name "*.launch.py"', re:[/^find \/opt\/ros\/? -name ["']?\*\.launch\.py["']?$/]},
+      {q:'Search "Twist" in folder src/ (recursive + line numbers)', a:'grep -rn Twist src/', re:[/^grep -(rn|nr) ["']?Twist["']? src\/?$/]},
+      {q:'Add the line hello to the END of notes.txt', a:'echo hello >> notes.txt', re:[/^echo ["']?hello["']? >> notes\.txt$/]},
+      {q:'Count how many .py files are in this folder (find + pipe)', a:'find . -name "*.py" | wc -l', re:[/^find \.? ?-name ["']?\*\.py["']? \| wc -l$/, /^ls \*\.py \| wc -l$/]}
+    ],
+    doit:['<code>find /opt/ros/humble -name "*.launch.py" | wc -l</code> tells you how many launch files ROS ships with','<code>nano test.txt</code>, type something, save, exit, then <code>cat test.txt</code>'],
+    hook:'🧠 | = pass it on.  > = overwrite.  >> = add to the end.' },
+
+  { id:'m3', ic:'🔐', t:'Permissions & processes', min:15,
+    why:'Run your nodes. Stop the stuck ones. Unlock USB devices.',
+    extra:'perm',
+    cards:[
+      ['chmod +x','Make a file executable','chmod +x node.py'],
+      ['sudo','Run as admin (only when needed)','sudo apt update'],
+      ['usermod -aG dialout','Allow USB serial (/dev/ttyUSB0). Log out after','sudo usermod -aG dialout $USER'],
+      ['Ctrl+C','Stop the running program / node','—'],
+      ['ps aux | grep','Find a running process','ps aux | grep gz'],
+      ['kill -9','Force-kill by PID','kill -9 4321'],
+      ['pkill -f','Kill by name','pkill -f gzserver'],
+      ['htop','Live CPU / RAM monitor','htop']
+    ],
+    tasks:[
+      {q:'Make my_node.py executable', a:'chmod +x my_node.py', re:[/^chmod (\+x|u\+x|a\+x|755|775|777) my_node\.py$/]},
+      {q:'Give yourself access to serial devices (/dev/ttyUSB0)', a:'sudo usermod -aG dialout $USER', re:[/^sudo usermod -a ?-?G dialout (\$USER|\$\(whoami\)|\w+)$/]},
+      {q:'Force-kill process 4321', a:'kill -9 4321', re:[/^kill -(9|KILL|SIGKILL) 4321$/]},
+      {q:'Kill every process named gzserver', a:'pkill -f gzserver', re:[/^(pkill( -f)?|killall) gzserver$/]}
+    ],
+    doit:['Run <code>sleep 500 &amp;</code>, find it with <code>ps aux | grep sleep</code>, then <code>kill</code> it','Run <code>groups</code>. Is <code>dialout</code> there?'],
+    hook:'🧠 r=4 w=2 x=1. Add them per person: 7 = rwx, 5 = r-x, 4 = r--' },
+
+  { id:'m4', ic:'⚙️', t:'Environment & .bashrc', min:15,
+    why:'"Package not found" is almost always a missing source. Learn why.',
+    cards:[
+      ['source /opt/ros/humble/setup.bash','Activate ROS 2 in THIS terminal','—'],
+      ['source install/setup.bash','Activate YOUR workspace (after every build)','cd ~/limo_ws'],
+      ['export','Set a variable for this terminal','export ROS_DOMAIN_ID=7'],
+      ['echo $VAR','Print a variable','echo $ROS_DISTRO'],
+      ['printenv | grep ROS','Show all ROS variables','—'],
+      ['~/.bashrc','Runs in EVERY new terminal: put setup here','nano ~/.bashrc'],
+      ['alias','Make a shortcut','alias cb="colcon build"'],
+      ['ROS_DOMAIN_ID','Team channel 0–101. Same ID = same robots','export ROS_DOMAIN_ID=7']
+    ],
+    tasks:[
+      {q:'Activate ROS 2 Humble in this terminal', a:'source /opt/ros/humble/setup.bash', re:[/^(source|\.) \/opt\/ros\/humble\/setup\.bash$/]},
+      {q:'Put yourself on team channel (domain) 7', a:'export ROS_DOMAIN_ID=7', re:[/^export ROS_DOMAIN_ID=7$/]},
+      {q:'Print which ROS distro is active', a:'echo $ROS_DISTRO', re:[/^echo \$ROS_DISTRO$/, /^printenv ROS_DISTRO$/]},
+      {q:'Make ROS 2 load in every new terminal (append to ~/.bashrc)', a:'echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc', re:[/^echo ["']source \/opt\/ros\/humble\/setup\.bash["'] >> ~\/\.bashrc$/]}
+    ],
+    doit:['Open a NEW terminal and run <code>ros2</code>. Does it work? If not, you need the <code>~/.bashrc</code> line','Add <code>export ROS_DOMAIN_ID=&lt;your number&gt;</code> to <code>~/.bashrc</code>'],
+    hook:'🧠 New terminal = empty memory. Source again, or put it in ~/.bashrc once.' },
+
+  { id:'m5', ic:'🧩', t:'ROS 2 in one picture', min:20,
+    why:'A robot = many small programs (nodes) talking. Pick the right way to talk.',
+    extra:'graph',
+    cards:[
+      ['Node','One program, one job','/camera_driver'],
+      ['Topic 📻','Non-stop stream. Many talk, many listen','/scan, /cmd_vel'],
+      ['Service ❓','Ask once, get one answer','/reset, /spawn'],
+      ['Action 📦','Long task: feedback + cancel','/navigate_to_pose'],
+      ['Parameter 🎛','A setting inside a node','max_speed: 0.5'],
+      ['Interface','The data shape','geometry_msgs/msg/Twist'],
+      ['Launch file','Start many nodes at once','bringup.launch.py'],
+      ['Workspace','Folder you build your code in','~/limo_ws']
+    ],
+    tasks:[],
+    doit:['Say out loud: "LiDAR → topic. Reset → service. Drive to goal → action."'],
+    hook:'🧠 Topic = radio 📻 (always on). Service = question ❓. Action = delivery order 📦 (progress + cancel).' },
+
+  { id:'m6', ic:'🐢', t:'ROS 2 command line with turtlesim', min:30,
+    why:'Every command is: ros2 <what> <do>. Lost? Add -h, or press Tab twice.',
+    cards:[
+      ['ros2 run','Start a node','ros2 run turtlesim turtlesim_node'],
+      ['ros2 node list','Who is running?','—'],
+      ['ros2 topic list -t','All topics + their types','—'],
+      ['ros2 topic echo','Watch a topic live','ros2 topic echo /turtle1/pose'],
+      ['ros2 topic pub','Publish from the terminal','... -r 1 /turtle1/cmd_vel ...'],
+      ['ros2 interface show','Show a message\'s fields','... geometry_msgs/msg/Twist'],
+      ['ros2 service call','Call a service','ros2 service call /clear std_srvs/srv/Empty'],
+      ['ros2 action send_goal','Send a goal','... --feedback /turtle1/rotate_absolute ...'],
+      ['ros2 param set','Change a setting live','ros2 param set /turtlesim background_r 150'],
+      ['ros2 launch','Start a launch file','ros2 launch pkg file.launch.py'],
+      ['ros2 bag record','Record topics','ros2 bag record -o run1 /scan'],
+      ['colcon build','Build the workspace (from its root!)','colcon build --symlink-install']
+    ],
+    tasks:[
+      {q:'Start the turtlesim simulator', a:'ros2 run turtlesim turtlesim_node', re:[/^ros2 run turtlesim turtlesim_node$/]},
+      {q:'List all topics WITH their types', a:'ros2 topic list -t', re:[/^ros2 topic list -t$/, /^ros2 topic list --show-types$/]},
+      {q:'Watch the turtle\'s position on /turtle1/pose', a:'ros2 topic echo /turtle1/pose', re:[/^ros2 topic echo \/turtle1\/pose$/]},
+      {q:'Show the fields of geometry_msgs/msg/Twist', a:'ros2 interface show geometry_msgs/msg/Twist', re:[/^ros2 interface show geometry_msgs\/msg\/Twist$/]},
+      {q:'Set /turtlesim parameter background_r to 150', a:'ros2 param set /turtlesim background_r 150', re:[/^ros2 param set \/turtlesim background_r 150$/]},
+      {q:'Build ONLY the package my_pkg', a:'colcon build --packages-select my_pkg', re:[/^colcon build (--symlink-install )?--packages-select my_pkg( --symlink-install)?$/]}
+    ],
+    doit:[
+      'Install: <code>sudo apt install ros-humble-turtlesim</code>',
+      'Terminal 1: <code>ros2 run turtlesim turtlesim_node</code> · Terminal 2: <code>ros2 run turtlesim turtle_teleop_key</code>. Drive with the arrow keys',
+      'Terminal 3: <code>rqt_graph</code>. See the arrow from teleop to turtlesim',
+      'Circle: <code>ros2 topic pub -r 1 /turtle1/cmd_vel geometry_msgs/msg/Twist "{linear: {x: 2.0}, angular: {z: 1.8}}"</code>',
+      'Spawn: <code>ros2 service call /spawn turtlesim/srv/Spawn "{x: 3.0, y: 3.0, name: \'turtle2\'}"</code>',
+      'Rotate: <code>ros2 action send_goal --feedback /turtle1/rotate_absolute turtlesim/action/RotateAbsolute "{theta: 1.57}"</code>'
+    ],
+    hook:'🧠 ros2 + node / topic / service / action / param / interface / bag + list / info / echo / call / set' }
+];
+
+var MATCH = [
+  ['LiDAR sends 10 scans every second','Topic'],
+  ['"Drive to the kitchen", report progress, allow cancel','Action'],
+  ['Reset the simulation once','Service'],
+  ['Maximum speed = 0.5 m/s','Parameter'],
+  ['Velocity commands to the wheels (/cmd_vel)','Topic'],
+  ['"Save the map now" and get OK / failed back','Service'],
+  ['Rotate to 90° and show how far it has turned','Action'],
+  ['Controller gain kp, tuned without recompiling','Parameter']
+];
+</script>
+
+<script>
 (function(){
-  var btn = document.getElementById('theme-toggle');
-  var icon = document.getElementById('theme-toggle-icon');
-  function updateIcon(){ icon.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙'; }
-  updateIcon();
+  /* ---------- theme ---------- */
+  var btn = document.getElementById('theme-toggle'), icon = document.getElementById('theme-toggle-icon');
+  function upd(){ icon.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙'; }
+  upd();
   btn.addEventListener('click', function(){
     var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
     try{ localStorage.setItem('limo-book-theme', next); }catch(e){}
-    updateIcon();
+    upd();
   });
 })();
 
 (function(){
-  /* ---- readiness self-check (saved per browser) ---- */
-  var KEY = 'limo-prereq-checklist';
-  var boxes = document.querySelectorAll('#checklist input[data-ck]');
-  var fill = document.getElementById('ck-fill');
-  var score = document.getElementById('ck-score');
-  var msg = document.getElementById('ck-msg');
-  var saved = [];
-  try{ saved = JSON.parse(localStorage.getItem(KEY) || '[]') || []; }catch(e){ saved = []; }
-  boxes.forEach(function(b){ b.checked = saved.indexOf(b.getAttribute('data-ck')) !== -1; });
-  function render(){
-    var on = [];
-    boxes.forEach(function(b){ if(b.checked) on.push(b.getAttribute('data-ck')); });
-    try{ localStorage.setItem(KEY, JSON.stringify(on)); }catch(e){}
-    var n = on.length, total = boxes.length;
-    fill.style.width = (n / total * 100) + '%';
-    score.textContent = n + ' / ' + total;
-    if(n === 0) msg.textContent = "Start ticking. There's no grade here, only an honest picture of where you are.";
-    else if(n < 6) msg.textContent = 'Good start. Work through sections 0.4–0.5 and do Lab A.';
-    else if(n < total) msg.textContent = 'Nearly there. Finish the unticked items and try Lab B.';
-    else msg.textContent = '🎉 Ready for Lecture 1. See you in the lab!';
+  /* ---------- state ---------- */
+  var KEY = 'limo-bootcamp-v1';
+  var S = {done:[], tasks:{}, doit:{}, drill:null};
+  try{ var raw = JSON.parse(localStorage.getItem(KEY)); if(raw) for(var k in raw) S[k] = raw[k]; }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+
+  function norm(s){ return s.replace(/^\s*\$\s*/, '').trim().replace(/\s+/g, ' '); }
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function matches(task, v){ v = norm(v); return task.re.some(function(r){ return r.test(v); }); }
+
+  /* ---------- builders ---------- */
+  function cardsHTML(m){
+    return '<div class="lbl">🃏 Flip cards · tap to reveal</div><div class="cards">' +
+      m.cards.map(function(c){
+        return '<div class="fc" tabindex="0"><div class="fc-in"><div class="fc-f">' + esc(c[0]) + '<small>tap to flip</small></div>' +
+               '<div class="fc-b"><b>' + esc(c[1]) + '</b>' + (c[2] && c[2] !== '—' ? '<code>' + esc(c[2]) + '</code>' : '') + '</div></div></div>';
+      }).join('') + '</div><div class="deck-tools"><button class="btn" data-deck="shuffle">🔀 Shuffle</button><button class="btn" data-deck="flipall">↻ Flip all</button></div>';
   }
-  boxes.forEach(function(b){ b.addEventListener('change', render); });
-  render();
-})();
+  function taskHTML(m, t, i){
+    var id = m.id + '-' + i, ok = S.tasks[id];
+    return '<div class="task' + (ok ? ' ok' : '') + '" data-task="' + id + '"><div class="task-q"><span class="st">' + (ok ? '✅' : '⬜') + '</span><span>' + esc(t.q) + '</span></div>' +
+      '<div class="task-row"><span class="pr">$</span><input type="text" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="type the command…" aria-label="' + esc(t.q) + '">' +
+      '<button class="btn" data-act="check">Check</button><button class="btn" data-act="hint">Hint</button><button class="btn" data-act="show">Answer</button></div>' +
+      '<div class="task-fb">' + (ok ? '✔ ' + esc(t.a) : '') + '</div></div>';
+  }
+  function permHTML(){
+    var rows = [['Owner','u'],['Group','g'],['Others','o']];
+    var h = '<div class="lbl">🔐 Permission calculator · click the bits</div><div class="perm"><span></span><span class="h">r (4)</span><span class="h">w (2)</span><span class="h">x (1)</span><span class="h">=</span>';
+    rows.forEach(function(r, ri){
+      h += '<span class="who">' + r[0] + '</span>';
+      [['r',4],['w',2],['x',1]].forEach(function(b){ h += '<button class="pbit" data-row="' + ri + '" data-v="' + b[1] + '">' + b[0] + '</button>'; });
+      h += '<span class="sum" id="psum' + ri + '">0</span>';
+    });
+    return h + '</div><div class="perm-out">ls -l shows: <b id="pstr">---------</b> → <code id="pcmd">chmod 000 file</code></div>' +
+      '<div class="perm-goal" id="pgoal">🎯 Challenge: build <code>755</code> (the usual setting for a script)</div>';
+  }
+  function graphHTML(){
+    return '<div class="lbl">📡 Watch the messages flow</div>' +
+    '<svg class="graph" viewBox="0 0 700 210" role="img" aria-label="LiDAR node publishes /scan to avoidance node, which publishes /cmd_vel to base driver; a service call and an action goal are shown dashed">' +
+    '<rect class="g-node" x="20" y="30" width="130" height="50" rx="12"/><text class="g-t" x="85" y="60" text-anchor="middle">lidar</text>' +
+    '<rect class="g-node" x="285" y="30" width="130" height="50" rx="12"/><text class="g-t" x="350" y="60" text-anchor="middle">avoidance</text>' +
+    '<rect class="g-node" x="550" y="30" width="130" height="50" rx="12"/><text class="g-t" x="615" y="60" text-anchor="middle">base_driver</text>' +
+    '<path id="p1" class="g-topic" d="M150 55 H285"/><text class="g-s" x="217" y="45" text-anchor="middle">/scan 📻</text>' +
+    '<path id="p2" class="g-topic" d="M415 55 H550"/><text class="g-s" x="482" y="45" text-anchor="middle">/cmd_vel 📻</text>' +
+    '<circle r="6" fill="#0e9e6e"><animateMotion dur="1.2s" repeatCount="indefinite"><mpath href="#p1"/></animateMotion></circle>' +
+    '<circle r="6" fill="#0e9e6e"><animateMotion dur="1.2s" begin="0.6s" repeatCount="indefinite"><mpath href="#p1"/></animateMotion></circle>' +
+    '<circle r="6" fill="#0e9e6e"><animateMotion dur="1.2s" begin="0.3s" repeatCount="indefinite"><mpath href="#p2"/></animateMotion></circle>' +
+    '<rect class="g-node" x="20" y="140" width="130" height="50" rx="12"/><text class="g-t" x="85" y="170" text-anchor="middle">you</text>' +
+    '<path id="p3" class="g-srv" d="M150 165 C 230 165, 290 120, 330 82"/><text class="g-s" x="215" y="150">/reset ❓</text>' +
+    '<circle r="6" fill="#c8862c"><animateMotion dur="3s" repeatCount="indefinite" keyPoints="0;1;0" keyTimes="0;0.5;1" calcMode="linear"><mpath href="#p3"/></animateMotion></circle>' +
+    '<rect class="g-node" x="470" y="140" width="130" height="50" rx="12"/><text class="g-t" x="535" y="170" text-anchor="middle">navigator</text>' +
+    '<path id="p4" class="g-srv" d="M600 165 C 650 165, 640 120, 625 82"/><text class="g-s" x="615" y="200" text-anchor="middle">/navigate_to_pose 📦</text>' +
+    '<circle r="6" fill="#c8862c"><animateMotion dur="2s" repeatCount="indefinite"><mpath href="#p4"/></animateMotion></circle>' +
+    '</svg>' +
+    '<div class="lbl">🎮 Game · Topic, Service, Action or Parameter?</div><div id="mg">' +
+    MATCH.map(function(m, i){
+      return '<div class="mg-row"><div class="mg-s">' + esc(m[0]) + '</div><div class="mg-o" data-mg="' + i + '">' +
+        ['Topic','Service','Action','Parameter'].map(function(o){ return '<button>' + o + '</button>'; }).join('') + '</div></div>';
+    }).join('') + '</div><div class="mg-score" id="mg-score">Score: 0 / ' + MATCH.length + '</div>';
+  }
 
-(function(){
-  /* ---- command filter across every command table ---- */
-  var input = document.getElementById('cmd-filter');
-  var count = document.getElementById('cmd-count');
-  if(!input) return;
-  var rows = Array.prototype.slice.call(document.querySelectorAll('table.cmd tr')).filter(function(r){ return !r.querySelector('th'); });
-  var groups = document.querySelectorAll('.cmd-group');
-  input.addEventListener('input', function(){
-    var q = input.value.trim().toLowerCase();
-    var shown = 0;
-    rows.forEach(function(r){
-      var hit = q === '' || r.textContent.toLowerCase().indexOf(q) !== -1;
-      r.classList.toggle('hide', !hit);
-      if(hit) shown++;
+  /* ---------- render modules ---------- */
+  var wrap = document.getElementById('modules');
+  wrap.innerHTML = MODULES.map(function(m, mi){
+    var body = '<p style="margin:14px 0 0; font-weight:600;">' + esc(m.why) + '</p>';
+    if(m.extra === 'graph') body += graphHTML();
+    body += cardsHTML(m);
+    if(m.extra === 'perm') body += permHTML();
+    if(m.tasks.length) body += '<div class="lbl">⌨️ Type it · from memory</div>' + m.tasks.map(function(t, i){ return taskHTML(m, t, i); }).join('');
+    body += '<div class="lbl">🖥 Do it in Ubuntu</div><div class="doit">' + m.doit.map(function(d, i){
+      var id = m.id + '-d' + i;
+      return '<label><input type="checkbox" data-doit="' + id + '"' + (S.doit[id] ? ' checked' : '') + '><span>' + d + '</span></label>';
+    }).join('') + '</div>';
+    body += '<div class="hook">' + esc(m.hook) + '</div>';
+    body += '<div class="mod-foot"><button class="btn pri" data-complete="' + m.id + '">✓ Done. Next module →</button></div>';
+    return '<div class="mod" id="' + m.id + '"><div class="mod-head" data-toggle="' + m.id + '"><div class="mod-ic">' + m.ic + '</div>' +
+      '<div class="mod-t"><b>Module ' + (mi + 1) + ' · ' + esc(m.t) + '</b><span>' + (m.cards.length) + ' cards' + (m.tasks.length ? ' · ' + m.tasks.length + ' challenges' : '') + (m.extra === 'graph' ? ' · 1 game' : '') + (m.extra === 'perm' ? ' · calculator' : '') + '</span></div>' +
+      '<div class="mod-min">' + m.min + ' min</div><div class="mod-check">✓</div></div><div class="mod-body">' + body + '</div></div>';
+  }).join('');
+
+  /* ---------- journey bar ---------- */
+  var steps = document.getElementById('j-steps');
+  steps.innerHTML = MODULES.map(function(m, i){
+    return '<div class="j-step" data-go="' + m.id + '"><span class="ji">' + m.ic + '</span>' + (i + 1) + ' · ' + m.min + 'm</div>';
+  }).join('') + '<div class="j-step" data-go="drill-sec"><span class="ji">⚡</span>Drill · 5m</div><div class="j-step" data-go="cheatsheet"><span class="ji">📄</span>Cheat sheet</div>';
+
+  function openMod(id, scroll){
+    document.querySelectorAll('.mod').forEach(function(el){ el.classList.toggle('open', el.id === id); });
+    render();
+    if(scroll){ var el = document.getElementById(id); if(el) setTimeout(function(){ window.scrollTo({top: el.getBoundingClientRect().top + window.scrollY - 170, behavior:'smooth'}); }, 30); }
+  }
+  function render(){
+    var total = MODULES.length + 1, n = S.done.length;
+    var pct = Math.round(n / total * 100);
+    document.getElementById('j-fill').style.width = pct + '%';
+    document.getElementById('j-pct').textContent = pct === 100 ? '100% 🎉 Ready for Lecture 1' : pct + '%';
+    MODULES.forEach(function(m){ document.getElementById(m.id).classList.toggle('done', S.done.indexOf(m.id) !== -1); });
+    document.querySelectorAll('.j-step').forEach(function(s){
+      var id = s.getAttribute('data-go');
+      s.classList.toggle('done', S.done.indexOf(id) !== -1);
+      var el = document.getElementById(id);
+      s.classList.toggle('open', !!(el && el.classList.contains('open')));
     });
-    groups.forEach(function(g){
-      var visible = g.querySelectorAll('table.cmd tr:not(.hide) td').length > 0;
-      g.classList.toggle('hide', q !== '' && !visible);
-    });
-    count.textContent = q === '' ? '' : shown + ' match' + (shown === 1 ? '' : 'es');
+  }
+
+  document.addEventListener('click', function(e){
+    var t = e.target;
+    var go = t.closest('[data-go]');
+    if(go){
+      var id = go.getAttribute('data-go');
+      if(id.charAt(0) === 'm') openMod(id, true);
+      else { var el = document.getElementById(id); window.scrollTo({top: el.getBoundingClientRect().top + window.scrollY - 170, behavior:'smooth'}); }
+      return;
+    }
+    var tog = t.closest('[data-toggle]');
+    if(tog){ var mid = tog.getAttribute('data-toggle'); var isOpen = document.getElementById(mid).classList.contains('open'); openMod(isOpen ? null : mid, false); return; }
+    var comp = t.closest('[data-complete]');
+    if(comp){
+      var cid = comp.getAttribute('data-complete');
+      if(S.done.indexOf(cid) === -1) S.done.push(cid);
+      save();
+      var idx = MODULES.findIndex(function(m){ return m.id === cid; });
+      if(idx < MODULES.length - 1) openMod(MODULES[idx + 1].id, true);
+      else { openMod(null, false); var d = document.getElementById('drill-sec'); window.scrollTo({top: d.getBoundingClientRect().top + window.scrollY - 170, behavior:'smooth'}); }
+      return;
+    }
+    var fc = t.closest('.fc');
+    if(fc){ fc.classList.toggle('flip'); return; }
+    var deck = t.closest('[data-deck]');
+    if(deck){
+      var grid = deck.parentElement.previousElementSibling;
+      if(deck.getAttribute('data-deck') === 'shuffle'){
+        var items = Array.prototype.slice.call(grid.children);
+        items.forEach(function(c){ c.classList.remove('flip'); });
+        for(var i = items.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)); grid.appendChild(items[j]); items.splice(j, 1); }
+      } else {
+        var anyFront = Array.prototype.some.call(grid.children, function(c){ return !c.classList.contains('flip'); });
+        Array.prototype.forEach.call(grid.children, function(c){ c.classList.toggle('flip', anyFront); });
+      }
+      return;
+    }
+    var act = t.closest('[data-act]');
+    if(act){ handleTask(act.closest('.task'), act.getAttribute('data-act')); return; }
+    var pb = t.closest('.pbit');
+    if(pb){ pb.classList.toggle('on'); perm(); return; }
+    var mgBtn = t.closest('.mg-o button');
+    if(mgBtn){
+      var box = mgBtn.parentElement;
+      if(box.getAttribute('data-solved')) return;
+      var q = MATCH[+box.getAttribute('data-mg')];
+      if(mgBtn.textContent === q[1]){
+        mgBtn.classList.add('right'); box.setAttribute('data-solved', box.querySelector('.wrong') ? 'late' : 'first');
+      } else mgBtn.classList.add('wrong');
+      var first = document.querySelectorAll('.mg-o[data-solved="first"]').length, all = document.querySelectorAll('.mg-o[data-solved]').length;
+      document.getElementById('mg-score').textContent = 'Score: ' + first + ' / ' + MATCH.length + (all === MATCH.length ? (first === MATCH.length ? '  🏆 Perfect!' : '  (first-try answers). Reload to retry') : '');
+      return;
+    }
   });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Enter' && e.target.matches('.task input')){ e.preventDefault(); var tk = e.target.closest('.task'); if(tk.closest('#drill-area')) drillCheck(); else handleTask(tk, 'check'); }
+    if((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('fc')){ e.preventDefault(); e.target.classList.toggle('flip'); }
+  });
+  document.addEventListener('change', function(e){
+    if(e.target.matches('[data-doit]')){ S.doit[e.target.getAttribute('data-doit')] = e.target.checked; save(); }
+  });
+
+  function findTask(id){ var p = id.split('-'); var m = MODULES.filter(function(x){ return x.id === p[0]; })[0]; return m.tasks[+p[1]]; }
+  function handleTask(el, action){
+    var id = el.getAttribute('data-task'), task = findTask(id);
+    var input = el.querySelector('input'), fb = el.querySelector('.task-fb');
+    fb.className = 'task-fb';
+    if(action === 'check'){
+      if(matches(task, input.value)){
+        el.classList.add('ok'); el.querySelector('.st').textContent = '✅';
+        fb.classList.add('ok'); fb.textContent = '✔ Correct!';
+        S.tasks[id] = true; save();
+      } else { fb.classList.add('bad'); fb.textContent = input.value.trim() ? '✘ Not quite. Try again or use a hint' : 'Type a command first'; }
+    } else if(action === 'hint'){
+      var words = task.a.split(' ');
+      fb.textContent = '💡 Starts with: ' + words.slice(0, Math.min(2, words.length - 1) || 1).join(' ') + ' …';
+    } else if(action === 'show'){
+      fb.textContent = '👉 ' + task.a + '   (now type it yourself to lock it in)';
+    }
+  }
+
+  /* ---------- permission calculator ---------- */
+  function perm(){
+    var str = '', num = '';
+    for(var r = 0; r < 3; r++){
+      var sum = 0;
+      document.querySelectorAll('.pbit[data-row="' + r + '"]').forEach(function(b){
+        var on = b.classList.contains('on');
+        if(on) sum += +b.getAttribute('data-v');
+        str += on ? b.textContent : '-';
+      });
+      document.getElementById('psum' + r).textContent = sum;
+      num += sum;
+    }
+    document.getElementById('pstr').textContent = str;
+    document.getElementById('pcmd').textContent = 'chmod ' + num + ' file';
+    var g = document.getElementById('pgoal');
+    if(num === '755') g.innerHTML = '🎉 That\'s <code>755</code>: the owner can do everything, everyone else can read and run.';
+  }
+
+  /* ---------- speed drill ---------- */
+  var D = null;
+  function allTasks(){ var a = []; MODULES.forEach(function(m){ m.tasks.forEach(function(t){ a.push(t); }); }); return a; }
+  function drillStart(){
+    var pool = allTasks();
+    for(var i = pool.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)); var tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp; }
+    D = {q: pool.slice(0, 10), i: 0, score: 0, t0: Date.now(), tries: 0};
+    drillShow();
+  }
+  function drillShow(){
+    var area = document.getElementById('drill-area');
+    var q = D.q[D.i];
+    area.innerHTML = '<div class="drill-stats"><div><b>' + (D.i + 1) + '/10</b>question</div><div><b>' + D.score + '</b>score</div><div><b id="d-time">0s</b>time</div></div>' +
+      '<div class="task" data-drill="1"><div class="task-q"><span class="st">❓</span><span>' + esc(q.q) + '</span></div>' +
+      '<div class="task-row"><span class="pr">$</span><input type="text" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="type and press Enter"><button class="btn" id="d-skip">Skip</button></div><div class="task-fb"></div></div>';
+    var inp = area.querySelector('input'); inp.focus();
+    document.getElementById('d-skip').onclick = function(){ drillReveal(false); };
+  }
+  function drillCheck(){
+    var area = document.getElementById('drill-area'), inp = area.querySelector('input'), fb = area.querySelector('.task-fb');
+    if(inp.disabled) return;
+    if(matches(D.q[D.i], inp.value)){ D.score++; fb.className = 'task-fb ok'; fb.textContent = '✔ Correct!'; inp.disabled = true; setTimeout(drillNext, 600); }
+    else { D.tries++; fb.className = 'task-fb bad'; fb.textContent = '✘ Try again (or Skip)'; if(D.tries >= 2) drillReveal(false); }
+  }
+  function drillReveal(){
+    var area = document.getElementById('drill-area'), inp = area.querySelector('input'), fb = area.querySelector('.task-fb');
+    inp.disabled = true; fb.className = 'task-fb'; fb.textContent = '👉 ' + D.q[D.i].a;
+    setTimeout(drillNext, 1800);
+  }
+  function drillNext(){
+    D.i++; D.tries = 0;
+    if(D.i < 10) drillShow(); else drillEnd();
+  }
+  function drillEnd(){
+    var secs = Math.round((Date.now() - D.t0) / 1000);
+    var best = S.drill;
+    if(!best || D.score > best.score || (D.score === best.score && secs < best.secs)) S.drill = {score: D.score, secs: secs};
+    if(D.score >= 8 && S.done.indexOf('drill-sec') === -1) S.done.push('drill-sec');
+    save(); render();
+    var msg = D.score === 10 ? '🏆 Perfect! You are ready for Lecture 1.' : D.score >= 8 ? '🎉 Great, you passed! (8+ unlocks the final step)' : '💪 Review the flip cards and try again. 8/10 passes.';
+    document.getElementById('drill-area').innerHTML = '<div class="drill-stats"><div><b>' + D.score + '/10</b>score</div><div><b>' + secs + 's</b>time</div><div><b>' + S.drill.score + '/10 · ' + S.drill.secs + 's</b>best</div></div>' +
+      '<p style="margin:14px 0;">' + msg + '</p><button class="btn pri big" id="drill-again">↻ Try again</button>';
+    document.getElementById('drill-again').onclick = drillStart;
+    D = null;
+  }
+  setInterval(function(){ if(D){ var el = document.getElementById('d-time'); if(el) el.textContent = Math.round((Date.now() - D.t0) / 1000) + 's'; } }, 500);
+  document.getElementById('drill-start').onclick = drillStart;
+  if(S.drill){ document.getElementById('drill-start').insertAdjacentHTML('afterend', '<p style="margin:12px 0 0; font-size:.85em;">Your best: ' + S.drill.score + '/10 in ' + S.drill.secs + 's</p>'); }
+
+  /* ---------- start ---------- */
+  var firstTodo = MODULES.filter(function(m){ return S.done.indexOf(m.id) === -1; })[0];
+  openMod(firstTodo ? firstTodo.id : null, false);
 })();
 </script>
 <script src="annotate.js" defer></script>

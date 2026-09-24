@@ -262,57 +262,40 @@
 
   <div class="divider"></div>
 
-  <h2 id="before-you-begin">🧰 Before You Begin — The Linux &amp; ROS 2 Toolkit</h2>
-  <p>
-    Every robot in this course is started, inspected and debugged from a <strong>Linux terminal</strong>. On the real
-    LIMO you'll often have nothing but an SSH session over Wi-Fi. Students rarely get stuck on the robotics. They get
-    stuck on a missing <code class="inline">source</code>, a script that isn't executable, or two teams sharing one
-    <code class="inline">ROS_DOMAIN_ID</code>. Spend a few hours on this toolkit before Lecture&nbsp;1 and the lectures
-    can go on robots instead of on the shell.
-  </p>
+  <h2 id="before-you-begin">🧰 Before You Begin: 2-Hour Bootcamp</h2>
+  <p>Do this before Lecture&nbsp;1. Flip the cards 🃏, type the commands ⌨️, beat the drill ⚡</p>
 
   <div class="prereq-steps">
-    <div class="prereq-step reveal"><div class="ps-n">01</div><b>Navigate &amp; manage files</b><span>pwd · ls · cd · mkdir -p · cp · rm</span></div>
-    <div class="prereq-step reveal"><div class="ps-n">02</div><b>Search, read &amp; pipe</b><span>grep · find · less · tail -f · |</span></div>
-    <div class="prereq-step reveal"><div class="ps-n">03</div><b>Permissions &amp; processes</b><span>chmod +x · sudo · dialout · kill</span></div>
-    <div class="prereq-step reveal"><div class="ps-n">04</div><b>Environment &amp; .bashrc</b><span>source · export · ROS_DOMAIN_ID</span></div>
-    <div class="prereq-step reveal"><div class="ps-n">05</div><b>The ROS 2 CLI</b><span>ros2 topic · service · action · param · bag</span></div>
-  </div>
-
-  <div class="box idea reveal">
-    <div class="box-title">✅ Are you ready for Lecture 1? Quick self-test</div>
-    <p style="margin-bottom:8px;">Can you, without looking anything up…</p>
-    <ul class="prereq-list">
-      <li>create <code class="inline">~/ws/src</code> in one command and move into it?</li>
-      <li>find every <code class="inline">*.launch.py</code> under <code class="inline">/opt/ros</code> and count them?</li>
-      <li>explain why <code class="inline">source install/setup.bash</code> is needed in <em>every</em> new terminal?</li>
-      <li>say when to use a <strong>topic</strong>, a <strong>service</strong> or an <strong>action</strong>?</li>
-    </ul>
-    <p style="margin:10px 0 0;">If any answer is "not sure", start with the toolkit page below. It has a 12-point readiness checklist that saves your progress in this browser, and two labs with solutions.</p>
+    <div class="prereq-step reveal"><div class="ps-n">📁 20 min</div><b>Files</b><span>cd · ls · mkdir -p</span></div>
+    <div class="prereq-step reveal"><div class="ps-n">🔎 15 min</div><b>Search &amp; pipe</b><span>grep · find · |</span></div>
+    <div class="prereq-step reveal"><div class="ps-n">🔐 15 min</div><b>Permissions</b><span>chmod · kill</span></div>
+    <div class="prereq-step reveal"><div class="ps-n">⚙️ 15 min</div><b>Environment</b><span>source · export</span></div>
+    <div class="prereq-step reveal"><div class="ps-n">🧩 20 min</div><b>ROS 2 ideas</b><span>topic · service · action</span></div>
+    <div class="prereq-step reveal"><div class="ps-n">🐢 30 min</div><b>ROS 2 CLI</b><span>ros2 run · topic · param</span></div>
   </div>
 
   <div class="chapter-list">
     <a class="chapter-card reveal prereq-main" href="prerequisites.html">
       <div class="chapter-num">0</div>
       <div class="chapter-info">
-        <div class="chapter-title">Lecture 0 — The Linux &amp; ROS 2 Toolkit</div>
-        <div class="chapter-desc">A guided, searchable tour of the Linux terminal, <code>~/.bashrc</code>, tmux, Git and the full <code>ros2</code> command line, plus package anatomy, a troubleshooting checklist, and warm-up Labs A &amp; B with solutions</div>
+        <div class="chapter-title">Start the Bootcamp</div>
+        <div class="chapter-desc">6 interactive modules and a final speed drill · progress saves automatically</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+    </a>
+    <a class="chapter-card reveal" href="prerequisites.html#cheatsheet">
+      <div class="chapter-num pdf-badge">📄</div>
+      <div class="chapter-info">
+        <div class="chapter-title">ROS 2 Humble Cheat Sheet</div>
+        <div class="chapter-desc">One printable page with every command you need</div>
       </div>
       <div class="chapter-arrow">→</div>
     </a>
     <a class="chapter-card reveal" href="Pre_requisits/Linux_ROS2_Command_Mastery.pdf" target="_blank" rel="noopener">
       <div class="chapter-num pdf-badge">PDF</div>
       <div class="chapter-info">
-        <div class="chapter-title">Handbook — Linux &amp; ROS 2 Command Mastery</div>
-        <div class="chapter-desc">17-page student handbook: 31 command sections from your first terminal session to debugging a live robot, with hands-on labs and a one-page quick reference</div>
-      </div>
-      <div class="chapter-arrow">↗</div>
-    </a>
-    <a class="chapter-card reveal" href="Pre_requisits/ROS-2-Cheat-Sheet_Jazzy_FINAL.pdf" target="_blank" rel="noopener">
-      <div class="chapter-num pdf-badge">PDF</div>
-      <div class="chapter-info">
-        <div class="chapter-title">ROS 2 Cheat Sheet — Clearpath Robotics</div>
-        <div class="chapter-desc">Two-page poster: workspaces, package layout, <code>setup.py</code> and <code>CMakeLists.txt</code> skeletons, and the core <code>ros2</code> CLI (the Jazzy edition, and it applies to Humble too)</div>
+        <div class="chapter-title">Handbook: Linux &amp; ROS 2 Command Mastery</div>
+        <div class="chapter-desc">The full 17-page reference, for more depth</div>
       </div>
       <div class="chapter-arrow">↗</div>
     </a>

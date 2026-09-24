@@ -7,3 +7,6 @@ Lecture_1/
 .DS_Store
 Thumbs.db
 *.tmp
+
+# Third-party cheat sheet (replaced by our own Humble sheet in prerequisites.html)
+Pre_requisits/ROS-2-Cheat-Sheet_Jazzy_FINAL.pdf
