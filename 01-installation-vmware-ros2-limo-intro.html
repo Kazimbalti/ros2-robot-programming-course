@@ -848,36 +848,53 @@ flowchart LR
       this course — including LIMO's own packages — lives in a separate <strong>workspace</strong> we control. Let's
       set that up now, along with the tools that build and manage it.
     </p>
-
-    <h3>Step 1 — Install colcon and rosdep</h3>
-    <pre><code>sudo apt install python3-colcon-common-extensions python3-rosdep -y
-sudo rosdep init
-rosdep update</code></pre>
     <p>
-      <code>colcon</code> is the build tool that compiles every ROS 2 package in a workspace. <code>rosdep</code>
-      is a dependency resolver — it reads each package's declared dependencies and installs the matching system
-      packages (drivers, libraries, other ROS packages) automatically instead of you hunting them down one by one.
+      The course code lives in the <a href="https://github.com/Kazimbalti/limo_ros2" target="_blank" rel="noopener">Kazimbalti/limo_ros2</a>
+      repository on GitHub — a complete ROS 2 Humble workspace for the AgileX LIMO. It contains these packages:
+    </p>
+    <table>
+      <tr><th>Package</th><th>What it contains</th></tr>
+      <tr><td><code>limo_description</code></td><td>URDF/xacro models and meshes for the LIMO (differential, Ackermann, mecanum, and tracked variants)</td></tr>
+      <tr><td><code>limo_gazebosim</code></td><td>Gazebo simulation worlds, models, and launch files</td></tr>
+      <tr><td><code>limo_msgs</code></td><td>Custom message definitions (<code>LimoStatus</code>)</td></tr>
+      <tr><td><code>trajectory_skeleton</code></td><td>Skeleton controller for the trajectory-tracking exercises</td></tr>
+      <tr><td><code>trajectory_referee</code></td><td>Records and scores trajectory-tracking runs against reference routes</td></tr>
+      <tr><td><code>example_codes</code></td><td>Example nodes: OpenCV, TF, localisation, navigation, controllers</td></tr>
+      <tr><td><code>KV6022_assessment</code></td><td>Coursework assessment package (navigation, waypoint following, pothole detection)</td></tr>
+    </table>
+
+    <h3>Step 1 — Install the build tools and simulation dependencies</h3>
+    <pre><code>sudo apt update
+sudo apt install ros-humble-gazebo-ros ros-humble-gazebo-plugins \
+    ros-humble-joint-state-publisher ros-humble-joint-state-publisher-gui \
+    ros-humble-xacro ros-humble-rviz2 ros-humble-teleop-twist-keyboard \
+    python3-colcon-common-extensions python3-rosdep -y</code></pre>
+    <p>
+      <code>colcon</code> is the build tool that compiles every ROS 2 package in a workspace. The
+      <code>gazebo-ros</code>/<code>gazebo-plugins</code> packages connect Gazebo to ROS 2, <code>xacro</code> and
+      <code>joint-state-publisher</code> turn LIMO's robot description into something RViz and Gazebo can display,
+      and <code>teleop-twist-keyboard</code> is what you'll use to drive LIMO in Section 1.9.
     </p>
 
-    <h3>Step 2 — Create the workspace and clone the course code</h3>
-    <pre><code>mkdir -p ~/limo_ws/src
-cd ~/limo_ws/src
-git clone &lt;course-workspace-url-from-your-instructor&gt; .</code></pre>
+    <h3>Step 2 — Clone the LIMO workspace</h3>
+    <pre><code>git clone https://github.com/Kazimbalti/limo_ros2.git ~/limo_ws
+cd ~/limo_ws</code></pre>
     <p>
-      Your instructor will provide the exact repository URL for this course's LIMO packages (simulation models,
-      description files, teleop configs, and the lecture exercise packages you'll extend in later sessions). Clone
-      it directly into <code>~/limo_ws/src</code>.
+      Notice we clone straight into <code>~/limo_ws</code>, <em>not</em> into <code>~/limo_ws/src</code>: the
+      repository is already laid out as a ROS 2 workspace and ships with its own <code>src/</code> folder holding
+      all the packages above. Run <code>ls ~/limo_ws</code> afterwards and you should see <code>src/</code> and a
+      <code>README.md</code>.
     </p>
 
-    <h3>Step 3 — Install the workspace's dependencies</h3>
-    <pre><code>cd ~/limo_ws
+    <h3>Step 3 — Install any remaining dependencies with rosdep</h3>
+    <pre><code>sudo rosdep init   # skip if already initialised
+rosdep update
 rosdep install --from-paths src --ignore-src -r -y</code></pre>
     <p>
-      This one command reads every package in <code>src/</code> and installs whatever it needs system-wide —
-      typically including <code>gazebo_ros</code>, <code>gazebo_plugins</code>, <code>xacro</code>,
-      <code>rviz2</code>, <code>joint-state-publisher</code>, <code>joint-state-publisher-gui</code>, and
-      <code>teleop-twist-keyboard</code> for a LIMO workspace. Depending on what's already installed, this can take
-      anywhere from a few seconds to several minutes.
+      <code>rosdep</code> is a dependency resolver — it reads every package in <code>src/</code>, checks the
+      dependencies each one declares, and installs any matching system packages that Step 1 didn't already cover.
+      If <code>sudo rosdep init</code> complains that the default sources list already exists, that just means it
+      was initialised before — carry on with <code>rosdep update</code>.
     </p>
 
     <h3>Step 4 — Build the workspace</h3>
@@ -889,21 +906,24 @@ rosdep install --from-paths src --ignore-src -r -y</code></pre>
       </div>
       <div class="term-body">
 <span class="term-prompt">you@ubuntu-vm:~/limo_ws$</span> colcon build --symlink-install
-<span class="term-out">Starting >>> limo_description
-Starting >>> limo_gazebosim
-Starting >>> limo_bringup
-Finished &lt;&lt;&lt; limo_description [4.1s]
-Finished &lt;&lt;&lt; limo_gazebosim [6.7s]
-Finished &lt;&lt;&lt; limo_bringup [3.2s]
+<span class="term-out">Starting >>> limo_msgs
+Starting >>> limo_description
+...
+Finished &lt;&lt;&lt; limo_msgs
+Finished &lt;&lt;&lt; limo_description
+Finished &lt;&lt;&lt; limo_gazebosim
+...
 
-Summary: 3 packages finished [7.8s]</span>
-<span class="term-prompt">you@ubuntu-vm:~/limo_ws$</span> source install/setup.bash</span>
+Summary: 7 packages finished</span>
+<span class="term-prompt">you@ubuntu-vm:~/limo_ws$</span> source install/setup.bash
       </div>
     </div>
     <p>
       The <code>--symlink-install</code> flag is worth using by habit: instead of copying every file into
       <code>install/</code>, it links back to your <code>src/</code> files where possible, so editing a Python
-      script or a launch file often takes effect immediately without a full rebuild.
+      script or a launch file often takes effect immediately without a full rebuild. The build also creates
+      <code>build/</code>, <code>install/</code>, and <code>log/</code> folders next to <code>src/</code> — these
+      are not tracked in the repository and are regenerated by every <code>colcon build</code>.
     </p>
 
     <h3>Step 5 — Source the workspace automatically too</h3>
@@ -929,7 +949,9 @@ source ~/.bashrc</code></pre>
       <p>
         Run <code>colcon build --symlink-install</code> a second time from <code>~/limo_ws</code> with nothing
         changed. Notice it finishes much faster than the first build. Then run <code>ros2 pkg list | grep limo</code>
-        and confirm your cloned LIMO packages appear in the list.
+        and confirm your cloned LIMO packages appear in the list. Finally, run
+        <code>ros2 launch limo_description display_models_diff.launch.py</code> and check that the LIMO model
+        appears in RViz.
       </p>
     </div>
   </section>
@@ -939,13 +961,52 @@ source ~/.bashrc</code></pre>
   <section id="sec10">
     <h2><span class="num">1.9</span>First Smoke Test: LIMO in Gazebo</h2>
     <p>
-      Let's finish this session by seeing LIMO move — in simulation, using the differential-drive model. You don't
-      need to understand every piece of this yet; Lecture 2 walks through ROS 2's architecture and this exact
-      launch file in full detail. For now, this is just proof that everything you installed today actually works
-      together.
+      Let's finish this session by seeing LIMO move in simulation. You don't need to understand every piece of
+      this yet; Lecture 2 walks through ROS 2's architecture and these launch files in full detail. For now, this
+      is just proof that everything you installed today actually works together.
     </p>
 
-    <h3>Step 1 — Launch the simulator</h3>
+    <h3>LIMO's four drive modes</h3>
+    <p>
+      The real AgileX LIMO can be reconfigured into four different ways of moving, and the
+      <code>limo_gazebosim</code> package gives you one launch file for each. They all use the same sensors and
+      listen on the same <code>/cmd_vel</code> topic. What changes is the <strong>Gazebo drive plugin</strong>,
+      which decides how a velocity command turns into wheel motion, so the same keypress can make each robot move
+      differently.
+    </p>
+    <table>
+      <tr><th>Drive mode</th><th>Launch file</th><th>Gazebo plugin</th><th>How it moves</th></tr>
+      <tr>
+        <td><strong>Differential</strong></td>
+        <td><code>limo_gazebo_diff.launch.py</code></td>
+        <td><code>gazebo_ros_diff_drive</code></td>
+        <td>Left and right wheels driven at different speeds. Can go forward/back and <strong>spin on the spot</strong>; cannot move sideways.</td>
+      </tr>
+      <tr>
+        <td><strong>Ackermann</strong></td>
+        <td><code>limo_gazebo_ackerman_drive.launch.py</code></td>
+        <td><code>gazebo_ros_ackermann_drive</code></td>
+        <td>Car-like: the front wheels steer (up to about 37°). Moves in arcs and <strong>cannot turn in place</strong>; tight turns need a three-point turn.</td>
+      </tr>
+      <tr>
+        <td><strong>Mecanum</strong></td>
+        <td><code>limo_gazebo_mecanum_drive.launch.py</code></td>
+        <td><code>gazebo_ros_planar_move</code></td>
+        <td>Omnidirectional: forward/back, spin, <strong>and slide sideways</strong> (uses the <code>linear.y</code> part of <code>/cmd_vel</code>).</td>
+      </tr>
+      <tr>
+        <td><strong>Tracked</strong></td>
+        <td><code>limo_gazebo_track_drive.launch.py</code></td>
+        <td><code>gazebo_ros_diff_drive</code> (2 wheel pairs)</td>
+        <td>Skid-steer like a tank. Behaves like differential drive: forward/back and spin on the spot, no sideways motion.</td>
+      </tr>
+    </table>
+    <p>
+      The differential model spawns into <code>simulation_table_with_obstacles.world</code>. The other three spawn
+      at the origin of <code>simulation_table.world</code>, which has the same table but no obstacles.
+    </p>
+
+    <h3>Step 1 — Launch the simulator (start with differential drive)</h3>
     <div class="term">
       <div class="term-bar">
         <div class="term-dot" style="background:#ff5f57;"></div>
@@ -955,17 +1016,25 @@ source ~/.bashrc</code></pre>
       <div class="term-body">
 <span class="term-prompt">you@ubuntu-vm:~$</span> ros2 launch limo_gazebosim limo_gazebo_diff.launch.py
 <span class="term-out">[INFO] [launch]: All log files can be found below /home/you/.ros/log/...
-[INFO] [gzserver-1]: process started with pid [4821]
-[INFO] [gzclient-2]: process started with pid [4823]
-[INFO] [robot_state_publisher-3]: process started with pid [4825]
-[gzserver-1] [Msg] Loading world file [/opt/.../limo_diff.world]
-[gzclient-2] [Msg] Connected to gazebo master</span>
+[INFO] [twist_watchdog.py-1]: process started with pid [4819]
+[INFO] [gzserver-2]: process started with pid [4821]
+[INFO] [gzclient-3]: process started with pid [4823]
+[INFO] [spawn_entity.py-4]: process started with pid [4825]
+[INFO] [robot_state_publisher-5]: process started with pid [4827]
+[INFO] [joint_state_publisher-6]: process started with pid [4829]
+[spawn_entity.py-4] [INFO] [spawn_entity]: Spawn status: SpawnEntity: Successfully spawned entity [limo_gazebo]</span>
       </div>
     </div>
     <p>
-      Gazebo should open a window showing an empty world with the LIMO model — a small four-wheeled robot with a
-      LiDAR puck and camera mounted up front — sitting in the middle. Leave this terminal running.
+      Gazebo should open a window showing the LIMO model, a small four-wheeled robot with a LiDAR puck and a depth
+      camera at the front, sitting on the table world. The first launch can take a minute while Gazebo loads its
+      models. Leave this terminal running.
     </p>
+    <p>
+      To open RViz alongside Gazebo so you can see the robot model, TF frames, and LiDAR scan together, add a
+      launch argument:
+    </p>
+    <pre><code>ros2 launch limo_gazebosim limo_gazebo_diff.launch.py use_rviz:=true</code></pre>
 
     <h3>Step 2 — Confirm it's alive from a second terminal</h3>
     <div class="term">
@@ -976,52 +1045,146 @@ source ~/.bashrc</code></pre>
       </div>
       <div class="term-body">
 <span class="term-prompt">you@ubuntu-vm:~$</span> ros2 node list
-<span class="term-out">/gazebo
+<span class="term-out">/TwistWatchDog
+/gazebo
+/joint_state_publisher
 /robot_state_publisher
-/limo_status_publisher</span>
+...</span>
 <span class="term-prompt">you@ubuntu-vm:~$</span> ros2 topic list
-<span class="term-out">/cmd_vel
-/odom
-/scan
+<span class="term-out">/clock
+/cmd_vel
 /imu
-/camera/color/image_raw
-/limo_status
-/tf</span>
+/joint_states
+/limo_camera/camera_points
+/limo_camera/image
+/limo_camera/depth/camera_image_depth
+/odom
+/robot_description
+/scan
+/tf
+/tf_static
+...</span>
       </div>
     </div>
     <p>
-      Seeing <code>/cmd_vel</code> (velocity commands in), <code>/odom</code> (odometry out), and
-      <code>/scan</code> (LiDAR data) confirms the simulated robot is fully wired into ROS 2, just like a physical
-      LIMO would be.
+      Your list may include a few more entries (Gazebo plugins add their own nodes), but the important ones are
+      <code>/cmd_vel</code> (velocity commands in), <code>/odom</code> (odometry out), <code>/scan</code> (LiDAR),
+      <code>/imu</code>, and the <code>/limo_camera/...</code> image topics. Together they confirm the simulated
+      robot is fully wired into ROS 2, just like a physical LIMO would be.
     </p>
 
     <h3>Step 3 — Drive it (a preview of Lecture 2)</h3>
     <pre><code>ros2 run teleop_twist_keyboard teleop_twist_keyboard</code></pre>
     <p>
-      This opens an interactive keyboard controller in the terminal — the on-screen legend maps keys like
-      <code>i</code>, <code>,</code>, <code>j</code>, <code>l</code> to forward, backward, and turning. Try driving
-      LIMO a small circle in the Gazebo window and watch it respond. Press <code>k</code> to stop, then
-      <code>Ctrl+C</code> to exit the teleop node, and <code>Ctrl+C</code> in the launch terminal to close Gazebo.
+      This opens an interactive keyboard controller in the terminal. The keyboard focus must be on the
+      <em>teleop terminal</em>, not the Gazebo window. The on-screen legend maps a 3×3 block of keys to motion:
     </p>
+    <pre><code>   u    i    o        i / ,  = forward / backward
+   j    k    l        j / l  = rotate left / right
+   m    ,    .        u o m . = forward/backward while turning
+                      k      = stop
+Holonomic mode (hold Shift):
+   U    I    O        J / L  = slide left / right   (mecanum only)
+   J    K    L
+   M    &lt;    &gt;
+q / z = increase / decrease all speeds by 10%</code></pre>
+    <p>
+      Drive LIMO in a small circle and watch it respond in Gazebo. Press <code>k</code> to stop, <code>Ctrl+C</code>
+      to exit the teleop node, and <code>Ctrl+C</code> in the launch terminal to close Gazebo.
+    </p>
+
+    <div class="box idea">
+      <div class="box-title">💡 Why LIMO stops when you stop pressing keys</div>
+      <p>
+        Each launch file also starts a small safety node, <code>twist_watchdog.py</code> (shown as
+        <code>/TwistWatchDog</code>). If nothing is published on <code>/cmd_vel</code> for 0.5 seconds, it sends a
+        zero velocity so the robot doesn't drive off the table when a controller crashes or a terminal loses
+        focus. For continuous motion, <strong>hold the key down</strong> rather than tapping it once. You'll see a
+        <code>Timeout Triggered</code> warning in the launch terminal whenever the watchdog stops the robot. That
+        is normal behaviour, not an error.
+      </p>
+    </div>
+
+    <h3>Step 4 — Try the other drive modes</h3>
+    <p>
+      Gazebo can only run one simulation at a time, so always <strong>stop the current launch with
+      <code>Ctrl+C</code> first</strong>, then start the next one. Keep the teleop terminal open; it will
+      reconnect to the new robot automatically because every variant listens on the same <code>/cmd_vel</code>.
+    </p>
+
+    <p><strong>Ackermann (car-like steering):</strong></p>
+    <pre><code>ros2 launch limo_gazebosim limo_gazebo_ackerman_drive.launch.py</code></pre>
+    <p>
+      Hold <code>u</code> or <code>o</code> to drive forward in an arc and watch the front wheels steer. Now try
+      <code>j</code> or <code>l</code>: the robot does <em>not</em> spin on the spot, because a car-like robot can't
+      rotate without moving forward. To turn around, do a three-point turn using <code>u</code>, <code>.</code>,
+      and <code>u</code> again.
+    </p>
+
+    <p><strong>Mecanum (omnidirectional):</strong></p>
+    <pre><code>ros2 launch limo_gazebosim limo_gazebo_mecanum_drive.launch.py</code></pre>
+    <p>
+      Drive it normally first, then hold <code>Shift</code> and press <code>J</code> / <code>L</code>. LIMO slides
+      sideways without changing its heading. Only this mode can do that: the teleop node puts the sideways speed
+      in <code>linear.y</code>, which the other plugins ignore.
+    </p>
+
+    <p><strong>Tracked (skid-steer):</strong></p>
+    <pre><code>ros2 launch limo_gazebosim limo_gazebo_track_drive.launch.py</code></pre>
+    <p>
+      This should feel almost identical to differential drive, including spinning on the spot with
+      <code>j</code> / <code>l</code>. Under the hood it uses the same diff-drive plugin, configured with two
+      wheel pairs per side to mimic a track.
+    </p>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ Gazebo won't start, or the old robot is still there?</div>
+      <p>
+        If you launch a new variant before the previous Gazebo has fully shut down, the new launch can fail with
+        an "address already in use" error or show a frozen window. Clear any leftover Gazebo processes and try again:
+      </p>
+      <pre><code>killall -9 gzserver gzclient</code></pre>
+      <p>
+        If you get <code>Package 'limo_gazebosim' not found</code>, your workspace isn't sourced in that terminal.
+        Run <code>source ~/limo_ws/install/setup.bash</code> or open a new terminal (see Section 1.8, Step 5).
+      </p>
+    </div>
 
     <div class="mermaid">
 flowchart LR
-    A["ros2 launch limo_gazebosim<br/>limo_gazebo_diff.launch.py"] --> B["Gazebo opens with<br/>the LIMO model loaded"]
+    A["ros2 launch limo_gazebosim<br/>limo_gazebo_&lt;mode&gt;.launch.py"] --> B["Gazebo opens with<br/>the chosen LIMO model"]
     B --> C["ros2 node list / ros2 topic list<br/>confirms it's alive on the ROS 2 graph"]
-    C --> D["ros2 run teleop_twist_keyboard<br/>teleop_twist_keyboard"]
-    D --> E["LIMO drives in simulation"]
-    E --> F["Lecture 2: what all of this<br/>actually means, explained properly"]
-    style E fill:#eafaf3,stroke:#0e9e6e,color:#211f1a
+    C --> D["teleop_twist_keyboard<br/>publishes /cmd_vel"]
+    D --> P{"Drive plugin"}
+    P -->|diff / track| E1["Forward, back,<br/>spin on the spot"]
+    P -->|ackermann| E2["Forward, back,<br/>arcs only"]
+    P -->|mecanum| E3["Forward, back, spin,<br/>slide sideways"]
+    E1 --> F["Lecture 2: what all of this<br/>actually means, explained properly"]
+    E2 --> F
+    E3 --> F
+    style P fill:#fdf3e4,stroke:#c8922c,color:#211f1a
     style F fill:#eef0ff,stroke:#3d4bf5,color:#211f1a,font-weight:bold
+    </div>
+
+    <div class="exercise">
+      <div class="level">Medium Exercise</div>
+      <p>
+        With any variant running, open a third terminal and run <code>ros2 topic echo /cmd_vel</code> while you
+        drive. Press <code>i</code>, <code>j</code>, and (in holonomic mode) <code>J</code>, and note which fields of
+        the <code>Twist</code> message change each time: <code>linear.x</code>, <code>linear.y</code>, or
+        <code>angular.z</code>. Then stop pressing keys and watch the watchdog publish an all-zero message about
+        half a second later.
+      </p>
     </div>
 
     <div class="exercise">
       <div class="level">Harder Exercise</div>
       <p>
-        With Gazebo and teleop both running, open a third terminal (or a third Terminator pane) and run
-        <code>ros2 topic echo /odom</code> while you drive LIMO forward a short distance with the keyboard. Watch
-        the position values change in the message stream, then stop and note roughly how far the position field
-        moved for a few seconds of "forward" key presses.
+        Launch each drive mode in turn and, with <code>ros2 topic echo /odom</code> running, send exactly the same
+        command to each robot for a few seconds: hold <code>j</code> (rotate left). Record how
+        <code>pose.pose.position</code> and <code>pose.pose.orientation</code> change for the differential,
+        Ackermann, mecanum, and tracked models. Which ones rotate in place, and which one barely moves? Use the
+        table above to explain your observations in one sentence per mode.
       </p>
     </div>
   </section>
@@ -1045,6 +1208,7 @@ flowchart LR
         <li>I have ROS 2 Humble installed and it is sourced automatically in every new terminal.</li>
         <li>I can build a ROS 2 workspace with colcon and source its overlay.</li>
         <li>I launched LIMO in Gazebo and drove it with the keyboard teleop node.</li>
+        <li>I can explain how the differential, Ackermann, mecanum, and tracked LIMO variants respond differently to the same <code>/cmd_vel</code> command.</li>
       </ul>
     </div>
 
