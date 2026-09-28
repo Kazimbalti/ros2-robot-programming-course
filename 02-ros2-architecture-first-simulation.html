@@ -121,6 +121,269 @@
   #theme-toggle{position:fixed; top:18px; left:18px; z-index:999; width:46px; height:46px; border-radius:50%; border:1px solid var(--border); background:var(--panel); color:var(--text); font-size:19px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px -8px rgba(0,0,0,0.35); transition:transform .15s ease, background-color .25s ease, border-color .25s ease;}
   #theme-toggle:hover{transform:scale(1.08);}
   @media (max-width:640px){ #theme-toggle{top:12px; left:12px; width:42px; height:42px; font-size:17px;} }
+
+  /* =================== Interactive labs (driven by 02-interactive-labs.js) =================== */
+  .lab{background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:20px 22px; margin:30px 0; box-shadow:0 1px 2px rgba(33,31,26,.03),0 18px 36px -24px rgba(33,31,26,.28);}
+  .lab-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:6px;}
+  .lab-head .lab-title{font-weight:800; font-size:1.08em;}
+  .lab-head-r{margin-inline-start:auto; display:flex; gap:6px; flex-wrap:wrap;}
+  .lab-tag{background:var(--accent); color:#fff; font-weight:800; font-size:.68em; letter-spacing:.5px; padding:4px 10px; border-radius:99px; text-transform:uppercase;}
+  .lab-tag.green{background:var(--accent2);} .lab-tag.gold{background:var(--gold);} .lab-tag.purple{background:var(--purple);}
+  .lab-sub{color:var(--muted) !important; font-size:.88em; margin:0 0 12px;}
+  .lab-row{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:10px 0;}
+  .lab svg.stage{width:100%; height:auto; display:block; background:var(--panel2); border:1px solid var(--border); border-radius:14px;}
+  .lab canvas.cv{width:100%; height:auto; display:block; border-radius:14px; border:1px solid var(--border); touch-action:none;}
+  .try-this{margin-top:12px; font-size:.86em; background:var(--panel2); border:1px dashed var(--border); border-radius:12px; padding:10px 14px;}
+  .btn{font-family:inherit; font-size:.8em; font-weight:700; border-radius:99px; padding:7px 14px; border:1px solid var(--border); background:var(--panel); color:var(--text); cursor:pointer; transition:.15s; line-height:1.3;}
+  .btn:hover:not(:disabled){border-color:var(--accent); color:var(--accent-ink);}
+  .btn.pri{background:var(--accent); border-color:var(--accent); color:#fff;}
+  .btn.pri:hover:not(:disabled){filter:brightness(1.1); color:#fff;}
+  .btn:disabled{opacity:.45; cursor:not-allowed;}
+  .btn.sm{font-size:.72em; padding:4px 10px;}
+  .linkbtn{background:none; border:0; color:var(--muted); font:inherit; font-size:.75em; text-decoration:underline; cursor:pointer; padding:0; margin-top:6px;}
+  .seg{display:inline-flex; border:1px solid var(--border); border-radius:99px; overflow:hidden; background:var(--panel2);}
+  .seg button{font:inherit; font-size:.78em; font-weight:700; border:0; background:transparent; color:var(--text); padding:7px 14px; cursor:pointer;}
+  .seg button.on{background:var(--accent); color:#fff;}
+  .mini-term{background:#181a2e; color:#d8dcff; border-radius:12px; padding:12px 14px; font-family:'JetBrains Mono',monospace; font-size:.74em; line-height:1.6; white-space:pre-wrap; word-break:break-word; min-height:110px; text-align:left; direction:ltr;}
+  .mini-term.log{max-height:220px; overflow:auto;}
+  .mini-term .ok{color:#7ee7c7;} .mini-term .bad{color:#ff9d91;} .mini-term .warn{color:#f5c26b;} .mini-term .info{color:#8fd3ff;}
+  .lab-split{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;}
+  @media (max-width:760px){ .lab-split{grid-template-columns:1fr;} }
+  .ctl{display:flex; align-items:center; gap:10px; font-size:.84em; font-weight:600;}
+  .ctl input[type=range]{flex:1; accent-color:var(--accent); min-width:90px;}
+  .ctl output{font-family:'JetBrains Mono',monospace; min-width:78px; text-align:end; color:var(--accent-ink); font-weight:800; font-size:.92em;}
+  .ctl.inline{display:inline-flex; gap:8px; font-size:.78em;}
+  .ctl-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:8px 20px; margin:12px 0;}
+  .readout{font-family:'JetBrains Mono',monospace; font-size:.76em; background:var(--panel2); border:1px solid var(--border); border-radius:12px; padding:10px 14px; white-space:pre-wrap; line-height:1.6; color:var(--text); text-align:left; direction:ltr;}
+  .tm-bar{height:8px; background:var(--panel2); border:1px solid var(--border); border-radius:99px; overflow:hidden; margin:6px 0;}
+  .tm-bar i{display:block; height:100%; background:linear-gradient(90deg,var(--accent2),var(--accent)); transition:width .4s;}
+
+  /* graph explorer */
+  .gl-node rect{fill:var(--panel); stroke:var(--accent); stroke-width:2; transition:stroke-width .15s;}
+  .gl-node{cursor:pointer; outline:none;}
+  .gl-node.sel rect{stroke-width:4; filter:drop-shadow(0 4px 10px rgba(61,75,245,.35));}
+  .gl-node.dead rect{stroke:var(--muted); stroke-dasharray:6 5; fill:var(--panel2);}
+  .gl-node.dead text{fill:var(--muted);}
+  .gl-node.isolated rect{stroke:var(--danger);}
+  .gl-t{fill:var(--text); font:700 13px 'JetBrains Mono',monospace;}
+  .gl-s{fill:var(--muted); font:600 11px Inter,sans-serif;}
+  .gl-lbl{fill:var(--accent2); font:700 12px 'JetBrains Mono',monospace; paint-order:stroke; stroke:var(--panel2); stroke-width:5px; stroke-linejoin:round;}
+  .gl-edge{fill:none; stroke:var(--accent2); stroke-width:2.5; opacity:.8;}
+  .gl-edge.lost{stroke:var(--gold);} .gl-edge.off{stroke:var(--muted); stroke-dasharray:5 6; opacity:.5;}
+  .gl-arrowhead{fill:var(--muted);}
+  .gl-dot{fill:var(--accent2);} .gl-dot.lost{fill:var(--gold);}
+  .gl-reg{stroke:var(--muted); stroke-width:1.5; stroke-dasharray:3 5; opacity:.35;}
+  .gl-reg.on{stroke:var(--purple); opacity:.7;}
+  .gl-master rect{fill:#f4effe; stroke:var(--purple); stroke-width:2;}
+  .gl-master.down rect{fill:#fdeeec; stroke:var(--danger); stroke-dasharray:5 4;}
+  html[data-theme="dark"] .gl-master rect{fill:#2a2340;} html[data-theme="dark"] .gl-master.down rect{fill:#3a2220;}
+
+  /* virtual turtlesim */
+  .ts-grid{display:grid; grid-template-columns:minmax(0,5fr) minmax(0,7fr); gap:16px; align-items:start;}
+  @media (max-width:880px){ .ts-grid{grid-template-columns:1fr;} }
+  .ts-stage{position:relative; border-radius:14px; overflow:hidden; outline:none; border:2px solid transparent;}
+  .ts-stage:focus{border-color:var(--gold);}
+  .ts-stage canvas{width:100%; height:auto; display:block; aspect-ratio:1/1;}
+  .ts-overlay{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#c9cdff; text-align:center; font-weight:700; gap:8px; padding:20px;}
+  .ts-overlay span{font-weight:500; font-size:.82em; color:#9aa0c8;}
+  .ts-overlay[hidden]{display:none;}
+  .ts-pad{display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:8px; background:var(--panel2); border:1px solid var(--border); border-radius:12px; padding:8px 10px; font-size:.78em;}
+  .ts-pad[hidden]{display:none;}
+  .ts-pad button{font:inherit; font-family:'JetBrains Mono',monospace; font-weight:700; min-width:34px; padding:5px 8px; border-radius:8px; border:1px solid var(--border); background:var(--panel); color:var(--text); cursor:pointer;}
+  .ts-pad button:hover{border-color:var(--accent);}
+  .ts-pad .pad-l{font-weight:700; color:var(--muted); margin-inline-end:4px;}
+  .ts-procs{display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-top:8px; min-height:30px; font-size:.78em;}
+  .procs-l{color:var(--muted); font-weight:600;}
+  .proc{display:inline-flex; align-items:center; gap:7px; background:var(--panel2); border:1px solid var(--border); border-radius:99px; padding:3px 4px 3px 11px; font-family:'JetBrains Mono',monospace; font-weight:700; font-size:.92em;}
+  .proc button{border:0; background:var(--danger); color:#fff; border-radius:99px; width:22px; height:22px; cursor:pointer; font-size:.8em; line-height:1;}
+  .pdot{width:8px; height:8px; border-radius:50%; background:var(--accent2); animation:l2pulse 1.2s infinite;}
+  @keyframes l2pulse{50%{opacity:.25;}}
+  .ts-missions{margin-top:10px; background:var(--panel2); border:1px solid var(--border); border-radius:12px; padding:10px 12px; font-size:.78em;}
+  .tm-head{display:flex; justify-content:space-between; font-weight:800;}
+  .tm-count{color:var(--accent-ink); font-family:'JetBrains Mono',monospace;}
+  .tm-list{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:2px 14px;}
+  .tm{color:var(--muted);} .tm.ok{color:var(--text); font-weight:600;}
+  .tm-win{margin-top:6px; font-weight:800; color:var(--accent2);}
+  .vterm{background:#181a2e; border-radius:14px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 12px 28px -16px rgba(24,26,46,0.5);}
+  .vterm .term-bar{display:flex; align-items:center; gap:7px; padding:10px 14px; background:#20223a;}
+  .vt-title{color:#9aa0c8; font-family:'JetBrains Mono',monospace; font-size:.72em; margin-inline-start:8px;}
+  .vt-stop{margin-inline-start:auto; background:var(--danger); color:#fff; border:0; border-radius:8px; font:700 .72em 'JetBrains Mono',monospace; padding:4px 10px; cursor:pointer;}
+  .vt-stop[hidden]{display:none;}
+  .vterm-out{height:340px; overflow-y:auto; padding:12px 14px; font-family:'JetBrains Mono',monospace; font-size:.74em; line-height:1.6; color:#d8dcff; white-space:pre-wrap; word-break:break-word; text-align:left; direction:ltr;}
+  .vterm-in{display:flex; align-items:center; gap:8px; padding:10px 14px; background:#20223a; font-family:'JetBrains Mono',monospace; font-size:.8em; cursor:text;}
+  .vterm-in input{flex:1; min-width:0; background:transparent; border:0; color:#fff; font:inherit; outline:none;}
+  .vterm-in input::placeholder{color:#6d739b;}
+  #ts-lab.busy .vterm-in{background:#2a2438;}
+  .vt-cmd{color:#fff; font-weight:600; margin-top:4px;} .vt-p{color:#7ee7c7;} .vt-out{color:#aab0d6;} .vt-err{color:#ff9d91;} .vt-warn{color:#f5c26b;}
+  .vt-info{color:#8fd3ff;} .vt-hint{color:#d3b8ff; font-style:italic;} .vt-log{color:#8a90ba;}
+  .chips{display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;}
+  .chip-cmd{font-family:'JetBrains Mono',monospace; font-size:.7em; background:var(--panel2); border:1px solid var(--border); color:var(--accent-ink); border-radius:8px; padding:4px 9px; cursor:pointer;}
+  .chip-cmd:hover{border-color:var(--accent); background:var(--panel);}
+  .term-bar{flex-wrap:wrap;}
+  .run-chips{margin-inline-start:auto; display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end;}
+  .run-chip{font-family:'JetBrains Mono',monospace; font-size:.66em; background:#2c3052; color:#c9cdff; border:1px solid #3a3f5c; border-radius:7px; padding:3px 8px; cursor:pointer;}
+  .run-chip:hover{background:var(--accent); border-color:var(--accent); color:#fff;}
+  .ts-graph{margin-top:14px; background:var(--panel2); border:1px solid var(--border); border-radius:14px; padding:10px;}
+  .ts-graph[hidden]{display:none;}
+  .ts-graph-h{display:flex; justify-content:space-between; align-items:center; font-weight:800; font-size:.82em; margin-bottom:6px;}
+  .ts-graph svg{width:100%; height:auto; display:block;}
+  .rq-n{fill:var(--panel); stroke:var(--accent); stroke-width:2;} .rq-n.hid{stroke-dasharray:5 4; stroke:var(--muted);}
+  .rq-topic{fill:var(--panel); stroke:var(--accent2); stroke-width:2;}
+  .rq-t{fill:var(--text); font:700 12px 'JetBrains Mono',monospace;}
+  .rq-e{fill:none; stroke:var(--muted); stroke-width:1.8;}
+  .rq-empty{fill:var(--muted); font:600 13px Inter,sans-serif;}
+  #ts-lab.docked{position:fixed; right:14px; bottom:14px; width:min(540px,44vw); max-height:calc(100vh - 96px); overflow:auto; z-index:960; margin:0; box-shadow:0 24px 60px -18px rgba(0,0,0,.55);}
+  #ts-lab.docked .ts-grid{grid-template-columns:1fr;}
+  #ts-lab.docked .ts-stage{max-width:250px; margin:0 auto;}
+  #ts-lab.docked .vterm-out{height:210px;}
+  #ts-lab.docked .lab-sub, #ts-lab.docked .ts-missions, #ts-lab.docked .chips{display:none;}
+  .dock-ph{margin:30px 0; padding:16px 20px; border:2px dashed var(--border); border-radius:16px; color:var(--muted); display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .dock-ph[hidden]{display:none;}
+  @media (max-width:1100px){ #ts-dock{display:none;} #ts-lab.docked{position:static; width:auto; max-height:none; box-shadow:none;} }
+
+  /* pub/sub playground */
+  .ps-pub{fill:var(--panel); stroke:var(--accent); stroke-width:2;}
+  .ps-sub{fill:var(--panel); stroke:var(--accent2); stroke-width:2;}
+  .ps-sub.slow{stroke:var(--gold); stroke-dasharray:6 4;}
+  .ps-topic{fill:var(--accent2); opacity:.95;}
+  .ps-tt{fill:#fff; font:800 14px 'JetBrains Mono',monospace;}
+  .ps-wire{fill:none; stroke:var(--border); stroke-width:3;}
+  .ps-q{fill:var(--panel2); stroke:var(--border);} .ps-q.on{fill:var(--gold); stroke:var(--gold);}
+  .ps-rows{display:flex; flex-direction:column; gap:6px; margin-top:10px;}
+  .ps-row{display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:.84em; font-weight:600;}
+  .ps-row span{min-width:170px; font-family:'JetBrains Mono',monospace;}
+
+  /* pattern player */
+  .pp-box{fill:var(--panel); stroke:var(--accent); stroke-width:2;}
+  .pp-lane{stroke:var(--border); stroke-width:2; stroke-dasharray:4 6;}
+  .pp-msg rect{fill:var(--accent);} .pp-msg text{fill:#fff; font:700 11.5px 'JetBrains Mono',monospace;}
+  .pp-msg.res rect{fill:var(--accent2);} .pp-msg.fb rect{fill:var(--purple);} .pp-msg.cancel rect{fill:var(--danger);} .pp-msg.stream rect{fill:var(--accent2);}
+  .pp-status{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:10px; font-size:.84em; font-weight:700;}
+  .pp-status > div{background:var(--panel2); border:1px solid var(--border); border-radius:12px; padding:8px 12px;}
+  .pp-status small{display:block; color:var(--muted); font-weight:600; font-size:.82em;}
+  .pp-status .bad{color:var(--danger);} .pp-status .ok{color:var(--accent2);}
+  .pp-workbar{height:6px; border-radius:99px; background:var(--border); margin-top:6px; overflow:hidden;}
+  .pp-work{display:block; height:100%; width:0; background:var(--gold); transition:width .1s linear;}
+  .pp-ctl{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:10px 0;}
+
+  /* classifier + quiz */
+  .cls-row, .quiz-item{padding:12px 0; border-bottom:1px solid var(--border);}
+  .cls-row:last-child, .quiz-item:last-child{border-bottom:none;}
+  .cls-q, .quiz-t{display:flex; gap:10px; align-items:flex-start; font-size:.92em; font-weight:600; margin-bottom:8px;}
+  .cls-n{flex-shrink:0; width:26px; height:26px; border-radius:8px; background:var(--panel2); border:1px solid var(--border); display:inline-flex; align-items:center; justify-content:center; font-size:.8em; font-weight:800; color:var(--accent-ink);}
+  .cls-o, .quiz-opts{display:flex; gap:6px; flex-wrap:wrap; padding-inline-start:36px;}
+  .cls-b, .quiz-o{font-family:inherit; font-size:.78em; font-weight:700; padding:6px 12px; border-radius:99px; border:1px solid var(--border); background:var(--panel2); color:var(--text); cursor:pointer; text-align:start;}
+  .cls-b:hover:not(:disabled), .quiz-o:hover:not(:disabled){border-color:var(--accent);}
+  .cls-b:disabled, .quiz-o:disabled{cursor:default; opacity:.55;}
+  .cls-b.right, .quiz-o.right{background:var(--accent2); border-color:var(--accent2); color:#fff; opacity:1;}
+  .cls-b.wrong, .quiz-o.wrong{background:var(--danger); border-color:var(--danger); color:#fff; opacity:1;}
+  .quiz-opts{flex-direction:column; align-items:flex-start;}
+  .quiz-o{border-radius:10px;}
+  .cls-fb, .quiz-fb{padding-inline-start:36px; font-size:.84em; margin-top:8px; color:var(--muted);}
+  .quiz-fb.ok{color:var(--accent2);} .quiz-fb.bad{color:var(--danger);}
+  .cls-score{font-weight:800; color:var(--accent-ink); margin-top:10px;}
+  .quiz-res{position:sticky; bottom:12px; background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:12px 16px; margin-top:12px; box-shadow:0 10px 30px -14px rgba(0,0,0,.35);}
+  .quiz-score{font-weight:700;} .quiz-score b{font-size:1.4em; color:var(--accent-ink);} .quiz-score span{color:var(--muted); font-weight:500;}
+  .quiz-msg{font-weight:800; margin-top:4px;} .quiz-best{font-size:.78em; color:var(--muted);}
+
+  /* mixer */
+  .mix-grid{display:grid; grid-template-columns:260px 1fr; gap:18px; align-items:start;}
+  @media (max-width:700px){ .mix-grid{grid-template-columns:1fr;} .mix-grid canvas{max-width:260px;} }
+  .mix-goal{font-weight:700; font-size:.88em; margin:10px 0; padding:8px 12px; border-radius:10px; background:var(--panel2); border:1px solid var(--border);}
+  .mix-goal.ok{background:#eafaf3; border-color:#c9eeda; color:#0b7a55;}
+  html[data-theme="dark"] .mix-goal.ok{background:#16302a; border-color:#1f4a3d; color:#7ee7c7;}
+  .ctl .sw{width:12px; height:12px; border-radius:3px; display:inline-block;}
+
+  /* msg builder */
+  .msg-top{display:flex; gap:10px; flex-wrap:wrap; align-items:center; font-size:.84em; font-weight:700;}
+  .msg-top input, .msg-row select, .msg-row .msg-fn{font-family:'JetBrains Mono',monospace; font-size:.9em; padding:6px 9px; border-radius:8px; border:1px solid var(--border); background:var(--panel2); color:var(--text);}
+  .msg-rows{display:flex; flex-direction:column; gap:6px; margin:12px 0;}
+  .msg-row{display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:.84em;}
+  .msg-row .msg-fn{flex:1; min-width:140px;}
+  .msg-arr{display:inline-flex; gap:4px; align-items:center; font-family:'JetBrains Mono',monospace; font-weight:700; color:var(--muted);}
+  .msg-tabs{margin-bottom:8px;}
+  .msg-err{font-size:.82em; margin:10px 0; padding:8px 12px; border-radius:10px;}
+  .msg-err.ok{background:#eafaf3; color:#0b7a55;} .msg-err.bad{background:#fdeeec; color:#b33a2d;}
+  html[data-theme="dark"] .msg-err.ok{background:#16302a; color:#7ee7c7;} html[data-theme="dark"] .msg-err.bad{background:#3a2220; color:#ff9d91;}
+
+  /* twist + scan */
+  .tw-presets{display:flex; gap:6px; flex-wrap:wrap;}
+  .scan-dec{display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; font-size:.82em;}
+  .scan-dec span{background:var(--panel2); border:1px solid var(--border); border-radius:99px; padding:5px 12px; font-family:'JetBrains Mono',monospace;}
+  .scan-dec b{color:var(--accent-ink);}
+  .scan-dec .scan-go{background:var(--accent); border-color:var(--accent); color:#fff; font-family:Inter,sans-serif; font-weight:800;}
+
+  /* DDS */
+  .dds-wifi{font-size:26px;}
+  .dds-air{stroke:var(--border); stroke-width:1.5; stroke-dasharray:2 5;}
+  .dds-link{stroke:var(--muted); stroke-width:2.5; opacity:.55;}
+  .dds-link.mine{stroke:var(--danger); stroke-width:3.5; opacity:.85; stroke-dasharray:8 5; animation:l2dash 1s linear infinite;}
+  @keyframes l2dash{to{stroke-dashoffset:-26;}}
+  .dds-scr{fill:#4556ff; stroke:#22263d; stroke-width:4;}
+  .dds-lap.me .dds-scr{stroke:var(--accent2);}
+  .dds-base{fill:#8a8ea5;}
+  .dds-turtle{font-size:26px;}
+  .dds-say{fill:var(--danger); font:800 12px Inter,sans-serif;}
+  .dds-ctl{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:8px; margin:12px 0;}
+  .dds-c{background:var(--panel2); border:1px solid var(--border); border-radius:12px; padding:8px 10px; font-size:.78em; display:flex; flex-direction:column; gap:4px;}
+  .dds-c.me{border-color:var(--accent2); border-width:2px;}
+  .dds-c select{font:inherit; border-radius:6px; border:1px solid var(--border); background:var(--panel); color:var(--text); margin-inline-start:4px;}
+  .dds-verdict{font-weight:800; font-size:.9em; padding:8px 12px; border-radius:10px; margin:8px 0;}
+  .dds-verdict.bad{background:#fdeeec; color:#b33a2d;} .dds-verdict.ok{background:#eafaf3; color:#0b7a55;}
+  html[data-theme="dark"] .dds-verdict.bad{background:#3a2220; color:#ff9d91;} html[data-theme="dark"] .dds-verdict.ok{background:#16302a; color:#7ee7c7;}
+  .rmw-stack{display:flex; flex-direction:column; gap:6px; max-width:560px; margin:12px auto;}
+  .rmw-l{border-radius:12px; padding:10px 14px; border:1px solid var(--border); background:var(--panel2); display:flex; justify-content:space-between; align-items:center; gap:10px; font-size:.86em; flex-wrap:wrap;}
+  .rmw-l b{font-family:'JetBrains Mono',monospace;} .rmw-l span{color:var(--muted); font-size:.88em;}
+  .rmw-l.app{background:#eef0ff; border-color:#d6dafc;} html[data-theme="dark"] .rmw-l.app{background:#1f2242; border-color:#383d6b;}
+  .rmw-dds{background:var(--accent2) !important; border-color:var(--accent2) !important;}
+  .rmw-dds b, .rmw-dds span{color:#fff !important;}
+  .rmw-dds.swap{animation:l2swap .6s ease;}
+  @keyframes l2swap{0%{transform:translateY(12px); opacity:0;} 100%{transform:none; opacity:1;}}
+  .rmw-same.flash::after{content:"unchanged ✓"; color:var(--accent2); font-weight:800; font-size:.8em; animation:l2fade 1.6s forwards;}
+  @keyframes l2fade{0%,60%{opacity:1;} 100%{opacity:0;}}
+
+  /* troubleshooting */
+  .fix-grid{display:grid; grid-template-columns:minmax(0,4fr) minmax(0,7fr); gap:16px; align-items:start;}
+  @media (max-width:760px){ .fix-grid{grid-template-columns:1fr;} }
+  .fix-menu{display:flex; flex-direction:column; gap:6px;}
+  .fix-sym{font:inherit; font-size:.8em; font-weight:700; text-align:start; padding:9px 12px; border-radius:10px; border:1px solid var(--border); background:var(--panel2); color:var(--text); cursor:pointer; font-family:'JetBrains Mono',monospace;}
+  .fix-sym:hover{border-color:var(--accent);} .fix-sym.on{background:var(--accent); border-color:var(--accent); color:#fff;}
+  .fix-panel{background:var(--panel2); border:1px solid var(--border); border-radius:14px; padding:14px 16px; min-height:200px; font-size:.88em;}
+  .fix-title{font-weight:800; margin-bottom:10px;}
+  .fix-step{display:flex; gap:10px; margin:10px 0; animation:l2swap .35s ease;}
+  .fix-step.past{opacity:.55;}
+  .fix-n{flex-shrink:0; width:24px; height:24px; border-radius:50%; background:var(--accent); color:#fff; display:inline-flex; align-items:center; justify-content:center; font-weight:800; font-size:.8em;}
+  .fix-cmd{margin-top:6px; background:#181a2e; color:#d8dcff; border-radius:8px; padding:7px 10px; font-family:'JetBrains Mono',monospace; font-size:.9em; word-break:break-all;}
+  .fix-btns{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;}
+  .fix-done{margin-top:12px; font-weight:800; color:var(--accent2);}
+  .fix-empty, .fix-last{color:var(--muted) !important; font-size:.92em;}
+
+  /* checklists */
+  .checkpoint li, .worksheet li{cursor:pointer; border-radius:8px; transition:background .15s;}
+  .checkpoint li:hover, .worksheet li:hover{background:rgba(14,158,110,.07);}
+  .checkpoint li.done::before{content:"☑";}
+  .checkpoint li.done{opacity:.75;}
+  .ck-bar{display:flex; align-items:center; gap:10px; margin-top:10px; font-size:.8em; font-weight:700; color:var(--muted);}
+  .ck-bar .tm-bar{flex:1;}
+  .worksheet{border-radius:16px; padding:18px 22px; margin:22px 0; background:var(--panel); border:1px solid var(--border); border-inline-start:4px solid var(--gold);}
+  .worksheet ol{margin:0; padding-inline-start:0; list-style:none; counter-reset:ws;}
+  .worksheet li{counter-increment:ws; padding:10px 8px 10px 44px; position:relative; border-bottom:1px solid var(--border); margin:0;}
+  .worksheet li:last-child{border-bottom:none;}
+  .worksheet li::before{content:counter(ws); position:absolute; left:6px; top:10px; width:26px; height:26px; border-radius:8px; background:var(--panel2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:.8em; color:var(--gold);}
+  .worksheet li.done::before{content:"✓"; background:var(--accent2); border-color:var(--accent2); color:#fff;}
+  .worksheet li.done > strong{text-decoration:line-through; text-decoration-color:var(--accent2);}
+  .worksheet .ws-hint{display:block; font-size:.86em; color:var(--muted);}
+
+  /* cheat sheet */
+  .cs{display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:12px; margin-top:14px;}
+  .cs-box{background:var(--panel); border:1px solid var(--border); border-radius:14px; overflow:hidden; break-inside:avoid;}
+  .cs-box h4{margin:0; padding:7px 12px; background:#22294a; color:#fff; font-size:.8em; letter-spacing:.6px; text-transform:uppercase;}
+  .cs-box .cs-body{margin:0; padding:9px 12px; font-family:'JetBrains Mono',monospace; font-size:.72em; line-height:1.65; white-space:pre-wrap; word-break:break-word; color:var(--text);}
+  .cs-box .cs-body i{font-style:normal; color:var(--muted);}
+  @media print{
+    .lab, .run-chips, .dock-ph, #annot-fab, #annot-fab-board{display:none !important;}
+    .cs-box h4{-webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  }
 </style>
 <link rel="stylesheet" href="projector.css">
 </head>
@@ -159,21 +422,35 @@ html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
       <div class="chip">Duration: 3 hours</div>
       <div class="chip">Prerequisite: Lecture 1 (install)</div>
       <div class="chip">Robot: AgileX LIMO in Gazebo</div>
+      <div class="chip">🎮 14 interactive labs</div>
     </div>
   </div>
 
   <div class="toc">
     <strong style="color:var(--text)">In this session</strong>
-    <a href="#big-picture"><span>2.1</span>The Big Picture: What ROS 2 Actually Is</a>
-    <a href="#nodes"><span>2.2</span>Nodes — the Living Units of the Graph</a>
-    <a href="#topics"><span>2.3</span>Topics — Publish and Subscribe</a>
-    <a href="#services"><span>2.4</span>Services — Request and Response</a>
-    <a href="#actions"><span>2.5</span>Actions — Long-Running Goals</a>
-    <a href="#parameters"><span>2.6</span>Parameters — Tuning a Node Live</a>
-    <a href="#custom-messages"><span>2.7</span>Custom Messages in the Wild: LimoStatus</a>
-    <a href="#limo-gazebo"><span>2.8</span>Meeting LIMO in Gazebo for Real</a>
-    <a href="#dds"><span>2.9</span>DDS and the Network Layer</a>
-    <a href="#summary"><span>2.10</span>Summary, Checkpoint &amp; Glossary</a>
+    <a href="#big-picture"><span>2.1</span>The Big Picture: What ROS 2 Actually Is <em class="toc-lab">🎮 live graph</em></a>
+    <a href="#nodes"><span>2.2</span>Nodes — the Living Units of the Graph <em class="toc-lab">🧪 virtual turtlesim</em></a>
+    <a href="#topics"><span>2.3</span>Topics — Publish and Subscribe <em class="toc-lab">🎮 pub/sub playground</em></a>
+    <a href="#services"><span>2.4</span>Services — Request and Response <em class="toc-lab">🎮 blocking demo</em></a>
+    <a href="#actions"><span>2.5</span>Actions — Long-Running Goals <em class="toc-lab">🎮 goal / feedback / cancel</em></a>
+    <a href="#parameters"><span>2.6</span>Parameters — Tuning a Node Live <em class="toc-lab">🎮 colour mixer · sorting game</em></a>
+    <a href="#custom-messages"><span>2.7</span>Custom Messages in the Wild: LimoStatus <em class="toc-lab">🎮 .msg builder</em></a>
+    <a href="#limo-gazebo"><span>2.8</span>Meeting LIMO in Gazebo for Real <em class="toc-lab">🎮 Twist planner · LiDAR explorer</em></a>
+    <a href="#dds"><span>2.9</span>DDS and the Network Layer <em class="toc-lab">🎮 classroom discovery</em></a>
+    <a href="#troubleshooting"><span>2.10</span>Troubleshooting Clinic <em class="toc-lab">🩺 interactive</em></a>
+    <a href="#self-test"><span>2.11</span>Self-Test Quiz &amp; Lab Worksheet <em class="toc-lab">✅ 12 questions</em></a>
+    <a href="#summary"><span>2.12</span>Summary, Cheat Sheet, Checkpoint &amp; Glossary</a>
+  </div>
+  <style>.toc-lab{font-style:normal; font-size:.72em; font-weight:700; color:var(--accent2); margin-inline-start:6px; white-space:nowrap;}</style>
+
+  <div class="box idea" style="margin-top:28px;">
+    <div class="box-title">🎮 How to use this page</div>
+    <p>
+      Every section has a hands-on widget. The main one is the <strong>virtual turtlesim lab</strong> in §2.2: a practice
+      copy of turtlesim and the <code>ros2</code> command line that runs in your browser. The terminal blocks in §2.2–2.6
+      have <strong>▶ chips</strong> that run their commands in that lab. On a wide screen, press <strong>📌 Dock to
+      side</strong> to keep the lab open while you read. It's for practice only: run every command again on your Ubuntu VM.
+    </p>
   </div>
 
   <section id="big-picture">
@@ -242,6 +519,24 @@ flowchart LR
         small Nodes wired together by named Topics — is identical to the real hardware. Learn the pattern in simulation
         and it transfers directly to the physical robot.
       </p>
+    </div>
+
+    <div class="lab" id="graph-lab">
+      <div class="lab-head"><span class="lab-tag">🎮 Interactive</span><span class="lab-title">Break the graph and see what keeps working</span></div>
+      <p class="lab-sub">Each dot is one Message moving along a Topic. Click a Node to inspect it, then stop it. Switch to <em>ROS 1</em> to see what a central master changes.</p>
+      <div class="lab-row">
+        <div class="seg" id="gl-mode"><button data-m="ros2" class="on">ROS 2 · no master</button><button data-m="ros1">ROS 1 · roscore</button></div>
+        <button class="btn pri" id="gl-toggle">⏹ Stop node</button>
+        <button class="btn" id="gl-master" hidden>💥 Kill roscore</button>
+        <button class="btn" id="gl-reset">↺ Reset</button>
+      </div>
+      <svg class="stage" id="gl-svg" viewBox="0 0 760 330" role="img" aria-label="Animated ROS graph with five nodes connected by topics"></svg>
+      <div class="lab-split"><div class="mini-term" id="gl-info" aria-live="polite"></div><div class="mini-term log" id="gl-log"></div></div>
+      <div class="try-this">
+        <strong>Try this:</strong> ① Stop <code>/obstacle_avoider</code>. Does <code>/motor_driver</code> still get <code>/cmd_vel</code> from teleop?
+        ② Stop <code>/motor_driver</code>. What happens to the publishers? (gold dots = published, but nobody is listening.)
+        ③ In <em>ROS 1</em> mode, kill roscore, then stop and restart <code>/lidar_driver</code>. Why can't it reconnect? Try the same in ROS 2.
+      </div>
     </div>
 
     <p>By the end of today you should be able to answer, for any ROS 2 system you're handed:</p>
@@ -325,6 +620,61 @@ flowchart LR
         the turtle today (<code>node list</code>, <code>topic echo</code>, <code>service call</code>, <code>param
         set</code>) is the exact same command you will run against the real LIMO in section 2.8 and in every later
         lecture. Get comfortable on the turtle before you touch the robot.
+      </p>
+    </div>
+
+    <div class="lab" id="ts-lab">
+      <div class="lab-head">
+        <span class="lab-tag green">🧪 Virtual Lab</span><span class="lab-title">turtlesim + the ros2 CLI, in your browser</span>
+        <span class="lab-head-r"><button class="btn" id="ts-dock">📌 Dock to side</button><button class="btn" id="ts-reset">↺ Reset lab</button></span>
+      </div>
+      <p class="lab-sub">
+        A practice copy of turtlesim. Type real commands: <strong>Tab</strong> completes, <strong>↑</strong> recalls history,
+        <strong>Ctrl+C</strong> stops a running command. Long-running nodes (turtlesim, teleop, a looping <code>topic pub</code>) open
+        in their own "pane", shown as a chip under the turtle window. The missions tick themselves off as you go.
+      </p>
+      <div class="ts-grid">
+        <div>
+          <div class="ts-stage" tabindex="0" aria-label="turtlesim window. When teleop is running, focus here and use the arrow keys.">
+            <canvas id="ts-canvas" width="500" height="500"></canvas>
+            <div class="ts-overlay" id="ts-overlay">🐢 turtlesim is not running<span>type <code>ros2 run turtlesim turtlesim_node</code> in the terminal</span></div>
+          </div>
+          <div class="ts-pad" id="ts-pad" hidden>
+            <span class="pad-l">🎮 teleop</span>
+            <button data-k="ArrowLeft" aria-label="turn left">←</button><button data-k="ArrowUp" aria-label="forward">↑</button><button data-k="ArrowDown" aria-label="backward">↓</button><button data-k="ArrowRight" aria-label="turn right">→</button>
+            <span class="pad-l" style="margin-inline-start:6px;">rotate (Action):</span>
+            <button data-k="r" title="R: 90°">R</button><button data-k="t" title="T: 45°">T</button><button data-k="g" title="G: 0°">G</button><button data-k="b" title="B: −45°">B</button><button data-k="v" title="V: −90°">V</button><button data-k="d" title="D: 180°">D</button><button data-k="f" title="F: cancel rotation">F✋</button>
+          </div>
+          <div class="ts-procs" id="ts-procs"></div>
+        </div>
+        <div>
+          <div class="vterm">
+            <div class="term-bar">
+              <div class="term-dot" style="background:#f2685a;"></div><div class="term-dot" style="background:#e3b341;"></div><div class="term-dot" style="background:#3ec97a;"></div>
+              <span class="vt-title">limo@ubuntu: ~</span>
+              <button class="vt-stop" id="ts-stop" hidden>■ Ctrl+C</button>
+            </div>
+            <div class="vterm-out" id="ts-out" aria-live="polite"></div>
+            <label class="vterm-in"><span class="vt-p">$</span><input id="ts-in" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Terminal input"></label>
+          </div>
+          <div class="chips" id="ts-chips"></div>
+        </div>
+      </div>
+      <div class="ts-missions" id="ts-missions"></div>
+      <div class="ts-graph" id="ts-graph" hidden>
+        <div class="ts-graph-h"><span>rqt_graph: live view of this lab's graph</span><button class="btn sm" id="ts-graph-close">✕ close</button></div>
+        <svg id="ts-graph-svg" viewBox="0 0 760 120" role="img" aria-label="rqt_graph of the virtual lab"></svg>
+      </div>
+    </div>
+    <div class="dock-ph" id="ts-ph" hidden>📌 The virtual lab is docked at the bottom-right of the screen. <button class="btn" id="ts-undock">Put it back here</button></div>
+
+    <div class="box eng">
+      <div class="box-title">🔧 Suggested first run (5 minutes)</div>
+      <p>
+        In the lab: start turtlesim, then <code>ros2 node list</code>, then start <code>turtle_teleop_key</code> and run
+        <code>ros2 node list</code> again. You now have two Nodes. Open <code>rqt_graph</code> and drive with the pad: the
+        arrow on the graph is the Topic <code>/turtle1/cmd_vel</code>. Stop the teleop pane (✕). The turtle is still alive,
+        because every Node is its own process.
       </p>
     </div>
 
@@ -445,6 +795,52 @@ angular_velocity: 0.0
       </p>
     </div>
 
+    <div class="lab" id="ps-lab">
+      <div class="lab-head"><span class="lab-tag">🎮 Interactive</span><span class="lab-title">Publish/subscribe playground</span></div>
+      <p class="lab-sub">Add and remove Publishers and Subscribers on <code>/scan</code> while it runs. Then make one subscriber slow and watch its queue.</p>
+      <div class="lab-row">
+        <button class="btn pri" id="ps-addp">+ Publisher</button>
+        <button class="btn pri" id="ps-adds">+ Subscriber</button>
+      </div>
+      <svg class="stage" id="ps-svg" viewBox="0 0 760 300" role="img" aria-label="Publishers sending messages through a topic to subscribers"></svg>
+      <div class="ctl-grid">
+        <label class="ctl">publish rate <input type="range" id="ps-rate" min="1" max="15" value="4"><output>4 Hz</output></label>
+        <label class="ctl">queue depth (QoS) <input type="range" id="ps-depth" min="1" max="10" value="5"><output>5</output></label>
+      </div>
+      <div class="lab-split">
+        <div class="ps-rows" id="ps-rows"></div>
+        <div class="mini-term" id="ps-info"></div>
+      </div>
+      <div class="try-this">
+        <strong>What to notice:</strong> the publisher's <em>sent</em> counter never pauses. Adding or removing subscribers,
+        or making one slow, changes nothing for the publisher, because Topics are fully decoupled. A slow subscriber keeps only
+        the newest <em>depth</em> messages and drops the oldest. That is the QoS <em>history depth</em>, and you will tune it in later lectures.
+      </div>
+    </div>
+
+    <h3>Anatomy of the Message you will send most: <code>geometry_msgs/msg/Twist</code></h3>
+    <p>
+      A <code>Twist</code> is two 3-D vectors. A ground robot like LIMO or the turtle only uses two of the six numbers:
+      <code>linear.x</code> (forward speed, m/s) and <code>angular.z</code> (turn rate, rad/s). ROS uses a right-handed
+      frame: <strong>x forward, y left, z up</strong>, so a <em>positive</em> <code>angular.z</code> turns
+      <em>counter-clockwise</em>, which is a left turn.
+    </p>
+    <table>
+      <tr><th>Field</th><th>Differential-drive LIMO / turtle</th><th>Try it in the virtual lab</th></tr>
+      <tr><td><code>linear.x</code></td><td>+ forward, − backward (m/s)</td><td><code>"{linear: {x: 2.0}}"</code></td></tr>
+      <tr><td><code>linear.y</code></td><td>ignored: a diff-drive robot can't slide sideways (a Mecanum LIMO can!)</td><td>—</td></tr>
+      <tr><td><code>angular.z</code></td><td>+ turn left ↺, − turn right ↻ (rad/s)</td><td><code>"{angular: {z: 1.57}}"</code></td></tr>
+      <tr><td>both together</td><td>drives an arc of radius R = v / ω</td><td><code>"{linear: {x: 2.0}, angular: {z: 1.0}}"</code></td></tr>
+    </table>
+    <div class="lab-row">
+      <button class="btn" data-lab-cmd='ros2 topic pub --once /turtle1/cmd_vel geometry_msgs/msg/Twist "{linear: {x: 2.0}}"'>▶ forward 2 m</button>
+      <button class="btn" data-lab-cmd='ros2 topic pub --once /turtle1/cmd_vel geometry_msgs/msg/Twist "{angular: {z: 1.5708}}"'>▶ turn left 90°</button>
+      <button class="btn" data-lab-cmd='ros2 topic pub --once /turtle1/cmd_vel geometry_msgs/msg/Twist "{linear: {x: 2.0}, angular: {z: 1.8}}"'>▶ arc</button>
+      <button class="btn" data-lab-cmd='ros2 interface show geometry_msgs/msg/Twist'>▶ interface show</button>
+    </div>
+    <p style="font-size:.9em;">turtlesim applies each velocity command for 1 second and then stops, so one <code>--once</code> with
+      <code>linear.x: 2.0</code> moves the turtle about 2 units. Can you draw a square using only these commands?</p>
+
     <div class="exercise">
       <div class="level">Easy Exercise</div>
       <p>
@@ -526,13 +922,42 @@ std_srvs.srv.Empty_Response()</span></div>
       </p>
     </div>
 
+    <div class="lab pp-lab" id="pp-service" data-mode="service">
+      <div class="lab-head"><span class="lab-tag">🎮 Interactive</span><span class="lab-title">Feel the difference: a blocking call vs. a stream</span></div>
+      <p class="lab-sub">The <em>other work</em> counter is everything else your program could be doing. Watch it freeze while a Service call is waiting. Then set <em>server offline</em> and call again.</p>
+      <div class="seg"><button data-m="topic">Topic</button><button data-m="service">Service</button><button data-m="action">Action</button></div>
+      <div class="pp-ctl"></div>
+      <svg class="stage pp-svg" viewBox="0 0 760 150" role="img" aria-label="Messages travelling between a client and a server"></svg>
+      <div class="pp-status">
+        <div><small>left side status</small><span class="pp-cs"></span><small>other work done: <span class="pp-other">0</span></small></div>
+        <div><small>right side status</small><span class="pp-ss"></span><div class="pp-workbar"><i class="pp-work"></i></div></div>
+      </div>
+      <div class="mini-term log pp-log" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="box eng">
+      <div class="box-title">🔧 Engineering Perspective: "blocking" in real code</div>
+      <p>
+        <code>ros2 service call</code> and a plain synchronous <code>call()</code> block the caller exactly as shown above.
+        In your own <code>rclpy</code> Nodes you will normally use <code>call_async()</code>, which returns a <em>future</em>,
+        so the Node can keep spinning while it waits. You still get exactly <strong>one</strong> response at the end, and
+        no progress updates. If you need progress, you need an Action.
+      </p>
+    </div>
+
     <div class="exercise">
       <div class="level">Intermediate Exercise</div>
       <p>
         Run <code>ros2 service call /spawn turtlesim/srv/Spawn "{x: 2.0, y: 2.0, theta: 0.0, name: 'turtle2'}"</code>.
-        Then run <code>ros2 node list</code> again. Explain in two sentences why a new Node appeared, and why the Service
-        call returned before the new turtle finished being usable.
+        Then run <code>ros2 node list</code> <em>and</em> <code>ros2 topic list</code> again. Explain in two sentences why
+        no new Node appeared but a whole new set of <code>/turtle2/…</code> Topics and Services did. (Hint: which process
+        is actually simulating turtle2?) Then drive turtle2 by publishing on <code>/turtle2/cmd_vel</code>.
       </p>
+      <div class="lab-row" style="margin-bottom:0;">
+        <button class="btn sm" data-lab-cmd="ros2 service call /spawn turtlesim/srv/Spawn &quot;{x: 2.0, y: 2.0, theta: 0.0, name: 'turtle2'}&quot;">▶ spawn in the virtual lab</button>
+        <button class="btn sm" data-lab-cmd="ros2 node list">▶ node list</button>
+        <button class="btn sm" data-lab-cmd="ros2 topic list">▶ topic list</button>
+      </div>
     </div>
   </section>
 
@@ -586,6 +1011,85 @@ sequenceDiagram
       <tr><td>Service</td><td>Instant / short</td><td>None</td><td>No</td></tr>
       <tr><td>Action</td><td>Seconds to minutes</td><td>Yes, periodically</td><td>Yes</td></tr>
     </table>
+
+    <h3>You already used an Action today</h3>
+    <p>
+      The teleop window you opened in §2.3 printed <em>"Use G|B|V|C|D|E|R|T keys to rotate to absolute orientations"</em>.
+      Each of those keys sends a Goal to turtlesim's <code>/turtle1/rotate_absolute</code> Action server, and
+      <strong>F</strong> cancels it. You can send the same Goal from the command line and watch the Feedback stream in:
+    </p>
+
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-dot" style="background:#f2685a;"></div><div class="term-dot" style="background:#e3b341;"></div><div class="term-dot" style="background:#3ec97a;"></div>
+      </div>
+      <div class="term-body"><span class="term-prompt">$</span> ros2 action list -t
+<span class="term-out">/turtle1/rotate_absolute [turtlesim/action/RotateAbsolute]</span>
+
+<span class="term-prompt">$</span> ros2 action info /turtle1/rotate_absolute
+<span class="term-out">Action: /turtle1/rotate_absolute
+Action clients: 1
+    /teleop_turtle
+Action servers: 1
+    /turtlesim</span>
+
+<span class="term-prompt">$</span> ros2 interface show turtlesim/action/RotateAbsolute
+<span class="term-out"># The desired heading in radians
+float32 theta
+---
+# The angular displacement in radians to the starting position
+float32 delta
+---
+# The remaining rotation in radians
+float32 remaining</span>
+
+<span class="term-prompt">$</span> ros2 action send_goal /turtle1/rotate_absolute turtlesim/action/RotateAbsolute "{theta: 1.57}" --feedback
+<span class="term-out">Waiting for an action server to become available...
+Sending goal:
+     theta: 1.57
+
+Goal accepted with ID: 3f1d2c0b9e8a4f6d8c7b6a5e4d3c2b1a
+
+Feedback:
+    remaining: 1.5540000200271606
+
+Feedback:
+    remaining: 1.2339999675750732
+...
+Result:
+    delta: -1.5520000457763672
+
+Goal finished with status: SUCCEEDED</span></div>
+    </div>
+
+    <p>
+      Notice the three parts of the <code>.action</code> file, separated by <code>---</code>: <strong>Goal</strong>
+      (<code>theta</code>), <strong>Result</strong> (<code>delta</code>) and <strong>Feedback</strong> (<code>remaining</code>).
+      A <code>.srv</code> file has only two parts (Request <code>---</code> Response), and a <code>.msg</code> has one. Press
+      <strong>Ctrl+C</strong> while a goal is running (in the virtual lab too) and the CLI cancels it. You can't do that with a Service.
+    </p>
+
+    <div class="box def">
+      <div class="box-title">📖 Under the hood: an Action is built from Services and Topics</div>
+      <p>
+        ROS 2 builds every Action from the two primitives you already know: three Services
+        (<code>send_goal</code>, <code>cancel_goal</code>, <code>get_result</code>) and two Topics
+        (<code>feedback</code> and <code>status</code>). The Action API bundles them into one easy interface.
+      </p>
+    </div>
+
+    <div class="lab pp-lab" id="pp-action" data-mode="action">
+      <div class="lab-head"><span class="lab-tag">🎮 Interactive</span><span class="lab-title">Goal → Feedback → Result, and Cancel</span></div>
+      <p class="lab-sub">Send a navigation goal and watch the Feedback stream back while the client stays free. Send another goal and press <em>Cancel</em> half-way. Switch tabs to compare with the Service.</p>
+      <div class="seg"><button data-m="topic">Topic</button><button data-m="service">Service</button><button data-m="action">Action</button></div>
+      <div class="pp-ctl"></div>
+      <svg class="stage pp-svg" viewBox="0 0 760 150" role="img" aria-label="Goal, feedback and result messages travelling between an action client and server"></svg>
+      <div class="pp-status">
+        <div><small>left side status</small><span class="pp-cs"></span><small>other work done: <span class="pp-other">0</span></small></div>
+        <div><small>right side status</small><span class="pp-ss"></span><div class="pp-workbar"><i class="pp-work"></i></div></div>
+      </div>
+      <div class="mini-term log pp-log" style="margin-top:10px;"></div>
+    </div>
 
     <div class="exercise">
       <div class="level">Harder Exercise</div>
@@ -653,13 +1157,46 @@ sequenceDiagram
       </p>
     </div>
 
+    <div class="lab" id="mix-lab">
+      <div class="lab-head"><span class="lab-tag">🎮 Interactive</span><span class="lab-title">Parameter colour mixer</span></div>
+      <p class="lab-sub">Move the sliders to see the matching <code>ros2 param set</code> commands, the YAML file and the launch-time flag. Then send them to the virtual lab.</p>
+      <div class="mix-grid">
+        <canvas class="cv" width="260" height="260" aria-label="Preview of the turtlesim background colour"></canvas>
+        <div>
+          <label class="ctl"><span class="sw" style="background:#e5484d"></span>background_r <input type="range" id="mix-r" min="0" max="255" value="69"><output>69</output></label>
+          <label class="ctl"><span class="sw" style="background:#30a46c"></span>background_g <input type="range" id="mix-g" min="0" max="255" value="86"><output>86</output></label>
+          <label class="ctl"><span class="sw" style="background:#3d63dd"></span>background_b <input type="range" id="mix-b" min="0" max="255" value="255"><output>255</output></label>
+          <div class="mix-goal"></div>
+          <div class="lab-row"><button class="btn pri mix-send">▶ Apply in the virtual lab</button><button class="btn mix-reset">↺ Defaults (69, 86, 255)</button></div>
+        </div>
+      </div>
+      <div class="mini-term mix-out" style="margin-top:12px;"></div>
+    </div>
+
+    <div class="box mistake">
+      <div class="box-title">⚠️ Common Mistake: Parameters Are Typed</div>
+      <p>
+        <code>ros2 param set /turtlesim background_r 150.0</code> fails with <em>"Wrong parameter type … is of type
+        {integer}, setting it to {double} is not allowed"</em>. In ROS 2 each parameter's type is fixed when the Node
+        declares it: <code>150</code> is an integer and <code>150.0</code> is a double. Setting <code>300</code> fails for a
+        different reason: turtlesim only accepts 0–255. Try both in the virtual lab and read the error messages.
+      </p>
+    </div>
+
     <div class="exercise">
       <div class="level">Easy Exercise</div>
       <p>
         Change all three of <code>background_r</code>, <code>background_g</code>, and <code>background_b</code> to make
         the turtlesim canvas roughly purple, then run <code>ros2 param get</code> on each to confirm the new values
-        stuck.
+        stuck. Finally, run <code>ros2 param dump /turtlesim</code> and find your values in the YAML it prints.
       </p>
+    </div>
+
+    <div class="lab" id="cls-lab">
+      <div class="lab-head"><span class="lab-tag gold">🧩 Sorting game</span><span class="lab-title">Topic, Service, Action or Parameter?</span><span class="lab-head-r"><button class="btn cls-reset">↺ Retry</button></span></div>
+      <p class="lab-sub">You'll make this choice every time you design a robot feature. Read each LIMO scenario and pick one pattern.</p>
+      <div class="cls-list"></div>
+      <div class="cls-score"></div>
     </div>
   </section>
 
@@ -726,6 +1263,33 @@ uint8   motion_mode</code></pre>
         define its own <code>.msg</code> files the moment its data doesn't fit an existing shape. You will write your
         own custom messages later in this course once you start building LIMO-specific behaviors.
       </p>
+    </div>
+
+    <h3>The three interface file types side by side</h3>
+    <table>
+      <tr><th>File</th><th>Used by</th><th>Sections</th><th>Example from today</th></tr>
+      <tr><td><code>.msg</code></td><td>Topics</td><td>1: the fields</td><td><code>geometry_msgs/msg/Twist</code>, <code>limo_msgs/msg/LimoStatus</code></td></tr>
+      <tr><td><code>.srv</code></td><td>Services</td><td>2: Request <code>---</code> Response</td><td><code>turtlesim/srv/Spawn</code></td></tr>
+      <tr><td><code>.action</code></td><td>Actions</td><td>3: Goal <code>---</code> Result <code>---</code> Feedback</td><td><code>turtlesim/action/RotateAbsolute</code></td></tr>
+    </table>
+
+    <div class="lab" id="msg-lab">
+      <div class="lab-head"><span class="lab-tag purple">🛠 Builder</span><span class="lab-title">Design your own .msg</span></div>
+      <p class="lab-sub">Start from LimoStatus or a preset, then add, rename and retype fields. The builder checks the ROS naming rules and shows the generated file, what <code>topic echo</code> would print, Python usage and the build-system lines.</p>
+      <div class="msg-top">
+        <label>package <input class="msg-pkg" spellcheck="false" size="14"></label>
+        <label>message <input class="msg-name" spellcheck="false" size="16"></label>
+        <span class="lab-head-r">
+          <button class="btn sm" data-preset="limo">LimoStatus</button>
+          <button class="btn sm" data-preset="battery">BatteryReport</button>
+          <button class="btn sm" data-preset="target">DetectedObject</button>
+        </span>
+      </div>
+      <div class="msg-rows"></div>
+      <button class="btn msg-add">+ add field</button>
+      <div class="msg-err"></div>
+      <div class="seg msg-tabs"><button data-t="msg" class="on">.msg file</button><button data-t="echo">topic echo</button><button data-t="py">Python</button><button data-t="build">CMake / package.xml</button></div>
+      <div class="mini-term msg-out"></div>
     </div>
   </section>
 
@@ -800,6 +1364,38 @@ uint8   motion_mode</code></pre>
       </p>
     </div>
 
+    <div class="lab" id="tw-lab">
+      <div class="lab-head"><span class="lab-tag">🎮 Interactive</span><span class="lab-title">Predict where LIMO goes: Twist → trajectory</span></div>
+      <p class="lab-sub">Before you type a <code>/cmd_vel</code> command in Gazebo, predict the path. Set a forward speed <em>v</em>, a turn rate <em>ω</em> and how long you'll send it, then press ▶ Drive. LIMO is drawn to scale (32 × 22 cm).</p>
+      <div class="ctl-grid">
+        <label class="ctl">linear.x (v) <input type="range" id="tw-v" min="-1" max="1" step="0.05" value="0.25"><output id="tw-v-o"></output></label>
+        <label class="ctl">angular.z (ω) <input type="range" id="tw-w" min="-2" max="2" step="0.05" value="0.5"><output id="tw-w-o"></output></label>
+        <label class="ctl">duration <input type="range" id="tw-t" min="0.5" max="25" step="0.5" value="6"><output id="tw-t-o"></output></label>
+      </div>
+      <div class="lab-row">
+        <button class="btn pri tw-play">▶ Drive</button>
+        <span class="tw-presets">
+          <button class="btn sm" data-tw="0.25,0.5,6">lecture command</button>
+          <button class="btn sm" data-tw="0.5,0,6">straight</button>
+          <button class="btn sm" data-tw="0,1,6.5">spin in place</button>
+          <button class="btn sm" data-tw="0.3,0.3,21">1 m-radius circle</button>
+          <button class="btn sm" data-tw="0.4,-0.8,4">right arc</button>
+          <button class="btn sm" data-tw="-0.3,0.4,5">reverse arc</button>
+        </span>
+      </div>
+      <canvas class="cv" width="760" height="420" aria-label="Top-down view of LIMO's predicted path"></canvas>
+      <div class="lab-split">
+        <div class="readout tw-read"></div>
+        <div class="mini-term tw-cmd"></div>
+      </div>
+      <div class="try-this">
+        <strong>Rule of thumb:</strong> <em>R = v / ω</em>. Double <em>v</em> and the circle doubles. Double <em>ω</em> and it halves.
+        Set <em>v = 0</em> and LIMO spins in place. <strong>Stopping:</strong> Gazebo's diff-drive plugin keeps running the last
+        command it received, so a single <code>--once</code> can leave LIMO circling. Always finish with a zero Twist
+        (<code>"{}"</code>). The "1 m circle" preset needs 21 s, which is 2π / 0.3.
+      </div>
+    </div>
+
     <p>Finally, peek at the LiDAR stream briefly — this is a firehose of numbers, so echo it for a moment and then Ctrl+C:</p>
     <pre><code>ros2 topic echo /scan</code></pre>
     <pre><code>header:
@@ -812,6 +1408,34 @@ range_min: 0.15000000596046
 range_max: 12.0
 ranges: [1.842, 1.839, 1.847, ..., inf, inf, 2.910]
 ---</code></pre>
+
+    <p>
+      Those numbers are easier to read with a picture. Every entry in <code>ranges</code> is one laser beam. Its direction
+      is not stored in the message, so you compute it: <strong>angle = angle_min + i × angle_increment</strong>, measured
+      from the robot's forward x-axis, positive to the left. <code>inf</code> means the beam hit nothing within
+      <code>range_max</code>.
+    </p>
+
+    <div class="lab" id="scan-lab">
+      <div class="lab-head"><span class="lab-tag">🎮 Interactive</span><span class="lab-title">LaserScan explorer: from <code>ranges[i]</code> to a picture</span></div>
+      <p class="lab-sub">This uses the same <code>angle_min</code>, <code>angle_max</code> and <code>angle_increment</code> as the echo above. Drag LIMO around the room, rotate it, and click anywhere to see which beam index points there.</p>
+      <div class="ctl-grid">
+        <label class="ctl">beam index i <input type="range" id="scan-i" min="0" max="1074" value="537"><output id="scan-i-o"></output></label>
+        <label class="ctl">LIMO heading <input type="range" id="scan-h" min="-180" max="180" value="0"><output id="scan-h-o"></output></label>
+        <label class="ctl"><input type="checkbox" id="scan-rays" checked> draw beams</label>
+      </div>
+      <canvas class="cv" width="760" height="470" aria-label="Top-down room with LIMO and its LiDAR beams"></canvas>
+      <div class="scan-dec"></div>
+      <div class="lab-split">
+        <div class="readout scan-read"></div>
+        <div class="mini-term scan-echo"></div>
+      </div>
+      <div class="try-this">
+        <strong>Try this:</strong> ① Find the index that points straight ahead, and the ones for left (+90°) and right (−90°).
+        ② Point LIMO at the open door. Why do those beams read <code>inf</code>? ③ Drive LIMO close to the pillar and watch the
+        "front min" decision flip. That is the core of the obstacle avoider you'll write in Lecture 7.
+      </div>
+    </div>
 
     <div class="box hw">
       <div class="box-title">🔩 Hardware Note</div>
@@ -884,12 +1508,128 @@ export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp</code></pre>
         your Python or C++ untouched.
       </p>
     </div>
+
+    <h3>ROS_DOMAIN_ID: separate "rooms" on the same network</h3>
+    <p>
+      <code>ROS_LOCALHOST_ONLY=1</code> hides you from everyone. Sometimes you <em>want</em> two machines to talk, for
+      example your laptop and a real LIMO on the same Wi-Fi, but not to the other fourteen teams. For that, DDS has
+      <strong>domains</strong>. Nodes only discover Nodes with the same <code>ROS_DOMAIN_ID</code> (default
+      <code>0</code>). If each team picks its own number (0–101 is the safe range on Linux) and sets it on both the laptop
+      and its robot, every team gets a private graph on shared Wi-Fi.
+    </p>
+    <pre><code># add to ~/.bashrc on BOTH your laptop and your LIMO
+export ROS_DOMAIN_ID=17</code></pre>
+
+    <div class="lab" id="dds-lab">
+      <div class="lab-head"><span class="lab-tag">🎮 Interactive</span><span class="lab-title">The classroom discovery problem</span><span class="lab-head-r"><button class="btn dds-chaos">↺ Everyone on defaults</button></span></div>
+      <p class="lab-sub">Four students on one Wi-Fi all run turtlesim + teleop on default settings. Press <em>Drive</em> and watch whose turtle moves. Then change the settings until your graph is private.</p>
+      <svg class="stage dds-svg" viewBox="0 0 760 350" role="img" aria-label="Four laptops on one Wi-Fi network and their DDS discovery links"></svg>
+      <div class="dds-ctl"></div>
+      <div class="lab-row"><button class="btn pri dds-drive">⬆ Drive my turtle</button></div>
+      <div class="dds-verdict"></div>
+      <div class="lab-split">
+        <div class="mini-term dds-term"></div>
+        <div class="mini-term dds-bashrc"></div>
+      </div>
+    </div>
+
+    <div class="box hw">
+      <div class="box-title">🔩 Version Note: Humble vs. Jazzy</div>
+      <p>
+        This course uses ROS 2 <strong>Humble</strong>, where <code>ROS_LOCALHOST_ONLY=1</code> is the standard switch. In newer
+        distributions (Jazzy and later) it's deprecated in favour of
+        <code>ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST</code>. If you follow a newer tutorial online and the variable seems to
+        do nothing, that's why.
+      </p>
+    </div>
+
+    <div class="lab" id="rmw-lab">
+      <div class="lab-head"><span class="lab-tag purple">🧱 Layers</span><span class="lab-title">Swap the DDS vendor. Your code doesn't change.</span></div>
+      <p class="lab-sub">Pick a different RMW implementation and see which layers change.</p>
+      <div class="rmw-stack">
+        <div class="rmw-l app rmw-same"><b>your_node.py / your_node.cpp</b><span>your code</span></div>
+        <div class="rmw-l rmw-same"><b>rclpy · rclcpp</b><span>client libraries (the API you import)</span></div>
+        <div class="rmw-l rmw-same"><b>rcl</b><span>shared C core: names, parameters, graph</span></div>
+        <div class="rmw-l rmw-same"><b>rmw</b><span>ROS middleware interface (the adapter)</span></div>
+        <div class="rmw-l rmw-dds"></div>
+      </div>
+      <label class="ctl" style="justify-content:center;">RMW_IMPLEMENTATION
+        <select style="font:inherit; padding:5px 8px; border-radius:8px; border:1px solid var(--border); background:var(--panel2); color:var(--text);">
+          <option value="rmw_fastrtps_cpp">rmw_fastrtps_cpp</option>
+          <option value="rmw_cyclonedds_cpp">rmw_cyclonedds_cpp</option>
+          <option value="rmw_connextdds">rmw_connextdds</option>
+        </select>
+      </label>
+      <div class="mini-term rmw-env" style="margin-top:10px; min-height:0;"></div>
+      <p class="lab-sub" style="margin-top:10px;">Keep every machine that must talk to each other (laptop + LIMO) on the <em>same</em> RMW. Mixing vendors is allowed in theory but is a common source of mysterious discovery problems.</p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="troubleshooting">
+    <h2><span class="num">2.10</span>Troubleshooting Clinic</h2>
+    <p>
+      Almost every "ROS is broken" moment in the first weeks is one of the problems below. Pick the symptom and work through
+      the checks in order. The first check fixes it most of the time. This is the same order experienced ROS developers use.
+    </p>
+    <div class="lab" id="fix-lab">
+      <div class="lab-head"><span class="lab-tag gold">🩺 Clinic</span><span class="lab-title">What's going wrong?</span></div>
+      <div class="fix-grid">
+        <div class="fix-menu"></div>
+        <div class="fix-panel"></div>
+      </div>
+    </div>
+    <div class="box idea">
+      <div class="box-title">🧠 The 3-Command Health Check</div>
+      <p>
+        When anything is off, run these three before you change any code: <code>ros2 node list</code> (is everyone alive?),
+        <code>ros2 topic list -t</code> (do the names and types match?), and <code>ros2 topic info /the_topic</code> (is anyone
+        actually publishing <em>and</em> subscribing?). These three commands narrow most bugs to a single Node or Topic.
+      </p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section id="self-test">
+    <h2><span class="num">2.11</span>Self-Test Quiz &amp; Lab Worksheet</h2>
+    <p>Twelve questions covering every section. Each answer comes with an explanation. Aim for 10+ before Lecture 3.</p>
+    <div class="lab" id="quiz-lab">
+      <div class="lab-head"><span class="lab-tag green">✅ Quiz</span><span class="lab-title">Lecture 2 self-check</span><span class="lab-head-r"><button class="btn quiz-reset">↺ Start over</button></span></div>
+      <div class="quiz-q"></div>
+      <div class="quiz-res"></div>
+    </div>
+
+    <h3>Lab Worksheet: hands-on missions</h3>
+    <p>
+      Do these on your Ubuntu VM (missions 1–4 also work in the virtual lab). Click a mission to tick it off. Your progress
+      is saved in this browser. <span class="badge-project">Submit</span> a short PDF with one screenshot per mission and your
+      written answers.
+    </p>
+    <div class="worksheet" id="ws-l02">
+      <ol>
+        <li><strong>The Square.</strong> Draw a closed square with turtle1 using only <code>ros2 topic pub --once</code> commands.
+          <span class="ws-hint">Hint: 1 s at <code>linear.x: 2.0</code> is a 2-unit side, and <code>angular.z: 1.5708</code> for 1 s is a 90° turn. How many commands do you need?</span></li>
+        <li><strong>Two-turtle art.</strong> Spawn <code>turtle2</code> at (2, 2), give it a red pen of width 5 with <code>/turtle2/set_pen</code>, and draw a triangle with it.
+          <span class="ws-hint">Answer in writing: why did <code>ros2 node list</code> not change, but <code>ros2 topic list</code> did?</span></li>
+        <li><strong>Save your colours.</strong> Make the background purple with <code>ros2 param set</code>, save it with
+          <code>ros2 param dump /turtlesim &gt; purple.yaml</code>, then restart turtlesim with <code>--ros-args --params-file purple.yaml</code>.
+          <span class="ws-hint">Proves you can move configuration out of code and into a file.</span></li>
+        <li><strong>Cancel an Action.</strong> Send <code>rotate_absolute</code> with <code>theta: 3.14</code> and <code>--feedback</code>, and press Ctrl+C half-way.
+          <span class="ws-hint">Record the final heading with <code>ros2 topic echo /turtle1/pose --once</code>. Why is it not 3.14?</span></li>
+        <li><strong>LIMO circle.</strong> In Gazebo, make LIMO drive a circle of radius ≈ 1 m, then stop it with a zero Twist.
+          <span class="ws-hint">Use the Twist planner in §2.8 to choose v and ω first, then compare the prediction with Gazebo.</span></li>
+        <li><strong>Graph detective.</strong> With <code>limo_gazebo_diff.launch.py</code> running, screenshot <code>rqt_graph</code> and write one sentence per Node describing its job.</li>
+        <li><strong>Rate table.</strong> Measure <code>ros2 topic hz</code> for <code>/odom</code>, <code>/scan</code>, <code>/imu</code> and the camera image topic. Put them in a table and explain the differences.</li>
+      </ol>
+    </div>
   </section>
 
   <div class="divider"></div>
 
   <section id="summary">
-    <h2><span class="num">2.10</span>Summary, Checkpoint &amp; Glossary</h2>
+    <h2><span class="num">2.12</span>Summary, Cheat Sheet, Checkpoint &amp; Glossary</h2>
     <p>
       Today you replaced "type commands and hope" with a real mental model of ROS 2: a decentralized graph of Nodes
       that exchange data over Topics, request answers over Services, run long tasks over Actions, and expose their
@@ -898,8 +1638,59 @@ export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp</code></pre>
       inspecting its live graph, and driving it two different ways from the command line.
     </p>
 
-    <div class="checkpoint">
-      <strong style="color:var(--text); display:block; margin-bottom:10px;">✅ Learning Checkpoint</strong>
+    <h3>Lecture 2 Command Cheat Sheet</h3>
+    <div class="cs">
+      <div class="cs-box"><h4>Nodes</h4><div class="cs-body">ros2 run &lt;pkg&gt; &lt;exe&gt;
+ros2 node list
+ros2 node info /node_name
+<i># start with a parameter set</i>
+ros2 run turtlesim turtlesim_node \
+  --ros-args -p background_r:=255</div></div>
+      <div class="cs-box"><h4>Topics</h4><div class="cs-body">ros2 topic list -t
+ros2 topic info /topic
+ros2 topic echo /topic [--once]
+ros2 topic hz /topic
+ros2 topic pub --once /topic &lt;type&gt; "&lt;yaml&gt;"
+ros2 topic pub -r 10 /topic &lt;type&gt; "&lt;yaml&gt;"</div></div>
+      <div class="cs-box"><h4>Services</h4><div class="cs-body">ros2 service list -t
+ros2 service type /srv
+ros2 service call /srv &lt;type&gt; "&lt;yaml&gt;"
+<i># e.g.</i>
+ros2 service call /clear std_srvs/srv/Empty</div></div>
+      <div class="cs-box"><h4>Actions</h4><div class="cs-body">ros2 action list -t
+ros2 action info /action
+ros2 action send_goal /action &lt;type&gt; \
+  "&lt;yaml&gt;" --feedback
+<i># Ctrl+C while running = cancel</i></div></div>
+      <div class="cs-box"><h4>Parameters</h4><div class="cs-body">ros2 param list [/node]
+ros2 param get /node name
+ros2 param set /node name value
+ros2 param dump /node &gt; file.yaml
+<i># load at start-up</i>
+--ros-args --params-file file.yaml</div></div>
+      <div class="cs-box"><h4>Interfaces &amp; tools</h4><div class="cs-body">ros2 interface show &lt;type&gt;
+ros2 pkg executables &lt;pkg&gt;
+rqt_graph
+ros2 daemon stop; ros2 daemon start
+printenv | grep ROS</div></div>
+      <div class="cs-box"><h4>LIMO in Gazebo</h4><div class="cs-body">source ~/limo_ws/install/setup.bash
+ros2 launch limo_gazebosim \
+  limo_gazebo_diff.launch.py
+ros2 run teleop_twist_keyboard \
+  teleop_twist_keyboard
+<i># stop LIMO</i>
+ros2 topic pub --once /cmd_vel \
+  geometry_msgs/msg/Twist "{}"</div></div>
+      <div class="cs-box"><h4>Network / DDS (~/.bashrc)</h4><div class="cs-body">export ROS_LOCALHOST_ONLY=1
+export ROS_DOMAIN_ID=17
+export RMW_IMPLEMENTATION=\
+  rmw_cyclonedds_cpp
+<i># check what is set</i>
+printenv | grep -E "ROS|RMW"</div></div>
+    </div>
+
+    <div class="checkpoint" id="cp-l02">
+      <strong style="color:var(--text); display:block; margin-bottom:10px;">✅ Learning Checkpoint <span style="font-weight:500; color:var(--muted); font-size:.85em;">(click each one you can honestly tick; saved in this browser)</span></strong>
       <ul>
         <li>I can explain why ROS 2 has no master process, unlike ROS 1's <code>roscore</code>.</li>
         <li>I can list a Node's Topics, Services, and Actions using <code>ros2 node info</code>.</li>
@@ -908,6 +1699,9 @@ export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp</code></pre>
         <li>I successfully launched <code>limo_gazebosim limo_gazebo_diff.launch.py</code> and saw LIMO's real graph.</li>
         <li>I drove simulated LIMO both with <code>teleop_twist_keyboard</code> and with a raw <code>ros2 topic pub --once</code> command.</li>
         <li>I know what <code>ROS_LOCALHOST_ONLY=1</code> does and why a classroom needs it.</li>
+        <li>I can send an Action goal with <code>ros2 action send_goal … --feedback</code> and cancel it with Ctrl+C.</li>
+        <li>I can work out the angle of any <code>ranges[i]</code> in a LaserScan, and predict the arc a Twist will drive.</li>
+        <li>I scored 10 or more out of 12 on the self-test quiz in §2.11.</li>
       </ul>
     </div>
 
@@ -930,13 +1724,26 @@ export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp</code></pre>
       <dt>DDS</dt><dd>The Data Distribution Service middleware standard ROS 2 uses for decentralized Node discovery and transport.</dd>
       <dt>Message</dt><dd>The fixed data structure carried by a single Topic, Service, or Action, defined in a .msg/.srv/.action file.</dd>
       <dt>rqt_graph</dt><dd>A GUI tool that draws the live ROS 2 graph — Nodes and the Topics connecting them — as a diagram.</dd>
+      <dt>QoS (Quality of Service)</dt><dd>Per-Topic delivery settings, such as history depth (how many messages to queue) and reliability. You met depth in the pub/sub playground.</dd>
+      <dt>RMW</dt><dd>The ROS Middleware interface: the adapter layer that lets ROS 2 run on different DDS vendors, chosen with <code>RMW_IMPLEMENTATION</code>.</dd>
+      <dt>ROS_DOMAIN_ID</dt><dd>A number that splits one network into separate ROS 2 "rooms". Only Nodes with the same domain ID discover each other.</dd>
+      <dt>Twist</dt><dd><code>geometry_msgs/msg/Twist</code>: linear + angular velocity. For LIMO, <code>linear.x</code> is forward speed and <code>angular.z</code> is turn rate (+ = left).</dd>
+      <dt>LaserScan</dt><dd><code>sensor_msgs/msg/LaserScan</code>: one LiDAR sweep. Beam <code>i</code> points at <code>angle_min + i × angle_increment</code>.</dd>
     </dl>
+
+    <h3>Further Reading (official ROS 2 Humble docs)</h3>
+    <ul>
+      <li><a href="https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools.html" target="_blank" rel="noopener">Beginner: CLI tools</a>: the official turtlesim tutorials for nodes, topics, services, parameters and actions. They follow today's lecture closely.</li>
+      <li><a href="https://docs.ros.org/en/humble/Concepts.html" target="_blank" rel="noopener">ROS 2 Concepts</a>: background on the graph, interfaces, QoS, domain IDs and middleware.</li>
+    </ul>
 
     <h3>Common Mistakes</h3>
     <ul>
       <li>Confusing Topics and Services — trying to "wait for an answer" on a Topic, or trying to stream continuous data through a Service.</li>
       <li>Forgetting <code>--once</code> on <code>ros2 topic pub</code>, leaving a runaway publisher driving the robot forever.</li>
-      <li>Typing the wrong message type string (e.g. missing the <code>msg</code> namespace, as in <code>geometry_msgs/Twist</code> instead of <code>geometry_msgs/msg/Twist</code>) and getting a cryptic "unknown type" error.</li>
+      <li>Mistyping the message type string (e.g. <code>geometry_msgs/msg/twist</code> with a lowercase <em>t</em>, or a misspelt package) and getting "The passed message type is invalid". Copy the exact type from <code>ros2 topic list -t</code>, and prefer the full <code>pkg/msg/Type</code> form.</li>
+      <li>Setting a parameter with the wrong type (<code>150.0</code> for an integer parameter). ROS 2 parameters are typed.</li>
+      <li>Publishing to <code>/cmd_vel</code> when the robot listens on a namespaced topic such as <code>/turtle1/cmd_vel</code>. Check that <code>ros2 topic info</code> shows a subscriber.</li>
       <li>Not sourcing the workspace (<code>source install/setup.bash</code>) before running <code>ros2 launch limo_gazebosim ...</code>, so ROS 2 reports it cannot find the package.</li>
     </ul>
   </section>
@@ -978,6 +1785,7 @@ export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp</code></pre>
   });
 })();
 </script>
+<script src="02-interactive-labs.js" defer></script>
 <script src="annotate.js" defer></script>
 </body>
 </html>
