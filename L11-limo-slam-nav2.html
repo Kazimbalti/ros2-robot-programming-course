@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){try{var t=localStorage.getItem('limo-book-theme');if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 11 — Mapping &amp; Navigation: SLAM + Nav2</title>
+<meta name="description" content="Hands-on Lecture 11: build a map of the LIMO's world with slam_toolbox, save it, navigate autonomously with Nav2, and program a waypoint mission in Python.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<link rel="stylesheet" href="lab.css">
+<link rel="stylesheet" href="projector.css">
+</head>
+<body>
+<button id="theme-toggle" aria-label="Toggle light/dark mode">🌙</button>
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html">Home</a><a href="prerequisites.html">Mission Zero</a><a href="syllabus.html">Syllabus</a><a href="schedule.html">Schedule</a><a href="index.html#lectures">Lectures</a>
+</div></nav>
+
+<div class="wrap">
+<div class="lesson-progress"><div class="lp-top"><span>Lecture 11 · your progress</span><span><b class="lp-count">0 / 0 steps</b> · <a href="#" class="lp-reset">reset</a></span></div><div class="lp-bar"><div class="lp-fill"></div></div></div>
+
+<div class="cover">
+  <div class="kicker">Part B · ROS 2 on the LIMO · Lecture 11 of 12</div>
+  <h1>Mapping &amp; Navigation — SLAM + Nav2</h1>
+  <div class="subtitle">From "react to what's in front of me" to "go to the kitchen". Today the LIMO draws a map of its world, finds itself on that map, and plans its own path around obstacles to any goal you click, or a list of goals you program.</div>
+  <div class="meta-row">
+    <div class="chip">⏱ 3 h · 25 min teach · 2 h 35 min hands-on</div>
+    <div class="chip">🗺️ slam_toolbox · Nav2 · AMCL</div>
+    <div class="chip">🐍 Python · ROS 2 Humble</div>
+    <div class="chip">Before this: Lectures 8–10</div>
+  </div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h3>🎯 By the end of today you can…</h3>
+    <ul class="outcomes">
+      <li>Explain SLAM, localisation and path planning in plain words.</li>
+      <li>Build and save a map (<code>.pgm</code> + <code>.yaml</code>) with slam_toolbox.</li>
+      <li>Start Nav2 on your map, set the initial pose and send goals in RViz.</li>
+      <li>Explain the frames <code>map → odom → base_link</code>.</li>
+      <li>Tune Nav2 through its YAML parameters.</li>
+      <li>Program a waypoint mission in Python with <code>nav2_simple_commander</code>.</li>
+    </ul>
+  </div>
+  <div class="card toc">
+    <h3>🗺️ Today's route</h3>
+    <a href="#warmup"><span>11.0</span>Warm-up</a>
+    <a href="#idea"><span>11.1</span>The idea: explorer, then GPS app</a>
+    <a href="#lab1"><span>Lab 1</span>Build a map with SLAM</a>
+    <a href="#lab2"><span>Lab 2</span>Navigate with Nav2</a>
+    <a href="#lab3"><span>Lab 3</span>A waypoint mission in Python</a>
+    <a href="#activity"><span>11.2</span>Activities</a>
+    <a href="#exit"><span>11.3</span>Errors, exit ticket &amp; homework</a>
+  </div>
+</div>
+
+<details class="box teacher">
+  <summary>🧑‍🏫 Instructor lesson plan (click to open)</summary>
+  <div class="inner">
+  <div class="table-wrap"><table>
+    <tr><th>Time</th><th>Activity</th><th>Type</th></tr>
+    <tr><td>0:00–0:10</td><td>Warm-up: why the wanderer gets stuck</td><td><span class="tag check">Check</span></td></tr>
+    <tr><td>0:10–0:35</td><td>SLAM (dark-house analogy), the occupancy grid, Nav2 blocks, map→odom→base_link</td><td><span class="tag teach">Teach</span></td></tr>
+    <tr><td>0:35–1:15</td><td>Lab 1 — SLAM + save the map</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>1:15–1:25</td><td>Break</td><td></td></tr>
+    <tr><td>1:25–2:15</td><td>Lab 2 — Nav2 params, bringup, initial pose, goals</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>2:15–2:50</td><td>Lab 3 — nav_mission.py</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>2:50–3:00</td><td>Activity 11.2 demo (surprise obstacle) + exit ticket</td><td><span class="tag check">Check</span></td></tr>
+  </table></div>
+  <p><strong>Teaching tip.</strong> This is the heaviest lecture for VMs (Gazebo + SLAM/Nav2 + RViz). Give each VM at least 4 CPU cores and 8 GB RAM, and close the Gazebo window's GUI if needed (<code>gzclient</code>). Students without enough power can pair up.</p>
+  </div>
+</details>
+
+<div class="box tip"><div class="box-title">📦 Install (once, if you didn't do last week's homework)</div>
+<div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>sudo apt install ros-humble-slam-toolbox ros-humble-navigation2 ros-humble-nav2-bringup ros-humble-nav2-simple-commander</code></pre></div></div>
+
+<h2 id="warmup"><span class="num">11.0</span>Warm-up (5 min)</h2>
+<div class="quiz">
+  <div class="q"><p>Why can't the wanderer "go to the door"?</p><details><summary>Answer</summary><div class="inner">It has no map (it doesn't know where the door is) and no idea where it is on a map. It only reacts to what's in front of it.</div></details></div>
+  <div class="q"><p>Your odometry says x = 5.00 m after a long drive. Why might that be wrong?</p><details><summary>Answer</summary><div class="inner">Odometry drifts: wheel slip and small errors add up over time (you saw it in the open-loop square). We need an outside reference: the map.</div></details></div>
+</div>
+
+<h2 id="idea"><span class="num">11.1</span>The idea in 15 minutes</h2>
+<div class="grid2">
+  <div class="analogy"><div class="emoji">🔦</div><div>
+    <p><strong>SLAM = exploring a dark house with a torch and a notebook.</strong> As you walk, you draw the walls you see <em>and</em> use those same walls to work out where you are. <strong>S</strong>imultaneous <strong>L</strong>ocalisation <strong>A</strong>nd <strong>M</strong>apping.</p>
+  </div></div>
+  <div class="analogy"><div class="emoji">📱</div><div>
+    <p><strong>Nav2 = a GPS navigation app for robots.</strong> It has a map, a "you are here" dot (AMCL), a route planner, a driver who follows the route while dodging new obstacles, and "recalculating…" when stuck.</p>
+  </div></div>
+</div>
+<div class="mermaid">
+flowchart LR
+  subgraph NAV2["Nav2"]
+    M["map_server<br/>(your saved map)"] --> GC["global costmap"] --> P["planner<br/>(route: A→B)"]
+    A["AMCL<br/>(where am I on the map?)"]
+    P --> C["controller<br/>(follow the route,<br/>dodge obstacles)"]
+    LC["local costmap<br/>(live /scan)"] --> C
+    BT["BT navigator<br/>(+ recovery: spin, back up)"] --> P
+  end
+  G["🎯 goal<br/>(RViz or Python)"] --> BT
+  SC["/scan"] --> A & LC
+  C --> V["/cmd_vel → LIMO"]
+</div>
+<div class="box idea"><div class="box-title">🧭 Three frames, three jobs</div>
+<p><code>map → odom → base_link</code>. <strong>Odometry</strong> publishes <code>odom → base_link</code>: smooth, but it drifts. <strong>SLAM or AMCL</strong> publishes <code>map → odom</code>: the small correction that cancels the drift, using the LiDAR against the map. Together they give a position that is both smooth <em>and</em> correct.</p></div>
+<div class="table-wrap"><table>
+  <tr><th>Map pixel colour</th><th>Meaning</th><th>Costmap idea</th></tr>
+  <tr><td>⬜ white</td><td>free</td><td>safe to drive</td></tr>
+  <tr><td>⬛ black</td><td>occupied (wall)</td><td>lethal: never enter</td></tr>
+  <tr><td>▩ grey</td><td>unknown</td><td>not explored yet</td></tr>
+  <tr><td>—</td><td>near a wall</td><td><strong>inflation</strong>: "expensive", so it stays away if it can</td></tr>
+</table></div>
+
+<!-- ============================================================ -->
+<h2 id="lab1"><span class="num">L1</span>Lab 1 — Build a map with SLAM</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 1 · 40 min</span><h3>Drive, draw, save</h3></div>
+  <div class="step" id="n1-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Start the robot and slam_toolbox</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 1</div><pre><code>ros2 launch limo_gazebosim limo_gazebo_diff.launch.py</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>ros2 launch slam_toolbox online_async_launch.py use_sim_time:=true</code></pre></div>
+  </div>
+  <div class="step" id="n1-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Watch the map grow in RViz</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 3</div><pre><code>rviz2 -d ~/ros2_ws/limo.rviz --ros-args -p use_sim_time:=true</code></pre></div>
+    <p>Change <strong>Fixed Frame</strong> to <code>map</code>, then <strong>Add → Map</strong>, Topic <code>/map</code>. A grey area appears, with white where the LiDAR has seen free space and black on the walls.</p>
+  </div>
+  <div class="step" id="n1-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Drive slowly around the whole table</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 4</div><pre><code>ros2 run teleop_twist_keyboard teleop_twist_keyboard</code></pre></div>
+    <p>Press <kbd>z</kbd> a few times to slow down. Turn slowly and pass every wall and obstacle. Slow, smooth driving gives a sharp map; fast spinning gives a blurred, doubled map. Aim for closed black outlines and no grey gaps inside.</p>
+  </div>
+  <div class="step" id="n1-4">
+    <div class="step-h"><span class="step-n">4</span><span class="step-t">Save the map (before you stop SLAM!)</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 5</div><pre><code>mkdir -p ~/maps
+ros2 run nav2_map_server map_saver_cli -f ~/maps/limo_table
+ls ~/maps &amp;&amp; cat ~/maps/limo_table.yaml</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>limo_table.pgm  limo_table.yaml
+
+image: limo_table.pgm
+mode: trinary
+resolution: 0.05          ← each pixel = 5 cm
+origin: [-1.9, -2.4, 0]   ← where pixel (0,0) is (your numbers will differ)
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.25</pre></div>
+    <p>The <code>.pgm</code> is just a greyscale picture; open it with the image viewer. Also try <code>ros2 run tf2_ros tf2_echo map odom</code>: that is the drift correction SLAM is publishing. Now stop everything (<kbd>Ctrl</kbd>+<kbd>C</kbd> in all terminals).</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab2"><span class="num">L2</span>Lab 2 — Navigate with Nav2</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 2 · 50 min</span><h3>Click a goal; the LIMO plans and drives</h3></div>
+  <div class="step" id="n2-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Make a LIMO-sized copy of Nav2's parameters</span></div>
+    <p>Nav2's defaults are for a bigger robot. Our table is small, so we shrink the robot radius and the "keep-away" inflation. You're applying Lecture 6 (parameters in YAML) to a real system.</p>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>mkdir -p ~/ros2_ws/params
+cp $(ros2 pkg prefix nav2_bringup)/share/nav2_bringup/params/nav2_params.yaml ~/ros2_ws/params/limo_nav2.yaml
+sed -i 's/robot_radius: 0.22/robot_radius: 0.16/g; s/inflation_radius: 0.55/inflation_radius: 0.25/g' ~/ros2_ws/params/limo_nav2.yaml
+grep -n "robot_radius\|inflation_radius\|max_vel_x\|base_frame_id" ~/ros2_ws/params/limo_nav2.yaml</code></pre></div>
+    <p>Check that every <code>robot_radius</code> now says 0.16 and every <code>inflation_radius</code> says 0.25. If your file used other numbers, edit them by hand in VS Code.</p>
+  </div>
+  <div class="step" id="n2-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Restart Gazebo, start Nav2 with your map, start RViz</span></div>
+    <p>Restart Gazebo so the LIMO is back at its start pose, which is (0, 0) on your map.</p>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 1</div><pre><code>ros2 launch limo_gazebosim limo_gazebo_diff.launch.py</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>ros2 launch nav2_bringup bringup_launch.py use_sim_time:=True \
+  map:=$HOME/maps/limo_table.yaml params_file:=$HOME/ros2_ws/params/limo_nav2.yaml</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 3</div><pre><code>rviz2 -d $(ros2 pkg prefix nav2_bringup)/share/nav2_bringup/rviz/nav2_default_view.rviz --ros-args -p use_sim_time:=true</code></pre></div>
+    <p>You see your map, but no robot yet. Nav2 is waiting to be told where the robot is.</p>
+  </div>
+  <div class="step" id="n2-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Tell AMCL where the robot is: "2D Pose Estimate"</span></div>
+    <p>In the RViz toolbar click <strong>2D Pose Estimate</strong>, then click on the map where the LIMO is and <strong>drag</strong> in the direction it faces (at the start pose: the map origin, pointing along +x, which is red). The robot model, the laser dots and a cloud of green arrows (AMCL's guesses, called <em>particles</em>) appear. The laser dots should sit on the black walls. If not, try again.</p>
+  </div>
+  <div class="step" id="n2-4">
+    <div class="step-h"><span class="step-n">4</span><span class="step-t">Send a goal: "Nav2 Goal"</span></div>
+    <p>Click <strong>Nav2 Goal</strong>, then click and drag on a free (white) spot. Watch:</p>
+    <ul>
+      <li>the <strong>global path</strong> (a line from robot to goal),</li>
+      <li>the <strong>costmaps</strong>: coloured halos around walls (inflation),</li>
+      <li>the LIMO driving there by itself, and the particle cloud shrinking as AMCL becomes sure.</li>
+    </ul>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 4: peek inside</div><pre><code>ros2 node list | grep -E "planner|controller|amcl|bt_navigator"
+ros2 topic echo /cmd_vel --field linear.x</code></pre></div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab3"><span class="num">L3</span>Lab 3 — A waypoint mission in Python</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 3 · 35 min</span><h3>nav_mission.py with nav2_simple_commander</h3></div>
+  <div class="step" id="n3-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Write the mission</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 limo_lab/limo_lab/nav_mission.py</div><pre><code>#!/usr/bin/env python3
+import math
+import rclpy
+from geometry_msgs.msg import PoseStamped
+from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
+
+
+def make_pose(navigator, x, y, yaw):
+    """A goal on the map: position in metres, heading in radians."""
+    pose = PoseStamped()
+    pose.header.frame_id = "map"
+    pose.header.stamp = navigator.get_clock().now().to_msg()
+    pose.pose.position.x = x
+    pose.pose.position.y = y
+    pose.pose.orientation.z = math.sin(yaw / 2.0)      # yaw -> quaternion (reverse of Lecture 8)
+    pose.pose.orientation.w = math.cos(yaw / 2.0)
+    return pose
+
+
+def main():
+    rclpy.init()
+    navigator = BasicNavigator()
+
+    # 1. tell AMCL where we start (same as "2D Pose Estimate")
+    navigator.setInitialPose(make_pose(navigator, 0.0, 0.0, 0.0))
+    navigator.waitUntilNav2Active()
+
+    # 2. the mission: a square patrol (map coordinates, metres)
+    waypoints = [
+        make_pose(navigator, 0.8, 0.0, math.pi / 2),
+        make_pose(navigator, 0.8, 0.8, math.pi),
+        make_pose(navigator, 0.0, 0.8, -math.pi / 2),
+        make_pose(navigator, 0.0, 0.0, 0.0),
+    ]
+    navigator.followWaypoints(waypoints)
+
+    # 3. wait, printing progress
+    while not navigator.isTaskComplete():
+        feedback = navigator.getFeedback()
+        if feedback:
+            navigator.get_logger().info(
+                f"Heading to waypoint {feedback.current_waypoint + 1}/{len(waypoints)}",
+                throttle_duration_sec=2.0)
+
+    # 4. result
+    result = navigator.getResult()
+    if result == TaskResult.SUCCEEDED:
+        navigator.get_logger().info("Mission complete! 🎉")
+    elif result == TaskResult.CANCELED:
+        navigator.get_logger().warn("Mission was cancelled")
+    else:
+        navigator.get_logger().error("Mission failed")
+
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+  </div>
+  <div class="step" id="n3-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Run it (Gazebo + Nav2 + RViz still running)</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 4</div><pre><code># limo_lab/package.xml:  &lt;depend&gt;nav2_simple_commander&lt;/depend&gt;
+# limo_lab/setup.py:     "nav_mission = limo_lab.nav_mission:main",
+cd ~/ros2_ws &amp;&amp; colcon build --packages-select limo_lab --symlink-install &amp;&amp; source ~/.bashrc
+ros2 run limo_lab nav_mission --ros-args -p use_sim_time:=true</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>[INFO] [basic_navigator]: Nav2 is ready for use!
+[INFO] [basic_navigator]: Heading to waypoint 1/4
+...
+[INFO] [basic_navigator]: Mission complete! 🎉</pre></div>
+    <p>Map (0, 0) is where you started SLAM; +x is the direction the LIMO faced then. If a waypoint is inside an obstacle on <em>your</em> map, Nav2 skips it. Change the numbers to fit your map.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="activity"><span class="num">11.2</span>Your turn</h2>
+<div class="activity">
+  <div class="lvl">Activity 11.1 · Core · 20 min</div>
+  <h3>The security patrol</h3>
+  <p>Change <code>nav_mission.py</code> so the robot patrols its square <strong>3 times</strong>, then returns to (0, 0) and logs how long the whole patrol took (in simulated seconds, using <code>navigator.get_clock().now()</code>).</p>
+  <details class="hint"><summary>Hint</summary><div class="inner">Multiply the list: <code>navigator.followWaypoints(waypoints * 3)</code>. Save the start time before, subtract after, and use <code>.nanoseconds / 1e9</code>.</div></details>
+</div>
+<div class="activity">
+  <div class="lvl">Activity 11.2 · Observe &amp; explain · 10 min</div>
+  <h3>The surprise obstacle</h3>
+  <p>Send a goal across the table. While the LIMO drives, drop a box on its path in Gazebo. Watch the <strong>local costmap</strong> in RViz. What happens to the path? The box is not on your saved map, so which part of Nav2 noticed it, and using which sensor?</p>
+  <details class="solution"><summary>Discussion</summary><div class="inner">The local (and global) costmap's obstacle layer marks the box from live <code>/scan</code> data. The planner replans around it and the controller follows the new path. If it's completely blocked, the behaviour tree runs recoveries (spin, back up, wait) before giving up.</div></details>
+</div>
+<div class="activity">
+  <div class="lvl">Challenge 11.3 · Stretch · tuning</div>
+  <h3>Faster but safe</h3>
+  <p>In <code>limo_nav2.yaml</code>, find <code>max_vel_x</code> in the controller section and <code>max_velocity</code> in <code>velocity_smoother</code>. Increase them carefully (for example 0.26 → 0.4), restart Nav2 and time your patrol. Then increase <code>inflation_radius</code> to 0.4. Where does the robot now refuse to go, and why?</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="exit"><span class="num">11.3</span>When things go wrong · Exit ticket · Homework</h2>
+<div class="table-wrap"><table class="fix">
+  <tr><th>You see…</th><th>Why</th><th>Fix</th></tr>
+  <tr><td>RViz: no map / "Frame [map] does not exist"</td><td>SLAM or map_server not running, or no initial pose yet.</td><td>Check Terminal 2 for errors; set 2D Pose Estimate.</td></tr>
+  <tr><td>Map looks doubled / smeared</td><td>You drove or turned too fast during SLAM.</td><td>Start again; drive slowly (press <kbd>z</kbd>).</td></tr>
+  <tr><td>Goal rejected / "Failed to create plan"</td><td>Goal is inside inflated space or unknown area.</td><td>Click on clear white space; reduce <code>inflation_radius</code>.</td></tr>
+  <tr><td>Robot spins in place, never moves</td><td>Wrong initial pose, so the laser doesn't match the map.</td><td>Redo 2D Pose Estimate carefully (position <em>and</em> direction).</td></tr>
+  <tr><td>"Timed out waiting for transform" warnings</td><td>Sim time mismatch.</td><td>Every node and RViz needs <code>use_sim_time:=true</code>.</td></tr>
+  <tr><td>nav_mission hangs at "waiting for Nav2"</td><td>Nav2 not started, or not active yet.</td><td>Start <code>bringup_launch.py</code> first; wait for "Managed nodes are active".</td></tr>
+</table></div>
+<div class="quiz">
+  <div class="q"><p>What do the letters in SLAM stand for?</p><details><summary>Answer</summary><div class="inner">Simultaneous Localisation And Mapping.</div></details></div>
+  <div class="q"><p>Which transform does AMCL publish, and why not <code>map → base_link</code> directly?</p><details><summary>Answer</summary><div class="inner"><code>map → odom</code>. A frame can have only one parent, and <code>odom → base_link</code> is already published by odometry. AMCL publishes the correction on top.</div></details></div>
+  <div class="q"><p>What is a costmap's inflation layer for?</p><details><summary>Answer</summary><div class="inner">It makes cells near obstacles "expensive", so paths keep a safe distance from walls.</div></details></div>
+  <div class="q"><p>Which two files make up a saved map?</p><details><summary>Answer</summary><div class="inner">A <code>.pgm</code> image and a <code>.yaml</code> description (resolution, origin, thresholds).</div></details></div>
+</div>
+<div class="box book">
+  <div class="box-title">🏠 Homework</div>
+  <ol>
+    <li>Finish Activity 11.1. Record a bag of the patrol: <code>ros2 bag record /odom /cmd_vel /plan -o patrol</code>.</li>
+    <li>Read the <em>NAV2 Boot Camp</em> chapter of the book (pp. 105–116) for more about the planners, costmaps and recovery behaviours.</li>
+    <li>Bring your <code>limo_lab</code> package on a USB stick or GitHub next week: <strong>it runs on the real LIMO</strong>.</li>
+  </ol>
+</div>
+
+<div class="footer-nav">
+  <a href="L10-limo-sensors.html">← Lecture 10: LiDAR &amp; Camera</a>
+  <a href="index.html#lectures">All lectures</a>
+  <a href="L12-real-limo-mission.html">Lecture 12: The Real LIMO →</a>
+</div>
+</div>
+<script src="lab.js"></script>
+<script src="annotate.js" defer></script>
+</body>
+</html>

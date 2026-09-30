@@ -13,7 +13,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Schedule — ROS and Robot Programming</title>
-<meta name="description" content="Week-by-week schedule for ROS and Robot Programming — 14 lectures across the term, with readings, labs, assignment deadlines, midterm, and final.">
+<meta name="description" content="Week-by-week schedule for ROS and Robot Programming — 12 hands-on lectures across the term, with readings, labs, assignment deadlines, midterm, and final.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="book.css">
@@ -35,9 +35,9 @@
 <div class="wrap">
 
   <div class="cover">
-    <div class="kicker">Course Schedule &nbsp;·&nbsp; 14 Weekly Sessions + Finals</div>
+    <div class="kicker">Course Schedule &nbsp;·&nbsp; 12 Hands-On Lectures + Finals</div>
     <h1>Schedule</h1>
-    <div class="subtitle">Three sections, one weekly lecture. <strong>Section B</strong> meets <strong>Mondays</strong>; <strong>Sections A &amp; C</strong> meet <strong>Thursdays</strong>. Each session is ~3&nbsp;h (1.5&nbsp;h concept + 1.5&nbsp;h supervised lab), except the extended labs (Wk 9–10) and the build sessions (Wk 12–14).</div>
+    <div class="subtitle">Three sections, one weekly lecture. <strong>Section B</strong> meets <strong>Mondays</strong>; <strong>Sections A &amp; C</strong> meet <strong>Thursdays</strong>. Each session is ~3&nbsp;h: a short concept part (20–30 min) and the rest hands-on labs. <strong>Part A</strong> (Wk 5–10) is the ROS&nbsp;2 Bootcamp from the book on turtlesim; <strong>Part B</strong> (Wk 11–15) applies it to the AgileX LIMO.</div>
     <div class="meta-row">
       <div class="chip">Term: 31 Aug – 11 Dec 2026</div>
       <div class="chip">Section B: Mondays · A &amp; C: Thursdays</div>
@@ -60,11 +60,10 @@
   <div class="box def">
     <div class="box-title">📖 Reading key</div>
     <p style="margin:0;">
+      <strong>Book</strong> = Dr. M. Kazim, <em>ROS2, NAV2 &amp; OpenRMF Boot Camp</em> (course book) &nbsp;·&nbsp;
       <strong>ROS2</strong> = official ROS 2 Humble tutorials (docs.ros.org) &nbsp;·&nbsp;
       <strong>LIMO</strong> = AgileX LIMO User Manual &nbsp;·&nbsp;
-      <strong>S</strong> = Siegwart, <em>Introduction to Autonomous Mobile Robots</em> 2e &nbsp;·&nbsp;
-      <strong>TBF</strong> = Thrun/Burgard/Fox, <em>Probabilistic Robotics</em> &nbsp;·&nbsp;
-      <strong>TC</strong> = The Construct, <em>Build Your First ROS 2 Based Robot</em>
+      <strong>Nav2</strong> = docs.nav2.org
     </p>
   </div>
 
@@ -75,116 +74,95 @@
       <th>Wk</th><th>Date <span style="font-weight:400;font-size:.9em;">(B&nbsp;Mon /<br>A&amp;C&nbsp;+3d Thu)</span></th><th>Lecture &amp; topic</th><th>Readings</th><th>Lab</th><th>Assessment / deadlines</th>
     </tr>
     <tr>
-      <td>1</td><td>31 Aug / 3 Sep</td>
-      <td><a href="01-installation-vmware-ros2-limo-intro.html">L1 — Getting Started: VMware, Ubuntu 22.04 &amp; ROS 2 Humble</a>. Meet the LIMO and its four drive modes.</td>
+      <td>1–4</td><td>31 Aug – 24 Sep</td>
+      <td><a href="prerequisites.html">Mission Zero</a> + <a href="01-installation-vmware-ros2-limo-intro.html">L1 — Getting Started: VMware, Ubuntu 22.04 &amp; ROS 2 Humble</a> <em>(completed)</em>.</td>
       <td>ROS2: Installation, Configuring environment</td>
-      <td>Lab 1 — build the VM, install ROS 2 Humble, first <code>talker</code>/<code>listener</code>, launch LIMO in Gazebo</td>
-      <td>—</td>
-    </tr>
-    <tr>
-      <td>2</td><td>7 Sep / 10 Sep</td>
-      <td><a href="02-ros2-architecture-first-simulation.html">L2 — ROS 2 Architecture &amp; Your First LIMO Simulation</a>. Nodes, topics, services, actions, parameters.</td>
-      <td>ROS2: Nodes, Topics, Services, Actions, Parameters</td>
-      <td>Lab 2 — turtlesim + terminator, <code>ros2 topic/service/action</code> CLI, drive LIMO with <code>teleop_twist_keyboard</code></td>
-      <td>—</td>
-    </tr>
-    <tr>
-      <td>3</td><td>14 Sep / 17 Sep</td>
-      <td><a href="03-dev-environment-drive-modes.html">L3 — The ROS 2 Dev Environment &amp; LIMO's Drive Modes</a>. Workspaces, packages, <code>colcon</code>, first Python node.</td>
-      <td>ROS2: Workspaces, Creating a package, Writing a publisher (Python)</td>
-      <td>Lab 3 — create <code>limo_ws</code>, a Python <code>cmd_vel</code> node, switch differential / Ackermann / Mecanum</td>
-      <td><span class="tag due">A1 issued</span></td>
-    </tr>
-    <tr>
-      <td>4</td><td>21 Sep / 24 Sep</td>
-      <td><a href="04-urdf-xacro-limo-body.html">L4 — LIMO's Body: URDF &amp; Xacro</a>. Links, joints, wheels, sensors, the <code>limo_description</code> package.</td>
-      <td>ROS2: URDF tutorials; S ch. 2–3</td>
-      <td>Lab 4 — read <code>limo_description</code>, add a sensor link in Xacro, view in RViz across all four chassis</td>
-      <td><span class="tag due">A1 due</span></td>
+      <td>Linux survival training, VM + ROS 2 install, LIMO workspace, first launch of LIMO in Gazebo</td>
+      <td><span class="tag due">A1 done</span></td>
     </tr>
     <tr>
       <td>5</td><td>28 Sep / 1 Oct</td>
-      <td><a href="05-tf2-frames-rviz.html">L5 — TF2, Coordinate Frames &amp; RViz</a>. The TF tree, static/dynamic transforms, map → odom → base_link.</td>
-      <td>ROS2: tf2 tutorials; S ch. 3</td>
-      <td>Lab 5 — <code>tf2_echo</code> / <code>view_frames</code>, write a static transform publisher, watch LIMO's TF live in RViz</td>
-      <td><span class="tag due">A2 issued</span></td>
+      <td><a href="L02-first-node.html">L2 — Workspaces, Packages &amp; Your First Node</a>.</td>
+      <td>Book Ch. 1 (pp. 9–22)</td>
+      <td><code>~/ros2_ws</code>, first Python node with a timer, <code>ros2 node</code>, remapping, turtlesim</td>
+      <td>—</td>
     </tr>
     <tr>
       <td>6</td><td>5 Oct / 8 Oct</td>
-      <td><a href="06-gazebo-ros2-control-path-controllers.html">L6 — Gazebo, ros2_control &amp; Path-Following Controllers</a>. Physics sim, <code>controller_manager</code>.</td>
-      <td>ROS2 / Gazebo: ros2_control, Gazebo Classic; S ch. 3.5</td>
-      <td>Lab 6 — bring up controllers, build on/off, proportional, and kinematic path controllers</td>
-      <td><span class="tag due">A2 due</span></td>
+      <td><a href="L03-topics.html">L3 — Topics: Publish &amp; Subscribe</a>.</td>
+      <td>Book §2.1 (pp. 23–35)</td>
+      <td>Drive turtlesim from the CLI, robot news station + smartphone, number counter</td>
+      <td><span class="tag due">A2 issued</span></td>
     </tr>
     <tr>
       <td>7</td><td>12 Oct / 15 Oct</td>
-      <td><a href="07-sensors-lidar-imu-camera-obstacle-avoidance.html">L7 — Sensors: LiDAR, IMU, Depth Camera &amp; Reactive Avoidance</a>.</td>
-      <td>ROS2: sensor_msgs; S ch. 4; LIMO §LiDAR/IMU/Camera</td>
-      <td>Lab 7 — read <code>LaserScan</code>/<code>Imu</code>/<code>Image</code>, TF-transform points, safe-stop avoidance node</td>
-      <td><span class="tag due">A3 issued</span></td>
+      <td><a href="L04-services.html">L4 — Services: Request &amp; Response</a>.</td>
+      <td>Book §2.2 (pp. 35–48)</td>
+      <td>turtlesim services, AddTwoInts server + client, <code>/reset_counter</code></td>
+      <td><span class="tag due">A2 due</span></td>
     </tr>
     <tr>
       <td>8</td><td>19 Oct / 22 Oct</td>
-      <td><a href="08-computer-vision-opencv-object-detection.html">L8 — Robot Perception: OpenCV &amp; Object Detection</a>. <code>cv_bridge</code>, HSV/contours, Find-Object-2D, YOLO.</td>
-      <td>OpenCV-Python tutorials; S ch. 4.3</td>
-      <td>Lab 8 — HSV colour + contour detector, then YOLO on LIMO's camera feed</td>
-      <td><span class="tag exam">Midterm (20)</span> &nbsp; <span class="tag due">A3 due</span></td>
+      <td><a href="L05-custom-interfaces.html">L5 — Custom Messages &amp; Services</a>.</td>
+      <td>Book §3.1 (pp. 49–63)</td>
+      <td><code>my_robot_interfaces</code>, HardwareStatus.msg, battery + LED panel</td>
+      <td><span class="tag exam">Midterm (20) — L1–L4</span> &nbsp; <span class="tag due">A3 issued</span></td>
     </tr>
     <tr>
       <td>9</td><td>26 Oct / 29 Oct</td>
-      <td><a href="09-odometry-ekf-amcl-localization.html">L9 — Odometry, Sensor Fusion (EKF) &amp; AMCL Localisation</a> <em>(extended lab)</em>.</td>
-      <td>TBF ch. 3, 5, 8; ROS2: robot_localization, nav2_amcl</td>
-      <td>Lab 9 — quantify odometry drift, fuse IMU/scan with <code>robot_localization</code>, tune AMCL</td>
-      <td>—</td>
+      <td><a href="L06-parameters-launch.html">L6 — Parameters &amp; Launch Files</a>.</td>
+      <td>Book §3.2–3.4 (pp. 64–84)</td>
+      <td>Parameters + YAML, <code>my_robot_bringup</code>, radio launch (5 stations), cylinder mini-project</td>
+      <td><span class="tag due">A3 due</span></td>
     </tr>
     <tr>
       <td>10</td><td>2 Nov / 5 Nov</td>
-      <td><a href="10-slam-nav2-capstone-mission.html">L10 — SLAM, Navigation2 &amp; the Simulated Capstone Mission</a> <em>(extended lab)</em>.</td>
-      <td>TBF ch. 9–10; Nav2 docs; ROS2: slam_toolbox</td>
-      <td>Lab 10 — map with <code>slam_toolbox</code>, configure Nav2, run waypoint following + frontier exploration</td>
-      <td><span class="tag exam">Capstone Part 1 — demo</span></td>
+      <td><a href="L07-catch-them-all.html">L7 — Project: Catch Them All</a> + <code>ros2 bag</code>.</td>
+      <td>Book Ch. 4 (pp. 85–95)</td>
+      <td>Go-to-goal controller, spawner, custom msg/srv, launch file, record &amp; replay</td>
+      <td><span class="tag exam">Capstone Part 1 issued</span></td>
     </tr>
     <tr>
       <td>11</td><td>9 Nov / 12 Nov</td>
-      <td><a href="11-limo-hardware-six-systems.html">L11 — LIMO Hardware Deep-Dive: The Six Real Systems</a>.</td>
-      <td>AgileX LIMO User Manual (full)</td>
-      <td>Lab 11 — six subsystem labs on the physical robot: chassis &amp; drive modules, compute, LiDAR, depth camera, IMU, battery/power</td>
-      <td>—</td>
+      <td><a href="L08-drive-limo.html">L8 — From Turtle to LIMO: Drive with Code</a>.</td>
+      <td>LIMO manual (overview); ROS2: nav_msgs/Odometry</td>
+      <td>LIMO topics, <code>drive_square</code> (open loop), <code>odom_reader</code>, <code>go_to_goal</code> (closed loop)</td>
+      <td><span class="tag exam">Capstone Part 1 — Catch Them All demo</span></td>
     </tr>
     <tr>
       <td>12</td><td>16 Nov / 19 Nov</td>
-      <td><a href="12-diy-robot-motors-power-compute.html">L12 — Build Your Own Robot I: Motors, Power &amp; Compute</a> <em>(build session)</em>.</td>
-      <td>TC units 2–4; L298N &amp; <code>ros_arduino_bridge</code> docs</td>
-      <td>Lab 12 — wire L298N ↔ Arduino Nano, flash firmware, closed-loop wheel spin + CPR calibration, power budget, headless Ubuntu Server + ROS 2</td>
-      <td><span class="tag due">A4 issued</span></td>
+      <td><a href="L09-limo-urdf-tf-rviz.html">L9 — LIMO's Body: URDF, TF &amp; RViz</a>.</td>
+      <td>ROS2: URDF + tf2 tutorials</td>
+      <td>mini_bot URDF, <code>limo_description</code>, <code>view_frames</code>/<code>tf2_echo</code>, RViz dashboard, TF in Python</td>
+      <td>—</td>
     </tr>
     <tr>
       <td>13</td><td>23 Nov / 26 Nov</td>
-      <td><a href="13-diy-robot-ros2-driver-urdf-lidar-camera.html">L13 — Build Your Own Robot II: ROS 2 Driver, CAD, URDF, LiDAR &amp; Camera</a> <em>(build session)</em>.</td>
-      <td>TC units 5–9; ROS2: custom messages, udev</td>
-      <td>Lab 13 — diff-drive kinematics by hand → full driver node, bringup launch, Onshape → URDF, <code>robot_state_publisher</code>, udev for USB sensors, camera debug</td>
-      <td><span class="tag due">A4 due</span></td>
+      <td><a href="L10-limo-sensors.html">L10 — LIMO's Senses: LiDAR &amp; Camera</a>.</td>
+      <td>ROS2: sensor_msgs; OpenCV-Python (colour spaces)</td>
+      <td>Nearest obstacle, wanderer, <code>color_tracker</code>, red follower</td>
+      <td><span class="tag due">A4 issued</span> &nbsp; <span class="tag exam">Final mission issued</span></td>
     </tr>
     <tr>
       <td>14</td><td>30 Nov / 3 Dec</td>
-      <td><a href="14-diy-robot-simulation-3dprint-capstone.html">L14 — Build Your Own Robot III: Simulation, 3D-Printed Cover &amp; Capstone</a> <em>(build session)</em>.</td>
-      <td>TC units 10–11; Gazebo plugin docs</td>
-      <td>Lab 14 — parameterised Xacro, Gazebo diff-drive/LiDAR/camera plugins, four-file launch hierarchy, publish to GitHub, design a 3D-printed cover</td>
-      <td><span class="tag exam">Capstone Part 2 — build review</span></td>
+      <td><a href="L11-limo-slam-nav2.html">L11 — Mapping &amp; Navigation: SLAM + Nav2</a>.</td>
+      <td>Book NAV2 Boot Camp (pp. 105–116); Nav2 docs</td>
+      <td><code>slam_toolbox</code> map, Nav2 goals, <code>nav_mission.py</code> waypoint patrol</td>
+      <td><span class="tag due">A4 due</span></td>
     </tr>
     <tr>
       <td>15</td><td>7 Dec / 10 Dec</td>
-      <td><strong>Finals week</strong> — no new lecture.</td>
-      <td>Review all</td>
-      <td>—</td>
-      <td><span class="tag exam">Final Exam (40) + capstone defence</span> &nbsp; <span class="tag due">Capstone report due</span></td>
+      <td><a href="L12-real-limo-mission.html">L12 — The Real LIMO &amp; the Final Mission</a> <em>(final lab + demos)</em>.</td>
+      <td>LIMO manual (safety, bring-up)</td>
+      <td>Safety, bring-up, your nodes on the physical LIMO, "LIMO Delivery" mission runs</td>
+      <td><span class="tag exam">Capstone Part 2 — final mission demo</span> &nbsp; <span class="tag exam">Final Exam (40)</span></td>
     </tr>
   </table>
   </div>
 
   <div class="box mistake">
     <div class="box-title">⚠️ Note</div>
-    <p style="margin:0;">Dates and lab scope may shift by up to a week for holidays or hardware availability. Any change is announced in class and reflected here — this page is the source of truth.</p>
+    <p style="margin:0;">The course was restructured in Week 5 into the 12-lecture hands-on format above. Week 15 combines the last lab (real LIMO) with final-mission demos and the final exam; teams that cannot get robot time may demo the final mission in simulation. Dates and lab scope may shift by up to a week for holidays or hardware availability. Any change is announced in class and reflected here. This page is the source of truth.</p>
   </div>
 
   <div class="footer-nav">

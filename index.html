@@ -13,8 +13,8 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ROS and Robot Programming — 14-Lecture Curriculum</title>
-<meta name="description" content="A complete 14-lecture hands-on Robotics and ROS 2 Humble course built around the AgileX LIMO robot — from VMware install through autonomous SLAM and Nav2, into a real hardware deep-dive on LIMO, and out the other side building your own ROS 2 robot from raw components.">
+<title>ROS and Robot Programming — 12-Lecture Hands-On Curriculum</title>
+<meta name="description" content="A 12-lecture hands-on Robotics and ROS 2 Humble course: a ROS 2 Bootcamp on turtlesim, then the AgileX LIMO robot, from driving with code through sensors, SLAM and Nav2 to a final mission on the real robot.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -206,14 +206,14 @@
 
   <div class="cover">
     <canvas id="cover-canvas" aria-hidden="true"></canvas>
-    <div class="kicker">Hands-On Lecture Series &nbsp;·&nbsp; 14 Lectures &nbsp;·&nbsp; ~51 Contact Hours</div>
+    <div class="kicker">Hands-On Lecture Series &nbsp;·&nbsp; 12 Lectures &nbsp;·&nbsp; ~36 Contact Hours</div>
     <h1>ROS and Robot Programming</h1>
-    <div class="subtitle">From an empty laptop to a robot you designed yourself — VMware, Ubuntu, and ROS 2 Humble installed on Day 1; a fully autonomous AgileX LIMO surveying and mapping in simulation by Week 10; LIMO's real electronics in your hands by Week 11; and your own ROS 2 robot, built from a bare motor and an empty microSD card, running by Week 14.</div>
+    <div class="subtitle">From an empty laptop to an autonomous robot, one hands-on step at a time: VMware, Ubuntu and ROS 2 Humble on Day 1; a ROS 2 Bootcamp on turtlesim (nodes, topics, services, interfaces, parameters, launch files); then the AgileX LIMO: driving with code, sensors, SLAM, Nav2, and a final mission on the real robot.</div>
     <div class="meta-row">
-      <div class="chip">14 Lectures · most 3 hours, two extended labs</div>
+      <div class="chip">12 Lectures · 3 hours each · mostly hands-on</div>
       <div class="chip">Robot: AgileX LIMO (diff / Ackermann / Mecanum / tracked)</div>
       <div class="chip">ROS 2 Humble · Ubuntu 22.04 · Gazebo Classic</div>
-      <div class="chip">Simulation-first, then two real-hardware builds</div>
+      <div class="chip">Part A: ROS 2 Bootcamp · Part B: ROS 2 on LIMO</div>
     </div>
     <div class="instructor-row">
       <img class="instructor-avatar" src="images/Kazim_Photo.png" alt="Dr. Muhammad Kazim">
@@ -225,11 +225,11 @@
   </div>
 
   <div class="stats-strip">
-    <div class="stat-card reveal"><div class="stat-num" data-count="14">0</div><div class="stat-label">Lectures</div></div>
-    <div class="stat-card reveal"><div class="stat-num" data-count="51">0</div><div class="stat-label">Contact Hours</div></div>
+    <div class="stat-card reveal"><div class="stat-num" data-count="12">0</div><div class="stat-label">Lectures</div></div>
+    <div class="stat-card reveal"><div class="stat-num" data-count="36">0</div><div class="stat-label">Contact Hours</div></div>
     <div class="stat-card reveal"><div class="stat-num" data-count="4">0</div><div class="stat-label">Drive Modes</div></div>
-    <div class="stat-card reveal"><div class="stat-num" data-count="2">0</div><div class="stat-label">Real Robot Builds</div></div>
-    <div class="stat-card reveal"><div class="stat-num" data-count="6">0</div><div class="stat-label">Course Parts</div></div>
+    <div class="stat-card reveal"><div class="stat-num" data-count="1">0</div><div class="stat-label">Real Robot Mission</div></div>
+    <div class="stat-card reveal"><div class="stat-num" data-count="2">0</div><div class="stat-label">Course Parts</div></div>
   </div>
 
   <h2>🗂️ Course Information</h2>
@@ -380,21 +380,19 @@
   <p>
     This is a complete, ready-to-teach robotics and ROS&nbsp;2 curriculum built specifically around the
     <strong>AgileX LIMO</strong> — a four-in-one mobile robot that can switch between differential, Ackermann,
-    Mecanum, and tracked drive bases on the same chassis. It merges three sources into one coherent course:
+    Mecanum, and tracked drive bases on the same chassis. It is organised in two parts:
   </p>
   <div class="box idea reveal">
-    <div class="box-title">🧩 What this course is built from</div>
-    <p style="margin-bottom:10px;"><strong>1. Conceptual depth</strong> — the concepts and terminology of the official ROS 2 documentation at <em>docs.ros.org</em> (Nodes → Topics → URDF → TF2 → Gazebo → Nav2 → Behavior Trees), rebuilt line-by-line around LIMO instead of a generic robot.</p>
-    <p style="margin-bottom:10px;"><strong>2. Tested lab exercises</strong> — the real, working package names, launch files, and CLI commands from a university LIMO+ROS2 module's teaching wiki, so every command in this course actually runs.</p>
-    <p style="margin-bottom:10px;"><strong>3. The official AgileX LIMO manual</strong> — Lecture 11's six-subsystem hardware deep-dive (chassis &amp; drive modules, onboard compute, LiDAR, depth camera, IMU, battery/power) is grounded directly in AgileX's own hardware documentation.</p>
-    <p style="margin-bottom:0;"><strong>4. A second, from-scratch build</strong> — Lectures 12-14 close the course by having you build your own ROS 2 robot ("Forge") from a bare motor and an empty microSD card, following The Construct's <em>Build Your First ROS 2 Based Robot</em> (FastBot) reference design end to end: real part numbers, real pin maps, real firmware, the full differential-drive driver node, a CAD-generated URDF, sensor bring-up, a Gazebo digital twin and a 3D-printed cover — applying every skill from Lectures 1-11 to hardware and design decisions that are entirely your own.</p>
+    <div class="box-title">🧩 How the course is built</div>
+    <p style="margin-bottom:10px;"><strong>Part A: ROS 2 Bootcamp (Lectures 2–7)</strong> follows the <em>ROS2 Boot Camp</em> chapters of Dr. Kazim's book (pp. 9–104): nodes, topics, services, custom interfaces, parameters, launch files, bags and the "Catch Them All" turtlesim project. Every idea is practised on turtlesim first, where nothing can break.</p>
+    <p style="margin-bottom:10px;"><strong>Part B: ROS 2 on the LIMO (Lectures 8–12)</strong> applies the same skills to the AgileX LIMO: driving with code, odometry, URDF/TF/RViz, LiDAR and camera, SLAM and Nav2, and finally the real robot and a final mission.</p>
+    <p style="margin-bottom:0;"><strong>Every lecture uses the same learning format:</strong> learning outcomes → warm-up → the idea in 10 minutes → step-by-step labs with expected output → your-turn activities with hints and solutions → common errors → exit ticket → homework. About 80% of each session is hands-on.</p>
   </div>
 
   <p>
-    Each lecture is a self-contained session — around 3 hours for Lectures 1-11, and 4-6 hours each for the
-    hands-on build arc in Lectures 12-14: a warm conceptual walkthrough, hands-on terminal work,
-    real code you build and run, a learning checkpoint, and exercises. Lectures build on each other in order —
-    work through them front to back for the full experience, or jump to any single topic you need.
+    Each lecture is a 3-hour session. Lectures build on each other in order, and the code from Part A (especially the
+    go-to-goal controller from Lecture 7) is reused on the LIMO in Part B. The older, longer notes are kept at the bottom
+    of the list as optional <em>extended reference notes</em> for students who want more depth.
   </p>
 
   <h2 id="lectures">📚 Lectures</h2>
@@ -416,188 +414,281 @@
 
   <div class="filter-bar reveal">
     <button class="filter-chip active" data-part="all">All</button>
-    <button class="filter-chip" data-part="foundations">Foundations</button>
-    <button class="filter-chip" data-part="body">Body &amp; Motion</button>
-    <button class="filter-chip" data-part="perception">Perception</button>
-    <button class="filter-chip" data-part="autonomy">Autonomy</button>
-    <button class="filter-chip" data-part="hardware">Hardware</button>
-    <button class="filter-chip" data-part="diy">Build-Your-Own</button>
-    <div class="search-box"><span class="search-icon">🔎</span><input type="text" id="lecture-search" placeholder="Search lectures — e.g. Nav2, URDF, camera…" aria-label="Search lectures"></div>
+    <button class="filter-chip" data-part="bootcamp">Part A · ROS 2 Bootcamp</button>
+    <button class="filter-chip" data-part="limo">Part B · ROS 2 on LIMO</button>
+    <button class="filter-chip" data-part="reference">Extended notes</button>
+    <div class="search-box"><span class="search-icon">🔎</span><input type="text" id="lecture-search" placeholder="Search lectures — e.g. topics, Nav2, camera…" aria-label="Search lectures"></div>
   </div>
 
   <div id="lecture-groups">
-  <div class="part-header reveal" data-part="foundations"><span class="part-title">Part One — Foundations</span><span class="line"></span></div>
-  <div class="chapter-list" data-part="foundations">
-    <div class="chapter-card reveal" data-lecture="1" data-part="foundations">
+  <div class="part-header reveal" data-part="bootcamp"><span class="part-title">Part A — ROS 2 Bootcamp (from the book, with turtlesim)</span><span class="line"></span></div>
+  <div class="chapter-list" data-part="bootcamp">
+    <div class="chapter-card reveal" data-lecture="1" data-part="bootcamp">
       <button class="chapter-check" data-check="1" title="Mark Lecture 1 complete" aria-label="Mark Lecture 1 complete">✓</button>
       <a class="chapter-card-link" href="01-installation-vmware-ros2-limo-intro.html">
         <div class="chapter-num">1</div>
       <div class="chapter-info">
         <div class="chapter-title">Getting Started — VMware, Ubuntu 22.04 &amp; ROS 2 Humble</div>
-        <div class="chapter-desc">Installing your Linux robotics workstation from zero, plus meeting the LIMO robot and its four drive modes</div>
+        <div class="chapter-desc">Install your Linux robotics workstation from zero and launch the LIMO in Gazebo for the first time</div>
       </div>
       <div class="chapter-arrow">→</div>
       </a>
     </div>
-    <div class="chapter-card reveal" data-lecture="2" data-part="foundations">
+    <div class="chapter-card reveal" data-lecture="2" data-part="bootcamp">
       <button class="chapter-check" data-check="2" title="Mark Lecture 2 complete" aria-label="Mark Lecture 2 complete">✓</button>
-      <a class="chapter-card-link" href="02-ros2-architecture-first-simulation.html">
+      <a class="chapter-card-link" href="L02-first-node.html">
         <div class="chapter-num">2</div>
       <div class="chapter-info">
-        <div class="chapter-title">ROS 2 Architecture &amp; Your First LIMO Simulation</div>
-        <div class="chapter-desc">Nodes, Topics, Services, Actions, Parameters — turtlesim, terminator, and launching LIMO in Gazebo</div>
+        <div class="chapter-title">Workspaces, Packages &amp; Your First Node</div>
+        <div class="chapter-desc">Book Ch. 1 · build ~/ros2_ws, write a Python node with a timer, inspect and rename nodes, explore turtlesim</div>
       </div>
       <div class="chapter-arrow">→</div>
       </a>
     </div>
-    <div class="chapter-card reveal" data-lecture="3" data-part="foundations">
+    <div class="chapter-card reveal" data-lecture="3" data-part="bootcamp">
       <button class="chapter-check" data-check="3" title="Mark Lecture 3 complete" aria-label="Mark Lecture 3 complete">✓</button>
-      <a class="chapter-card-link" href="03-dev-environment-drive-modes.html">
+      <a class="chapter-card-link" href="L03-topics.html">
         <div class="chapter-num">3</div>
       <div class="chapter-info">
-        <div class="chapter-title">The ROS 2 Dev Environment &amp; LIMO's Drive Modes</div>
-        <div class="chapter-desc">Workspaces, packages, colcon, your first Python controller node, and differential/Ackermann/Mecanum control</div>
+        <div class="chapter-title">Topics — Publish &amp; Subscribe</div>
+        <div class="chapter-desc">Book §2.1 · move the turtle from the terminal, write a publisher and a subscriber, remap topics, build the number counter</div>
       </div>
       <div class="chapter-arrow">→</div>
       </a>
     </div>
-  </div>
-
-  <div class="part-header reveal" data-part="body"><span class="part-title">Part Two — Building &amp; Moving LIMO's Body</span><span class="line"></span></div>
-  <div class="chapter-list" data-part="body">
-    <div class="chapter-card reveal" data-lecture="4" data-part="body">
+    <div class="chapter-card reveal" data-lecture="4" data-part="bootcamp">
       <button class="chapter-check" data-check="4" title="Mark Lecture 4 complete" aria-label="Mark Lecture 4 complete">✓</button>
-      <a class="chapter-card-link" href="04-urdf-xacro-limo-body.html">
+      <a class="chapter-card-link" href="L04-services.html">
         <div class="chapter-num">4</div>
       <div class="chapter-info">
-        <div class="chapter-title">LIMO's Body — URDF &amp; Xacro</div>
-        <div class="chapter-desc">Links, joints, wheels, sensors, and the real limo_description package across all four chassis types</div>
+        <div class="chapter-title">Services — Request &amp; Response</div>
+        <div class="chapter-desc">Book §2.2 · spawn and kill turtles, write a service server and a non-blocking client, add a reset service</div>
       </div>
       <div class="chapter-arrow">→</div>
       </a>
     </div>
-    <div class="chapter-card reveal" data-lecture="5" data-part="body">
+    <div class="chapter-card reveal" data-lecture="5" data-part="bootcamp">
       <button class="chapter-check" data-check="5" title="Mark Lecture 5 complete" aria-label="Mark Lecture 5 complete">✓</button>
-      <a class="chapter-card-link" href="05-tf2-frames-rviz.html">
+      <a class="chapter-card-link" href="L05-custom-interfaces.html">
         <div class="chapter-num">5</div>
       <div class="chapter-info">
-        <div class="chapter-title">TF2, Coordinate Frames &amp; RViz</div>
-        <div class="chapter-desc">The TF tree, static/dynamic transforms, map→odom→base_link, and watching LIMO live</div>
+        <div class="chapter-title">Custom Messages &amp; Services</div>
+        <div class="chapter-desc">Book §3.1 · design your own .msg and .srv, use them in Python, build the battery + LED panel system</div>
       </div>
       <div class="chapter-arrow">→</div>
       </a>
     </div>
-    <div class="chapter-card reveal" data-lecture="6" data-part="body">
+    <div class="chapter-card reveal" data-lecture="6" data-part="bootcamp">
       <button class="chapter-check" data-check="6" title="Mark Lecture 6 complete" aria-label="Mark Lecture 6 complete">✓</button>
-      <a class="chapter-card-link" href="06-gazebo-ros2-control-path-controllers.html">
+      <a class="chapter-card-link" href="L06-parameters-launch.html">
         <div class="chapter-num">6</div>
       <div class="chapter-info">
-        <div class="chapter-title">Gazebo, ros2_control &amp; Path-Following Controllers</div>
-        <div class="chapter-desc">Physics simulation, controller_manager, and building on/off, proportional, and kinematic path controllers</div>
+        <div class="chapter-title">Parameters &amp; Launch Files</div>
+        <div class="chapter-desc">Book §3.2–3.4 · configure nodes at runtime, start whole apps with one command, the cylinder mini-project</div>
       </div>
       <div class="chapter-arrow">→</div>
       </a>
     </div>
-  </div>
-
-  <div class="part-header reveal" data-part="perception"><span class="part-title">Part Three — Perception</span><span class="line"></span></div>
-  <div class="chapter-list" data-part="perception">
-    <div class="chapter-card reveal" data-lecture="7" data-part="perception">
+    <div class="chapter-card reveal" data-lecture="7" data-part="bootcamp">
       <button class="chapter-check" data-check="7" title="Mark Lecture 7 complete" aria-label="Mark Lecture 7 complete">✓</button>
-      <a class="chapter-card-link" href="07-sensors-lidar-imu-camera-obstacle-avoidance.html">
+      <a class="chapter-card-link" href="L07-catch-them-all.html">
         <div class="chapter-num">7</div>
       <div class="chapter-info">
-        <div class="chapter-title">Sensors — LiDAR, IMU, Depth Camera &amp; Reactive Avoidance</div>
-        <div class="chapter-desc">Reading LaserScan/Imu/Image data, TF-transforming points, and a safe-stop obstacle-avoidance node</div>
+        <div class="chapter-title">Project — Catch Them All 🐢</div>
+        <div class="chapter-desc">Book Ch. 4 · the Part A capstone: a go-to-goal controller, a spawner, custom interfaces, a launch file and ros2 bag</div>
       </div>
       <div class="chapter-arrow">→</div>
       </a>
     </div>
-    <div class="chapter-card reveal" data-lecture="8" data-part="perception">
+  </div>
+
+  <div class="part-header reveal" data-part="limo"><span class="part-title">Part B — ROS 2 on the AgileX LIMO</span><span class="line"></span></div>
+  <div class="chapter-list" data-part="limo">
+    <div class="chapter-card reveal" data-lecture="8" data-part="limo">
       <button class="chapter-check" data-check="8" title="Mark Lecture 8 complete" aria-label="Mark Lecture 8 complete">✓</button>
-      <a class="chapter-card-link" href="08-computer-vision-opencv-object-detection.html">
+      <a class="chapter-card-link" href="L08-drive-limo.html">
         <div class="chapter-num">8</div>
       <div class="chapter-info">
-        <div class="chapter-title">Robot Perception — OpenCV &amp; Object Detection</div>
-        <div class="chapter-desc">cv_bridge, HSV color/contour detection, Find-Object-2D, and YOLO on LIMO's camera</div>
+        <div class="chapter-title">From Turtle to LIMO — Drive with Code</div>
+        <div class="chapter-desc">LIMO in Gazebo: its topics, driving by terminal and Python, odometry and yaw, closed-loop go-to-goal</div>
       </div>
       <div class="chapter-arrow">→</div>
       </a>
     </div>
-  </div>
-
-  <div class="part-header reveal" data-part="autonomy"><span class="part-title">Part Four — State Estimation &amp; Autonomy</span><span class="line"></span></div>
-  <div class="chapter-list" data-part="autonomy">
-    <div class="chapter-card reveal" data-lecture="9" data-part="autonomy">
+    <div class="chapter-card reveal" data-lecture="9" data-part="limo">
       <button class="chapter-check" data-check="9" title="Mark Lecture 9 complete" aria-label="Mark Lecture 9 complete">✓</button>
-      <a class="chapter-card-link" href="09-odometry-ekf-amcl-localization.html">
+      <a class="chapter-card-link" href="L09-limo-urdf-tf-rviz.html">
         <div class="chapter-num">9</div>
       <div class="chapter-info">
-        <div class="chapter-title">Odometry, Sensor Fusion (EKF) &amp; AMCL Localization</div>
-        <div class="chapter-desc">Extended lab: wheel odometry drift, IMU/scan-matching fusion, robot_localization, the particle filter, and AMCL tuning — from a good relative estimate to knowing exactly where you are on the map</div>
+        <div class="chapter-title">LIMO's Body — URDF, TF &amp; RViz</div>
+        <div class="chapter-desc">Write a mini robot in URDF, read the LIMO model, the live TF tree, an RViz dashboard, TF from Python</div>
       </div>
       <div class="chapter-arrow">→</div>
       </a>
     </div>
-    <div class="chapter-card reveal" data-lecture="10" data-part="autonomy">
+    <div class="chapter-card reveal" data-lecture="10" data-part="limo">
       <button class="chapter-check" data-check="10" title="Mark Lecture 10 complete" aria-label="Mark Lecture 10 complete">✓</button>
-      <a class="chapter-card-link" href="10-slam-nav2-capstone-mission.html">
+      <a class="chapter-card-link" href="L10-limo-sensors.html">
         <div class="chapter-num">10</div>
       <div class="chapter-info">
-        <div class="chapter-title">SLAM, Navigation2 &amp; the Simulated Capstone Mission</div>
-        <div class="chapter-desc">Extended lab: mapping the lab with slam_toolbox, costmaps/planners/behavior trees in Nav2, and a full waypoint-following + frontier-exploration mission — the simulated dress rehearsal for Lecture 14</div>
+        <div class="chapter-title">LIMO's Senses — LiDAR &amp; Camera</div>
+        <div class="chapter-desc">Nearest obstacle, an obstacle-avoiding wanderer, OpenCV colour tracking and a red-object follower</div>
       </div>
       <div class="chapter-arrow">→</div>
       </a>
     </div>
-  </div>
-
-  <div class="part-header reveal" data-part="hardware"><span class="part-title">Part Five — Real Hardware: The LIMO Deep-Dive</span><span class="line"></span></div>
-  <div class="chapter-list" data-part="hardware">
-    <div class="chapter-card reveal" data-lecture="11" data-part="hardware">
+    <div class="chapter-card reveal" data-lecture="11" data-part="limo">
       <button class="chapter-check" data-check="11" title="Mark Lecture 11 complete" aria-label="Mark Lecture 11 complete">✓</button>
-      <a class="chapter-card-link" href="11-limo-hardware-six-systems.html">
+      <a class="chapter-card-link" href="L11-limo-slam-nav2.html">
         <div class="chapter-num">11</div>
       <div class="chapter-info">
-        <div class="chapter-title">LIMO Hardware Deep-Dive — The Six Real Systems</div>
-        <div class="chapter-desc">Straight from the AgileX manual: chassis &amp; the four drive modules, onboard compute, LiDAR, depth camera, IMU, and battery/power — six hands-on subsystem labs on the physical robot</div>
+        <div class="chapter-title">Mapping &amp; Navigation — SLAM + Nav2</div>
+        <div class="chapter-desc">Map the world with slam_toolbox, navigate with Nav2, program a waypoint patrol in Python</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+      </a>
+    </div>
+    <div class="chapter-card reveal" data-lecture="12" data-part="limo">
+      <button class="chapter-check" data-check="12" title="Mark Lecture 12 complete" aria-label="Mark Lecture 12 complete">✓</button>
+      <a class="chapter-card-link" href="L12-real-limo-mission.html">
+        <div class="chapter-num">12</div>
+      <div class="chapter-info">
+        <div class="chapter-title">The Real LIMO &amp; the Final Mission</div>
+        <div class="chapter-desc">Safety, bring-up and your own nodes on the physical robot, then the "LIMO Delivery" final mission</div>
       </div>
       <div class="chapter-arrow">→</div>
       </a>
     </div>
   </div>
 
-  <div class="part-header reveal" data-part="diy"><span class="part-title">Part Six — Build Your Own ROS 2 Robot</span><span class="line"></span></div>
-  <div class="chapter-list" data-part="diy">
-    <div class="chapter-card reveal" data-lecture="12" data-part="diy">
-      <button class="chapter-check" data-check="12" title="Mark Lecture 12 complete" aria-label="Mark Lecture 12 complete">✓</button>
+  <div class="part-header reveal" data-part="reference"><span class="part-title">Extended reference notes (optional deep-dives)</span><span class="line"></span></div>
+  <div class="chapter-list" data-part="reference">
+    <div class="chapter-card reveal" data-part="reference">
+      <a class="chapter-card-link" href="02-ros2-architecture-first-simulation.html">
+        <div class="chapter-num">↗</div>
+      <div class="chapter-info">
+        <div class="chapter-title">ROS 2 Architecture (interactive widgets, virtual turtlesim)</div>
+        <div class="chapter-desc">Optional reading for students who want more depth</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+      </a>
+    </div>
+    <div class="chapter-card reveal" data-part="reference">
+      <a class="chapter-card-link" href="03-dev-environment-drive-modes.html">
+        <div class="chapter-num">↗</div>
+      <div class="chapter-info">
+        <div class="chapter-title">Dev environment &amp; LIMO's four drive modes</div>
+        <div class="chapter-desc">Optional reading for students who want more depth</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+      </a>
+    </div>
+    <div class="chapter-card reveal" data-part="reference">
+      <a class="chapter-card-link" href="04-urdf-xacro-limo-body.html">
+        <div class="chapter-num">↗</div>
+      <div class="chapter-info">
+        <div class="chapter-title">URDF &amp; Xacro in depth</div>
+        <div class="chapter-desc">Optional reading for students who want more depth</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+      </a>
+    </div>
+    <div class="chapter-card reveal" data-part="reference">
+      <a class="chapter-card-link" href="05-tf2-frames-rviz.html">
+        <div class="chapter-num">↗</div>
+      <div class="chapter-info">
+        <div class="chapter-title">TF2 &amp; RViz in depth</div>
+        <div class="chapter-desc">Optional reading for students who want more depth</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+      </a>
+    </div>
+    <div class="chapter-card reveal" data-part="reference">
+      <a class="chapter-card-link" href="06-gazebo-ros2-control-path-controllers.html">
+        <div class="chapter-num">↗</div>
+      <div class="chapter-info">
+        <div class="chapter-title">Gazebo, ros2_control &amp; path controllers</div>
+        <div class="chapter-desc">Optional reading for students who want more depth</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+      </a>
+    </div>
+    <div class="chapter-card reveal" data-part="reference">
+      <a class="chapter-card-link" href="07-sensors-lidar-imu-camera-obstacle-avoidance.html">
+        <div class="chapter-num">↗</div>
+      <div class="chapter-info">
+        <div class="chapter-title">Sensors in depth</div>
+        <div class="chapter-desc">Optional reading for students who want more depth</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+      </a>
+    </div>
+    <div class="chapter-card reveal" data-part="reference">
+      <a class="chapter-card-link" href="08-computer-vision-opencv-object-detection.html">
+        <div class="chapter-num">↗</div>
+      <div class="chapter-info">
+        <div class="chapter-title">OpenCV, Find-Object-2D &amp; YOLO</div>
+        <div class="chapter-desc">Optional reading for students who want more depth</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+      </a>
+    </div>
+    <div class="chapter-card reveal" data-part="reference">
+      <a class="chapter-card-link" href="09-odometry-ekf-amcl-localization.html">
+        <div class="chapter-num">↗</div>
+      <div class="chapter-info">
+        <div class="chapter-title">Odometry, EKF &amp; AMCL in depth</div>
+        <div class="chapter-desc">Optional reading for students who want more depth</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+      </a>
+    </div>
+    <div class="chapter-card reveal" data-part="reference">
+      <a class="chapter-card-link" href="10-slam-nav2-capstone-mission.html">
+        <div class="chapter-num">↗</div>
+      <div class="chapter-info">
+        <div class="chapter-title">SLAM, Nav2, behaviour trees &amp; exploration in depth</div>
+        <div class="chapter-desc">Optional reading for students who want more depth</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+      </a>
+    </div>
+    <div class="chapter-card reveal" data-part="reference">
+      <a class="chapter-card-link" href="11-limo-hardware-six-systems.html">
+        <div class="chapter-num">↗</div>
+      <div class="chapter-info">
+        <div class="chapter-title">LIMO hardware: the six real systems</div>
+        <div class="chapter-desc">Optional reading for students who want more depth</div>
+      </div>
+      <div class="chapter-arrow">→</div>
+      </a>
+    </div>
+    <div class="chapter-card reveal" data-part="reference">
       <a class="chapter-card-link" href="12-diy-robot-motors-power-compute.html">
-        <div class="chapter-num">12</div>
+        <div class="chapter-num">↗</div>
       <div class="chapter-info">
-        <div class="chapter-title">Build Your Own Robot I — Motors, Power &amp; Compute</div>
-        <div class="chapter-desc">Meet Forge: choosing gear motors with encoders, wiring the L298N to an Arduino Nano pin by pin, flashing <code>ros_arduino_bridge</code>, spinning the wheels under closed-loop control and calibrating counts-per-revolution, then the power budget, battery sizing, power distribution and a headless Ubuntu Server + ROS 2 Humble install</div>
+        <div class="chapter-title">Build your own robot I: motors, power, compute</div>
+        <div class="chapter-desc">Optional reading for students who want more depth</div>
       </div>
       <div class="chapter-arrow">→</div>
       </a>
     </div>
-    <div class="chapter-card reveal" data-lecture="13" data-part="diy">
-      <button class="chapter-check" data-check="13" title="Mark Lecture 13 complete" aria-label="Mark Lecture 13 complete">✓</button>
+    <div class="chapter-card reveal" data-part="reference">
       <a class="chapter-card-link" href="13-diy-robot-ros2-driver-urdf-lidar-camera.html">
-        <div class="chapter-num">13</div>
+        <div class="chapter-num">↗</div>
       <div class="chapter-info">
-        <div class="chapter-title">Build Your Own Robot II — ROS 2 Driver, CAD, URDF, LiDAR &amp; Camera</div>
-        <div class="chapter-desc">A nervous system, a body and senses: custom messages, differential-drive kinematics derived by hand then implemented in a full driver node, a bringup launch file, a chassis designed in Onshape and converted to URDF automatically, TF via <code>robot_state_publisher</code>, the udev workflow for any USB sensor, and a real silent-failure camera debugging exercise</div>
+        <div class="chapter-title">Build your own robot II: driver, URDF, sensors</div>
+        <div class="chapter-desc">Optional reading for students who want more depth</div>
       </div>
       <div class="chapter-arrow">→</div>
       </a>
     </div>
-    <div class="chapter-card reveal" data-lecture="14" data-part="diy">
-      <button class="chapter-check" data-check="14" title="Mark Lecture 14 complete" aria-label="Mark Lecture 14 complete">✓</button>
+    <div class="chapter-card reveal" data-part="reference">
       <a class="chapter-card-link" href="14-diy-robot-simulation-3dprint-capstone.html">
-        <div class="chapter-num">14</div>
+        <div class="chapter-num">↗</div>
       <div class="chapter-info">
-        <div class="chapter-title">Build Your Own Robot III — Simulation, 3D-Printed Cover &amp; Capstone</div>
-        <div class="chapter-desc">URDF to parameterised Xacro, diff-drive/LiDAR/camera Gazebo plugins with the sim-to-real gaps named, the four-file launch hierarchy, publishing your packages to GitHub and driving the digital twin — then designing a self-supporting 3D-printed cover and a final capstone build review</div>
+        <div class="chapter-title">Build your own robot III: simulation &amp; 3D print</div>
+        <div class="chapter-desc">Optional reading for students who want more depth</div>
       </div>
       <div class="chapter-arrow">→</div>
       </a>
@@ -619,19 +710,15 @@
     <tr><td>A laptop/desktop, 8GB+ RAM, 60GB+ free disk</td><td>Windows, macOS, or Linux host — Lecture 1 covers VMware Workstation Pro setup</td></tr>
     <tr><td>Ubuntu 22.04 LTS (in a VM)</td><td>Free ISO, full install walkthrough in Lecture 1</td></tr>
     <tr><td>ROS 2 Humble Hawksbill</td><td>Installed in Lecture 1; used throughout</td></tr>
-    <tr><td>An AgileX LIMO robot (optional but recommended)</td><td>Lectures 1-10 work fully in Gazebo simulation; Lecture 11 is a hands-on hardware lab built around a physical LIMO</td></tr>
-    <tr><td>DIY robot parts for Lectures 12-14 (optional)</td><td>A gear motor with encoder, an H-bridge driver, a small MCU board, an SBC, a LiDAR, and a camera — every step also works as a design-only exercise without buying parts</td></tr>
+    <tr><td>An AgileX LIMO robot (optional but recommended)</td><td>Lectures 1–11 work fully in turtlesim and Gazebo simulation; Lecture 12 runs your code on a physical LIMO (teams of 3–4)</td></tr>
   </table>
 
   <div class="box real reveal">
-    <div class="box-title">🌍 Simulation-First, Then Two Real Builds</div>
+    <div class="box-title">🌍 Turtle first, then simulation, then the real robot</div>
     <p style="margin:0;">
-      Lectures 1-10 are designed to run start-to-finish in Gazebo, so a classroom or self-learner never needs to wait
-      for lab time on a physical robot. Where real hardware behaves differently — motor drivers, sensor noise, CAN bus,
-      timing — that gap is called out explicitly throughout. Lecture 11 then puts LIMO's real electronics in your
-      hands, subsystem by subsystem, straight from AgileX's own manual. Lectures 12-14 go a step further: you build
-      a second robot, entirely your own, from a bare motor and an empty microSD card, applying every skill from the
-      first eleven lectures to hardware and design decisions nobody handed you.
+      Part A teaches every ROS 2 concept on turtlesim, where mistakes are free. Part B moves the same code to the LIMO
+      in Gazebo, so a classroom never has to wait for robot time. Lecture 12 then runs your own nodes on the physical
+      LIMO and names the sim-to-real differences (noise, slip, lighting, timing) that you measure yourself.
     </p>
   </div>
 
@@ -665,7 +752,7 @@
     </a>
   </div>
 
-  <p class="footer-note">ROS and Robot Programming &nbsp;·&nbsp; 14 Lectures &nbsp;·&nbsp; Built on ROS 2 Humble, the AgileX LIMO &amp; a robot you build yourself</p>
+  <p class="footer-note">ROS and Robot Programming &nbsp;·&nbsp; 12 Lectures &nbsp;·&nbsp; Built on ROS 2 Humble and the AgileX LIMO</p>
 
 </div>
 <script src="annotate.js" defer></script>
@@ -827,7 +914,7 @@
 (function(){
   /* ---- lecture progress tracker (saved to localStorage) ---- */
   var STORAGE_KEY = 'limo-lecture-progress';
-  var TOTAL = 14;
+  var TOTAL = 12;
   var CIRC = 2 * Math.PI * 24;
 
   function load(){
@@ -852,7 +939,7 @@
       var n = card.getAttribute('data-lecture');
       card.classList.toggle('done', done.indexOf(n) !== -1);
     });
-    var count = done.length;
+    var count = document.querySelectorAll('.chapter-card[data-lecture].done').length;
     var pct = Math.round((count / TOTAL) * 100);
     if(ringFg) ringFg.style.strokeDashoffset = CIRC - (CIRC * pct / 100);
     if(ringText) ringText.textContent = pct + '%';

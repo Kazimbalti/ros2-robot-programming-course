@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){try{var t=localStorage.getItem('limo-book-theme');if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 6 — Parameters &amp; Launch Files</title>
+<meta name="description" content="Hands-on Lecture 6: configure nodes at runtime with ROS 2 parameters and start whole applications with Python launch files: rename, remap and set parameters, plus the cylinder mini-project.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<link rel="stylesheet" href="lab.css">
+<link rel="stylesheet" href="projector.css">
+</head>
+<body>
+<button id="theme-toggle" aria-label="Toggle light/dark mode">🌙</button>
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html">Home</a><a href="prerequisites.html">Mission Zero</a><a href="syllabus.html">Syllabus</a><a href="schedule.html">Schedule</a><a href="index.html#lectures">Lectures</a>
+</div></nav>
+
+<div class="wrap">
+<div class="lesson-progress"><div class="lp-top"><span>Lecture 6 · your progress</span><span><b class="lp-count">0 / 0 steps</b> · <a href="#" class="lp-reset">reset</a></span></div><div class="lp-bar"><div class="lp-fill"></div></div></div>
+
+<div class="cover">
+  <div class="kicker">Part A · ROS 2 Bootcamp · Lecture 6 of 12</div>
+  <h1>Parameters &amp; Launch Files</h1>
+  <div class="subtitle">Stop hard-coding numbers, and stop opening ten terminals. Parameters let you change a node's settings without touching its code, and a launch file starts a whole application with one command. These are exactly the tools you'll use to start the LIMO.</div>
+  <div class="meta-row">
+    <div class="chip">⏱ 3 h · 25 min teach · 2 h 35 min hands-on</div>
+    <div class="chip">📘 Book: §3.2–3.4, pp. 64–84</div>
+    <div class="chip">🐍 Python · ROS 2 Humble</div>
+    <div class="chip">Before this: Lectures 3–5</div>
+  </div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h3>🎯 By the end of today you can…</h3>
+    <ul class="outcomes">
+      <li>Declare parameters in a node and set them with <code>-p</code> at startup.</li>
+      <li>Read and change parameters with <code>ros2 param</code>, and save them to a YAML file.</li>
+      <li>Create a bringup package with a Python launch file.</li>
+      <li>In a launch file: start nodes, rename them, remap topics and set parameters.</li>
+      <li>Start 5 copies of the same node with one command.</li>
+    </ul>
+  </div>
+  <div class="card toc">
+    <h3>🗺️ Today's route</h3>
+    <a href="#warmup"><span>6.0</span>Warm-up</a>
+    <a href="#idea"><span>6.1</span>The idea: knobs and a start button</a>
+    <a href="#lab1"><span>Lab 1</span>Add parameters to a node</a>
+    <a href="#lab2"><span>Lab 2</span>Parameter tools &amp; YAML files</a>
+    <a href="#lab3"><span>Lab 3</span>Your first launch file</a>
+    <a href="#lab4"><span>Lab 4</span>Configure nodes in a launch file</a>
+    <a href="#activity"><span>6.2</span>Activities: radio + cylinder project</a>
+    <a href="#errors"><span>6.3</span>When things go wrong</a>
+    <a href="#exit"><span>6.4</span>Exit ticket &amp; homework</a>
+  </div>
+</div>
+
+<details class="box teacher">
+  <summary>🧑‍🏫 Instructor lesson plan (click to open)</summary>
+  <div class="inner">
+  <div class="table-wrap"><table>
+    <tr><th>Time</th><th>Activity</th><th>Type</th></tr>
+    <tr><td>0:00–0:10</td><td>Warm-up + battery/LED demo from a student</td><td><span class="tag check">Check</span></td></tr>
+    <tr><td>0:10–0:25</td><td>Parameters (knobs) and launch files (start button)</td><td><span class="tag teach">Teach</span></td></tr>
+    <tr><td>0:25–1:05</td><td>Labs 1–2 — parameters in number_publisher + robot_news_station, param CLI, YAML</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>1:05–1:15</td><td>Break</td><td></td></tr>
+    <tr><td>1:15–2:00</td><td>Labs 3–4 — bringup package, number_app.launch.py, then rename/remap/params</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>2:00–2:45</td><td>Activity 6.1 — radio.launch.py (5 stations + smartphone)</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>2:45–3:00</td><td>Exit ticket; set the cylinder mini-project as homework</td><td><span class="tag check">Check</span></td></tr>
+  </table></div>
+  <p><strong>Teaching tip.</strong> Before Lab 3, remind students how many terminals they opened for the battery/LED system. Then show one <code>ros2 launch</code> starting everything. The motivation sells itself. Link to the LIMO: <code>limo_gazebo_diff.launch.py</code> from Lecture 1 is just a bigger version of what they write today.</p>
+  </div>
+</details>
+
+<h2 id="warmup"><span class="num">6.0</span>Warm-up (5 min)</h2>
+<div class="quiz">
+  <div class="q"><p>In <code>number_publisher</code>, the number (2) and the rate (0.5 s) are written in the code. What must you do today to change them?</p><details><summary>Answer</summary><div class="inner">Edit the code (and rebuild for C++). After today, you'll just type <code>-p number_to_publish:=5</code>.</div></details></div>
+  <div class="q"><p>How many terminals did the battery + LED panel system need?</p><details><summary>Answer</summary><div class="inner">At least 3. After today: <strong>one</strong> launch command.</div></details></div>
+</div>
+
+<h2 id="idea"><span class="num">6.1</span>The idea in 10 minutes</h2>
+<div class="grid2">
+  <div class="analogy"><div class="emoji">🎛️</div><div>
+    <p><strong>Parameters are the knobs on a machine.</strong> A washing machine has one program (the code) but knobs for temperature and speed. You set them before you start, without opening the machine.</p>
+    <p>In ROS 2, a parameter belongs to <strong>one node</strong> and has a <strong>name</strong> and a <strong>type</strong> (Book §3.2.1).</p>
+  </div></div>
+  <div class="analogy"><div class="emoji">🚀</div><div>
+    <p><strong>A launch file is the start button of the whole factory.</strong> It says which nodes to start, what to call them, how to wire their topics and which knob settings to use.</p>
+    <p>In ROS 2, launch files are written in <strong>Python</strong> (Book §3.3).</p>
+  </div></div>
+</div>
+<div class="mermaid">
+flowchart LR
+  L["number_app.launch.py"] --> A(["number_publisher<br/>name: my_number_publisher<br/>number_to_publish: 4<br/>publish_frequency: 5.0"])
+  L --> B(["number_counter<br/>name: my_number_counter"])
+  A -- "/my_number" --> B
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab1"><span class="num">L1</span>Lab 1 — Add parameters to a node</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 1 · 25 min</span><h3>number_publisher with two knobs (Book §3.2.1–3.2.2)</h3></div>
+
+  <div class="step" id="p1-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Every node already has one parameter</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminals 1 &amp; 2</div><pre><code>ros2 run my_py_pkg number_publisher
+ros2 param list</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>/number_publisher:
+  use_sim_time</pre></div>
+    <p><code>use_sim_time</code> is on every node. You'll meet it again with Gazebo in Lecture 8.</p>
+  </div>
+
+  <div class="step" id="p1-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Declare and read two parameters</span></div>
+    <p>Change the <code>__init__</code> of <code>number_publisher.py</code> (the highlighted lines are new):</p>
+    <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/my_py_pkg/number_publisher.py</div><pre><code>class NumberPublisherNode(Node):
+    def __init__(self):
+        super().__init__("number_publisher")
+<span class="hl">        self.declare_parameter("number_to_publish", 2)        # name, default value</span>
+<span class="hl">        self.declare_parameter("publish_frequency", 1.0)</span>
+
+<span class="hl">        self.number_ = self.get_parameter("number_to_publish").value</span>
+<span class="hl">        self.publish_frequency_ = self.get_parameter("publish_frequency").value</span>
+
+        self.number_publisher_ = self.create_publisher(Int64, "number", 10)
+<span class="hl">        self.number_timer_ = self.create_timer(1.0 / self.publish_frequency_, self.publish_number)</span>
+        self.get_logger().info("Number publisher has been started")</code></pre></div>
+    <div class="box warn"><div class="box-title">⚠️ Always give a default value</div>
+    <p>The book (§3.2.1) first shows <code>declare_parameter("test123")</code> without a default. On ROS 2 Humble this creates a parameter with <em>no type</em>, which causes confusing errors. Always write <code>declare_parameter("name", default)</code>. The default also fixes the <strong>type</strong>: <code>2</code> is an integer, <code>1.0</code> is a float.</p></div>
+  </div>
+
+  <div class="step" id="p1-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Set the knobs at startup with <code>-p</code></span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 1</div><pre><code>ros2 run my_py_pkg number_publisher --ros-args -p number_to_publish:=5 -p publish_frequency:=4.0</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>ros2 param get /number_publisher number_to_publish
+ros2 topic echo /number
+ros2 topic hz /number</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>Integer value is: 5
+data: 5
+---
+average rate: 4.000</pre></div>
+    <p>Same code, different behaviour, and no rebuild needed. Try <code>-p number_to_publish:=hello</code> and read the error. The type was fixed by the default value.</p>
+  </div>
+
+  <div class="step" id="p1-4">
+    <div class="step-h"><span class="step-n">4</span><span class="step-t">Parameter activity: name your robot (Book §3.2.4 part 1)</span></div>
+    <p>In <code>robot_news_station.py</code>, replace the fixed name with a parameter:</p>
+    <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/my_py_pkg/robot_news_station.py (in __init__)</div><pre><code><span class="hl">        self.declare_parameter("robot_name", "LIMO")</span>
+<span class="hl">        self.robot_name_ = self.get_parameter("robot_name").value</span></code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminals</div><pre><code>ros2 run my_py_pkg robot_news_station --ros-args -p robot_name:=R2D2
+ros2 run my_py_pkg robot_news_station --ros-args -r __node:=station_b -p robot_name:=C3PO
+ros2 topic echo /robot_news</code></pre></div>
+    <p>You'll see messages from both R2D2 and C3PO: one program, two robots.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab2"><span class="num">L2</span>Lab 2 — Parameter tools &amp; YAML files</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 2 · 15 min</span><h3>Change, save and load settings</h3></div>
+
+  <div class="step" id="p2-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Change a parameter while the node runs</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2 (turtlesim running in Terminal 1)</div><pre><code>ros2 param list /turtlesim
+ros2 param set /turtlesim background_r 150
+ros2 param set /turtlesim background_g 0</code></pre></div>
+    <p>The turtlesim background changes colour. turtlesim listens for parameter changes. Our <code>number_publisher</code> reads its parameters only once, in <code>__init__</code>, so <code>ros2 param set</code> on it changes the value but not the behaviour. That's normal for most nodes.</p>
+  </div>
+
+  <div class="step" id="p2-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Save all parameters to a YAML file and load them back</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>mkdir -p ~/ros2_ws/params
+ros2 param dump /turtlesim > ~/ros2_ws/params/turtlesim.yaml
+cat ~/ros2_ws/params/turtlesim.yaml
+# stop turtlesim, then start it with the saved settings:
+ros2 run turtlesim turtlesim_node --ros-args --params-file ~/ros2_ws/params/turtlesim.yaml</code></pre></div>
+    <div class="box idea"><div class="box-title">💡 Why this matters for the LIMO</div>
+    <p>Big robot software (SLAM, Nav2) has <em>hundreds</em> of parameters, and they are always stored in YAML files like this one. In Lecture 11 you will load Nav2's YAML file.</p></div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab3"><span class="num">L3</span>Lab 3 — Your first launch file</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 3 · 25 min</span><h3>my_robot_bringup + number_app.launch.py (Book §3.3)</h3></div>
+
+  <div class="step" id="p3-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Create a bringup package</span></div>
+    <p>By convention, launch files live in a package called <code>&lt;robot&gt;_bringup</code>.</p>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws/src
+ros2 pkg create my_robot_bringup
+cd my_robot_bringup
+rm -rf include/ src/
+mkdir launch</code></pre></div>
+  </div>
+
+  <div class="step" id="p3-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Install the launch folder (CMakeLists) and declare what it starts (package.xml)</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_robot_bringup/CMakeLists.txt (replace everything)</div><pre><code>cmake_minimum_required(VERSION 3.8)
+project(my_robot_bringup)
+
+find_package(ament_cmake REQUIRED)
+
+<span class="hl">install(DIRECTORY</span>
+<span class="hl">  launch</span>
+<span class="hl">  DESTINATION share/${PROJECT_NAME}</span>
+<span class="hl">)</span>
+
+ament_package()</code></pre></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_robot_bringup/package.xml (after buildtool_depend)</div><pre><code><span class="hl">  &lt;exec_depend&gt;my_py_pkg&lt;/exec_depend&gt;</span></code></pre></div>
+  </div>
+
+  <div class="step" id="p3-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Write the launch file</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_robot_bringup/launch/number_app.launch.py</div><pre><code>from launch import LaunchDescription
+from launch_ros.actions import Node
+
+
+def generate_launch_description():
+    ld = LaunchDescription()
+
+    number_publisher_node = Node(
+        package="my_py_pkg",
+        executable="number_publisher",
+    )
+
+    number_counter_node = Node(
+        package="my_py_pkg",
+        executable="number_counter",
+    )
+
+    ld.add_action(number_publisher_node)
+    ld.add_action(number_counter_node)
+    return ld</code></pre></div>
+    <p>Every launch file has a function <code>generate_launch_description()</code> that returns a list of things to start. Each <code>Node(...)</code> is exactly one <code>ros2 run</code>.</p>
+  </div>
+
+  <div class="step" id="p3-4">
+    <div class="step-h"><span class="step-n">4</span><span class="step-t">Build and launch</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 1</div><pre><code>cd ~/ros2_ws
+colcon build --packages-select my_robot_bringup --symlink-install
+source ~/.bashrc
+ros2 launch my_robot_bringup number_app.launch.py</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>ros2 node list
+ros2 topic echo /number_count</code></pre></div>
+    <p>One command, two nodes. <kbd>Ctrl</kbd>+<kbd>C</kbd> in Terminal 1 stops <em>all</em> of them.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab4"><span class="num">L4</span>Lab 4 — Configure nodes in a launch file</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 4 · 20 min</span><h3>Rename, remap, set parameters (Book §3.3.1)</h3></div>
+
+  <div class="step" id="p4-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Everything you did with <code>--ros-args</code>, now in Python</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_robot_bringup/launch/number_app.launch.py</div><pre><code>from launch import LaunchDescription
+from launch_ros.actions import Node
+
+
+def generate_launch_description():
+    ld = LaunchDescription()
+
+    remap_number_topic = ("number", "my_number")
+
+    number_publisher_node = Node(
+        package="my_py_pkg",
+        executable="number_publisher",
+<span class="hl">        name="my_number_publisher",                 # rename the node</span>
+<span class="hl">        remappings=[remap_number_topic],             # remap topics/services</span>
+<span class="hl">        parameters=[{"number_to_publish": 4,         # set parameters</span>
+<span class="hl">                     "publish_frequency": 5.0}],</span>
+    )
+
+    number_counter_node = Node(
+        package="my_py_pkg",
+        executable="number_counter",
+        name="my_number_counter",
+        remappings=[remap_number_topic,
+                    ("number_count", "my_number_count")],
+    )
+
+    ld.add_action(number_publisher_node)
+    ld.add_action(number_counter_node)
+    return ld</code></pre></div>
+    <div class="table-wrap"><table>
+      <tr><th>In the terminal</th><th>In a launch file</th></tr>
+      <tr><td><code>-r __node:=my_number_publisher</code></td><td><code>name="my_number_publisher"</code></td></tr>
+      <tr><td><code>-r number:=my_number</code></td><td><code>remappings=[("number", "my_number")]</code></td></tr>
+      <tr><td><code>-p number_to_publish:=4</code></td><td><code>parameters=[{"number_to_publish": 4}]</code></td></tr>
+      <tr><td><code>--params-file file.yaml</code></td><td><code>parameters=["/path/file.yaml"]</code></td></tr>
+    </table></div>
+  </div>
+
+  <div class="step" id="p4-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Launch and verify</span></div>
+    <p>With <code>--symlink-install</code>, editing an existing launch file needs no rebuild.</p>
+    <div class="cmd"><div class="cmd-h">💻 Terminals 1 &amp; 2</div><pre><code>ros2 launch my_robot_bringup number_app.launch.py
+ros2 node list
+ros2 topic list
+ros2 topic hz /my_number_count</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>/my_number_counter
+/my_number_publisher
+...
+/my_number
+/my_number_count
+...
+average rate: 5.000</pre></div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="activity"><span class="num">6.2</span>Your turn</h2>
+<div class="activity">
+  <div class="lvl">Activity 6.1 · Core · 40 min · from Book §3.3.2</div>
+  <h3>The radio network</h3>
+  <p>Write <code>radio.launch.py</code> that starts <strong>5 robot_news_station nodes</strong> and <strong>1 smartphone</strong>. Robot names: <code>Giskard, BB8, Daneel, Jander, C3PO</code>. Each station has a different node name and publishes "Hi, this is &lt;name&gt; …". The smartphone receives all of them. You don't need to change any node, only write one launch file.</p>
+  <div class="mermaid">
+flowchart LR
+  S1(["robot_news_station_giskard"]) --> T[["/robot_news"]]
+  S2(["robot_news_station_bb8"]) --> T
+  S3(["robot_news_station_daneel"]) --> T
+  S4(["robot_news_station_jander"]) --> T
+  S5(["robot_news_station_c3po"]) --> T
+  T --> P(["smartphone"])
+  </div>
+  <details class="hint"><summary>Hint</summary><div class="inner">A launch file is Python, so use a <code>for</code> loop over the names and <code>ld.add_action(...)</code> each Node. New launch file means you must rebuild once.</div></details>
+  <details class="solution"><summary>Solution</summary><div class="inner">
+  <div class="cmd file"><div class="cmd-h">📄 my_robot_bringup/launch/radio.launch.py</div><pre><code>from launch import LaunchDescription
+from launch_ros.actions import Node
+
+
+def generate_launch_description():
+    ld = LaunchDescription()
+    robot_names = ["Giskard", "BB8", "Daneel", "Jander", "C3PO"]
+
+    for name in robot_names:
+        ld.add_action(Node(
+            package="my_py_pkg",
+            executable="robot_news_station",
+            name="robot_news_station_" + name.lower(),
+            parameters=[{"robot_name": name}],
+        ))
+
+    ld.add_action(Node(package="my_py_pkg", executable="smartphone"))
+    return ld</code></pre></div>
+  <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws &amp;&amp; colcon build --packages-select my_robot_bringup --symlink-install &amp;&amp; source ~/.bashrc
+ros2 launch my_robot_bringup radio.launch.py
+rqt_graph      # second terminal: compare with the diagram above</code></pre></div>
+  </div></details>
+</div>
+
+<div class="activity">
+  <div class="lvl">Activity 6.2 · Parameters in the LED panel · 10 min · Book §3.2.4 part 2</div>
+  <h3>Start the LED panel with any number of LEDs</h3>
+  <p>Make <code>led_states</code> a parameter of <code>led_panel.py</code> with default <code>[0, 0, 0]</code>, then run <code>ros2 run my_py_pkg led_panel --ros-args -p led_states:="[0,1,0,1,1]"</code>.</p>
+  <details class="solution"><summary>Solution</summary><div class="inner">
+  <div class="cmd file"><div class="cmd-h">📄 led_panel.py (in __init__)</div><pre><code>        self.declare_parameter("led_states", [0, 0, 0])
+        self.led_states_ = list(self.get_parameter("led_states").value)</code></pre></div></div></details>
+</div>
+
+<div class="activity">
+  <div class="lvl">Mini-project 6.3 · Homework · from Book §3.4</div>
+  <h3>The cylinder calculator</h3>
+  <p>Build a 3-node system that calculates the <strong>volume</strong> and <strong>surface area</strong> of a cylinder:</p>
+  <p style="text-align:center"><code>Volume = π · r² · h</code> &nbsp;&nbsp; <code>Surface area = 2 · π · r · (r + h)</code></p>
+  <div class="mermaid">
+flowchart LR
+  I(["cylinder_input<br/>(asks the user)"]) --> R[["/radius"]] & H[["/height"]]
+  R --> SQ(["radius_squarer"]) --> R2[["/radius_squared"]]
+  R --> C(["cylinder_calc"])
+  H --> C
+  R2 --> C
+  C --> CY[["/cylinder<br/>Cylinder.msg"]]
+  </div>
+  <ol>
+    <li><code>cylinder_input</code>: asks the user for r and h (Python <code>input()</code>), then publishes them as <code>std_msgs/msg/Float64</code> on <code>/radius</code> and <code>/height</code> every 0.1 s.</li>
+    <li><code>radius_squarer</code>: subscribes to <code>/radius</code> and publishes r² on <code>/radius_squared</code>.</li>
+    <li><code>cylinder_calc</code>: subscribes to all three topics. When it has all three values, it publishes a custom <code>my_robot_interfaces/msg/Cylinder</code> (<code>float64 volume</code>, <code>float64 surface_area</code>) on <code>/cylinder</code>.</li>
+    <li>Bonus: a launch file <code>cylinder.launch.py</code> that starts <code>radius_squarer</code> and <code>cylinder_calc</code>. Run <code>cylinder_input</code> in its own terminal, because it needs the keyboard.</li>
+  </ol>
+  <details class="solution"><summary>Solution: cylinder_calc.py (the other two nodes follow patterns you already know)</summary><div class="inner">
+  <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/my_py_pkg/cylinder_calc.py</div><pre><code>#!/usr/bin/env python3
+from math import pi
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import Float64
+from my_robot_interfaces.msg import Cylinder
+
+
+class CylinderCalcNode(Node):
+    def __init__(self):
+        super().__init__("cylinder_calc")
+        self.radius_ = None
+        self.radius_squared_ = None
+        self.height_ = None
+        self.create_subscription(Float64, "radius", self.callback_radius, 10)
+        self.create_subscription(Float64, "radius_squared", self.callback_radius_squared, 10)
+        self.create_subscription(Float64, "height", self.callback_height, 10)
+        self.cylinder_pub_ = self.create_publisher(Cylinder, "cylinder", 10)
+
+    def callback_radius(self, msg):
+        self.radius_ = msg.data
+        self.calculate()
+
+    def callback_radius_squared(self, msg):
+        self.radius_squared_ = msg.data
+        self.calculate()
+
+    def callback_height(self, msg):
+        self.height_ = msg.data
+        self.calculate()
+
+    def calculate(self):
+        if None in (self.radius_, self.radius_squared_, self.height_):
+            return                                   # wait until we have all three
+        msg = Cylinder()
+        msg.volume = pi * self.radius_squared_ * self.height_
+        msg.surface_area = 2 * pi * (self.radius_ * self.height_ + self.radius_squared_)
+        self.cylinder_pub_.publish(msg)
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    rclpy.spin(CylinderCalcNode())
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+  <p>Remember: add <code>"msg/Cylinder.msg"</code> to the interfaces CMakeLists, add <code>&lt;depend&gt;std_msgs&lt;/depend&gt;</code> to <code>my_py_pkg/package.xml</code>, and register three executables. Check: with r = 2 and h = 5 you should get volume ≈ 62.83 and surface area ≈ 87.96.</p>
+  </div></details>
+</div>
+
+<h2 id="errors"><span class="num">6.3</span>When things go wrong</h2>
+<div class="table-wrap"><table class="fix">
+  <tr><th>You see…</th><th>Why</th><th>Fix</th></tr>
+  <tr><td>InvalidParameterTypeException</td><td>You passed a value of a different type than the default (e.g. <code>5</code> for a float).</td><td>Match the type: <code>publish_frequency:=5.0</code>.</td></tr>
+  <tr><td>ParameterNotDeclaredException</td><td><code>get_parameter</code> before <code>declare_parameter</code>, or a typo in the name.</td><td>Declare first; copy-paste the name.</td></tr>
+  <tr><td>file 'x.launch.py' was not found in the share directory</td><td>The launch folder is not installed, or the package wasn't rebuilt after adding the file.</td><td>Check <code>install(DIRECTORY launch …)</code>; rebuild; source.</td></tr>
+  <tr><td>executable 'X' not found on the libexec directory</td><td>A typo in <code>executable=</code>, or it's not in <code>setup.py</code>.</td><td>It must match the name in <code>console_scripts</code> exactly.</td></tr>
+  <tr><td>Nodes start but don't talk</td><td>A remap on one node only.</td><td>Use <code>rqt_graph</code>; remap every node that uses the topic.</td></tr>
+</table></div>
+
+<h2 id="exit"><span class="num">6.4</span>Exit ticket (5 min)</h2>
+<div class="quiz">
+  <div class="q"><p>What decides the type of a parameter?</p><details><summary>Answer</summary><div class="inner">The default value in <code>declare_parameter</code> (<code>2</code> → integer, <code>2.0</code> → float, <code>"a"</code> → string).</div></details></div>
+  <div class="q"><p>Write the <code>Node(...)</code> for <code>robot_news_station</code> named <code>station_x</code> with <code>robot_name = "X"</code>.</p><details><summary>Answer</summary><div class="inner"><code>Node(package="my_py_pkg", executable="robot_news_station", name="station_x", parameters=[{"robot_name": "X"}])</code></div></details></div>
+  <div class="q"><p>How do you save all parameters of a running node to a file?</p><details><summary>Answer</summary><div class="inner"><code>ros2 param dump /node_name > file.yaml</code></div></details></div>
+  <div class="q"><p>Which Lecture 1 command was a launch file?</p><details><summary>Answer</summary><div class="inner"><code>ros2 launch limo_gazebosim limo_gazebo_diff.launch.py</code>. It starts Gazebo, the robot model publisher, the spawner and the watchdog.</div></details></div>
+</div>
+
+<h3>📋 Today's commands</h3>
+<div class="cheat">
+  <div><code>declare_parameter("n", default)</code> · <code>get_parameter("n").value</code><span>in Python</span></div>
+  <div><code>--ros-args -p name:=value</code><span>set at startup</span></div>
+  <div><code>ros2 param list / get / set</code><span>inspect &amp; change</span></div>
+  <div><code>ros2 param dump /node > f.yaml</code> · <code>--params-file f.yaml</code><span>save &amp; load</span></div>
+  <div><code>ros2 launch PKG FILE.launch.py</code><span>start an application</span></div>
+  <div><code>Node(package, executable, name, remappings, parameters)</code><span>the launch building block</span></div>
+</div>
+
+<div class="box book">
+  <div class="box-title">🏠 Homework</div>
+  <ol>
+    <li>Finish Activity 6.1 and Mini-project 6.3 (cylinder).</li>
+    <li>Read Book Chapter 4 "Complete Project with Turtlesim" (pp. 85–95), since next lecture we build it.</li>
+    <li>Make sure <code>Turtle.msg</code> and <code>TurtleArray.msg</code> (Lecture 5 homework) are built.</li>
+  </ol>
+</div>
+
+<div class="footer-nav">
+  <a href="L05-custom-interfaces.html">← Lecture 5: Custom Interfaces</a>
+  <a href="index.html#lectures">All lectures</a>
+  <a href="L07-catch-them-all.html">Lecture 7: Catch Them All →</a>
+</div>
+</div>
+<script src="lab.js"></script>
+<script src="annotate.js" defer></script>
+</body>
+</html>

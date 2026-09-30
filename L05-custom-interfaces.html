@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){try{var t=localStorage.getItem('limo-book-theme');if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 5 — Custom Messages &amp; Services</title>
+<meta name="description" content="Hands-on Lecture 5: create your own ROS 2 interfaces. Build a .msg and a .srv, use them in Python nodes, and complete the battery and LED panel activity.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<link rel="stylesheet" href="lab.css">
+<link rel="stylesheet" href="projector.css">
+</head>
+<body>
+<button id="theme-toggle" aria-label="Toggle light/dark mode">🌙</button>
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html">Home</a><a href="prerequisites.html">Mission Zero</a><a href="syllabus.html">Syllabus</a><a href="schedule.html">Schedule</a><a href="index.html#lectures">Lectures</a>
+</div></nav>
+
+<div class="wrap">
+<div class="lesson-progress"><div class="lp-top"><span>Lecture 5 · your progress</span><span><b class="lp-count">0 / 0 steps</b> · <a href="#" class="lp-reset">reset</a></span></div><div class="lp-bar"><div class="lp-fill"></div></div></div>
+
+<div class="cover">
+  <div class="kicker">Part A · ROS 2 Bootcamp · Lecture 5 of 12</div>
+  <h1>Custom Messages &amp; Services</h1>
+  <div class="subtitle">So far we used messages that other people made. Real robots need their own: a hardware status report, a list of LEDs, a list of turtles to catch. Today you design, build and use your own interfaces.</div>
+  <div class="meta-row">
+    <div class="chip">⏱ 3 h · 25 min teach · 2 h 35 min hands-on</div>
+    <div class="chip">📘 Book: §3.1, pp. 49–63</div>
+    <div class="chip">🐍 Python · ROS 2 Humble</div>
+    <div class="chip">Before this: Lecture 4</div>
+  </div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h3>🎯 By the end of today you can…</h3>
+    <ul class="outcomes">
+      <li>Explain what an <strong>interface</strong> is and how <code>colcon</code> turns it into Python code.</li>
+      <li>Create a dedicated interfaces package, <code>my_robot_interfaces</code>.</li>
+      <li>Write a <code>.msg</code> and a <code>.srv</code> file using basic types and arrays.</li>
+      <li>Publish your own message and serve your own service from Python.</li>
+      <li>Build a two-node system (battery + LED panel) with a custom msg and srv.</li>
+    </ul>
+  </div>
+  <div class="card toc">
+    <h3>🗺️ Today's route</h3>
+    <a href="#warmup"><span>5.0</span>Warm-up</a>
+    <a href="#idea"><span>5.1</span>The idea: forms and languages</a>
+    <a href="#lab1"><span>Lab 1</span>Create an interfaces package + a .msg</a>
+    <a href="#lab2"><span>Lab 2</span>Publish your own message</a>
+    <a href="#lab3"><span>Lab 3</span>Create and serve a .srv</a>
+    <a href="#activity"><span>5.2</span>Activity: battery + LED panel</a>
+    <a href="#errors"><span>5.3</span>When things go wrong</a>
+    <a href="#exit"><span>5.4</span>Exit ticket &amp; homework</a>
+  </div>
+</div>
+
+<details class="box teacher">
+  <summary>🧑‍🏫 Instructor lesson plan (click to open)</summary>
+  <div class="inner">
+  <div class="table-wrap"><table>
+    <tr><th>Time</th><th>Activity</th><th>Type</th></tr>
+    <tr><td>0:00–0:10</td><td>Warm-up + demo of reset_counter</td><td><span class="tag check">Check</span></td></tr>
+    <tr><td>0:10–0:30</td><td>What is an interface, the build pipeline, the types table</td><td><span class="tag teach">Teach</span></td></tr>
+    <tr><td>0:30–1:00</td><td>Lab 1 — my_robot_interfaces + HardwareStatus.msg (go slowly: 2 config files)</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>1:00–1:25</td><td>Lab 2 — hw_status_publisher</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>1:25–1:35</td><td>Break</td><td></td></tr>
+    <tr><td>1:35–2:00</td><td>Lab 3 — ComputeRectangleArea.srv + server</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>2:00–2:50</td><td>Activity 5.1 — battery + LED panel (in pairs: one writes each node)</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>2:50–3:00</td><td>Exit ticket + homework</td><td><span class="tag check">Check</span></td></tr>
+  </table></div>
+  <p><strong>Teaching tip.</strong> Most build errors today come from the <code>CMakeLists.txt</code> / <code>package.xml</code> edits. Project a correct copy and have students compare line by line before building. Remind them to rebuild <em>both</em> packages (interfaces first) and to <code>source</code>.</p>
+  </div>
+</details>
+
+<h2 id="warmup"><span class="num">5.0</span>Warm-up (5 min)</h2>
+<div class="quiz">
+  <div class="q"><p>What are the request and response of <code>example_interfaces/srv/SetBool</code>?</p><details><summary>Answer</summary><div class="inner">Request: <code>bool data</code>. Response: <code>bool success</code>, <code>string message</code>.</div></details></div>
+  <div class="q"><p>We want to publish a robot's temperature, whether its motors are ready, and a debug text, all in <em>one</em> message. Which existing message can do that?</p><details><summary>Answer</summary><div class="inner">None is a good fit, so we make our own. That's today's topic.</div></details></div>
+</div>
+
+<h2 id="idea"><span class="num">5.1</span>The idea in 10 minutes</h2>
+<div class="analogy"><div class="emoji">📝</div><div>
+  <p><strong>An interface is a form with fixed boxes.</strong> A topic is the post box, and the interface is the form you post: everyone agrees that box 1 is "temperature (number)" and box 2 is "motors ready (yes/no)". If the sender and receiver use different forms, nothing works.</p>
+</div></div>
+
+<div class="box book">
+  <div class="box-title">📘 Name + definition (Book §3.1.1)</div>
+  <p>A <strong>topic</strong> is identified by two things: a <em>name</em> (<code>/number_count</code>) and a <em>msg definition</em> (<code>example_interfaces/msg/Int64</code>).<br>
+  A <strong>service</strong> is identified by a <em>name</em> (<code>/reset_counter</code>) and a <em>srv definition</em> (<code>example_interfaces/srv/SetBool</code>).<br>
+  Topics and services are the <strong>communication layer</strong>; interfaces are the <strong>content</strong> you send.</p>
+</div>
+
+<p>You write a tiny text file. When you run <code>colcon build</code>, ROS 2 <strong>generates code</strong> from it for every language. Your Python node then simply does <code>from my_robot_interfaces.msg import HardwareStatus</code>.</p>
+<div class="mermaid">
+flowchart LR
+  A["HardwareStatus.msg<br/>int64 temperature<br/>bool are_motors_ready<br/>string debug_message"] --> B["colcon build<br/>(rosidl generators)"]
+  B --> C["Python class<br/>HardwareStatus"]
+  B --> D["C++ struct<br/>hardware_status.hpp"]
+  C --> E(["your Python node"])
+  D --> F(["your C++ node"])
+</div>
+
+<h3>Types you can use</h3>
+<div class="table-wrap"><table>
+  <tr><th>You write</th><th>Meaning</th><th>Example</th></tr>
+  <tr><td><code>bool</code></td><td>true / false</td><td><code>bool are_motors_ready</code></td></tr>
+  <tr><td><code>int64</code> (also int32, uint8…)</td><td>whole number</td><td><code>int64 temperature</code></td></tr>
+  <tr><td><code>float64</code> (also float32)</td><td>decimal number</td><td><code>float64 length</code></td></tr>
+  <tr><td><code>string</code></td><td>text</td><td><code>string debug_message</code></td></tr>
+  <tr><td><code>TYPE[]</code></td><td>a list (array) of any type</td><td><code>int64[] led_states</code></td></tr>
+  <tr><td><code>pkg/Msg</code> or <code>Msg</code></td><td>another message inside yours</td><td><code>geometry_msgs/Point position</code>, <code>Turtle[] turtles</code></td></tr>
+</table></div>
+<div class="box warn"><div class="box-title">⚠️ Naming rules (the build fails if you break them)</div>
+<ul><li>File names: <strong>CamelCase</strong>, with no underscores, starting with a capital: <code>HardwareStatus.msg</code> ✔ <code>hardware_status.msg</code> ✘</li>
+<li>Field names: <strong>snake_case</strong>, lower case: <code>are_motors_ready</code> ✔ <code>AreMotorsReady</code> ✘</li></ul></div>
+
+<!-- ============================================================ -->
+<h2 id="lab1"><span class="num">L1</span>Lab 1 — Your interfaces package + a .msg</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 1 · 30 min</span><h3>my_robot_interfaces with HardwareStatus.msg (Book §3.1.2)</h3></div>
+  <p class="lab-goal">Goal: <code>ros2 interface show my_robot_interfaces/msg/HardwareStatus</code> prints your three fields.</p>
+
+  <div class="step" id="c1-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Create a package just for interfaces</span></div>
+    <p>Interfaces live in their own package, so every other package (Python or C++) can use them. It must be a CMake package, which is the default.</p>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws/src
+ros2 pkg create my_robot_interfaces
+cd my_robot_interfaces
+rm -rf include/ src/
+mkdir msg srv</code></pre></div>
+  </div>
+
+  <div class="step" id="c1-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Write the message</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_robot_interfaces/msg/HardwareStatus.msg</div><pre><code>int64 temperature
+bool are_motors_ready
+string debug_message</code></pre></div>
+  </div>
+
+  <div class="step" id="c1-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Edit <code>package.xml</code>: add the 3 highlighted lines</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_robot_interfaces/package.xml</div><pre><code>  &lt;buildtool_depend&gt;ament_cmake&lt;/buildtool_depend&gt;
+
+<span class="hl">  &lt;build_depend&gt;rosidl_default_generators&lt;/build_depend&gt;</span>
+<span class="hl">  &lt;exec_depend&gt;rosidl_default_runtime&lt;/exec_depend&gt;</span>
+<span class="hl">  &lt;member_of_group&gt;rosidl_interface_packages&lt;/member_of_group&gt;</span>
+
+  &lt;test_depend&gt;ament_lint_auto&lt;/test_depend&gt;</code></pre></div>
+  </div>
+
+  <div class="step" id="c1-4">
+    <div class="step-h"><span class="step-n">4</span><span class="step-t">Edit <code>CMakeLists.txt</code>: replace everything with this</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_robot_interfaces/CMakeLists.txt</div><pre><code>cmake_minimum_required(VERSION 3.8)
+project(my_robot_interfaces)
+
+find_package(ament_cmake REQUIRED)
+<span class="hl">find_package(rosidl_default_generators REQUIRED)</span>
+
+<span class="hl">rosidl_generate_interfaces(${PROJECT_NAME}</span>
+<span class="hl">  "msg/HardwareStatus.msg"</span>
+<span class="hl">)</span>
+
+<span class="hl">ament_export_dependencies(rosidl_default_runtime)</span>
+ament_package()</code></pre></div>
+    <p>From now on, <strong>every new .msg or .srv file gets one line</strong> inside <code>rosidl_generate_interfaces( … )</code>.</p>
+  </div>
+
+  <div class="step" id="c1-5">
+    <div class="step-h"><span class="step-n">5</span><span class="step-t">Build and check</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws
+colcon build --packages-select my_robot_interfaces
+source ~/.bashrc
+ros2 interface show my_robot_interfaces/msg/HardwareStatus</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>int64 temperature
+bool are_motors_ready
+string debug_message</pre></div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab2"><span class="num">L2</span>Lab 2 — Publish your own message</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 2 · 25 min</span><h3>The hardware status publisher (Book §3.1.3)</h3></div>
+
+  <div class="step" id="c2-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Tell <code>my_py_pkg</code> that it uses your interfaces</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/package.xml</div><pre><code>  &lt;depend&gt;rclpy&lt;/depend&gt;
+  &lt;depend&gt;example_interfaces&lt;/depend&gt;
+<span class="hl">  &lt;depend&gt;my_robot_interfaces&lt;/depend&gt;</span></code></pre></div>
+  </div>
+
+  <div class="step" id="c2-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Write the node</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/my_py_pkg/hw_status_publisher.py</div><pre><code>#!/usr/bin/env python3
+import rclpy
+from rclpy.node import Node
+<span class="hl">from my_robot_interfaces.msg import HardwareStatus</span>
+
+
+class HardwareStatusPublisherNode(Node):
+    def __init__(self):
+        super().__init__("hardware_status_publisher")
+        self.hw_status_publisher_ = self.create_publisher(HardwareStatus, "hardware_status", 10)
+        self.timer_ = self.create_timer(1.0, self.publish_hw_status)
+        self.get_logger().info("Hardware status publisher has been started")
+
+    def publish_hw_status(self):
+        msg = HardwareStatus()
+        msg.temperature = 45
+        msg.are_motors_ready = True
+        msg.debug_message = "Nothing special here"
+        self.hw_status_publisher_.publish(msg)
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = HardwareStatusPublisherNode()
+    rclpy.spin(node)
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+  </div>
+
+  <div class="step" id="c2-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Register, build, run, echo</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 1</div><pre><code>#  setup.py:  "hw_status_publisher = my_py_pkg.hw_status_publisher:main",
+cd ~/ros2_ws &amp;&amp; colcon build --symlink-install &amp;&amp; source ~/.bashrc
+ros2 run my_py_pkg hw_status_publisher</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>ros2 topic info /hardware_status
+ros2 topic echo /hardware_status</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>Type: my_robot_interfaces/msg/HardwareStatus
+...
+temperature: 45
+are_motors_ready: true
+debug_message: Nothing special here
+---</pre></div>
+    <p>We ran <code>colcon build</code> without <code>--packages-select</code>, so it builds <em>all</em> packages in the right order: interfaces first, then the Python package that needs them.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab3"><span class="num">L3</span>Lab 3 — Create and serve a .srv</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 3 · 25 min</span><h3>ComputeRectangleArea (Book §3.1.5–3.1.6)</h3></div>
+
+  <div class="step" id="c3-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Write the service definition</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_robot_interfaces/srv/ComputeRectangleArea.srv</div><pre><code>float64 length
+float64 width
+---
+float64 area</code></pre></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_robot_interfaces/CMakeLists.txt (inside rosidl_generate_interfaces)</div><pre><code>rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/HardwareStatus.msg"
+<span class="hl">  "srv/ComputeRectangleArea.srv"</span>
+)</code></pre></div>
+  </div>
+
+  <div class="step" id="c3-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Build and explore with the interface tools</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws &amp;&amp; colcon build --packages-select my_robot_interfaces &amp;&amp; source ~/.bashrc
+ros2 interface show my_robot_interfaces/srv/ComputeRectangleArea
+ros2 interface package my_robot_interfaces
+ros2 interface list | grep my_robot</code></pre></div>
+  </div>
+
+  <div class="step" id="c3-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Serve it (use your Lecture 4 server as a model)</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/my_py_pkg/rectangle_server.py</div><pre><code>#!/usr/bin/env python3
+import rclpy
+from rclpy.node import Node
+from my_robot_interfaces.srv import ComputeRectangleArea
+
+
+class RectangleServer(Node):
+    def __init__(self):
+        super().__init__("rectangle_server")
+        self.create_service(ComputeRectangleArea, "compute_rectangle_area", self.callback_area)
+        self.get_logger().info("Rectangle area server ready")
+
+    def callback_area(self, request, response):
+        response.area = request.length * request.width
+        self.get_logger().info(f"{request.length} x {request.width} = {response.area}")
+        return response
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    rclpy.spin(RectangleServer())
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminals 1 &amp; 2</div><pre><code>#  setup.py:  "rectangle_server = my_py_pkg.rectangle_server:main",
+cd ~/ros2_ws &amp;&amp; colcon build --packages-select my_py_pkg --symlink-install &amp;&amp; source ~/.bashrc
+ros2 run my_py_pkg rectangle_server
+ros2 service call /compute_rectangle_area my_robot_interfaces/srv/ComputeRectangleArea "{length: 3.0, width: 2.5}"</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>response:
+my_robot_interfaces.srv.ComputeRectangleArea_Response(area=7.5)</pre></div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="activity"><span class="num">5.2</span>Your turn</h2>
+<div class="activity">
+  <div class="lvl">Activity 5.1 · Core · 50 min · from Book §3.1.7–3.1.8</div>
+  <h3>The battery and the LED panel</h3>
+  <p>When the battery is <strong>empty</strong>, the battery node asks the LED panel to turn LED 3 <strong>on</strong>. When the battery is <strong>full</strong> again, it asks to turn LED 3 <strong>off</strong>. The LED panel publishes its LED states all the time.</p>
+  <div class="mermaid">
+flowchart LR
+  B(["battery"]) -. "SetLed request<br/>{led_number: 3, state: 1}" .-> S{{"/set_led"}} -.-> P(["led_panel"])
+  P -- "LedStateArray" --> T[["/led_states"]]
+  </div>
+  <ul>
+    <li><strong>Fake the battery:</strong> it starts full. After 4 s it becomes empty, and after 6 more seconds it is full again. Repeat forever.</li>
+    <li><strong>LED panel:</strong> an array <code>[0, 0, 0]</code>. It publishes the array on <code>/led_states</code> and offers the service <code>/set_led</code>.</li>
+    <li>You need: <code>msg/LedStateArray.msg</code>, <code>srv/SetLed.srv</code>, the node <code>led_panel.py</code> and the node <code>battery.py</code>.</li>
+  </ul>
+  <p><strong>Suggested order (Book §3.1.8):</strong> ① the msg + a panel that publishes; test with <code>echo</code> → ② the srv + the panel's server; test with <code>ros2 service call</code> → ③ the battery client.</p>
+
+  <details class="hint"><summary>Hint 1: the two interface files</summary><div class="inner">
+  <div class="cmd file"><div class="cmd-h">📄 msg/LedStateArray.msg</div><pre><code>int64[] led_states</code></pre></div>
+  <div class="cmd file"><div class="cmd-h">📄 srv/SetLed.srv</div><pre><code>int64 led_number
+int64 state
+---
+bool success</code></pre></div>
+  <p>Add both to <code>rosidl_generate_interfaces</code> and rebuild the interfaces package.</p>
+  <p><em>Note: the book's <code>SetLed.srv</code> names the second field <code>led_states</code>, but its code uses <code>request.state</code>. We use <code>state</code> in both places.</em></p>
+  </div></details>
+  <details class="hint"><summary>Hint 2: measuring time in the battery node</summary><div class="inner">Run a fast timer (every 0.1 s) that compares "now" with the last time the state changed:
+  <code>self.get_clock().now().nanoseconds / 1e9</code> gives the current time in seconds.</div></details>
+
+  <details class="solution"><summary>Solution: led_panel.py</summary><div class="inner">
+  <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/my_py_pkg/led_panel.py</div><pre><code>#!/usr/bin/env python3
+import rclpy
+from rclpy.node import Node
+from my_robot_interfaces.msg import LedStateArray
+from my_robot_interfaces.srv import SetLed
+
+
+class LedPanelNode(Node):
+    def __init__(self):
+        super().__init__("led_panel")
+        self.led_states_ = [0, 0, 0]
+        self.led_states_publisher_ = self.create_publisher(LedStateArray, "led_states", 10)
+        self.led_states_timer_ = self.create_timer(4.0, self.publish_led_states)
+        self.set_led_service_ = self.create_service(SetLed, "set_led", self.callback_set_led)
+        self.get_logger().info("LED panel node has been started")
+
+    def publish_led_states(self):
+        msg = LedStateArray()
+        msg.led_states = self.led_states_
+        self.led_states_publisher_.publish(msg)
+
+    def callback_set_led(self, request, response):
+        led_number = request.led_number
+        state = request.state
+
+        if led_number > len(self.led_states_) or led_number &lt;= 0:
+            response.success = False
+            return response
+        if state not in [0, 1]:
+            response.success = False
+            return response
+
+        self.led_states_[led_number - 1] = state
+        response.success = True
+        self.publish_led_states()          # publish the change straight away
+        return response
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    rclpy.spin(LedPanelNode())
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div></div></details>
+
+  <details class="solution"><summary>Solution: battery.py</summary><div class="inner">
+  <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/my_py_pkg/battery.py</div><pre><code>#!/usr/bin/env python3
+from functools import partial
+import rclpy
+from rclpy.node import Node
+from my_robot_interfaces.srv import SetLed
+
+
+class BatteryNode(Node):
+    def __init__(self):
+        super().__init__("battery")
+        self.battery_state_ = "full"
+        self.last_change_ = self.now_seconds()
+        self.set_led_client_ = self.create_client(SetLed, "set_led")
+        self.battery_timer_ = self.create_timer(0.1, self.check_battery_state)
+        self.get_logger().info("Battery node has been started")
+
+    def now_seconds(self):
+        return self.get_clock().now().nanoseconds / 1e9
+
+    def check_battery_state(self):
+        time_now = self.now_seconds()
+        if self.battery_state_ == "full" and time_now - self.last_change_ > 4.0:
+            self.battery_state_ = "empty"
+            self.get_logger().info("Battery is empty! Charging battery...")
+            self.last_change_ = time_now
+            self.call_set_led_server(3, 1)
+        elif self.battery_state_ == "empty" and time_now - self.last_change_ > 6.0:
+            self.battery_state_ = "full"
+            self.get_logger().info("Battery is now full again.")
+            self.last_change_ = time_now
+            self.call_set_led_server(3, 0)
+
+    def call_set_led_server(self, led_number, state):
+        if not self.set_led_client_.service_is_ready():
+            self.get_logger().warn("LED panel not available")
+            return
+        request = SetLed.Request()
+        request.led_number = led_number
+        request.state = state
+        future = self.set_led_client_.call_async(request)
+        future.add_done_callback(partial(self.callback_set_led, led_number=led_number, state=state))
+
+    def callback_set_led(self, future, led_number, state):
+        try:
+            self.get_logger().info(f"LED {led_number} -> {state}: success={future.result().success}")
+        except Exception as e:
+            self.get_logger().error(f"Service call failed {e!r}")
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    rclpy.spin(BatteryNode())
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+  <div class="cmd"><div class="cmd-h">💻 Run it</div><pre><code>#  setup.py: "led_panel = my_py_pkg.led_panel:main",  "battery = my_py_pkg.battery:main",
+cd ~/ros2_ws &amp;&amp; colcon build --symlink-install &amp;&amp; source ~/.bashrc
+ros2 run my_py_pkg led_panel          # terminal 1
+ros2 topic echo /led_states           # terminal 2
+ros2 run my_py_pkg battery            # terminal 3</code></pre></div>
+  <p>Why <code>service_is_ready()</code> instead of the <code>while … wait_for_service</code> loop? Because this call happens <em>inside a timer callback</em>, where a blocking loop would freeze the node (see Lecture 4, "When things go wrong").</p>
+  </div></details>
+</div>
+
+<h2 id="errors"><span class="num">5.3</span>When things go wrong</h2>
+<div class="table-wrap"><table class="fix">
+  <tr><th>You see…</th><th>Why</th><th>Fix</th></tr>
+  <tr><td>ModuleNotFoundError: my_robot_interfaces</td><td>Interfaces not built or not sourced, or dependency missing.</td><td>Build the interfaces package, <code>source ~/.bashrc</code>, and add <code>&lt;depend&gt;my_robot_interfaces&lt;/depend&gt;</code>.</td></tr>
+  <tr><td>rosidl … "is not a valid message name"</td><td>A file name with an underscore or lower case.</td><td>Rename it to CamelCase: <code>LedStateArray.msg</code>.</td></tr>
+  <tr><td>ImportError: cannot import name 'SetLed'</td><td>New file not listed in CMakeLists, or not rebuilt.</td><td>Add the line to <code>rosidl_generate_interfaces</code> and rebuild.</td></tr>
+  <tr><td>AssertionError: The 'led_states' field must be…</td><td>Wrong Python type for the field.</td><td><code>int64[]</code> needs a list of <code>int</code>; <code>float64</code> needs a <code>float</code> (<code>3.0</code>, not <code>3</code>).</td></tr>
+  <tr><td>Old fields still shown after editing a .msg</td><td>Old build still used.</td><td>Rebuild the interfaces <em>and</em> the Python package, then source. If still stuck, delete <code>build/ install/</code> and build again.</td></tr>
+</table></div>
+
+<h2 id="exit"><span class="num">5.4</span>Exit ticket (5 min)</h2>
+<div class="quiz">
+  <div class="q"><p>Why do we put interfaces in a separate package?</p><details><summary>Answer</summary><div class="inner">So any package (Python or C++) can depend on them. It also avoids mixing build systems, because interfaces need CMake.</div></details></div>
+  <div class="q"><p>Which three places do you touch to add a new <code>.srv</code> to an existing interfaces package?</p><details><summary>Answer</summary><div class="inner">Create the <code>.srv</code> file, add one line in <code>rosidl_generate_interfaces</code> in CMakeLists.txt, then rebuild (and source).</div></details></div>
+  <div class="q"><p>Write a message <code>Turtle.msg</code> with a name and an x, y position.</p><details><summary>Answer</summary><div class="inner"><code>string name</code> / <code>float64 x</code> / <code>float64 y</code>. You'll use exactly this in Lecture 7.</div></details></div>
+  <div class="q"><p>Is <code>robot_Status.msg</code> a valid file name?</p><details><summary>Answer</summary><div class="inner">No. It must be CamelCase with no underscore: <code>RobotStatus.msg</code>.</div></details></div>
+</div>
+
+<h3>📋 Today's commands</h3>
+<div class="cheat">
+  <div><code>ros2 pkg create my_robot_interfaces</code><span>then delete include/ src/, add msg/ srv/</span></div>
+  <div><code>rosidl_generate_interfaces(${PROJECT_NAME} "msg/X.msg" "srv/Y.srv")</code><span>in CMakeLists.txt</span></div>
+  <div><code>ros2 interface show pkg/msg/X</code><span>check your definition</span></div>
+  <div><code>ros2 interface list</code> · <code>ros2 interface package PKG</code><span>find interfaces</span></div>
+  <div><code>from my_robot_interfaces.msg import X</code><span>use it in Python</span></div>
+  <div><code>&lt;depend&gt;my_robot_interfaces&lt;/depend&gt;</code><span>in the user package's package.xml</span></div>
+</div>
+
+<div class="box book">
+  <div class="box-title">🏠 Homework</div>
+  <ol>
+    <li>Finish Activity 5.1 (all three nodes running together).</li>
+    <li>Create <code>Turtle.msg</code> (<code>string name</code>, <code>float64 x</code>, <code>float64 y</code>, <code>float64 theta</code>) and <code>TurtleArray.msg</code> (<code>Turtle[] turtles</code>). Build and <code>ros2 interface show</code> them; you'll need them in Lecture 7.</li>
+    <li>Read Book §3.2–3.3, "Parameters" and "Launch Files" (pp. 64–76).</li>
+  </ol>
+</div>
+
+<div class="footer-nav">
+  <a href="L04-services.html">← Lecture 4: Services</a>
+  <a href="index.html#lectures">All lectures</a>
+  <a href="L06-parameters-launch.html">Lecture 6: Parameters &amp; Launch →</a>
+</div>
+</div>
+<script src="lab.js"></script>
+<script src="annotate.js" defer></script>
+</body>
+</html>

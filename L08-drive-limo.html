@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){try{var t=localStorage.getItem('limo-book-theme');if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 8 — From Turtle to LIMO</title>
+<meta name="description" content="Hands-on Lecture 8: apply your ROS 2 skills to the AgileX LIMO in Gazebo. Explore its topics, drive it from the terminal and from Python, read odometry, and port the go-to-goal controller.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<link rel="stylesheet" href="lab.css">
+<link rel="stylesheet" href="projector.css">
+</head>
+<body>
+<button id="theme-toggle" aria-label="Toggle light/dark mode">🌙</button>
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html">Home</a><a href="prerequisites.html">Mission Zero</a><a href="syllabus.html">Syllabus</a><a href="schedule.html">Schedule</a><a href="index.html#lectures">Lectures</a>
+</div></nav>
+
+<div class="wrap">
+<div class="lesson-progress"><div class="lp-top"><span>Lecture 8 · your progress</span><span><b class="lp-count">0 / 0 steps</b> · <a href="#" class="lp-reset">reset</a></span></div><div class="lp-bar"><div class="lp-fill"></div></div></div>
+
+<div class="cover">
+  <div class="kicker">Part B · ROS 2 on the LIMO · Lecture 8 of 12</div>
+  <h1>From Turtle to LIMO — Drive with Code</h1>
+  <div class="subtitle">Same ROS 2, real robot model. The LIMO in Gazebo takes the same <code>Twist</code> message you sent to the turtle, and reports its position on <code>/odom</code>. Today you drive it by terminal, then by Python, then with your own go-to-goal controller.</div>
+  <div class="meta-row">
+    <div class="chip">⏱ 3 h · 20 min teach · 2 h 40 min hands-on</div>
+    <div class="chip">🤖 AgileX LIMO · Gazebo · ~/limo_ws</div>
+    <div class="chip">🐍 Python · ROS 2 Humble</div>
+    <div class="chip">Before this: Lecture 7</div>
+  </div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h3>🎯 By the end of today you can…</h3>
+    <ul class="outcomes">
+      <li>Launch the LIMO in Gazebo and name its 5 key topics.</li>
+      <li>Drive it with <code>ros2 topic pub</code> and <code>teleop_twist_keyboard</code>.</li>
+      <li>Write an <strong>open-loop</strong> node (drive a square by timing) and see why it drifts.</li>
+      <li>Read <code>/odom</code> and convert its quaternion into a heading angle (yaw).</li>
+      <li>Run a <strong>closed-loop</strong> go-to-goal controller on the LIMO.</li>
+    </ul>
+  </div>
+  <div class="card toc">
+    <h3>🗺️ Today's route</h3>
+    <a href="#warmup"><span>8.0</span>Warm-up</a>
+    <a href="#idea"><span>8.1</span>The idea: turtle → LIMO</a>
+    <a href="#lab1"><span>Lab 1</span>Launch &amp; explore the LIMO</a>
+    <a href="#lab2"><span>Lab 2</span>Drive from the terminal</a>
+    <a href="#lab3"><span>Lab 3</span>Drive a square with Python (open loop)</a>
+    <a href="#lab4"><span>Lab 4</span>Read odometry</a>
+    <a href="#lab5"><span>Lab 5</span>Go-to-goal on the LIMO (closed loop)</a>
+    <a href="#activity"><span>8.2</span>Activity: the precise square</a>
+    <a href="#exit"><span>8.3</span>Errors, exit ticket &amp; homework</a>
+  </div>
+</div>
+
+<details class="box teacher">
+  <summary>🧑‍🏫 Instructor lesson plan (click to open)</summary>
+  <div class="inner">
+  <div class="table-wrap"><table>
+    <tr><th>Time</th><th>Activity</th><th>Type</th></tr>
+    <tr><td>0:00–0:10</td><td>Warm-up: recall the go-to-goal maths from Lecture 7</td><td><span class="tag check">Check</span></td></tr>
+    <tr><td>0:10–0:30</td><td>Turtle → LIMO mapping table; safety (watchdog, speed limits); sim time</td><td><span class="tag teach">Teach</span></td></tr>
+    <tr><td>0:30–1:00</td><td>Labs 1–2 — launch, explore, drive</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>1:00–1:35</td><td>Lab 3 — drive_square (open loop)</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>1:35–1:45</td><td>Break</td><td></td></tr>
+    <tr><td>1:45–2:10</td><td>Lab 4 — odom_reader with yaw</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>2:10–2:50</td><td>Lab 5 — go_to_goal; Activity 8.1 for fast finishers</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>2:50–3:00</td><td>Discuss: open loop vs closed loop. Exit ticket</td><td><span class="tag check">Check</span></td></tr>
+  </table></div>
+  <p><strong>Teaching tip.</strong> Gazebo in a VM is slow. Ask students to close other programs and to use <code>use_sim_time:=true</code> on their nodes. If a VM cannot run Gazebo, pair that student with a neighbour. Everything today also works on the real LIMO in Lecture 12.</p>
+  </div>
+</details>
+
+<h2 id="warmup"><span class="num">8.0</span>Warm-up (5 min)</h2>
+<div class="quiz">
+  <div class="q"><p>Which topic and message type moved the turtle?</p><details><summary>Answer</summary><div class="inner"><code>/turtle1/cmd_vel</code>, <code>geometry_msgs/msg/Twist</code>.</div></details></div>
+  <div class="q"><p>In the turtle controller, what were <code>linear.x</code> and <code>angular.z</code> proportional to?</p><details><summary>Answer</summary><div class="inner">Distance to the target, and the heading error (<code>goal_theta − theta</code>, wrapped to [−π, π]).</div></details></div>
+</div>
+
+<h2 id="idea"><span class="num">8.1</span>The idea in 10 minutes</h2>
+<div class="analogy"><div class="emoji">🐢➡️🤖</div><div>
+  <p><strong>You already know how to drive the LIMO.</strong> ROS 2 hides the hardware behind topics. The turtle and the LIMO both obey a <code>Twist</code> on a <code>cmd_vel</code> topic. What changes: the topic names, the units (real <strong>metres</strong>), the extra sensors, and the fact that a real robot can crash into things.</p>
+</div></div>
+<div class="table-wrap"><table>
+  <tr><th></th><th>turtlesim 🐢</th><th>LIMO in Gazebo 🤖</th></tr>
+  <tr><td>Start it</td><td><code>ros2 run turtlesim turtlesim_node</code></td><td><code>ros2 launch limo_gazebosim limo_gazebo_diff.launch.py</code></td></tr>
+  <tr><td>Drive it</td><td><code>/turtle1/cmd_vel</code> (Twist)</td><td><code>/cmd_vel</code> (Twist)</td></tr>
+  <tr><td>Where am I?</td><td><code>/turtle1/pose</code>: x, y, theta</td><td><code>/odom</code> (<code>nav_msgs/msg/Odometry</code>): position + <em>quaternion</em></td></tr>
+  <tr><td>Units</td><td>"turtle units" (0–11)</td><td>metres, radians, m/s, rad/s</td></tr>
+  <tr><td>Sensors</td><td>none</td><td><code>/scan</code> (LiDAR), <code>/imu</code>, <code>/limo_camera/image</code> (+ depth)</td></tr>
+  <tr><td>Safety</td><td>nothing breaks</td><td>watchdog stops the robot if <code>/cmd_vel</code> is silent for 0.5 s; keep speeds ≤ 0.3 m/s</td></tr>
+</table></div>
+<div class="mermaid">
+flowchart LR
+  YN(["your node<br/>(limo_lab)"]) -- "/cmd_vel<br/>Twist" --> GZ(["Gazebo LIMO<br/>drive plugin"])
+  GZ -- "/odom<br/>Odometry" --> YN
+  GZ -- "/scan · /imu · /limo_camera/image" --> S(["next lectures"])
+</div>
+<div class="box warn"><div class="box-title">⏱️ Simulation time</div>
+<p>Gazebo has its own clock, published on <code>/clock</code>. In a slow VM, 1 simulated second can take 2 real seconds. Add <code>--ros-args -p use_sim_time:=true</code> when you run your nodes, so their timers follow Gazebo's clock and not the wall clock.</p></div>
+
+<!-- ============================================================ -->
+<h2 id="lab1"><span class="num">L1</span>Lab 1 — Launch &amp; explore the LIMO</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 1 · 15 min</span><h3>Use your Part A tools on a new robot</h3></div>
+  <div class="step" id="d1-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Launch the differential-drive LIMO</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 1 (leave running all lecture)</div><pre><code>ros2 launch limo_gazebosim limo_gazebo_diff.launch.py</code></pre></div>
+    <p>The first start can take a minute. You'll see the LIMO on a table with a few obstacles.</p>
+  </div>
+  <div class="step" id="d1-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Nodes, topics, types</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>ros2 node list
+ros2 topic list
+ros2 topic info /cmd_vel
+ros2 topic hz /odom
+ros2 topic hz /scan</code></pre></div>
+    <div class="out"><div class="out-h">✅ Find these 5 topics — you'll use them for the rest of the course</div><pre>/cmd_vel                   geometry_msgs/msg/Twist       (in: speed commands)
+/odom                      nav_msgs/msg/Odometry         (out: position estimate)
+/scan                      sensor_msgs/msg/LaserScan     (out: LiDAR, ~8 Hz)
+/imu                       sensor_msgs/msg/Imu           (out: rotation rates)
+/limo_camera/image         sensor_msgs/msg/Image         (out: camera, ~10 Hz)</pre></div>
+  </div>
+  <div class="step" id="d1-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Look inside an odometry message</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>ros2 interface show nav_msgs/msg/Odometry | grep -v "^\s*#"
+ros2 topic echo /odom --once</code></pre></div>
+    <div class="out"><div class="out-h">✅ The part we need</div><pre>pose:
+  pose:
+    position:    {x: 0.0, y: 0.0, z: 0.0}      ← metres, from the start point
+    orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}   ← a quaternion (Lab 4)</pre></div>
+    <p>So the path to the robot's x position is <code>msg.pose.pose.position.x</code>. Odometry starts at (0, 0) where the robot was spawned, facing +x.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab2"><span class="num">L2</span>Lab 2 — Drive from the terminal</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 2 · 15 min</span><h3>Exactly like the turtle (Lecture 3, Lab 1)</h3></div>
+  <div class="step" id="d2-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Publish a slow circle</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>ros2 topic pub -r 10 /cmd_vel geometry_msgs/msg/Twist "{linear: {x: 0.15}, angular: {z: 0.4}}"</code></pre></div>
+    <p>We publish <strong>10 times per second</strong> (<code>-r 10</code>). Try <code>-r 1</code>: the LIMO stutters, because the watchdog stops it after 0.5 s of silence. <kbd>Ctrl</kbd>+<kbd>C</kbd>: the robot stops by itself.</p>
+  </div>
+  <div class="step" id="d2-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Drive with the keyboard and watch the odometry</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminals 2 &amp; 3</div><pre><code>ros2 run teleop_twist_keyboard teleop_twist_keyboard
+ros2 topic echo /odom --field pose.pose.position</code></pre></div>
+    <p>Keys: <kbd>i</kbd> forward, <kbd>,</kbd> back, <kbd>j</kbd>/<kbd>l</kbd> turn, <kbd>k</kbd> stop, <kbd>z</kbd> slower. Drive 1 m forward and check that x grows by about 1.0. Then run <code>rqt_graph</code>: the teleop node publishes on <code>/cmd_vel</code>, and Gazebo listens.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab3"><span class="num">L3</span>Lab 3 — Drive a square with Python (open loop)</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 3 · 35 min</span><h3>A new package for all your LIMO code</h3></div>
+  <div class="step" id="d3-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Create <code>limo_lab</code></span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws/src
+ros2 pkg create limo_lab --build-type ament_python \
+  --dependencies rclpy geometry_msgs nav_msgs sensor_msgs</code></pre></div>
+  </div>
+  <div class="step" id="d3-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Write <code>drive_square.py</code></span></div>
+    <p>Plan: drive straight for <code>side / speed</code> seconds, then turn for <code>(π/2) / turn_speed</code> seconds, 4 times. The timer runs at 10 Hz, so we count ticks. This is <strong>open loop</strong>: we never check where the robot really is.</p>
+    <div class="cmd file"><div class="cmd-h">📄 limo_lab/limo_lab/drive_square.py</div><pre><code>#!/usr/bin/env python3
+import math
+import rclpy
+from rclpy.node import Node
+from geometry_msgs.msg import Twist
+
+
+class DriveSquare(Node):
+    def __init__(self):
+        super().__init__("drive_square")
+        self.declare_parameter("side", 0.5)         # metres
+        self.declare_parameter("speed", 0.2)        # m/s
+        self.declare_parameter("turn_speed", 0.5)   # rad/s
+        self.side_ = self.get_parameter("side").value
+        self.speed_ = self.get_parameter("speed").value
+        self.turn_speed_ = self.get_parameter("turn_speed").value
+
+        self.dt_ = 0.1                                               # 10 Hz
+        self.forward_ticks_ = round(self.side_ / self.speed_ / self.dt_)
+        self.turn_ticks_ = round((math.pi / 2) / self.turn_speed_ / self.dt_)
+
+        self.phase_ = "forward"
+        self.ticks_ = 0
+        self.sides_done_ = 0
+        self.cmd_pub_ = self.create_publisher(Twist, "cmd_vel", 10)
+        self.timer_ = self.create_timer(self.dt_, self.loop)
+        self.get_logger().info(f"Square: {self.forward_ticks_} ticks forward, {self.turn_ticks_} ticks turning")
+
+    def loop(self):
+        msg = Twist()                              # all zeros = stop
+        if self.sides_done_ >= 4:
+            self.cmd_pub_.publish(msg)
+            self.get_logger().info("Square finished")
+            self.timer_.cancel()
+            return
+
+        if self.phase_ == "forward":
+            msg.linear.x = self.speed_
+            self.ticks_ += 1
+            if self.ticks_ >= self.forward_ticks_:
+                self.phase_, self.ticks_ = "turn", 0
+        else:
+            msg.angular.z = self.turn_speed_
+            self.ticks_ += 1
+            if self.ticks_ >= self.turn_ticks_:
+                self.phase_, self.ticks_ = "forward", 0
+                self.sides_done_ += 1
+                self.get_logger().info(f"Side {self.sides_done_} done")
+
+        self.cmd_pub_.publish(msg)
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    rclpy.spin(DriveSquare())
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+  </div>
+  <div class="step" id="d3-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Register, build, run, and compare with odometry</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 limo_lab/setup.py → console_scripts</div><pre><code>            "drive_square = limo_lab.drive_square:main",</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminals 2 &amp; 3</div><pre><code>cd ~/ros2_ws &amp;&amp; colcon build --packages-select limo_lab --symlink-install &amp;&amp; source ~/.bashrc
+ros2 run limo_lab drive_square --ros-args -p use_sim_time:=true
+ros2 topic echo /odom --field pose.pose.position</code></pre></div>
+    <p><strong>Observe:</strong> after 4 sides the robot should be back at (0, 0). Is it? Write down the final x and y. Now run it again <em>without</em> <code>use_sim_time:=true</code> and compare. The error you see is why real robots use <strong>feedback</strong>.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab4"><span class="num">L4</span>Lab 4 — Read odometry</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 4 · 25 min</span><h3>Where am I, and which way am I facing?</h3></div>
+  <div class="box idea"><div class="box-title">🧭 Quaternion → yaw in one formula</div>
+  <p>3D orientation is stored as a <strong>quaternion</strong> (x, y, z, w) to avoid problems with angles. A ground robot only needs the heading around the vertical axis, <strong>yaw</strong> (the turtle's <code>theta</code>):</p>
+  <p style="text-align:center"><code>yaw = atan2( 2(w·z + x·y), 1 − 2(y² + z²) )</code></p>
+  <p>Facing +x → yaw 0. Turned left 90° → yaw +1.57. Facing backwards → ±3.14.</p></div>
+  <div class="step" id="d4-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Write <code>odom_reader.py</code></span></div>
+    <div class="cmd file"><div class="cmd-h">📄 limo_lab/limo_lab/odom_reader.py</div><pre><code>#!/usr/bin/env python3
+import math
+import rclpy
+from rclpy.node import Node
+from nav_msgs.msg import Odometry
+
+
+def yaw_from_quaternion(q):
+    return math.atan2(2.0 * (q.w * q.z + q.x * q.y), 1.0 - 2.0 * (q.y * q.y + q.z * q.z))
+
+
+class OdomReader(Node):
+    def __init__(self):
+        super().__init__("odom_reader")
+        self.x_ = self.y_ = self.yaw_ = None
+        self.create_subscription(Odometry, "odom", self.callback_odom, 10)
+        self.create_timer(1.0, self.report)          # print once per second, not 50x
+
+    def callback_odom(self, msg):
+        self.x_ = msg.pose.pose.position.x
+        self.y_ = msg.pose.pose.position.y
+        self.yaw_ = yaw_from_quaternion(msg.pose.pose.orientation)
+
+    def report(self):
+        if self.x_ is not None:
+            self.get_logger().info(
+                f"x={self.x_:.2f} m  y={self.y_:.2f} m  yaw={math.degrees(self.yaw_):.0f} deg")
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    rclpy.spin(OdomReader())
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+  </div>
+  <div class="step" id="d4-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Run it while you drive with teleop</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminals</div><pre><code>#  setup.py:  "odom_reader = limo_lab.odom_reader:main",
+cd ~/ros2_ws &amp;&amp; colcon build --packages-select limo_lab --symlink-install &amp;&amp; source ~/.bashrc
+ros2 run limo_lab odom_reader --ros-args -p use_sim_time:=true
+ros2 run teleop_twist_keyboard teleop_twist_keyboard</code></pre></div>
+    <div class="out"><div class="out-h">✅ Turn left on the spot for a while and you should see</div><pre>[INFO] [...] [odom_reader]: x=0.00 m  y=0.00 m  yaw=45 deg
+[INFO] [...] [odom_reader]: x=0.00 m  y=0.00 m  yaw=90 deg</pre></div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab5"><span class="num">L5</span>Lab 5 — Go-to-goal on the LIMO (closed loop)</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 5 · 40 min</span><h3>Your Lecture 7 controller, now in metres</h3></div>
+  <p class="lab-goal">It is the same idea as the turtle controller, with three safety upgrades for a real robot: <strong>speed limits</strong>, <strong>turn first if the heading is badly off</strong>, and a <strong>tighter stop distance</strong> (5 cm).</p>
+  <div class="step" id="d5-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Write <code>go_to_goal.py</code></span></div>
+    <div class="cmd file"><div class="cmd-h">📄 limo_lab/limo_lab/go_to_goal.py</div><pre><code>#!/usr/bin/env python3
+import math
+import rclpy
+from rclpy.node import Node
+from geometry_msgs.msg import Twist
+from nav_msgs.msg import Odometry
+
+
+def yaw_from_quaternion(q):
+    return math.atan2(2.0 * (q.w * q.z + q.x * q.y), 1.0 - 2.0 * (q.y * q.y + q.z * q.z))
+
+
+def clamp(value, limit):
+    return max(-limit, min(limit, value))
+
+
+class GoToGoal(Node):
+    def __init__(self):
+        super().__init__("go_to_goal")
+        self.declare_parameter("goal_x", 1.0)
+        self.declare_parameter("goal_y", 0.5)
+        self.goal_x_ = self.get_parameter("goal_x").value
+        self.goal_y_ = self.get_parameter("goal_y").value
+
+        self.k_lin_, self.k_ang_ = 0.5, 1.5          # P gains
+        self.max_lin_, self.max_ang_ = 0.3, 1.0      # safety limits (m/s, rad/s)
+        self.tolerance_ = 0.05                       # stop within 5 cm
+        self.pose_ = None                            # (x, y, yaw)
+        self.reached_ = False
+
+        self.cmd_pub_ = self.create_publisher(Twist, "cmd_vel", 10)
+        self.create_subscription(Odometry, "odom", self.callback_odom, 10)
+        self.create_timer(0.05, self.control_loop)   # 20 Hz
+        self.get_logger().info(f"Going to ({self.goal_x_}, {self.goal_y_})")
+
+    def callback_odom(self, msg):
+        p = msg.pose.pose
+        self.pose_ = (p.position.x, p.position.y, yaw_from_quaternion(p.orientation))
+
+    def control_loop(self):
+        if self.pose_ is None or self.reached_:
+            return
+        x, y, yaw = self.pose_
+        dist_x = self.goal_x_ - x
+        dist_y = self.goal_y_ - y
+        distance = math.sqrt(dist_x * dist_x + dist_y * dist_y)
+
+        msg = Twist()
+        if distance > self.tolerance_:
+            diff = math.atan2(dist_y, dist_x) - yaw
+            diff = math.atan2(math.sin(diff), math.cos(diff))       # wrap to [-pi, pi]
+            msg.angular.z = clamp(self.k_ang_ * diff, self.max_ang_)
+            if abs(diff) &lt; 0.4:                                     # roughly facing the goal?
+                msg.linear.x = clamp(self.k_lin_ * distance, self.max_lin_)
+        else:
+            self.reached_ = True
+            self.get_logger().info(f"Goal reached! final error {distance * 100:.1f} cm")
+        self.cmd_pub_.publish(msg)
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    rclpy.spin(GoToGoal())
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+    <div class="box tip"><div class="box-title">💡 A shorter angle wrap</div>
+    <p><code>atan2(sin(d), cos(d))</code> gives the same result as the <code>if diff &gt; π …</code> block from Lecture 7, in one line.</p></div>
+  </div>
+  <div class="step" id="d5-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Run it to a few goals</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>#  setup.py:  "go_to_goal = limo_lab.go_to_goal:main",
+cd ~/ros2_ws &amp;&amp; colcon build --packages-select limo_lab --symlink-install &amp;&amp; source ~/.bashrc
+ros2 run limo_lab go_to_goal --ros-args -p goal_x:=1.0 -p goal_y:=0.5 -p use_sim_time:=true</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>[INFO] [...] [go_to_goal]: Going to (1.0, 0.5)
+[INFO] [...] [go_to_goal]: Goal reached! final error 4.8 cm</pre></div>
+    <p>Goals are in the <strong>odom frame</strong>: (0, 0) is where the robot started, +x is straight ahead of its start pose, +y is to its left. Keep goals within about 1 m. The table has walls and obstacles, and our controller does not see them yet (Lecture 10).</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="activity"><span class="num">8.2</span>Your turn</h2>
+<div class="activity">
+  <div class="lvl">Activity 8.1 · Core · 30 min</div>
+  <h3>The precise square (closed loop)</h3>
+  <p>Copy <code>go_to_goal.py</code> to <code>waypoint_square.py</code>. Instead of one goal, use a list of waypoints <code>[(0.6, 0.0), (0.6, 0.6), (0.0, 0.6), (0.0, 0.0)]</code>. When one is reached, move to the next; after the last one, stop and log "Square done". Compare the final error with your open-loop square from Lab 3.</p>
+  <details class="hint"><summary>Hint</summary><div class="inner">Keep <code>self.waypoints_</code> and an index <code>self.index_</code>. In the "reached" branch, do <code>self.index_ += 1</code> instead of setting <code>reached_</code>; the goal is <code>self.waypoints_[self.index_]</code>.</div></details>
+  <details class="solution"><summary>Solution: the changed parts</summary><div class="inner">
+  <div class="cmd file"><div class="cmd-h">📄 limo_lab/limo_lab/waypoint_square.py (differences from go_to_goal.py)</div><pre><code>        self.waypoints_ = [(0.6, 0.0), (0.6, 0.6), (0.0, 0.6), (0.0, 0.0)]
+        self.index_ = 0
+
+    def control_loop(self):
+        if self.pose_ is None or self.index_ >= len(self.waypoints_):
+            return
+        goal_x, goal_y = self.waypoints_[self.index_]
+        x, y, yaw = self.pose_
+        dist_x, dist_y = goal_x - x, goal_y - y
+        distance = math.sqrt(dist_x * dist_x + dist_y * dist_y)
+
+        msg = Twist()
+        if distance > self.tolerance_:
+            diff = math.atan2(dist_y, dist_x) - yaw
+            diff = math.atan2(math.sin(diff), math.cos(diff))
+            msg.angular.z = clamp(self.k_ang_ * diff, self.max_ang_)
+            if abs(diff) &lt; 0.4:
+                msg.linear.x = clamp(self.k_lin_ * distance, self.max_lin_)
+        else:
+            self.get_logger().info(f"Waypoint {self.index_ + 1} reached")
+            self.index_ += 1
+            if self.index_ == len(self.waypoints_):
+                self.get_logger().info("Square done")
+        self.cmd_pub_.publish(msg)</code></pre></div></div></details>
+</div>
+
+<div class="activity">
+  <div class="lvl">Challenge 8.2 · Think · 10 min</div>
+  <h3>Would it work on a car?</h3>
+  <p>Close Gazebo and start the Ackermann LIMO: <code>ros2 launch limo_gazebosim limo_gazebo_ackerman_drive.launch.py</code>. Run <code>go_to_goal</code> to a goal at (0.0, 0.8), which is to the robot's left. What happens, and why? Which line of the controller assumes the robot can turn on the spot?</p>
+  <details class="solution"><summary>Discussion</summary><div class="inner">An Ackermann (car-like) robot cannot rotate with <code>linear.x = 0</code>. The line <code>if abs(diff) &lt; 0.4:</code> sets linear to 0 while turning, so the car never moves. Car-like robots need controllers that always move forward while steering. This is why the drive mode matters when you choose a controller, and why Nav2 (Lecture 11) has different controller plugins for them.</div></details>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="exit"><span class="num">8.3</span>When things go wrong · Exit ticket · Homework</h2>
+<div class="table-wrap"><table class="fix">
+  <tr><th>You see…</th><th>Why</th><th>Fix</th></tr>
+  <tr><td>Robot moves then stops every half second</td><td>Publishing too slowly for the watchdog.</td><td>Publish at ≥ 10 Hz (timer 0.1 s or <code>-r 10</code>).</td></tr>
+  <tr><td>Nothing moves, no /odom</td><td>Gazebo still loading, or it crashed.</td><td>Watch Terminal 1; <code>killall gzserver gzclient</code> and relaunch.</td></tr>
+  <tr><td>Square is much smaller than 0.5 m</td><td>Gazebo is slower than real time and the node uses the wall clock.</td><td>Run with <code>-p use_sim_time:=true</code>.</td></tr>
+  <tr><td>Robot spins forever near the goal</td><td>Angle not wrapped, or gains too high.</td><td>Use the <code>atan2(sin, cos)</code> wrap; lower <code>k_ang_</code>.</td></tr>
+  <tr><td>ModuleNotFoundError: nav_msgs</td><td>Missing dependency.</td><td><code>&lt;depend&gt;nav_msgs&lt;/depend&gt;</code> in <code>limo_lab/package.xml</code>.</td></tr>
+</table></div>
+<div class="quiz">
+  <div class="q"><p>What is the difference between open-loop and closed-loop control?</p><details><summary>Answer</summary><div class="inner">Open loop sends commands without measuring the result (timing only). Closed loop measures the result (odometry) and corrects the command continuously.</div></details></div>
+  <div class="q"><p>Where in an <code>Odometry</code> message is the robot's y position?</p><details><summary>Answer</summary><div class="inner"><code>msg.pose.pose.position.y</code></div></details></div>
+  <div class="q"><p>The quaternion is (0, 0, 0.707, 0.707). What is the yaw?</p><details><summary>Answer</summary><div class="inner">atan2(2·0.707·0.707, 1 − 2·0.5) = atan2(1, 0) = 90° (facing left).</div></details></div>
+  <div class="q"><p>Why must we publish <code>/cmd_vel</code> at least every 0.5 s?</p><details><summary>Answer</summary><div class="inner">The twist watchdog stops the robot for safety if commands stop arriving, for example if your node crashes.</div></details></div>
+</div>
+<div class="box book">
+  <div class="box-title">🏠 Homework</div>
+  <ol>
+    <li>Finish Activity 8.1 and record a bag of it: <code>ros2 bag record /odom /cmd_vel -o square</code>.</li>
+    <li>Make <code>go_to_goal</code>'s gains and limits parameters, and find the fastest gains that still don't overshoot.</li>
+    <li>Preview: run <code>ros2 launch limo_description display_models_diff.launch.py</code> and move the sliders in the small window.</li>
+  </ol>
+</div>
+
+<div class="footer-nav">
+  <a href="L07-catch-them-all.html">← Lecture 7: Catch Them All</a>
+  <a href="index.html#lectures">All lectures</a>
+  <a href="L09-limo-urdf-tf-rviz.html">Lecture 9: URDF, TF &amp; RViz →</a>
+</div>
+</div>
+<script src="lab.js"></script>
+<script src="annotate.js" defer></script>
+</body>
+</html>

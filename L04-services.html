@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){try{var t=localStorage.getItem('limo-book-theme');if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 4 — Services: Request &amp; Response</title>
+<meta name="description" content="Hands-on Lecture 4: ROS 2 services. Call turtlesim services, write a Python service server and client, debug and remap services, and add a reset service to the number counter.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<link rel="stylesheet" href="lab.css">
+<link rel="stylesheet" href="projector.css">
+</head>
+<body>
+<button id="theme-toggle" aria-label="Toggle light/dark mode">🌙</button>
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html">Home</a><a href="prerequisites.html">Mission Zero</a><a href="syllabus.html">Syllabus</a><a href="schedule.html">Schedule</a><a href="index.html#lectures">Lectures</a>
+</div></nav>
+
+<div class="wrap">
+<div class="lesson-progress"><div class="lp-top"><span>Lecture 4 · your progress</span><span><b class="lp-count">0 / 0 steps</b> · <a href="#" class="lp-reset">reset</a></span></div><div class="lp-bar"><div class="lp-fill"></div></div></div>
+
+<div class="cover">
+  <div class="kicker">Part A · ROS 2 Bootcamp · Lecture 4 of 12</div>
+  <h1>Services — Request &amp; Response</h1>
+  <div class="subtitle">Topics stream data one way. Services <em>ask a question and get an answer</em>. Today you clear, spawn and kill turtles with services, then write your own service server and client.</div>
+  <div class="meta-row">
+    <div class="chip">⏱ 3 h · 25 min teach · 2 h 35 min hands-on</div>
+    <div class="chip">📘 Book: §2.2, pp. 35–48</div>
+    <div class="chip">🐍 Python · ROS 2 Humble</div>
+    <div class="chip">Before this: Lecture 3 (number counter ready)</div>
+  </div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h3>🎯 By the end of today you can…</h3>
+    <ul class="outcomes">
+      <li>Say when to use a <strong>service</strong> and when to use a <strong>topic</strong>.</li>
+      <li>Call any service from the terminal with <code>ros2 service call</code>.</li>
+      <li>Write a Python <strong>service server</strong>.</li>
+      <li>Write a Python <strong>service client</strong> that doesn't block your node.</li>
+      <li>Add a service to an existing node (reset the number counter).</li>
+    </ul>
+  </div>
+  <div class="card toc">
+    <h3>🗺️ Today's route</h3>
+    <a href="#warmup"><span>4.0</span>Warm-up</a>
+    <a href="#idea"><span>4.1</span>The idea: the help desk</a>
+    <a href="#lab1"><span>Lab 1</span>Services with turtlesim</a>
+    <a href="#lab2"><span>Lab 2</span>Your first service server</a>
+    <a href="#lab3"><span>Lab 3</span>Your first service client</a>
+    <a href="#lab4"><span>Lab 4</span>Debug &amp; remap services</a>
+    <a href="#activity"><span>4.2</span>Activity: reset the counter</a>
+    <a href="#errors"><span>4.3</span>When things go wrong</a>
+    <a href="#exit"><span>4.4</span>Exit ticket &amp; homework</a>
+  </div>
+</div>
+
+<details class="box teacher">
+  <summary>🧑‍🏫 Instructor lesson plan (click to open)</summary>
+  <div class="inner">
+  <div class="table-wrap"><table>
+    <tr><th>Time</th><th>Activity</th><th>Type</th></tr>
+    <tr><td>0:00–0:10</td><td>Warm-up + run everyone's number counter</td><td><span class="tag check">Check</span></td></tr>
+    <tr><td>0:10–0:30</td><td>Help-desk analogy, topic vs service table</td><td><span class="tag teach">Teach</span></td></tr>
+    <tr><td>0:30–0:55</td><td>Lab 1 — clear / spawn / kill / set_pen from the terminal</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>0:55–1:20</td><td>Lab 2 — AddTwoInts server, called from the terminal</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>1:20–1:30</td><td>Break</td><td></td></tr>
+    <tr><td>1:30–2:10</td><td>Lab 3 — client (simple, then OOP with a callback) + Lab 4</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>2:10–2:50</td><td>Activity 4.1 — reset_counter service</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>2:50–3:00</td><td>Exit ticket + homework</td><td><span class="tag check">Check</span></td></tr>
+  </table></div>
+  <p><strong>Teaching tip.</strong> The client is the hardest part today. Draw the timeline on the board: "send request → keep spinning → answer arrives → callback runs". Show that a "blocking wait inside a callback" freezes the node; this is the number-one bug students hit in Lecture 7.</p>
+  </div>
+</details>
+
+<h2 id="warmup"><span class="num">4.0</span>Warm-up (5 min)</h2>
+<div class="quiz">
+  <div class="q"><p>Write the command to publish <code>{data: 5}</code> on <code>/number</code> once per second.</p><details><summary>Answer</summary><div class="inner"><code>ros2 topic pub -r 1 /number example_interfaces/msg/Int64 "{data: 5}"</code></div></details></div>
+  <div class="q"><p>In the number counter, where did we publish: in a timer or in a subscriber callback?</p><details><summary>Answer</summary><div class="inner">In the subscriber callback, so a new total is published every time a number arrives.</div></details></div>
+  <div class="q"><p>Your counter is at 1,000,000. How could another node ask it to go back to 0?</p><details><summary>Answer</summary><div class="inner">That's today's lecture. It needs a <strong>request</strong> and a <strong>confirmation</strong>, which is a service.</div></details></div>
+</div>
+
+<h2 id="idea"><span class="num">4.1</span>The idea in 10 minutes</h2>
+<div class="analogy"><div class="emoji">🛎️</div><div>
+  <p><strong>A service is like a help desk.</strong> You walk up (you are the <em>client</em>), ask one question (the <em>request</em>), and the person behind the desk (the <em>server</em>) gives you one answer (the <em>response</em>). There is one desk, but many people can come and ask.</p>
+</div></div>
+
+<div class="mermaid">
+sequenceDiagram
+  participant C as Client node
+  participant S as Server node (/add_two_ints)
+  C->>S: Request {a: 3, b: 4}
+  Note right of S: callback computes a + b
+  S-->>C: Response {sum: 7}
+</div>
+
+<div class="box book">
+  <div class="box-title">📘 Properties of a service (Book §2.2)</div>
+  <ul>
+    <li>A <strong>client/server</strong> system: one request, one response.</li>
+    <li>It can be <strong>synchronous</strong> (wait for the answer) or <strong>asynchronous</strong> (carry on and get a callback when it arrives).</li>
+    <li><strong>Two message types</strong>: one for the request and one for the response, written in one <code>.srv</code> type separated by <code>---</code>.</li>
+    <li>A service <strong>server exists only once</strong>, but it can have <strong>many clients</strong>.</li>
+  </ul>
+</div>
+
+<div class="table-wrap"><table>
+  <tr><th></th><th>Topic 📻</th><th>Service 🛎️</th></tr>
+  <tr><td>Direction</td><td>One-way</td><td>Request → Response</td></tr>
+  <tr><td>How many</td><td>Many publishers, many subscribers</td><td>One server, many clients</td></tr>
+  <tr><td>Use for</td><td>Continuous data: sensors, pose, velocity</td><td>One-off actions and questions: reset, spawn, compute, switch mode</td></tr>
+  <tr><td>Robot example</td><td><code>/scan</code>, <code>/odom</code>, <code>/cmd_vel</code></td><td>"Save the map", "Reset odometry", "Turn the LED on"</td></tr>
+</table></div>
+
+<!-- ============================================================ -->
+<h2 id="lab1"><span class="num">L1</span>Lab 1 — Services with turtlesim</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 1 · 25 min</span><h3>Clear, spawn, kill and change pen colour (Book §2.2.9)</h3></div>
+  <p class="lab-goal">Goal: find a service, read its type, and call it from the terminal.</p>
+
+  <div class="step" id="s1-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Start turtlesim + teleop, list the services</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminals 1 &amp; 2</div><pre><code>ros2 run turtlesim turtlesim_node
+ros2 run turtlesim turtle_teleop_key</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 3</div><pre><code>ros2 service list</code></pre></div>
+    <div class="out"><div class="out-h">✅ Among others you'll see</div><pre>/clear
+/kill
+/reset
+/spawn
+/turtle1/set_pen
+/turtle1/teleport_absolute
+/turtle1/teleport_relative</pre></div>
+  </div>
+
+  <div class="step" id="s1-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Clear the drawing</span></div>
+    <p>Drive a bit so there is a line, then:</p>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 3</div><pre><code>ros2 service type /clear
+ros2 interface show std_srvs/srv/Empty
+ros2 service call /clear std_srvs/srv/Empty</code></pre></div>
+    <p><code>Empty</code> has nothing above or below the <code>---</code>, so there's nothing to send and nothing comes back. The lines disappear.</p>
+  </div>
+
+  <div class="step" id="s1-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Spawn a turtle</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 3</div><pre><code>ros2 interface show turtlesim/srv/Spawn
+ros2 service call /spawn turtlesim/srv/Spawn "{x: 5.0, y: 5.0, theta: 0.0, name: 'my_turtle'}"</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>float32 x
+float32 y
+float32 theta
+string name # Optional.  A unique name will be created and returned if this is empty
+---
+string name
+
+requester: making request: turtlesim.srv.Spawn_Request(x=5.0, y=5.0, theta=0.0, name='my_turtle')
+response:
+turtlesim.srv.Spawn_Response(name='my_turtle')</pre></div>
+    <p>Above <code>---</code> is the <strong>request</strong>, and below it is the <strong>response</strong>.</p>
+  </div>
+
+  <div class="step" id="s1-4">
+    <div class="step-h"><span class="step-n">4</span><span class="step-t">Change the pen, then remove the turtle</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 3</div><pre><code>ros2 service call /turtle1/set_pen turtlesim/srv/SetPen "{r: 255, g: 0, b: 0, width: 5, 'off': 0}"
+ros2 service call /kill turtlesim/srv/Kill "{name: 'my_turtle'}"</code></pre></div>
+    <p>Drive turtle1: its line is now thick and red. <code>my_turtle</code> is gone. (<code>'off'</code> is in quotes because <code>off</code> is a special word in YAML.)</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab2"><span class="num">L2</span>Lab 2 — Your first service server</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 2 · 25 min</span><h3>The adding machine (Book §2.2.1)</h3></div>
+  <p class="lab-goal">Goal: a node that offers <code>/add_two_ints</code>, receives a and b, and returns their sum.</p>
+
+  <div class="step" id="s2-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Look at the service type</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>ros2 interface show example_interfaces/srv/AddTwoInts</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>int64 a
+int64 b
+---
+int64 sum</pre></div>
+  </div>
+
+  <div class="step" id="s2-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Write the server</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws/src/my_py_pkg/my_py_pkg
+touch add_two_ints_server.py &amp;&amp; chmod +x add_two_ints_server.py</code></pre></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/add_two_ints_server.py</div><pre><code>#!/usr/bin/env python3
+import rclpy
+from rclpy.node import Node
+from example_interfaces.srv import AddTwoInts
+
+
+class AddTwoIntsServerNode(Node):
+    def __init__(self):
+        super().__init__("add_two_ints_server")
+<span class="hl">        self.server_ = self.create_service(</span>
+<span class="hl">            AddTwoInts, "add_two_ints", self.callback_add_two_ints)</span>
+        self.get_logger().info("Add two ints server has been started")
+
+<span class="hl">    def callback_add_two_ints(self, request, response):</span>
+<span class="hl">        response.sum = request.a + request.b</span>
+        self.get_logger().info(f"{request.a} + {request.b} = {response.sum}")
+<span class="hl">        return response</span>
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = AddTwoIntsServerNode()
+    rclpy.spin(node)
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+    <p>The server callback receives the <code>request</code> and an empty <code>response</code>. You fill the response and <strong>return it</strong>. If you forget the <code>return</code>, the client never gets an answer.</p>
+  </div>
+
+  <div class="step" id="s2-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Register, build, run and call it from the terminal</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 setup.py → console_scripts (add)</div><pre><code>            "add_two_ints_server = my_py_pkg.add_two_ints_server:main",</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 1</div><pre><code>cd ~/ros2_ws &amp;&amp; colcon build --packages-select my_py_pkg --symlink-install &amp;&amp; source ~/.bashrc
+ros2 run my_py_pkg add_two_ints_server</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>ros2 service list
+ros2 service call /add_two_ints example_interfaces/srv/AddTwoInts "{a: 3, b: 4}"</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>response:
+example_interfaces.srv.AddTwoInts_Response(sum=7)</pre></div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab3"><span class="num">L3</span>Lab 3 — Your first service client</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 3 · 30 min</span><h3>Ask the adding machine from code (Book §2.2.2–2.2.3)</h3></div>
+  <p class="lab-goal">Goal: first a simple client script, then the OOP client you will use inside real robot nodes.</p>
+
+  <div class="step" id="s3-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">The simple client (no class)</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/add_two_ints_client_no_oop.py</div><pre><code>#!/usr/bin/env python3
+import rclpy
+from rclpy.node import Node
+from example_interfaces.srv import AddTwoInts
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = Node("add_two_ints_no_oop")
+
+    client = node.create_client(AddTwoInts, "add_two_ints")          # 1. make a client
+    while not client.wait_for_service(1.0):                          # 2. wait for the server
+        node.get_logger().warn("Waiting for server add_two_ints...")
+
+    request = AddTwoInts.Request()                                   # 3. fill a request
+    request.a = 3
+    request.b = 8
+
+    future = client.call_async(request)                              # 4. send it
+    rclpy.spin_until_future_complete(node, future)                   # 5. wait for the answer
+
+    response = future.result()
+    node.get_logger().info(f"{request.a} + {request.b} = {response.sum}")
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Register, build, run (server must be running in another terminal)</div><pre><code>#  setup.py:  "add_two_ints_client_no_oop = my_py_pkg.add_two_ints_client_no_oop:main",
+cd ~/ros2_ws &amp;&amp; colcon build --packages-select my_py_pkg --symlink-install &amp;&amp; source ~/.bashrc
+ros2 run my_py_pkg add_two_ints_client_no_oop</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>[INFO] [...] [add_two_ints_no_oop]: 3 + 8 = 11</pre></div>
+    <p>Try it the other way round: start the <strong>client first</strong>. It prints "Waiting for server…" until you start the server.</p>
+  </div>
+
+  <div class="step" id="s3-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">The OOP client: send, keep spinning, get a callback</span></div>
+    <p>Inside a real node we must <strong>never block</strong>, because the node also has to handle its timers and subscribers. So we send the request and ask ROS 2 to call us back when the answer arrives.</p>
+    <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/add_two_ints_client.py</div><pre><code>#!/usr/bin/env python3
+from functools import partial
+import rclpy
+from rclpy.node import Node
+from example_interfaces.srv import AddTwoInts
+
+
+class AddTwoIntsClientNode(Node):
+    def __init__(self):
+        super().__init__("add_two_ints_client")
+        self.client_ = self.create_client(AddTwoInts, "add_two_ints")
+        self.call_add_two_ints_server(6, 6)
+        self.call_add_two_ints_server(7, 4)
+        self.call_add_two_ints_server(5, 4)
+
+    def call_add_two_ints_server(self, a, b):
+        while not self.client_.wait_for_service(1.0):
+            self.get_logger().warn("Waiting for server add_two_ints...")
+
+        request = AddTwoInts.Request()
+        request.a = a
+        request.b = b
+
+        future = self.client_.call_async(request)
+<span class="hl">        future.add_done_callback(partial(self.callback_call_add_two_ints, a=a, b=b))</span>
+
+    def callback_call_add_two_ints(self, future, a, b):
+        try:
+            response = future.result()
+            self.get_logger().info(f"{a} + {b} = {response.sum}")
+        except Exception as e:
+            self.get_logger().error(f"Service call failed {e!r}")
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = AddTwoIntsClientNode()
+    rclpy.spin(node)
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Register, build, run</div><pre><code>#  setup.py:  "add_two_ints_client = my_py_pkg.add_two_ints_client:main",
+cd ~/ros2_ws &amp;&amp; colcon build --packages-select my_py_pkg --symlink-install &amp;&amp; source ~/.bashrc
+ros2 run my_py_pkg add_two_ints_client</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see three answers</div><pre>[INFO] [...] [add_two_ints_client]: 6 + 6 = 12
+[INFO] [...] [add_two_ints_client]: 7 + 4 = 11
+[INFO] [...] [add_two_ints_client]: 5 + 4 = 9</pre></div>
+  </div>
+
+  <h3>🔍 Why <code>partial</code>?</h3>
+  <p><code>add_done_callback</code> always calls your function with just one argument, the <code>future</code>. But we also want to print <code>a</code> and <code>b</code>. <code>partial(f, a=a, b=b)</code> makes a new function with a and b already filled in. Remember this pattern: you will use it for every service call in Lecture 7.</p>
+</div>
+
+<details class="box">
+  <summary>➕ Going further (optional): the C++ server (Book §2.2.4)</summary>
+  <div class="inner">
+  <div class="cmd file"><div class="cmd-h">📄 my_cpp_pkg/src/add_two_ints_server.cpp</div><pre><code>#include "rclcpp/rclcpp.hpp"
+#include "example_interfaces/srv/add_two_ints.hpp"
+
+using std::placeholders::_1;
+using std::placeholders::_2;
+
+class AddTwoIntsServerNode : public rclcpp::Node
+{
+public:
+    AddTwoIntsServerNode() : Node("add_two_ints_server")
+    {
+        server_ = this->create_service&lt;example_interfaces::srv::AddTwoInts&gt;(
+            "add_two_ints", std::bind(&amp;AddTwoIntsServerNode::callbackAddTwoInts, this, _1, _2));
+        RCLCPP_INFO(this->get_logger(), "Service server has been started.");
+    }
+
+private:
+    void callbackAddTwoInts(const example_interfaces::srv::AddTwoInts::Request::SharedPtr request,
+                            const example_interfaces::srv::AddTwoInts::Response::SharedPtr response)
+    {
+        response-&gt;sum = request-&gt;a + request-&gt;b;
+        RCLCPP_INFO(this->get_logger(), "%ld + %ld = %ld", request-&gt;a, request-&gt;b, response-&gt;sum);
+    }
+    rclcpp::Service&lt;example_interfaces::srv::AddTwoInts&gt;::SharedPtr server_;
+};
+
+int main(int argc, char **argv)
+{
+    rclcpp::init(argc, argv);
+    rclcpp::spin(std::make_shared&lt;AddTwoIntsServerNode&gt;());
+    rclcpp::shutdown();
+    return 0;
+}</code></pre></div>
+  <p>CMakeLists: <code>add_executable(add_two_ints_server src/add_two_ints_server.cpp)</code>, <code>ament_target_dependencies(add_two_ints_server rclcpp example_interfaces)</code> and add it to <code>install(TARGETS …)</code>. The Python client works with the C++ server.</p>
+  </div>
+</details>
+
+<!-- ============================================================ -->
+<h2 id="lab4"><span class="num">L4</span>Lab 4 — Debug &amp; remap services</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 4 · 10 min</span><h3>Service tools (Book §2.2.7–2.2.8)</h3></div>
+  <div class="step" id="s4-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Inspect the server</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2 (server running in Terminal 1)</div><pre><code>ros2 service type /add_two_ints
+ros2 node info /add_two_ints_server
+rqt</code></pre></div>
+    <p>In rqt: <strong>Plugins → Services → Service Caller</strong>, choose <code>/add_two_ints</code>, type values into the table and click Call.</p>
+  </div>
+  <div class="step" id="s4-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Remap the service name</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminals 1 &amp; 2</div><pre><code>ros2 run my_py_pkg add_two_ints_server --ros-args -r add_two_ints:=calculator
+ros2 run my_py_pkg add_two_ints_client --ros-args -r add_two_ints:=calculator</code></pre></div>
+    <p>It's the same <code>-r</code> as for topics. If you remap only the client, it waits forever. Try it!</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="activity"><span class="num">4.2</span>Your turn</h2>
+<div class="activity">
+  <div class="lvl">Activity 4.1 · Core · 40 min · from Book §2.2.10</div>
+  <h3>Reset the number counter</h3>
+  <div class="mermaid">
+flowchart LR
+  A(["number_publisher"]) --> T1[["/number"]] --> B(["number_counter"]) --> T2[["/number_count"]]
+  C(["you, in the terminal"]) -. "SetBool request" .-> S{{"/reset_counter"}} -.-> B
+  </div>
+  <p>Add a <strong>service server</strong> to your <code>number_counter</code> node from Lecture 3:</p>
+  <ul>
+    <li>Service name: <code>/reset_counter</code>. Type: <code>example_interfaces/srv/SetBool</code> (use <code>ros2 interface show</code> to see what's inside).</li>
+    <li>If the request's <code>data</code> is <code>true</code>: set the counter to 0 and return <code>success = True</code> with a message.</li>
+    <li>If it is <code>false</code>: do nothing and return <code>success = False</code>.</li>
+  </ul>
+  <p><strong>Test</strong> with publisher, counter and <code>ros2 topic echo /number_count</code> running:</p>
+  <div class="cmd"><div class="cmd-h">💻 Terminal 4</div><pre><code>ros2 service call /reset_counter example_interfaces/srv/SetBool "{data: true}"</code></pre></div>
+  <details class="hint"><summary>Hint</summary><div class="inner"><code>SetBool</code>: request <code>bool data</code>; response <code>bool success</code>, <code>string message</code>. You only need to add 1 import, 1 <code>create_service</code> line and 1 callback.</div></details>
+  <details class="solution"><summary>Solution: the new parts of number_counter.py</summary><div class="inner">
+  <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/number_counter.py</div><pre><code>#!/usr/bin/env python3
+import rclpy
+from rclpy.node import Node
+from example_interfaces.msg import Int64
+<span class="hl">from example_interfaces.srv import SetBool</span>
+
+
+class NumberCounterNode(Node):
+    def __init__(self):
+        super().__init__("number_counter")
+        self.counter_ = 0
+        self.number_count_publisher_ = self.create_publisher(Int64, "number_count", 10)
+        self.number_subscriber_ = self.create_subscription(
+            Int64, "number", self.callback_number, 10)
+<span class="hl">        self.reset_counter_service_ = self.create_service(</span>
+<span class="hl">            SetBool, "reset_counter", self.callback_reset_counter)</span>
+        self.get_logger().info("Number Counter has been started")
+
+    def callback_number(self, msg):
+        self.counter_ += msg.data
+        new_msg = Int64()
+        new_msg.data = self.counter_
+        self.number_count_publisher_.publish(new_msg)
+
+<span class="hl">    def callback_reset_counter(self, request, response):</span>
+<span class="hl">        if request.data:</span>
+<span class="hl">            self.counter_ = 0</span>
+<span class="hl">            response.success = True</span>
+<span class="hl">            response.message = "Counter has been reset"</span>
+<span class="hl">        else:</span>
+<span class="hl">            response.success = False</span>
+<span class="hl">            response.message = "Counter has not been reset"</span>
+<span class="hl">        return response</span>
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = NumberCounterNode()
+    rclpy.spin(node)
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div></div></details>
+</div>
+
+<div class="activity">
+  <div class="lvl">Challenge 4.2 · Stretch · a preview of Lecture 7</div>
+  <h3>The turtle army</h3>
+  <p>Write a client node <code>turtle_army.py</code> that calls turtlesim's <code>/spawn</code> service <strong>5 times</strong> to put turtles in a row at <code>y = 2.0</code> and <code>x = 1, 3, 5, 7, 9</code>, named <code>soldier1</code>…<code>soldier5</code>. Log the name returned by each response. Add <code>&lt;depend&gt;turtlesim&lt;/depend&gt;</code> to <code>package.xml</code>.</p>
+  <details class="solution"><summary>Solution</summary><div class="inner">
+  <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/turtle_army.py</div><pre><code>#!/usr/bin/env python3
+from functools import partial
+import rclpy
+from rclpy.node import Node
+from turtlesim.srv import Spawn
+
+
+class TurtleArmy(Node):
+    def __init__(self):
+        super().__init__("turtle_army")
+        self.client_ = self.create_client(Spawn, "spawn")
+        while not self.client_.wait_for_service(1.0):
+            self.get_logger().warn("Waiting for turtlesim...")
+        for i in range(5):
+            self.spawn(f"soldier{i + 1}", 1.0 + 2.0 * i, 2.0)
+
+    def spawn(self, name, x, y):
+        request = Spawn.Request()
+        request.x, request.y, request.theta, request.name = x, y, 1.57, name
+        future = self.client_.call_async(request)
+        future.add_done_callback(partial(self.on_spawned, name=name))
+
+    def on_spawned(self, future, name):
+        try:
+            self.get_logger().info(f"{future.result().name} is alive")
+        except Exception as e:
+            self.get_logger().error(f"Could not spawn {name}: {e!r}")
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    rclpy.spin(TurtleArmy())
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div></div></details>
+</div>
+
+<h2 id="errors"><span class="num">4.3</span>When things go wrong</h2>
+<div class="table-wrap"><table class="fix">
+  <tr><th>You see…</th><th>Why</th><th>Fix</th></tr>
+  <tr><td>"Waiting for server…" forever</td><td>Server not running, wrong name, or remapped on one side only.</td><td><code>ros2 service list</code>: is the exact name there?</td></tr>
+  <tr><td>Client hangs, no answer</td><td>The server callback forgot <code>return response</code>.</td><td>Always end the server callback with <code>return response</code>.</td></tr>
+  <tr><td>Node freezes after a call</td><td>You used <code>spin_until_future_complete</code> inside a callback of a node that is already spinning.</td><td>Inside nodes use <code>call_async</code> + <code>add_done_callback</code>.</td></tr>
+  <tr><td>TypeError: callback() missing argument</td><td><code>add_done_callback</code> passes only <code>future</code>.</td><td>Use <code>partial(self.cb, a=a, b=b)</code>.</td></tr>
+  <tr><td>"Failed to populate field" on service call</td><td>A YAML typo, or a word such as <code>off</code> used as a key without quotes.</td><td><code>"{a: 3, b: 4}"</code>: a space after each colon; quote special keys.</td></tr>
+</table></div>
+
+<h2 id="exit"><span class="num">4.4</span>Exit ticket (5 min)</h2>
+<div class="quiz">
+  <div class="q"><p>Topic or service? (a) LiDAR scans (b) "Save the map now" (c) Robot battery level every second.</p><details><summary>Answer</summary><div class="inner">(a) topic (b) service (c) topic</div></details></div>
+  <div class="q"><p>In a <code>.srv</code> type, what does the <code>---</code> separate?</p><details><summary>Answer</summary><div class="inner">The request fields (above) from the response fields (below).</div></details></div>
+  <div class="q"><p>What must the last line of a server callback be?</p><details><summary>Answer</summary><div class="inner"><code>return response</code></div></details></div>
+  <div class="q"><p>How many servers can offer <code>/add_two_ints</code> at the same time? How many clients?</p><details><summary>Answer</summary><div class="inner">One server; any number of clients.</div></details></div>
+  <div class="q"><p>Write the terminal command to spawn a turtle called <code>bob</code> at (3, 3).</p><details><summary>Answer</summary><div class="inner"><code>ros2 service call /spawn turtlesim/srv/Spawn "{x: 3.0, y: 3.0, theta: 0.0, name: 'bob'}"</code></div></details></div>
+</div>
+
+<h3>📋 Today's commands</h3>
+<div class="cheat">
+  <div><code>ros2 service list</code><span>all services</span></div>
+  <div><code>ros2 service type /s</code><span>its type</span></div>
+  <div><code>ros2 interface show TYPE</code><span>request --- response</span></div>
+  <div><code>ros2 service call /s TYPE "{...}"</code><span>call from the terminal</span></div>
+  <div><code>create_service(T, "name", cb)</code><span>server (callback returns response)</span></div>
+  <div><code>create_client(T, "name")</code> · <code>call_async(req)</code><span>client</span></div>
+  <div><code>future.add_done_callback(partial(...))</code><span>non-blocking answer</span></div>
+  <div><code>rqt → Plugins → Services → Service Caller</code><span>call with a GUI</span></div>
+</div>
+
+<div class="box book">
+  <div class="box-title">🏠 Homework</div>
+  <ol>
+    <li>Finish Activity 4.1. Show that the counter resets while the publisher keeps running.</li>
+    <li>Try Challenge 4.2 (turtle army).</li>
+    <li>Read Book §3.1 "Create Custom ROS2 Interfaces" (pp. 49–57).</li>
+  </ol>
+</div>
+
+<div class="footer-nav">
+  <a href="L03-topics.html">← Lecture 3: Topics</a>
+  <a href="index.html#lectures">All lectures</a>
+  <a href="L05-custom-interfaces.html">Lecture 5: Custom Interfaces →</a>
+</div>
+</div>
+<script src="lab.js"></script>
+<script src="annotate.js" defer></script>
+</body>
+</html>

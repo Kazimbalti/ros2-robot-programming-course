@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){try{var t=localStorage.getItem('limo-book-theme');if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 3 — Topics: Publish &amp; Subscribe</title>
+<meta name="description" content="Hands-on Lecture 3: ROS 2 topics. Drive turtlesim from the command line, write a Python publisher and subscriber, debug topics, remap them, and build the number counter.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<link rel="stylesheet" href="lab.css">
+<link rel="stylesheet" href="projector.css">
+</head>
+<body>
+<button id="theme-toggle" aria-label="Toggle light/dark mode">🌙</button>
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html">Home</a><a href="prerequisites.html">Mission Zero</a><a href="syllabus.html">Syllabus</a><a href="schedule.html">Schedule</a><a href="index.html#lectures">Lectures</a>
+</div></nav>
+
+<div class="wrap">
+<div class="lesson-progress"><div class="lp-top"><span>Lecture 3 · your progress</span><span><b class="lp-count">0 / 0 steps</b> · <a href="#" class="lp-reset">reset</a></span></div><div class="lp-bar"><div class="lp-fill"></div></div></div>
+
+<div class="cover">
+  <div class="kicker">Part A · ROS 2 Bootcamp · Lecture 3 of 12</div>
+  <h1>Topics — Publish &amp; Subscribe</h1>
+  <div class="subtitle">Topics are how robot data flows: velocity commands, laser scans, camera images. Today you move a turtle by publishing on a topic, then write your own publisher and subscriber nodes.</div>
+  <div class="meta-row">
+    <div class="chip">⏱ 3 h · 30 min teach · 2 h 30 min hands-on</div>
+    <div class="chip">📘 Book: §2.1, pp. 23–35</div>
+    <div class="chip">🐍 Python · ROS 2 Humble</div>
+    <div class="chip">Before this: Lecture 2</div>
+  </div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h3>🎯 By the end of today you can…</h3>
+    <ul class="outcomes">
+      <li>Explain a topic with the "radio station" picture and name its 4 properties.</li>
+      <li>Use <code>ros2 topic list / echo / info / hz / pub</code> and <code>ros2 interface show</code>.</li>
+      <li>Write a Python <strong>publisher</strong> and a Python <strong>subscriber</strong>.</li>
+      <li>Remap a topic at runtime and read the result in <code>rqt_graph</code>.</li>
+      <li>Build a node that is both subscriber and publisher (the number counter).</li>
+    </ul>
+  </div>
+  <div class="card toc">
+    <h3>🗺️ Today's route</h3>
+    <a href="#warmup"><span>3.0</span>Warm-up</a>
+    <a href="#idea"><span>3.1</span>The idea: the radio station</a>
+    <a href="#lab1"><span>Lab 1</span>Topics from the command line (turtlesim)</a>
+    <a href="#lab2"><span>Lab 2</span>Your first publisher</a>
+    <a href="#lab3"><span>Lab 3</span>Your first subscriber</a>
+    <a href="#lab4"><span>Lab 4</span>Debug &amp; remap topics</a>
+    <a href="#activity"><span>3.2</span>Activity: the number counter</a>
+    <a href="#errors"><span>3.3</span>When things go wrong</a>
+    <a href="#exit"><span>3.4</span>Exit ticket &amp; homework</a>
+  </div>
+</div>
+
+<details class="box teacher">
+  <summary>🧑‍🏫 Instructor lesson plan (click to open)</summary>
+  <div class="inner">
+  <div class="table-wrap"><table>
+    <tr><th>Time</th><th>Activity</th><th>Type</th></tr>
+    <tr><td>0:00–0:10</td><td>Warm-up + check Activity 2.1 from homework</td><td><span class="tag check">Check</span></td></tr>
+    <tr><td>0:10–0:30</td><td>Radio station analogy, the 4 properties of a topic, message types</td><td><span class="tag teach">Teach</span></td></tr>
+    <tr><td>0:30–0:55</td><td>Lab 1 — move the turtle with <code>ros2 topic pub</code></td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>0:55–1:35</td><td>Labs 2 &amp; 3 — robot_news_station + smartphone</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>1:35–1:45</td><td>Break</td><td></td></tr>
+    <tr><td>1:45–2:10</td><td>Lab 4 — hz, bw, pub, remap, 3 stations in rqt_graph</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>2:10–2:50</td><td>Activity 3.1 — number_publisher + number_counter (pairs)</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>2:50–3:00</td><td>Exit ticket + homework</td><td><span class="tag check">Check</span></td></tr>
+  </table></div>
+  <p><strong>Teaching tip.</strong> Before Lab 2, ask two students to stand up: one "publishes" by reading numbers aloud, the other "subscribes" by writing them down. Then a third student also subscribes. That shows that topics are one-way and that many subscribers can listen to one publisher.</p>
+  </div>
+</details>
+
+<h2 id="warmup"><span class="num">3.0</span>Warm-up (5 min)</h2>
+<div class="quiz">
+  <div class="q"><p>What are the five steps of every rclpy program?</p><details><summary>Answer</summary><div class="inner">init → create node → do work (timers, callbacks) → spin → shutdown.</div></details></div>
+  <div class="q"><p>After adding a new line in <code>console_scripts</code>, what must you do?</p><details><summary>Answer</summary><div class="inner">Rebuild with <code>colcon build</code> and then <code>source ~/.bashrc</code>.</div></details></div>
+  <div class="q"><p>In rqt_graph last week, what was the arrow between <code>/teleop_turtle</code> and <code>/turtlesim</code>?</p><details><summary>Answer</summary><div class="inner">The topic <code>/turtle1/cmd_vel</code>. Today we learn exactly what that is.</div></details></div>
+</div>
+
+<h2 id="idea"><span class="num">3.1</span>The idea in 10 minutes</h2>
+<div class="analogy"><div class="emoji">📻</div><div>
+  <p><strong>A topic is like a radio station.</strong> The station (the <em>publisher</em>) broadcasts on a frequency (the <em>topic name</em>). Any radio (a <em>subscriber</em>) tuned to that frequency hears it. The station does not know who is listening, and a listener does not know who is broadcasting. They only agree on the frequency and the language (the <em>message type</em>).</p>
+</div></div>
+
+<div class="mermaid">
+flowchart LR
+  A(["📡 robot_news_station<br/>(publisher)"]) -- "String" --> T[["/robot_news<br/>topic"]]
+  T --> B(["📱 smartphone<br/>(subscriber)"])
+  T --> C(["💻 laptop<br/>(subscriber)"])
+  D(["📡 another station<br/>(publisher)"]) -- "String" --> T
+</div>
+
+<div class="box book">
+  <div class="box-title">📘 The 4 properties of a topic (Book §2.1)</div>
+  <ol>
+    <li><strong>One-way data stream.</strong> Data goes from publisher to subscriber, and no reply comes back.</li>
+    <li><strong>Anonymous.</strong> Publishers and subscribers don't know about each other.</li>
+    <li><strong>It has a message type</strong>, for example <code>example_interfaces/msg/String</code> or <code>geometry_msgs/msg/Twist</code>. Both sides must use the same type.</li>
+    <li><strong>Many to many.</strong> A topic can have many publishers and many subscribers, and one node can publish and subscribe to many topics.</li>
+  </ol>
+</div>
+<p><strong>When to use a topic:</strong> for <em>continuous streams</em> of data such as sensor readings, robot position and velocity commands. (For "do this and tell me the result", we use services, next lecture.)</p>
+
+<!-- ============================================================ -->
+<h2 id="lab1"><span class="num">L1</span>Lab 1 — Topics from the command line</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 1 · 25 min</span><h3>Move the turtle without the keyboard (Book §2.1.8)</h3></div>
+  <p class="lab-goal">Goal: find the topic that moves the turtle, read its message type, and publish on it yourself.</p>
+
+  <div class="step" id="t1-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Start turtlesim + teleop, then list the topics</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 1</div><pre><code>ros2 run turtlesim turtlesim_node</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>ros2 run turtlesim turtle_teleop_key</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 3</div><pre><code>ros2 topic list
+ros2 node info /turtlesim</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see (topic list)</div><pre>/parameter_events
+/rosout
+/turtle1/cmd_vel
+/turtle1/color_sensor
+/turtle1/pose</pre></div>
+  </div>
+
+  <div class="step" id="t1-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Listen to the topic while you drive</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 3</div><pre><code>ros2 topic echo /turtle1/cmd_vel</code></pre></div>
+    <p>Now press arrow keys in Terminal 2. Every key press is one message:</p>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>linear:
+  x: 2.0
+  y: 0.0
+  z: 0.0
+angular:
+  x: 0.0
+  y: 0.0
+  z: 0.0
+---</pre></div>
+  </div>
+
+  <div class="step" id="t1-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Read the message type</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 3 (Ctrl+C the echo first)</div><pre><code>ros2 topic info /turtle1/cmd_vel
+ros2 interface show geometry_msgs/msg/Twist</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>Type: geometry_msgs/msg/Twist
+Publisher count: 1
+Subscription count: 1
+
+Vector3  linear
+	float64 x
+	float64 y
+	float64 z
+Vector3  angular
+	float64 x
+	float64 y
+	float64 z</pre></div>
+    <div class="box idea"><div class="box-title">💡 Twist is the most important message in this course</div>
+    <p><code>linear.x</code> = forward speed (m/s) and <code>angular.z</code> = turning speed (rad/s). The real LIMO robot is driven with <em>exactly</em> this message on a topic called <code>/cmd_vel</code> (Lecture 8).</p></div>
+  </div>
+
+  <div class="step" id="t1-4">
+    <div class="step-h"><span class="step-n">4</span><span class="step-t">Publish yourself: make the turtle draw a circle</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 3</div><pre><code>ros2 topic pub -r 1 /turtle1/cmd_vel geometry_msgs/msg/Twist "{linear: {x: 2.0}, angular: {z: 1.8}}"</code></pre></div>
+    <p><code>-r 1</code> means "publish once per second". The turtle drives in a circle. Change the numbers and try again. Can you make it spin on the spot?</p>
+  </div>
+
+  <div class="step" id="t1-5">
+    <div class="step-h"><span class="step-n">5</span><span class="step-t">Read the turtle's position (another topic)</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 4</div><pre><code>ros2 topic echo /turtle1/pose
+ros2 topic hz /turtle1/pose</code></pre></div>
+    <p><code>echo</code> shows <code>x</code>, <code>y</code> and <code>theta</code> changing. <code>hz</code> shows that turtlesim publishes the pose about <strong>62 times per second</strong>. Stop everything with <kbd>Ctrl</kbd>+<kbd>C</kbd>.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab2"><span class="num">L2</span>Lab 2 — Your first publisher</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 2 · 20 min</span><h3>The robot news station (Book §2.1.1)</h3></div>
+  <p class="lab-goal">Goal: a node that publishes a text message on <code>/robot_news</code> twice per second.</p>
+
+  <div class="step" id="t2-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Look at the message we will send</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>ros2 interface show example_interfaces/msg/String</code></pre></div>
+    <div class="out"><div class="out-h">✅ The important line</div><pre>string data</pre></div>
+    <p>So a String message has one field, <code>data</code>.</p>
+  </div>
+
+  <div class="step" id="t2-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Declare the dependency in <code>package.xml</code></span></div>
+    <p>We use a message from the <code>example_interfaces</code> package, so we must say so. Add the highlighted line under the rclpy one:</p>
+    <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/package.xml</div><pre><code>  &lt;depend&gt;rclpy&lt;/depend&gt;
+<span class="hl">  &lt;depend&gt;example_interfaces&lt;/depend&gt;</span></code></pre></div>
+  </div>
+
+  <div class="step" id="t2-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Create the node</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws/src/my_py_pkg/my_py_pkg
+touch robot_news_station.py
+chmod +x robot_news_station.py</code></pre></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/robot_news_station.py</div><pre><code>#!/usr/bin/env python3
+import rclpy
+from rclpy.node import Node
+from example_interfaces.msg import String
+
+
+class RobotNewsStationNode(Node):
+
+    def __init__(self):
+        super().__init__("robot_news_station")
+        self.robot_name_ = "LIMO"
+<span class="hl">        self.publisher_ = self.create_publisher(String, "robot_news", 10)</span>
+        self.timer_ = self.create_timer(0.5, self.publish_news)
+        self.get_logger().info("Robot News Station has been started")
+
+    def publish_news(self):
+<span class="hl">        msg = String()</span>
+<span class="hl">        msg.data = "Hi, this is " + self.robot_name_ + " from the robot news station."</span>
+<span class="hl">        self.publisher_.publish(msg)</span>
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = RobotNewsStationNode()
+    rclpy.spin(node)
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+    <p>The highlighted lines are the only new ideas: <strong>create a publisher</strong> once, then <strong>make a message, fill it, publish it</strong> each time the timer fires.</p>
+  </div>
+
+  <div class="step" id="t2-4">
+    <div class="step-h"><span class="step-n">4</span><span class="step-t">Register, build, run and listen</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 setup.py → console_scripts (add this line)</div><pre><code>            "robot_news_station = my_py_pkg.robot_news_station:main",</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 1</div><pre><code>cd ~/ros2_ws
+colcon build --packages-select my_py_pkg --symlink-install
+source ~/.bashrc
+ros2 run my_py_pkg robot_news_station</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>ros2 topic list
+ros2 topic echo /robot_news</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>data: Hi, this is LIMO from the robot news station.
+---
+data: Hi, this is LIMO from the robot news station.
+---</pre></div>
+  </div>
+
+  <h3>🔍 <code>create_publisher(String, "robot_news", 10)</code> explained</h3>
+  <div class="table-wrap"><table class="walk">
+    <tr><th>Argument</th><th>Meaning</th></tr>
+    <tr><td>String</td><td>The message type. It must match what subscribers expect.</td></tr>
+    <tr><td>"robot_news"</td><td>The topic name. It becomes <code>/robot_news</code>.</td></tr>
+    <tr><td>10</td><td>Queue size: keep up to 10 messages if the network is slow. 10 is a good default.</td></tr>
+  </table></div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab3"><span class="num">L3</span>Lab 3 — Your first subscriber</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 3 · 20 min</span><h3>The smartphone (Book §2.1.2)</h3></div>
+  <p class="lab-goal">Goal: a second node that receives every news message and prints it.</p>
+
+  <div class="step" id="t3-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Create the subscriber node</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws/src/my_py_pkg/my_py_pkg
+touch smartphone.py
+chmod +x smartphone.py</code></pre></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/smartphone.py</div><pre><code>#!/usr/bin/env python3
+import rclpy
+from rclpy.node import Node
+from example_interfaces.msg import String
+
+
+class SmartphoneNode(Node):
+
+    def __init__(self):
+        super().__init__("smartphone")
+<span class="hl">        self.subscriber_ = self.create_subscription(</span>
+<span class="hl">            String, "robot_news", self.callback_robot_news, 10)</span>
+        self.get_logger().info("Smartphone has been started")
+
+<span class="hl">    def callback_robot_news(self, msg):</span>
+<span class="hl">        self.get_logger().info(msg.data)</span>
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = SmartphoneNode()
+    rclpy.spin(node)
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+    <p>The subscriber gives ROS 2 a <strong>callback</strong>. Each time a message arrives, ROS 2 calls <code>callback_robot_news(msg)</code> with it. You never call it yourself.</p>
+  </div>
+
+  <div class="step" id="t3-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Register, build and run both nodes</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 setup.py → console_scripts (add)</div><pre><code>            "smartphone = my_py_pkg.smartphone:main",</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 1</div><pre><code>cd ~/ros2_ws &amp;&amp; colcon build --packages-select my_py_pkg --symlink-install &amp;&amp; source ~/.bashrc
+ros2 run my_py_pkg robot_news_station</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>ros2 run my_py_pkg smartphone</code></pre></div>
+    <div class="out"><div class="out-h">✅ Terminal 2 shows</div><pre>[INFO] [...] [smartphone]: Smartphone has been started
+[INFO] [...] [smartphone]: Hi, this is LIMO from the robot news station.
+[INFO] [...] [smartphone]: Hi, this is LIMO from the robot news station.</pre></div>
+    <p>Test the "anonymous" property: stop the station and start it again. The smartphone never crashes; it just waits and then receives again.</p>
+  </div>
+</div>
+
+<details class="box">
+  <summary>➕ Going further (optional): the C++ publisher (Book §2.1.3)</summary>
+  <div class="inner">
+  <div class="cmd file"><div class="cmd-h">📄 my_cpp_pkg/src/robot_news_station.cpp</div><pre><code>#include "rclcpp/rclcpp.hpp"
+#include "example_interfaces/msg/string.hpp"
+
+class RobotNewsStationNode : public rclcpp::Node
+{
+public:
+    RobotNewsStationNode() : Node("robot_news_station"), robot_name_("LIMO")
+    {
+        publisher_ = this->create_publisher&lt;example_interfaces::msg::String&gt;("robot_news", 10);
+        timer_ = this->create_wall_timer(std::chrono::milliseconds(500),
+                     std::bind(&amp;RobotNewsStationNode::publishNews, this));
+        RCLCPP_INFO(this->get_logger(), "Robot News Station has been started.");
+    }
+
+private:
+    void publishNews()
+    {
+        auto msg = example_interfaces::msg::String();
+        msg.data = std::string("Hi, this is ") + robot_name_ + " from the Robot News Station";
+        publisher_-&gt;publish(msg);
+    }
+    std::string robot_name_;
+    rclcpp::Publisher&lt;example_interfaces::msg::String&gt;::SharedPtr publisher_;
+    rclcpp::TimerBase::SharedPtr timer_;
+};
+
+int main(int argc, char **argv)
+{
+    rclcpp::init(argc, argv);
+    rclcpp::spin(std::make_shared&lt;RobotNewsStationNode&gt;());
+    rclcpp::shutdown();
+    return 0;
+}</code></pre></div>
+  <div class="cmd file"><div class="cmd-h">📄 my_cpp_pkg/CMakeLists.txt (add) + package.xml: &lt;depend&gt;example_interfaces&lt;/depend&gt;</div><pre><code>find_package(example_interfaces REQUIRED)
+add_executable(robot_news_station src/robot_news_station.cpp)
+ament_target_dependencies(robot_news_station rclcpp example_interfaces)
+install(TARGETS robot_news_station DESTINATION lib/${PROJECT_NAME})</code></pre></div>
+  <p>Run it with the <strong>Python</strong> smartphone: C++ and Python nodes talk on the same topic without any problem.</p>
+  </div>
+</details>
+
+<!-- ============================================================ -->
+<h2 id="lab4"><span class="num">L4</span>Lab 4 — Debug &amp; remap topics</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 4 · 25 min</span><h3>The engineer's toolbox (Book §2.1.5–2.1.7)</h3></div>
+  <p class="lab-goal">Goal: measure a topic, inject messages from the terminal, and rename topics without changing code.</p>
+
+  <div class="step" id="t4-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Measure the topic</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 1</div><pre><code>ros2 run my_py_pkg robot_news_station</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>ros2 topic info /robot_news
+ros2 topic hz /robot_news
+ros2 topic bw /robot_news</code></pre></div>
+    <p><code>hz</code> should show about <strong>2.0</strong> (the timer is 0.5 s). <code>bw</code> shows the bandwidth in bytes per second. Change the timer to <code>0.1</code>, run again, and check that <code>hz</code> shows about 10.</p>
+  </div>
+
+  <div class="step" id="t4-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Publish from the terminal: be a fake station</span></div>
+    <p>Keep the smartphone running in one terminal and publish from another:</p>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 3</div><pre><code>ros2 topic pub -r 2 /robot_news example_interfaces/msg/String "{data: 'hello from the terminal'}"</code></pre></div>
+    <p>The smartphone prints your text too. This is how you test a subscriber before its publisher exists.</p>
+  </div>
+
+  <div class="step" id="t4-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Remap the topic name at runtime</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 1</div><pre><code>ros2 run my_py_pkg robot_news_station --ros-args -r __node:=my_station -r robot_news:=my_news</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>ros2 topic list
+ros2 run my_py_pkg smartphone --ros-args -r robot_news:=my_news</code></pre></div>
+    <p><code>-r</code> is short for <code>--remap</code>. Publisher and subscriber must use the <strong>same</strong> name, or they won't hear each other.</p>
+  </div>
+
+  <div class="step" id="t4-4">
+    <div class="step-h"><span class="step-n">4</span><span class="step-t">Three stations, two phones, one graph</span></div>
+    <p>Open a terminal for each line, then look at the graph:</p>
+    <div class="cmd"><div class="cmd-h">💻 Terminals 1–6</div><pre><code>ros2 run my_py_pkg robot_news_station --ros-args -r __node:=station1
+ros2 run my_py_pkg robot_news_station --ros-args -r __node:=station2
+ros2 run my_py_pkg smartphone
+ros2 run my_py_pkg robot_news_station --ros-args -r __node:=station3 -r robot_news:=other_news
+ros2 run my_py_pkg smartphone --ros-args -r __node:=smartphone2 -r robot_news:=other_news
+rqt_graph</code></pre></div>
+    <p>You should see <strong>two separate groups</strong>, just like Book Fig. 2.4. Explain to your neighbour why <code>smartphone2</code> only hears <code>station3</code>.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="activity"><span class="num">3.2</span>Your turn</h2>
+<div class="activity">
+  <div class="lvl">Activity 3.1 · Core · 40 min · from Book §2.1.9</div>
+  <h3>The number counter</h3>
+  <div class="mermaid">
+flowchart LR
+  A(["number_publisher"]) -- "Int64" --> T1[["/number"]] --> B(["number_counter"]) -- "Int64" --> T2[["/number_count"]]
+  </div>
+  <ol>
+    <li><strong>number_publisher</strong> publishes the same number (for example <code>2</code>) on <code>/number</code> every 0.5 s. Type: <code>example_interfaces/msg/Int64</code>.</li>
+    <li><strong>number_counter</strong> subscribes to <code>/number</code>. It keeps a counter. Each time a number arrives, it adds it to the counter and <strong>immediately publishes</strong> the new total on <code>/number_count</code>.</li>
+  </ol>
+  <p><strong>Test:</strong> <code>ros2 topic echo /number_count</code> should show 2, 4, 6, 8…</p>
+  <details class="hint"><summary>Hint 1: the message</summary><div class="inner"><code>ros2 interface show example_interfaces/msg/Int64</code> → one field, <code>int64 data</code>.</div></details>
+  <details class="hint"><summary>Hint 2: the counter node</summary><div class="inner">It needs one publisher and one subscriber. The publishing happens <em>inside the subscriber callback</em>, not in a timer.</div></details>
+  <details class="solution"><summary>Solution: number_publisher.py</summary><div class="inner">
+  <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/number_publisher.py</div><pre><code>#!/usr/bin/env python3
+import rclpy
+from rclpy.node import Node
+from example_interfaces.msg import Int64
+
+
+class NumberPublisherNode(Node):
+    def __init__(self):
+        super().__init__("number_publisher")
+        self.number_ = 2
+        self.number_publisher_ = self.create_publisher(Int64, "number", 10)
+        self.number_timer_ = self.create_timer(0.5, self.publish_number)
+        self.get_logger().info("Number publisher has been started")
+
+    def publish_number(self):
+        msg = Int64()
+        msg.data = self.number_
+        self.number_publisher_.publish(msg)
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = NumberPublisherNode()
+    rclpy.spin(node)
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div></div></details>
+  <details class="solution"><summary>Solution: number_counter.py</summary><div class="inner">
+  <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/number_counter.py</div><pre><code>#!/usr/bin/env python3
+import rclpy
+from rclpy.node import Node
+from example_interfaces.msg import Int64
+
+
+class NumberCounterNode(Node):
+    def __init__(self):
+        super().__init__("number_counter")
+        self.counter_ = 0
+        self.number_count_publisher_ = self.create_publisher(Int64, "number_count", 10)
+        self.number_subscriber_ = self.create_subscription(
+            Int64, "number", self.callback_number, 10)
+        self.get_logger().info("Number Counter has been started")
+
+    def callback_number(self, msg):
+        self.counter_ += msg.data
+        new_msg = Int64()
+        new_msg.data = self.counter_
+        self.number_count_publisher_.publish(new_msg)
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = NumberCounterNode()
+    rclpy.spin(node)
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+  <div class="cmd"><div class="cmd-h">💻 setup.py lines + run</div><pre><code>#   "number_publisher = my_py_pkg.number_publisher:main",
+#   "number_counter = my_py_pkg.number_counter:main",
+cd ~/ros2_ws &amp;&amp; colcon build --packages-select my_py_pkg --symlink-install &amp;&amp; source ~/.bashrc
+ros2 run my_py_pkg number_publisher        # terminal 1
+ros2 run my_py_pkg number_counter          # terminal 2
+ros2 topic echo /number_count              # terminal 3</code></pre></div>
+  <p><strong>Keep these two nodes.</strong> We add a service to the counter in Lecture 4, and start both with a launch file in Lecture 6.</p>
+  </div></details>
+</div>
+
+<div class="activity">
+  <div class="lvl">Challenge 3.2 · Stretch · a preview of the LIMO</div>
+  <h3>Draw a spiral with code</h3>
+  <p>Write <code>turtle_spiral.py</code>: a node that publishes a <code>geometry_msgs/msg/Twist</code> on <code>/turtle1/cmd_vel</code> at 10 Hz. Keep <code>angular.z = 2.0</code> and make <code>linear.x</code> grow slowly (for example +0.02 each time), so the turtle draws a spiral. Add <code>&lt;depend&gt;geometry_msgs&lt;/depend&gt;</code> to <code>package.xml</code>.</p>
+  <details class="solution"><summary>Solution</summary><div class="inner">
+  <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/turtle_spiral.py</div><pre><code>#!/usr/bin/env python3
+import rclpy
+from rclpy.node import Node
+from geometry_msgs.msg import Twist
+
+
+class TurtleSpiral(Node):
+    def __init__(self):
+        super().__init__("turtle_spiral")
+        self.speed_ = 0.5
+        self.cmd_pub_ = self.create_publisher(Twist, "turtle1/cmd_vel", 10)
+        self.create_timer(0.1, self.loop)
+
+    def loop(self):
+        msg = Twist()
+        msg.linear.x = self.speed_
+        msg.angular.z = 2.0
+        self.cmd_pub_.publish(msg)
+        self.speed_ += 0.02
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    rclpy.spin(TurtleSpiral())
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div></div></details>
+</div>
+
+<h2 id="errors"><span class="num">3.3</span>When things go wrong</h2>
+<div class="table-wrap"><table class="fix">
+  <tr><th>You see…</th><th>Why</th><th>Fix</th></tr>
+  <tr><td>Subscriber prints nothing</td><td>The topic names differ (a typo, or you remapped only one side).</td><td><code>ros2 topic list</code> and <code>ros2 topic info /name</code>: publisher count and subscription count should both be ≥ 1.</td></tr>
+  <tr><td>ModuleNotFoundError: example_interfaces</td><td>Missing dependency.</td><td>Add <code>&lt;depend&gt;example_interfaces&lt;/depend&gt;</code>, rebuild.</td></tr>
+  <tr><td>AttributeError: 'String' has no attribute 'text'</td><td>Wrong field name.</td><td><code>ros2 interface show …</code> shows the real field names (<code>data</code>).</td></tr>
+  <tr><td>ros2 topic pub: "Failed to populate field"</td><td>YAML typo in the message.</td><td>Use <code>"{data: 'text'}"</code>: a space after the colon, and the whole thing in double quotes.</td></tr>
+  <tr><td>Types don't match (rqt_graph shows no arrow)</td><td>Publisher uses <code>std_msgs/String</code>, subscriber <code>example_interfaces/String</code>.</td><td>Both sides must import the same type.</td></tr>
+</table></div>
+
+<h2 id="exit"><span class="num">3.4</span>Exit ticket (5 min)</h2>
+<div class="quiz">
+  <div class="q"><p>Name the 4 properties of a topic.</p><details><summary>Answer</summary><div class="inner">One-way stream, anonymous, has a message type, many publishers/subscribers.</div></details></div>
+  <div class="q"><p>Which two fields of a Twist do we use to drive a wheeled robot?</p><details><summary>Answer</summary><div class="inner"><code>linear.x</code> (forward m/s) and <code>angular.z</code> (turn rad/s).</div></details></div>
+  <div class="q"><p>Which command shows how often a topic publishes?</p><details><summary>Answer</summary><div class="inner"><code>ros2 topic hz /topic_name</code></div></details></div>
+  <div class="q"><p>Who calls <code>callback_robot_news(msg)</code>?</p><details><summary>Answer</summary><div class="inner">ROS 2 (inside <code>rclpy.spin</code>), every time a message arrives. You never call it yourself.</div></details></div>
+  <div class="q"><p>Is a topic a good choice for "compute 3 + 4 and give me the answer"? Why?</p><details><summary>Answer</summary><div class="inner">No, because topics are one-way and give no reply. That is what a <strong>service</strong> is for (next lecture).</div></details></div>
+</div>
+
+<h3>📋 Today's commands</h3>
+<div class="cheat">
+  <div><code>ros2 topic list</code><span>all topics</span></div>
+  <div><code>ros2 topic echo /t</code><span>print messages</span></div>
+  <div><code>ros2 topic info /t</code><span>type + number of pubs/subs</span></div>
+  <div><code>ros2 topic hz /t</code> · <code>bw /t</code><span>rate · bandwidth</span></div>
+  <div><code>ros2 topic pub -r 2 /t TYPE "{...}"</code><span>publish from the terminal</span></div>
+  <div><code>ros2 interface show TYPE</code><span>fields of a message</span></div>
+  <div><code>--ros-args -r old:=new</code><span>remap a topic</span></div>
+  <div><code>create_publisher(T, "name", 10)</code> · <code>create_subscription(T, "name", cb, 10)</code><span>in Python</span></div>
+</div>
+
+<div class="box book">
+  <div class="box-title">🏠 Homework</div>
+  <ol>
+    <li>Finish Activity 3.1 (number counter) and keep it: you'll need it next week.</li>
+    <li>Try Challenge 3.2 (spiral).</li>
+    <li>Read Book §2.2 "ROS2 – Services" (pp. 35–40).</li>
+  </ol>
+</div>
+
+<div class="footer-nav">
+  <a href="L02-first-node.html">← Lecture 2: First Node</a>
+  <a href="index.html#lectures">All lectures</a>
+  <a href="L04-services.html">Lecture 4: Services →</a>
+</div>
+</div>
+<script src="lab.js"></script>
+<script src="annotate.js" defer></script>
+</body>
+</html>

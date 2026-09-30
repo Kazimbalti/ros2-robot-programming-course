@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){try{var t=localStorage.getItem('limo-book-theme');if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 7 — Project: Catch Them All</title>
+<meta name="description" content="Hands-on Lecture 7: the Part A capstone. Build the turtlesim 'Catch Them All' project step by step with topics, services, custom interfaces, parameters and a launch file, then record and replay it with ROS 2 bags.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<link rel="stylesheet" href="lab.css">
+<link rel="stylesheet" href="projector.css">
+</head>
+<body>
+<button id="theme-toggle" aria-label="Toggle light/dark mode">🌙</button>
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html">Home</a><a href="prerequisites.html">Mission Zero</a><a href="syllabus.html">Syllabus</a><a href="schedule.html">Schedule</a><a href="index.html#lectures">Lectures</a>
+</div></nav>
+
+<div class="wrap">
+<div class="lesson-progress"><div class="lp-top"><span>Lecture 7 · your progress</span><span><b class="lp-count">0 / 0 steps</b> · <a href="#" class="lp-reset">reset</a></span></div><div class="lp-bar"><div class="lp-fill"></div></div></div>
+
+<div class="cover">
+  <div class="kicker">Part A · ROS 2 Bootcamp · Lecture 7 of 12 · Project</div>
+  <h1>Project: Catch Them All 🐢</h1>
+  <div class="subtitle">Everything from Part A in one game. A master turtle hunts down turtles that keep appearing at random places. You'll use topics, services, custom messages, parameters and a launch file together, and the go-to-goal controller you write today is the one you'll put on the LIMO next week.</div>
+  <div class="meta-row">
+    <div class="chip">⏱ 3 h in class + finish at home</div>
+    <div class="chip">📘 Book: Chapter 4, pp. 85–95</div>
+    <div class="chip">🐍 Python · ROS 2 Humble</div>
+    <div class="chip">Before this: Lectures 2–6</div>
+  </div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h3>🎯 By the end of today you can…</h3>
+    <ul class="outcomes">
+      <li>Break a robot task into nodes, topics and services before coding.</li>
+      <li>Write a <strong>go-to-goal controller</strong> (proportional control on distance and angle).</li>
+      <li>Combine a publisher, subscriber, service server and service client in one node.</li>
+      <li>Make the whole system configurable with parameters and start it with one launch file.</li>
+      <li>Record and replay robot data with <code>ros2 bag</code>.</li>
+    </ul>
+  </div>
+  <div class="card toc">
+    <h3>🗺️ Today's route (6 milestones)</h3>
+    <a href="#design"><span>7.1</span>Design the system first</a>
+    <a href="#m1"><span>M1</span>Controller: go to a fixed point</a>
+    <a href="#m2"><span>M2</span>Spawner: new turtles every second</a>
+    <a href="#m3"><span>M3</span>Chase the first alive turtle</a>
+    <a href="#m4"><span>M4</span>Catch (kill) it with a service</a>
+    <a href="#m5"><span>M5</span>Chase the closest turtle</a>
+    <a href="#m6"><span>M6</span>Parameters + launch file</a>
+    <a href="#bags"><span>Lab</span>Record &amp; replay with ros2 bag</a>
+    <a href="#exit"><span>7.2</span>Exit ticket &amp; assessment rubric</a>
+  </div>
+</div>
+
+<details class="box teacher">
+  <summary>🧑‍🏫 Instructor lesson plan (click to open)</summary>
+  <div class="inner">
+  <div class="table-wrap"><table>
+    <tr><th>Time</th><th>Activity</th><th>Type</th></tr>
+    <tr><td>0:00–0:20</td><td>Design together on the board: which nodes, topics, services? Then reveal the diagram</td><td><span class="tag teach">Teach</span></td></tr>
+    <tr><td>0:20–0:35</td><td>The go-to-goal maths (distance, heading, angle wrap)</td><td><span class="tag teach">Teach</span></td></tr>
+    <tr><td>0:35–1:15</td><td>M1 + M2</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>1:15–1:25</td><td>Break</td><td></td></tr>
+    <tr><td>1:25–2:30</td><td>M3 + M4 (the core of the project)</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>2:30–2:50</td><td>ros2 bag lab (record a run, replay it)</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>2:50–3:00</td><td>M5 + M6 set as homework; explain the rubric</td><td><span class="tag check">Check</span></td></tr>
+  </table></div>
+  <p><strong>Suggestion.</strong> This project works well as a graded assessment (for example, before the midterm). The rubric is at the bottom of the page. Ask for a short screen recording plus the <code>ros2 bag</code> of a successful run as evidence.</p>
+  </div>
+</details>
+
+<!-- ============================================================ -->
+<h2 id="design"><span class="num">7.1</span>Design the system first</h2>
+<p>Good robot engineers draw the graph <strong>before</strong> writing code. Take 5 minutes with a neighbour: which nodes do we need, and what does each one publish, subscribe, serve and call? Then compare with the design below.</p>
+<div class="box idea"><div class="box-title">🧩 The system design (Book Ch. 4)</div>
+<div class="mermaid">
+flowchart LR
+  TS(["turtlesim_node"])
+  SP(["turtle_spawner"])
+  CT(["turtle_controller"])
+  TS -- "/turtle1/pose<br/>turtlesim/Pose" --> CT
+  CT -- "/turtle1/cmd_vel<br/>Twist" --> TS
+  SP -- "/alive_turtles<br/>TurtleArray" --> CT
+  SP -. "/spawn (client)" .-> TS
+  SP -. "/kill (client)" .-> TS
+  CT -. "/catch_turtle (client)<br/>CatchTurtle" .-> SP
+</div>
+<div class="table-wrap"><table>
+  <tr><th>Node</th><th>Job</th><th>Uses</th></tr>
+  <tr><td><code>turtlesim_node</code></td><td>The simulator (already exists).</td><td>Offers <code>/spawn</code> and <code>/kill</code>; publishes <code>/turtle1/pose</code>; listens to <code>/turtle1/cmd_vel</code></td></tr>
+  <tr><td><code>turtle_spawner</code></td><td>Creates turtles at random places and keeps the list of alive turtles.</td><td>Client of <code>/spawn</code> &amp; <code>/kill</code>; publishes <code>/alive_turtles</code>; <strong>serves</strong> <code>/catch_turtle</code></td></tr>
+  <tr><td><code>turtle_controller</code></td><td>Drives turtle1 to a target and asks for it to be caught.</td><td>Subscribes to pose &amp; alive_turtles; publishes <code>cmd_vel</code>; client of <code>/catch_turtle</code></td></tr>
+</table></div>
+</div>
+
+<h3>The go-to-goal maths (you'll reuse this on the LIMO)</h3>
+<div class="grid2">
+  <div class="figure" style="margin:0">
+    <svg viewBox="0 0 320 220" role="img" aria-label="Turtle at bottom left, target at top right; dx horizontal, dy vertical, distance is the hypotenuse, goal_theta the angle from the x axis" style="width:100%;max-width:340px;background:var(--panel);border:1px solid var(--border);border-radius:14px">
+      <line x1="40" y1="180" x2="270" y2="180" stroke="currentColor" stroke-dasharray="4 4" opacity=".5"/>
+      <line x1="270" y1="180" x2="270" y2="50" stroke="currentColor" stroke-dasharray="4 4" opacity=".5"/>
+      <line x1="40" y1="180" x2="270" y2="50" stroke="#3d4bf5" stroke-width="3"/>
+      <path d="M90 180 A50 50 0 0 0 83 156" fill="none" stroke="#c8862c" stroke-width="2.5"/>
+      <circle cx="40" cy="180" r="11" fill="#0e9e6e"/>
+      <text x="22" y="208" font-size="13" fill="currentColor">turtle (x, y)</text>
+      <circle cx="270" cy="50" r="10" fill="#d64a3c"/>
+      <text x="220" y="32" font-size="13" fill="currentColor">target</text>
+      <text x="140" y="200" font-size="13" fill="currentColor">dist_x</text>
+      <text x="278" y="120" font-size="13" fill="currentColor">dist_y</text>
+      <text x="120" y="105" font-size="13" fill="#3d4bf5" font-weight="700">distance</text>
+      <text x="96" y="164" font-size="12" fill="#c8862c" font-weight="700">goal_theta</text>
+    </svg>
+  </div>
+  <div>
+    <ol>
+      <li><code>dist_x = target.x − pose.x</code>, <code>dist_y = target.y − pose.y</code></li>
+      <li><code>distance = √(dist_x² + dist_y²)</code></li>
+      <li><code>goal_theta = atan2(dist_y, dist_x)</code>: the direction to the target</li>
+      <li><code>diff = goal_theta − pose.theta</code>, then wrap it into [−π, π] so the turtle turns the short way</li>
+      <li><strong>P-control:</strong> <code>linear.x = 2·distance</code>, <code>angular.z = 6·diff</code>. The further away, the faster; the more off-course, the harder it turns.</li>
+      <li>Stop when <code>distance &lt; 0.5</code>.</li>
+    </ol>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="m1"><span class="num">M1</span>Milestone 1 — Controller: go to a fixed point</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">MILESTONE 1 · 25 min</span><h3>turtle_controller v1 (Book §4.0.1)</h3></div>
+
+  <div class="step" id="m1-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Create the project package and explore the interfaces</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws/src
+ros2 pkg create turtlesim_catch_them_all --build-type ament_python \
+  --dependencies rclpy turtlesim geometry_msgs my_robot_interfaces
+ros2 interface show turtlesim/msg/Pose
+ros2 interface show geometry_msgs/msg/Twist</code></pre></div>
+  </div>
+
+  <div class="step" id="m1-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Write the controller</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 turtlesim_catch_them_all/turtlesim_catch_them_all/turtle_controller.py</div><pre><code>#!/usr/bin/env python3
+import math
+import rclpy
+from rclpy.node import Node
+from turtlesim.msg import Pose
+from geometry_msgs.msg import Twist
+
+
+class TurtleControllerNode(Node):
+    def __init__(self):
+        super().__init__("turtle_controller")
+        self.target_x_ = 8.0
+        self.target_y_ = 4.0
+        self.pose_ = None
+        self.cmd_vel_publisher_ = self.create_publisher(Twist, "turtle1/cmd_vel", 10)
+        self.pose_subscriber_ = self.create_subscription(
+            Pose, "turtle1/pose", self.callback_turtle_pose, 10)
+        self.control_loop_timer_ = self.create_timer(0.01, self.control_loop)
+
+    def callback_turtle_pose(self, msg):
+        self.pose_ = msg                      # just remember the latest pose
+
+    def control_loop(self):
+        if self.pose_ is None:                # no pose received yet
+            return
+
+        dist_x = self.target_x_ - self.pose_.x
+        dist_y = self.target_y_ - self.pose_.y
+        distance = math.sqrt(dist_x * dist_x + dist_y * dist_y)
+
+        msg = Twist()
+        if distance > 0.5:
+            msg.linear.x = 2 * distance                       # position
+            goal_theta = math.atan2(dist_y, dist_x)           # orientation
+            diff = goal_theta - self.pose_.theta
+            if diff > math.pi:
+                diff -= 2 * math.pi
+            elif diff &lt; -math.pi:
+                diff += 2 * math.pi
+            msg.angular.z = 6 * diff
+        else:
+            msg.linear.x = 0.0                                # target reached
+            msg.angular.z = 0.0
+
+        self.cmd_vel_publisher_.publish(msg)
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    rclpy.spin(TurtleControllerNode())
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+    <div class="box idea"><div class="box-title">💡 The pattern: "store in the callback, act in the timer"</div>
+    <p>The pose callback only <em>saves</em> the latest pose. The timer (100 times per second) makes the decision. You will use this exact pattern on the LIMO with <code>/odom</code> instead of <code>/turtle1/pose</code>.</p></div>
+  </div>
+
+  <div class="step" id="m1-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Register, build, run</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 turtlesim_catch_them_all/setup.py → console_scripts</div><pre><code>            "turtle_controller = turtlesim_catch_them_all.turtle_controller:main",</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminals 1 &amp; 2</div><pre><code>cd ~/ros2_ws &amp;&amp; colcon build --packages-select turtlesim_catch_them_all --symlink-install &amp;&amp; source ~/.bashrc
+ros2 run turtlesim turtlesim_node
+ros2 run turtlesim_catch_them_all turtle_controller</code></pre></div>
+    <p>✅ The turtle drives to (8, 4) and stops. <strong>Experiment:</strong> change the gains 2 and 6 (for example 0.5 and 1, then 5 and 20). What happens? This is called <em>tuning</em>.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="m2"><span class="num">M2</span>Milestone 2 — Spawner: new turtles every second</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">MILESTONE 2 · 20 min</span><h3>turtle_spawner v1 (Book §4.0.2)</h3></div>
+  <div class="step" id="m2-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">A node that calls <code>/spawn</code> from a timer</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 turtlesim_catch_them_all/turtlesim_catch_them_all/turtle_spawner.py</div><pre><code>#!/usr/bin/env python3
+from functools import partial
+import math
+import random
+import rclpy
+from rclpy.node import Node
+from turtlesim.srv import Spawn
+
+
+class TurtleSpawnerNode(Node):
+    def __init__(self):
+        super().__init__("turtle_spawner")
+        self.turtle_name_prefix_ = "turtle"
+        self.turtle_counter_ = 1              # turtle1 already exists, so start at turtle2
+        self.spawn_client_ = self.create_client(Spawn, "spawn")
+        self.spawn_timer_ = self.create_timer(1.0, self.spawn_new_turtle)
+
+    def spawn_new_turtle(self):
+        if not self.spawn_client_.service_is_ready():
+            self.get_logger().warn("Waiting for turtlesim /spawn ...")
+            return
+        self.turtle_counter_ += 1
+        name = self.turtle_name_prefix_ + str(self.turtle_counter_)
+        x = random.uniform(0.5, 10.5)
+        y = random.uniform(0.5, 10.5)
+        theta = random.uniform(0.0, 2 * math.pi)
+
+        request = Spawn.Request()
+        request.x, request.y, request.theta, request.name = x, y, theta, name
+        future = self.spawn_client_.call_async(request)
+        future.add_done_callback(partial(self.callback_spawn, x=x, y=y, theta=theta))
+
+    def callback_spawn(self, future, x, y, theta):
+        try:
+            response = future.result()
+            if response.name != "":
+                self.get_logger().info("Turtle " + response.name + " is now alive")
+        except Exception as e:
+            self.get_logger().error(f"Service call failed {e!r}")
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    rclpy.spin(TurtleSpawnerNode())
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 setup.py + run</div><pre><code>#  "turtle_spawner = turtlesim_catch_them_all.turtle_spawner:main",
+cd ~/ros2_ws &amp;&amp; colcon build --packages-select turtlesim_catch_them_all --symlink-install &amp;&amp; source ~/.bashrc
+ros2 run turtlesim_catch_them_all turtle_spawner</code></pre></div>
+    <p>✅ A new turtle appears every second. Why does the counter start at 1? Change it to 0 and look at turtlesim's terminal. (turtlesim refuses a second <code>turtle1</code>.)</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="m3"><span class="num">M3</span>Milestone 3 — Chase the first alive turtle</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">MILESTONE 3 · 30 min</span><h3>Share the list of turtles with a custom message (Book §4.0.3)</h3></div>
+
+  <div class="step" id="m3-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Two messages (you may have them from Lecture 5 homework)</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_robot_interfaces/msg/Turtle.msg</div><pre><code>string name
+float64 x
+float64 y
+float64 theta</code></pre></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_robot_interfaces/msg/TurtleArray.msg</div><pre><code>Turtle[] turtles</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Add both to rosidl_generate_interfaces, then</div><pre><code>cd ~/ros2_ws &amp;&amp; colcon build --packages-select my_robot_interfaces &amp;&amp; source ~/.bashrc
+ros2 interface show my_robot_interfaces/msg/TurtleArray</code></pre></div>
+  </div>
+
+  <div class="step" id="m3-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Spawner: keep a list and publish it</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 turtle_spawner.py (changes)</div><pre><code><span class="hl">from my_robot_interfaces.msg import Turtle, TurtleArray</span>
+...
+    def __init__(self):
+        ...
+<span class="hl">        self.alive_turtles_ = []</span>
+<span class="hl">        self.alive_turtles_publisher_ = self.create_publisher(TurtleArray, "alive_turtles", 10)</span>
+
+<span class="hl">    def publish_alive_turtles(self):</span>
+<span class="hl">        msg = TurtleArray()</span>
+<span class="hl">        msg.turtles = self.alive_turtles_</span>
+<span class="hl">        self.alive_turtles_publisher_.publish(msg)</span>
+
+    def callback_spawn(self, future, x, y, theta):
+        try:
+            response = future.result()
+            if response.name != "":
+                self.get_logger().info("Turtle " + response.name + " is now alive")
+<span class="hl">                new_turtle = Turtle()</span>
+<span class="hl">                new_turtle.name = response.name</span>
+<span class="hl">                new_turtle.x, new_turtle.y, new_turtle.theta = x, y, theta</span>
+<span class="hl">                self.alive_turtles_.append(new_turtle)</span>
+<span class="hl">                self.publish_alive_turtles()</span>
+        except Exception as e:
+            self.get_logger().error(f"Service call failed {e!r}")</code></pre></div>
+  </div>
+
+  <div class="step" id="m3-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Controller: the target comes from <code>/alive_turtles</code></span></div>
+    <div class="cmd file"><div class="cmd-h">📄 turtle_controller.py (changes)</div><pre><code><span class="hl">from my_robot_interfaces.msg import TurtleArray</span>
+...
+    def __init__(self):
+        super().__init__("turtle_controller")
+<span class="hl">        self.turtle_to_catch_ = None          # replaces target_x_ / target_y_</span>
+        self.pose_ = None
+        ...
+<span class="hl">        self.alive_turtles_subscriber_ = self.create_subscription(</span>
+<span class="hl">            TurtleArray, "alive_turtles", self.callback_alive_turtles, 10)</span>
+
+<span class="hl">    def callback_alive_turtles(self, msg):</span>
+<span class="hl">        if len(msg.turtles) > 0:</span>
+<span class="hl">            self.turtle_to_catch_ = msg.turtles[0]</span>
+
+    def control_loop(self):
+<span class="hl">        if self.pose_ is None or self.turtle_to_catch_ is None:</span>
+            return
+<span class="hl">        dist_x = self.turtle_to_catch_.x - self.pose_.x</span>
+<span class="hl">        dist_y = self.turtle_to_catch_.y - self.pose_.y</span>
+        ...   # the rest is unchanged</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 3 terminals</div><pre><code>cd ~/ros2_ws &amp;&amp; colcon build --symlink-install &amp;&amp; source ~/.bashrc
+ros2 run turtlesim turtlesim_node
+ros2 run turtlesim_catch_them_all turtle_controller
+ros2 run turtlesim_catch_them_all turtle_spawner</code></pre></div>
+    <p>✅ turtle1 drives to the first spawned turtle and stops on top of it, but doesn't catch it yet. Check <code>ros2 topic echo /alive_turtles</code>.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="m4"><span class="num">M4</span>Milestone 4 — Catch (kill) it with a service</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">MILESTONE 4 · 35 min</span><h3>/catch_turtle (Book §4.0.4)</h3></div>
+
+  <div class="step" id="m4-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">The service definition</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_robot_interfaces/srv/CatchTurtle.srv</div><pre><code>string name
+---
+bool success</code></pre></div>
+    <p>Add <code>"srv/CatchTurtle.srv"</code> to CMakeLists and rebuild the interfaces.</p>
+  </div>
+
+  <div class="step" id="m4-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Spawner: serve <code>/catch_turtle</code> and call turtlesim's <code>/kill</code></span></div>
+    <div class="cmd file"><div class="cmd-h">📄 turtle_spawner.py (changes)</div><pre><code><span class="hl">from turtlesim.srv import Spawn, Kill</span>
+<span class="hl">from my_robot_interfaces.srv import CatchTurtle</span>
+...
+    def __init__(self):
+        ...
+<span class="hl">        self.kill_client_ = self.create_client(Kill, "kill")</span>
+<span class="hl">        self.catch_turtle_service_ = self.create_service(</span>
+<span class="hl">            CatchTurtle, "catch_turtle", self.callback_catch_turtle)</span>
+
+<span class="hl">    def callback_catch_turtle(self, request, response):</span>
+<span class="hl">        self.call_kill_server(request.name)</span>
+<span class="hl">        response.success = True</span>
+<span class="hl">        return response</span>
+
+<span class="hl">    def call_kill_server(self, turtle_name):</span>
+<span class="hl">        request = Kill.Request()</span>
+<span class="hl">        request.name = turtle_name</span>
+<span class="hl">        future = self.kill_client_.call_async(request)</span>
+<span class="hl">        future.add_done_callback(partial(self.callback_kill, turtle_name=turtle_name))</span>
+
+<span class="hl">    def callback_kill(self, future, turtle_name):</span>
+<span class="hl">        try:</span>
+<span class="hl">            future.result()</span>
+<span class="hl">            for i, turtle in enumerate(self.alive_turtles_):</span>
+<span class="hl">                if turtle.name == turtle_name:</span>
+<span class="hl">                    del self.alive_turtles_[i]</span>
+<span class="hl">                    self.publish_alive_turtles()</span>
+<span class="hl">                    break</span>
+<span class="hl">        except Exception as e:</span>
+<span class="hl">            self.get_logger().error(f"Kill failed {e!r}")</span></code></pre></div>
+  </div>
+
+  <div class="step" id="m4-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Controller: when the target is reached, ask for it to be caught</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 turtle_controller.py (changes)</div><pre><code><span class="hl">from functools import partial</span>
+<span class="hl">from my_robot_interfaces.srv import CatchTurtle</span>
+...
+    def __init__(self):
+        ...
+<span class="hl">        self.catch_client_ = self.create_client(CatchTurtle, "catch_turtle")</span>
+
+    def control_loop(self):
+        ...
+        else:
+            msg.linear.x = 0.0
+            msg.angular.z = 0.0
+<span class="hl">            self.call_catch_turtle_server(self.turtle_to_catch_.name)</span>
+<span class="hl">            self.turtle_to_catch_ = None</span>
+
+        self.cmd_vel_publisher_.publish(msg)
+
+<span class="hl">    def call_catch_turtle_server(self, turtle_name):</span>
+<span class="hl">        request = CatchTurtle.Request()</span>
+<span class="hl">        request.name = turtle_name</span>
+<span class="hl">        future = self.catch_client_.call_async(request)</span>
+<span class="hl">        future.add_done_callback(partial(self.callback_catch, turtle_name=turtle_name))</span>
+
+<span class="hl">    def callback_catch(self, future, turtle_name):</span>
+<span class="hl">        try:</span>
+<span class="hl">            if not future.result().success:</span>
+<span class="hl">                self.get_logger().error("Turtle " + turtle_name + " could not be caught")</span>
+<span class="hl">        except Exception as e:</span>
+<span class="hl">            self.get_logger().error(f"Service call failed {e!r}")</span></code></pre></div>
+    <p>✅ Rebuild, then run the 3 nodes again. turtle1 now eats each turtle and goes to the next one. <strong>You have a working autonomous system.</strong></p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="m5"><span class="num">M5</span>Milestone 5 — Chase the closest turtle</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">MILESTONE 5 · 15 min</span><h3>A smarter choice of target (Book §4.0.5)</h3></div>
+  <div class="step" id="m5-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Pick the nearest turtle instead of the first one</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 turtle_controller.py → callback_alive_turtles</div><pre><code>    def callback_alive_turtles(self, msg):
+        if len(msg.turtles) == 0 or self.pose_ is None:
+            return
+        if self.catch_closest_turtle_first_:
+            closest_turtle = None
+            closest_distance = None
+            for turtle in msg.turtles:
+                dist_x = turtle.x - self.pose_.x
+                dist_y = turtle.y - self.pose_.y
+                distance = math.sqrt(dist_x * dist_x + dist_y * dist_y)
+                if closest_turtle is None or distance &lt; closest_distance:
+                    closest_turtle = turtle
+                    closest_distance = distance
+            self.turtle_to_catch_ = closest_turtle
+        else:
+            self.turtle_to_catch_ = msg.turtles[0]</code></pre></div>
+    <p>Add <code>self.catch_closest_turtle_first_ = True</code> in <code>__init__</code> (it becomes a parameter in M6). This is a classic "find the minimum" loop. Compare how many turtles are caught per minute with and without it.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="m6"><span class="num">M6</span>Milestone 6 — Parameters + launch file</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">MILESTONE 6 · 20 min</span><h3>One command starts the game (Book §4.0.6)</h3></div>
+  <div class="step" id="m6-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Turn the fixed values into parameters</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 turtle_spawner.py → __init__</div><pre><code>        self.declare_parameter("spawn_frequency", 1.0)
+        self.declare_parameter("turtle_name_prefix", "turtle")
+        self.spawn_frequency_ = self.get_parameter("spawn_frequency").value
+        self.turtle_name_prefix_ = self.get_parameter("turtle_name_prefix").value
+        ...
+        self.spawn_timer_ = self.create_timer(1.0 / self.spawn_frequency_, self.spawn_new_turtle)</code></pre></div>
+    <div class="cmd file"><div class="cmd-h">📄 turtle_controller.py → __init__</div><pre><code>        self.declare_parameter("catch_closest_turtle_first", True)
+        self.catch_closest_turtle_first_ = self.get_parameter("catch_closest_turtle_first").value</code></pre></div>
+  </div>
+  <div class="step" id="m6-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">The launch file</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_robot_bringup/launch/turtlesim_catch_them_all.launch.py</div><pre><code>from launch import LaunchDescription
+from launch_ros.actions import Node
+
+
+def generate_launch_description():
+    ld = LaunchDescription()
+
+    turtlesim_node = Node(package="turtlesim", executable="turtlesim_node")
+
+    turtle_spawner_node = Node(
+        package="turtlesim_catch_them_all",
+        executable="turtle_spawner",
+        parameters=[{"spawn_frequency": 1.5,
+                     "turtle_name_prefix": "my_turtle"}],
+    )
+
+    turtle_controller_node = Node(
+        package="turtlesim_catch_them_all",
+        executable="turtle_controller",
+        parameters=[{"catch_closest_turtle_first": True}],
+    )
+
+    ld.add_action(turtlesim_node)
+    ld.add_action(turtle_spawner_node)
+    ld.add_action(turtle_controller_node)
+    return ld</code></pre></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_robot_bringup/package.xml (add)</div><pre><code>  &lt;exec_depend&gt;turtlesim&lt;/exec_depend&gt;
+  &lt;exec_depend&gt;turtlesim_catch_them_all&lt;/exec_depend&gt;</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws &amp;&amp; colcon build --symlink-install &amp;&amp; source ~/.bashrc
+ros2 launch my_robot_bringup turtlesim_catch_them_all.launch.py</code></pre></div>
+    <p>With the prefix <code>my_turtle</code> there's no name clash any more, so you could start the counter at 0 again.</p>
+  </div>
+</div>
+
+<details class="box">
+  <summary>📦 Complete final files (use these to check your work)</summary>
+  <div class="inner">
+  <div class="cmd file"><div class="cmd-h">📄 turtle_controller.py (final)</div><pre><code>#!/usr/bin/env python3
+from functools import partial
+import math
+import rclpy
+from rclpy.node import Node
+from turtlesim.msg import Pose
+from geometry_msgs.msg import Twist
+from my_robot_interfaces.msg import TurtleArray
+from my_robot_interfaces.srv import CatchTurtle
+
+
+class TurtleControllerNode(Node):
+    def __init__(self):
+        super().__init__("turtle_controller")
+        self.declare_parameter("catch_closest_turtle_first", True)
+        self.catch_closest_turtle_first_ = self.get_parameter("catch_closest_turtle_first").value
+        self.turtle_to_catch_ = None
+        self.pose_ = None
+        self.cmd_vel_publisher_ = self.create_publisher(Twist, "turtle1/cmd_vel", 10)
+        self.pose_subscriber_ = self.create_subscription(
+            Pose, "turtle1/pose", self.callback_turtle_pose, 10)
+        self.alive_turtles_subscriber_ = self.create_subscription(
+            TurtleArray, "alive_turtles", self.callback_alive_turtles, 10)
+        self.catch_client_ = self.create_client(CatchTurtle, "catch_turtle")
+        self.control_loop_timer_ = self.create_timer(0.01, self.control_loop)
+
+    def callback_turtle_pose(self, msg):
+        self.pose_ = msg
+
+    def callback_alive_turtles(self, msg):
+        if len(msg.turtles) == 0 or self.pose_ is None:
+            return
+        if self.catch_closest_turtle_first_:
+            closest_turtle = None
+            closest_distance = None
+            for turtle in msg.turtles:
+                dist_x = turtle.x - self.pose_.x
+                dist_y = turtle.y - self.pose_.y
+                distance = math.sqrt(dist_x * dist_x + dist_y * dist_y)
+                if closest_turtle is None or distance &lt; closest_distance:
+                    closest_turtle = turtle
+                    closest_distance = distance
+            self.turtle_to_catch_ = closest_turtle
+        else:
+            self.turtle_to_catch_ = msg.turtles[0]
+
+    def control_loop(self):
+        if self.pose_ is None or self.turtle_to_catch_ is None:
+            return
+        dist_x = self.turtle_to_catch_.x - self.pose_.x
+        dist_y = self.turtle_to_catch_.y - self.pose_.y
+        distance = math.sqrt(dist_x * dist_x + dist_y * dist_y)
+
+        msg = Twist()
+        if distance > 0.5:
+            msg.linear.x = 2 * distance
+            goal_theta = math.atan2(dist_y, dist_x)
+            diff = goal_theta - self.pose_.theta
+            if diff > math.pi:
+                diff -= 2 * math.pi
+            elif diff &lt; -math.pi:
+                diff += 2 * math.pi
+            msg.angular.z = 6 * diff
+        else:
+            msg.linear.x = 0.0
+            msg.angular.z = 0.0
+            self.call_catch_turtle_server(self.turtle_to_catch_.name)
+            self.turtle_to_catch_ = None
+        self.cmd_vel_publisher_.publish(msg)
+
+    def call_catch_turtle_server(self, turtle_name):
+        if not self.catch_client_.service_is_ready():
+            self.get_logger().warn("catch_turtle service not available")
+            return
+        request = CatchTurtle.Request()
+        request.name = turtle_name
+        future = self.catch_client_.call_async(request)
+        future.add_done_callback(partial(self.callback_catch, turtle_name=turtle_name))
+
+    def callback_catch(self, future, turtle_name):
+        try:
+            if not future.result().success:
+                self.get_logger().error("Turtle " + turtle_name + " could not be caught")
+        except Exception as e:
+            self.get_logger().error(f"Service call failed {e!r}")
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    rclpy.spin(TurtleControllerNode())
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+  <div class="cmd file"><div class="cmd-h">📄 turtle_spawner.py (final)</div><pre><code>#!/usr/bin/env python3
+from functools import partial
+import math
+import random
+import rclpy
+from rclpy.node import Node
+from turtlesim.srv import Spawn, Kill
+from my_robot_interfaces.msg import Turtle, TurtleArray
+from my_robot_interfaces.srv import CatchTurtle
+
+
+class TurtleSpawnerNode(Node):
+    def __init__(self):
+        super().__init__("turtle_spawner")
+        self.declare_parameter("spawn_frequency", 1.0)
+        self.declare_parameter("turtle_name_prefix", "turtle")
+        self.spawn_frequency_ = self.get_parameter("spawn_frequency").value
+        self.turtle_name_prefix_ = self.get_parameter("turtle_name_prefix").value
+        self.turtle_counter_ = 1
+        self.alive_turtles_ = []
+        self.spawn_client_ = self.create_client(Spawn, "spawn")
+        self.kill_client_ = self.create_client(Kill, "kill")
+        self.alive_turtles_publisher_ = self.create_publisher(TurtleArray, "alive_turtles", 10)
+        self.catch_turtle_service_ = self.create_service(
+            CatchTurtle, "catch_turtle", self.callback_catch_turtle)
+        self.spawn_timer_ = self.create_timer(1.0 / self.spawn_frequency_, self.spawn_new_turtle)
+
+    def callback_catch_turtle(self, request, response):
+        self.call_kill_server(request.name)
+        response.success = True
+        return response
+
+    def publish_alive_turtles(self):
+        msg = TurtleArray()
+        msg.turtles = self.alive_turtles_
+        self.alive_turtles_publisher_.publish(msg)
+
+    def spawn_new_turtle(self):
+        if not self.spawn_client_.service_is_ready():
+            self.get_logger().warn("Waiting for turtlesim /spawn ...")
+            return
+        self.turtle_counter_ += 1
+        name = self.turtle_name_prefix_ + str(self.turtle_counter_)
+        x = random.uniform(0.5, 10.5)
+        y = random.uniform(0.5, 10.5)
+        theta = random.uniform(0.0, 2 * math.pi)
+        request = Spawn.Request()
+        request.x, request.y, request.theta, request.name = x, y, theta, name
+        future = self.spawn_client_.call_async(request)
+        future.add_done_callback(partial(self.callback_spawn, x=x, y=y, theta=theta))
+
+    def callback_spawn(self, future, x, y, theta):
+        try:
+            response = future.result()
+            if response.name != "":
+                self.get_logger().info("Turtle " + response.name + " is now alive")
+                new_turtle = Turtle()
+                new_turtle.name = response.name
+                new_turtle.x, new_turtle.y, new_turtle.theta = x, y, theta
+                self.alive_turtles_.append(new_turtle)
+                self.publish_alive_turtles()
+        except Exception as e:
+            self.get_logger().error(f"Service call failed {e!r}")
+
+    def call_kill_server(self, turtle_name):
+        request = Kill.Request()
+        request.name = turtle_name
+        future = self.kill_client_.call_async(request)
+        future.add_done_callback(partial(self.callback_kill, turtle_name=turtle_name))
+
+    def callback_kill(self, future, turtle_name):
+        try:
+            future.result()
+            for i, turtle in enumerate(self.alive_turtles_):
+                if turtle.name == turtle_name:
+                    del self.alive_turtles_[i]
+                    self.publish_alive_turtles()
+                    break
+        except Exception as e:
+            self.get_logger().error(f"Kill failed {e!r}")
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    rclpy.spin(TurtleSpawnerNode())
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+  </div>
+</details>
+
+<!-- ============================================================ -->
+<h2 id="bags"><span class="num">Lab</span>Record &amp; replay with ros2 bag</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB · 20 min</span><h3>A flight recorder for your robot (Book §4.1)</h3></div>
+  <p class="lab-goal">A <strong>bag</strong> saves topic messages to disk, so you can replay them later: to debug, to test a node without the robot, or as evidence that your code worked.</p>
+
+  <div class="step" id="b-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Record a topic</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 1</div><pre><code>ros2 run my_py_pkg number_publisher</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2 (let it run ~10 s, then Ctrl+C)</div><pre><code>mkdir -p ~/bags &amp;&amp; cd ~/bags
+ros2 bag record /number -o test
+ros2 bag info test</code></pre></div>
+    <div class="out"><div class="out-h">✅ bag info shows something like</div><pre>Duration:          10.2s
+Messages:          20
+Topic information: Topic: /number | Type: example_interfaces/msg/Int64 | Count: 20</pre></div>
+  </div>
+
+  <div class="step" id="b-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Replay it without the publisher</span></div>
+    <p>Stop <code>number_publisher</code>. Then:</p>
+    <div class="cmd"><div class="cmd-h">💻 Terminals 2 &amp; 3</div><pre><code>ros2 bag play ~/bags/test
+ros2 topic echo /number</code></pre></div>
+    <p>The data comes back as if the node were running.</p>
+  </div>
+
+  <div class="step" id="b-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Record the game, and replay the turtle's moves on an empty turtlesim</span></div>
+    <div class="cmd"><div class="cmd-h">💻 While the Catch-Them-All launch runs (~30 s)</div><pre><code>cd ~/bags
+ros2 bag record /turtle1/cmd_vel /turtle1/pose /alive_turtles -o catch_run</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Stop everything. Start a fresh turtlesim, then replay only the commands</div><pre><code>ros2 run turtlesim turtlesim_node
+ros2 bag play ~/bags/catch_run --topics /turtle1/cmd_vel</code></pre></div>
+    <p>turtle1 repeats the same moves, "hunting" turtles that are not there. That's the power of bags: <strong>the same inputs, replayed exactly.</strong></p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="exit"><span class="num">7.2</span>Exit ticket &amp; assessment</h2>
+<div class="quiz">
+  <div class="q"><p>Why does <code>callback_turtle_pose</code> only store the pose instead of computing the command?</p><details><summary>Answer</summary><div class="inner">Keeping callbacks short and making decisions in one control timer gives a steady control rate and code that is easy to reason about.</div></details></div>
+  <div class="q"><p>What does <code>atan2(dist_y, dist_x)</code> give you?</p><details><summary>Answer</summary><div class="inner">The direction (angle) from the turtle to the target, measured from the x-axis, in radians.</div></details></div>
+  <div class="q"><p>Why wrap <code>diff</code> into [−π, π]?</p><details><summary>Answer</summary><div class="inner">So the robot turns the short way. Without it, a 350° left turn might be chosen instead of a 10° right turn.</div></details></div>
+  <div class="q"><p>Why is <code>/catch_turtle</code> a service and <code>/alive_turtles</code> a topic?</p><details><summary>Answer</summary><div class="inner">Catching is a one-off request that needs a confirmation. The alive list is state that must be shared with anyone who listens.</div></details></div>
+</div>
+
+<div class="box book">
+  <div class="box-title">📝 Suggested rubric (Catch Them All, 20 marks)</div>
+  <div class="table-wrap"><table>
+    <tr><th>Criterion</th><th>Marks</th></tr>
+    <tr><td>M1: controller reaches a fixed goal and stops</td><td>3</td></tr>
+    <tr><td>M2–M3: spawner + /alive_turtles with custom messages</td><td>4</td></tr>
+    <tr><td>M4: catching works through a custom service</td><td>5</td></tr>
+    <tr><td>M5: closest-turtle strategy</td><td>2</td></tr>
+    <tr><td>M6: parameters + one-command launch</td><td>3</td></tr>
+    <tr><td>Evidence: rqt_graph screenshot + bag of a run + a clean, commented code</td><td>3</td></tr>
+  </table></div>
+</div>
+
+<div class="box tip">
+  <div class="box-title">🎉 Part A complete: you now know the ROS 2 core</div>
+  <p>Nodes, topics, services, interfaces, parameters, launch files and bags: this is 90% of what every ROS 2 robot uses. In Part B we apply it all to a <strong>real robot</strong>, the AgileX LIMO. Your go-to-goal controller moves over almost unchanged; only the topic names and the units are new.</p>
+</div>
+
+<div class="footer-nav">
+  <a href="L06-parameters-launch.html">← Lecture 6: Parameters &amp; Launch</a>
+  <a href="index.html#lectures">All lectures</a>
+  <a href="L08-drive-limo.html">Lecture 8: Drive the LIMO →</a>
+</div>
+</div>
+<script src="lab.js"></script>
+<script src="annotate.js" defer></script>
+</body>
+</html>
