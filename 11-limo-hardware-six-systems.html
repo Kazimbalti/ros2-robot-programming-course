@@ -12,7 +12,7 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lecture 11 — LIMO Hardware Deep-Dive: The Six Real Systems</title>
+<title>Extended notes 11 — LIMO Hardware Deep-Dive: The Six Real Systems</title>
 <meta name="description" content="A complete real-hardware lab built directly on AgileX's official LIMO ROS 2 Humble manual: the six real systems (chassis &amp; drive modes, the Intel NUC11 onboard computer, the EAI T-mini Pro LiDAR, the DaBai depth camera, the HI226 IMU, and battery/power), plus Cartographer SLAM, Nav2 navigation, RTAB-Map visual SLAM, the real vision-module demos, and headless bring-up — with every real image from the manual.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -156,8 +156,8 @@ html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
 <div class="wrap">
 
   <div class="cover">
-    <div class="kicker">LIMO Robotics &amp; ROS 2 Lecture &nbsp;·&nbsp; Session 11 of 14 — Real Hardware</div>
-    <h1>Lecture 11: LIMO Hardware Deep-Dive — The Six Real Systems</h1>
+    <div class="kicker">Extended reference notes &nbsp;·&nbsp; optional deep-dive &nbsp;·&nbsp; goes with the class lecture</div>
+    <h1>Extended notes 11: LIMO Hardware Deep-Dive — The Six Real Systems</h1>
     <div class="subtitle">Opening up the real robot, subsystem by subsystem, then driving it for real — built directly on AgileX's own official LIMO ROS 2 Humble manual, images included</div>
     <div class="meta-row">
       <div class="chip">Duration: 3 hours (dense — plan for a long lab session)</div>
@@ -165,6 +165,11 @@ html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
       <div class="chip">Focus: real hardware, real commands, real screenshots</div>
     </div>
   </div>
+  <div class="box idea" data-extended-notes="1">
+    <div class="box-title">📚 Optional deep-dive: extended reference notes</div>
+    <p style="margin:0;">These longer notes are for students who want more depth. The class lecture for this topic is <a href="L14-real-limo-mission.html">Lecture 14: The Real LIMO</a>. Inside these notes, "Lecture N" refers to the numbering of the extended notes, not the current 14-lecture course. <a href="index.html#lectures">See the current course plan</a>.</p>
+  </div>
+
 
   <div class="toc">
     <strong style="color:var(--text)">In this session</strong>
@@ -505,7 +510,7 @@ motion_mode: 0
 ---</span>
 <span class="term-prompt">$</span> # motion_mode: 0 == differential drive on this unit's firmware mapping
 <span class="term-prompt">$</span> # control_mode: 1 == command (ROS 2) control, not RC/App remote
-<span class="term-prompt">$</span> # error_code: 0   == no fault flagged, battery_voltage healthy for an 11.1V-nominal pack</span></div>
+<span class="term-prompt">$</span> # error_code: 0   == no fault flagged, battery_voltage healthy for an 11.1V-nominal pack</div>
     </div>
     <div class="box hw">
       <div class="box-title">🔩 Don't hard-code the enum values</div>
@@ -1116,7 +1121,7 @@ flowchart TD
 ros2 launch limo_bringup limo_start.launch.py
 
 <span class="term-prompt">$</span> # Terminal 2: start Cartographer mapping
-ros2 launch limo_bringup limo_cartographer.launch.py</span></div>
+ros2 launch limo_bringup limo_cartographer.launch.py</div>
     </div>
     <div class="figure">
       <img src="images/limo-manual/cartographer-mapping-rviz.png" alt="RViz showing a live Cartographer SLAM map being built from LIMO's real LiDAR data">
@@ -1710,9 +1715,9 @@ ros2 launch limo_bringup limo_nav2_diff.launch.py
   </section>
 
   <div class="footer-nav">
-    <a href="10-slam-nav2-capstone-mission.html">&larr; Lecture 10: SLAM, Navigation2 &amp; Capstone</a>
+    <a href="10-slam-nav2-capstone-mission.html">&larr; Notes 10: SLAM, Navigation2 &amp; Capstone</a>
     <a href="index.html">Table of Contents</a>
-    <a href="12-diy-robot-motors-power-compute.html">Lecture 12: Build Your Own Robot I &rarr;</a>
+    <a href="12-diy-robot-motors-power-compute.html">Project 1: Build Your Own Robot I &rarr;</a>
   </div>
 
 </div>

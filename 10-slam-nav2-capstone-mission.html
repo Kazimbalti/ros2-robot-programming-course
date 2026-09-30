@@ -12,7 +12,7 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lecture 10 — SLAM, Navigation2 &amp; the Simulated Capstone Mission</title>
+<title>Extended notes 10 — SLAM, Navigation2 &amp; the Simulated Capstone Mission</title>
 <meta name="description" content="Map the lab with slam_toolbox, teach LIMO to plan and act with Navigation2, then fuse waypoints, exploration, and detection into one simulated capstone mission — the dress rehearsal for the real-hardware capstone in Lecture 14.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -156,8 +156,8 @@ html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
 <div class="wrap">
 
   <div class="cover">
-    <div class="kicker">LIMO Robotics &amp; ROS 2 Lecture &nbsp;·&nbsp; Session 10 of 14</div>
-    <h1>Lecture 10: SLAM, Navigation2 &amp; the Simulated Capstone Mission</h1>
+    <div class="kicker">Extended reference notes &nbsp;·&nbsp; optional deep-dive &nbsp;·&nbsp; goes with the class lectures</div>
+    <h1>Extended notes 10: SLAM, Navigation2 &amp; the Simulated Capstone Mission</h1>
     <div class="subtitle">Mapping the lab, navigating it autonomously, and completing a full survey mission — the simulated dress rehearsal before real hardware</div>
     <div class="meta-row">
       <div class="chip">Duration: ~6 hours (extended lab session — can be split across two lab days)</div>
@@ -165,6 +165,11 @@ html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
       <div class="chip">Focus: mapping, autonomous navigation &amp; mission execution</div>
     </div>
   </div>
+  <div class="box idea" data-extended-notes="1">
+    <div class="box-title">📚 Optional deep-dive: extended reference notes</div>
+    <p style="margin:0;">These longer notes are for students who want more depth. The class lecture for this topic is <a href="L12-limo-slam-localization.html">Lecture 12: SLAM &amp; AMCL</a> and <a href="L13-limo-nav2.html">Lecture 13: Nav2 &amp; Actions</a>. Inside these notes, "Lecture N" refers to the numbering of the extended notes, not the current 14-lecture course. <a href="index.html#lectures">See the current course plan</a>.</p>
+  </div>
+
 
   <p>
     This session absorbs what used to be three separate three-hour lectures — SLAM mapping, Nav2 navigation, and the
@@ -990,7 +995,7 @@ rviz2</code></pre>
 /wait</span>
 <span class="term-prompt">limo@lecture:~$</span> ros2 lifecycle get /controller_server
 <span class="term-out">active [3]</span>
-<span class="term-prompt">limo@lecture:~$</span> ros2 run rqt_graph rqt_graph</span>
+<span class="term-prompt">limo@lecture:~$</span> ros2 run rqt_graph rqt_graph
 <span class="term-out">[rqt_graph opens — shows bt_navigator wired to planner_server,
  controller_server and behavior_server, each publishing/cmd_vel
  or subscribing /scan, /map, and the TF tree]</span></div>
@@ -1782,9 +1787,9 @@ def build_marker_array(defects):
   </section>
 
   <div class="footer-nav">
-    <a href="09-odometry-ekf-amcl-localization.html">&larr; Lecture 9: Odometry, EKF &amp; AMCL</a>
+    <a href="09-odometry-ekf-amcl-localization.html">&larr; Notes 9: Odometry, EKF &amp; AMCL</a>
     <a href="index.html">Table of Contents</a>
-    <a href="11-limo-hardware-six-systems.html">Lecture 11: LIMO Hardware Deep-Dive &rarr;</a>
+    <a href="11-limo-hardware-six-systems.html">Notes 11: LIMO Hardware Deep-Dive &rarr;</a>
   </div>
 
 </div>

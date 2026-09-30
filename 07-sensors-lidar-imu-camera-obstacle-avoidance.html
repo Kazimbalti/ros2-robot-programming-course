@@ -12,7 +12,7 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lecture 7 — Sensors: LiDAR, IMU, Depth Camera &amp; Reactive Obstacle Avoidance</title>
+<title>Extended notes 7 — Sensors: LiDAR, IMU, Depth Camera &amp; Reactive Obstacle Avoidance</title>
 <meta name="description" content="Read LIMO's LaserScan, Imu, and Image messages correctly, then build a reactive safe-stop and sector-based obstacle avoidance node in rclpy.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -152,8 +152,8 @@ html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
 <div class="wrap">
 
   <div class="cover">
-    <div class="kicker">LIMO Robotics &amp; ROS 2 Lecture &nbsp;·&nbsp; Session 7 of 14</div>
-    <h1>Lecture 7: Sensors — LiDAR, IMU, Depth Camera &amp; Reactive Obstacle Avoidance</h1>
+    <div class="kicker">Extended reference notes &nbsp;·&nbsp; optional deep-dive &nbsp;·&nbsp; goes with the class lectures</div>
+    <h1>Extended notes 7: Sensors — LiDAR, IMU, Depth Camera &amp; Reactive Obstacle Avoidance</h1>
     <div class="subtitle">From raw sensor messages to a robot that refuses to hit the wall</div>
     <div class="meta-row">
       <div class="chip">Duration: 3 hours</div>
@@ -161,6 +161,11 @@ html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
       <div class="chip">Sensors: 2D LiDAR, IMU, RGB-D camera</div>
     </div>
   </div>
+  <div class="box idea" data-extended-notes="1">
+    <div class="box-title">📚 Optional deep-dive: extended reference notes</div>
+    <p style="margin:0;">These longer notes are for students who want more depth. The class lecture for this topic is <a href="L10-limo-lidar-imu.html">Lecture 10: LiDAR &amp; IMU</a> and <a href="L11-limo-camera-vision.html">Lecture 11: Camera &amp; Vision</a>. Inside these notes, "Lecture N" refers to the numbering of the extended notes, not the current 14-lecture course. <a href="index.html#lectures">See the current course plan</a>.</p>
+  </div>
+
 
   <div class="toc">
     <strong style="color:var(--text)">In this session</strong>
@@ -665,7 +670,7 @@ if __name__ == '__main__':
 <span class="term-prompt">student@limo:~$</span> ros2 run limo_sensors_lab safe_stop_node --ros-args -p safety_radius:=0.3
 
 <span class="term-prompt">student@limo:~$</span> # in a third terminal, drive toward an obstacle:
-<span class="term-prompt">student@limo:~$</span> ros2 run teleop_twist_keyboard teleop_twist_keyboard</span></div>
+<span class="term-prompt">student@limo:~$</span> ros2 run teleop_twist_keyboard teleop_twist_keyboard</div>
     </div>
     <p>
       Drive LIMO toward a wall or box using teleop, or reuse the on/off or P-controller nodes from
@@ -762,8 +767,8 @@ if __name__ == '__main__':
   </section>
 
   <div class="footer-nav">
-    <a href="06-gazebo-ros2-control-path-controllers.html">&larr; Lecture 6: Gazebo &amp; ros2_control</a>
-    <a href="08-computer-vision-opencv-object-detection.html">Lecture 8: Computer Vision &rarr;</a>
+    <a href="06-gazebo-ros2-control-path-controllers.html">&larr; Notes 6: Gazebo &amp; ros2_control</a>
+    <a href="08-computer-vision-opencv-object-detection.html">Notes 8: Computer Vision &rarr;</a>
   </div>
 
 </div>

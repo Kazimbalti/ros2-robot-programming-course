@@ -12,7 +12,7 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lecture 9 — Odometry, Sensor Fusion (EKF) &amp; AMCL Localization</title>
+<title>Extended notes 9 — Odometry, Sensor Fusion (EKF) &amp; AMCL Localization</title>
 <meta name="description" content="From drifting wheel odometry to a Kalman-fused estimate, to knowing exactly where LIMO is on a known map: noisy_odometry.py, laser scan matching, IMU fusion, robot_localization's EKF, and AMCL's particle filter, all in one extended lab.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -156,8 +156,8 @@ html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
 <div class="wrap">
 
   <div class="cover">
-    <div class="kicker">LIMO Robotics &amp; ROS 2 Lecture &nbsp;·&nbsp; Session 9 of 14</div>
-    <h1>Lecture 9: Odometry, Sensor Fusion (EKF) &amp; AMCL Localization</h1>
+    <div class="kicker">Extended reference notes &nbsp;·&nbsp; optional deep-dive &nbsp;·&nbsp; goes with the class lecture</div>
+    <h1>Extended notes 9: Odometry, Sensor Fusion (EKF) &amp; AMCL Localization</h1>
     <div class="subtitle">From raw wheel ticks and drifting odometry to a Kalman-fused estimate — and finally, knowing exactly where you are on the map</div>
     <div class="meta-row">
       <div class="chip">Duration: ~5 hours (extended lab session)</div>
@@ -165,6 +165,11 @@ html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
       <div class="chip">Focus: state estimation &amp; localization</div>
     </div>
   </div>
+  <div class="box idea" data-extended-notes="1">
+    <div class="box-title">📚 Optional deep-dive: extended reference notes</div>
+    <p style="margin:0;">These longer notes are for students who want more depth. The class lecture for this topic is <a href="L12-limo-slam-localization.html">Lecture 12: SLAM &amp; AMCL</a>. Inside these notes, "Lecture N" refers to the numbering of the extended notes, not the current 14-lecture course. <a href="index.html#lectures">See the current course plan</a>.</p>
+  </div>
+
 
   <div class="toc">
     <strong style="color:var(--text)">In this session</strong>
@@ -449,7 +454,7 @@ flowchart LR
 Finished <<< robot_localization [42.6s]
 Summary: 1 package finished [43.1s]</span>
 <span class="term-prompt">student@limo:~/limo_ws$</span> source install/setup.bash
-<span class="term-prompt">student@limo:~/limo_ws$</span> ros2 launch robot_localization ekf.launch.py</span></div>
+<span class="term-prompt">student@limo:~/limo_ws$</span> ros2 launch robot_localization ekf.launch.py</div>
     </div>
     <p>
       What the EKF actually fuses, and how much it trusts each input, is entirely defined in a config file —
@@ -1190,9 +1195,9 @@ pose:
   </section>
 
   <div class="footer-nav">
-    <a href="08-computer-vision-opencv-object-detection.html">&larr; Lecture 8: Computer Vision</a>
+    <a href="08-computer-vision-opencv-object-detection.html">&larr; Notes 8: Computer Vision</a>
     <a href="index.html">Table of Contents</a>
-    <a href="10-slam-nav2-capstone-mission.html">Lecture 10: SLAM, Navigation2 &amp; Capstone &rarr;</a>
+    <a href="10-slam-nav2-capstone-mission.html">Notes 10: SLAM, Navigation2 &amp; Capstone &rarr;</a>
   </div>
 
 </div>

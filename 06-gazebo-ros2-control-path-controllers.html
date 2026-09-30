@@ -12,7 +12,7 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lecture 6 — Gazebo, ros2_control &amp; Path-Following Controllers</title>
+<title>Extended notes 6 — Gazebo, ros2_control &amp; Path-Following Controllers</title>
 <meta name="description" content="Simulate the LIMO in Gazebo Classic, understand the industrial ros2_control pattern, add a cmd_vel safety watchdog, and build three increasingly capable path-following controllers scored by the trajectory_referee.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -152,8 +152,8 @@ html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
 <div class="wrap">
 
   <div class="cover">
-    <div class="kicker">LIMO Robotics &amp; ROS 2 Lecture &nbsp;·&nbsp; Session 6 of 14</div>
-    <h1>Lecture 6: Gazebo, ros2_control &amp; Path-Following Controllers</h1>
+    <div class="kicker">Extended reference notes &nbsp;·&nbsp; optional deep-dive &nbsp;·&nbsp; goes with the class lecture</div>
+    <h1>Extended notes 6: Gazebo, ros2_control &amp; Path-Following Controllers</h1>
     <div class="subtitle">From "the plugin drives the wheels" to a real pose-regulation controller that lands where you tell it to</div>
     <div class="meta-row">
       <div class="chip">Duration: 3 hours</div>
@@ -161,6 +161,11 @@ html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
       <div class="chip">Packages: limo_gazebosim, trajectory_skeleton, trajectory_referee</div>
     </div>
   </div>
+  <div class="box idea" data-extended-notes="1">
+    <div class="box-title">📚 Optional deep-dive: extended reference notes</div>
+    <p style="margin:0;">These longer notes are for students who want more depth. The class lecture for this topic is <a href="L08-drive-limo.html">Lecture 8: Drive the LIMO</a>. Inside these notes, "Lecture N" refers to the numbering of the extended notes, not the current 14-lecture course. <a href="index.html#lectures">See the current course plan</a>.</p>
+  </div>
+
 
   <div class="toc">
     <strong style="color:var(--text)">In this session</strong>
@@ -746,8 +751,8 @@ ros2 run trajectory_referee trajectory_publisher route1 dis</code></pre>
   </section>
 
   <div class="footer-nav">
-    <a href="05-tf2-frames-rviz.html">&larr; Lecture 5: TF2 &amp; RViz</a>
-    <a href="07-sensors-lidar-imu-camera-obstacle-avoidance.html">Lecture 7: Sensors &amp; Obstacle Avoidance &rarr;</a>
+    <a href="05-tf2-frames-rviz.html">&larr; Notes 5: TF2 &amp; RViz</a>
+    <a href="07-sensors-lidar-imu-camera-obstacle-avoidance.html">Notes 7: Sensors &amp; Obstacle Avoidance &rarr;</a>
   </div>
 
 </div>
