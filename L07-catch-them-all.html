@@ -10,20 +10,21 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
 <link rel="stylesheet" href="lab.css">
+<link rel="stylesheet" href="widgets.css">
 <link rel="stylesheet" href="projector.css">
 </head>
 <body>
 <button id="theme-toggle" aria-label="Toggle light/dark mode">🌙</button>
 <nav class="coursenav"><div class="inner">
   <span class="brand">ROS &amp; Robot Programming</span>
-  <a href="index.html">Home</a><a href="prerequisites.html">Mission Zero</a><a href="syllabus.html">Syllabus</a><a href="schedule.html">Schedule</a><a href="index.html#lectures">Lectures</a>
+  <a href="index.html">Home</a><a href="prerequisites.html">Mission Zero</a><a href="syllabus.html">Syllabus</a><a href="schedule.html">Schedule</a><a href="index.html#lectures">Lectures</a><a href="projects.html">Projects</a>
 </div></nav>
 
-<div class="wrap">
+<div class="wrap" data-enriched="1">
 <div class="lesson-progress"><div class="lp-top"><span>Lecture 7 · your progress</span><span><b class="lp-count">0 / 0 steps</b> · <a href="#" class="lp-reset">reset</a></span></div><div class="lp-bar"><div class="lp-fill"></div></div></div>
 
 <div class="cover">
-  <div class="kicker">Part A · ROS 2 Bootcamp · Lecture 7 of 12 · Project</div>
+  <div class="kicker">Part A · ROS 2 Bootcamp · Lecture 7 of 14 · Project</div>
   <h1>Project: Catch Them All 🐢</h1>
   <div class="subtitle">Everything from Part A in one game. A master turtle hunts down turtles that keep appearing at random places. You'll use topics, services, custom messages, parameters and a launch file together, and the go-to-goal controller you write today is the one you'll put on the LIMO next week.</div>
   <div class="meta-row">
@@ -32,6 +33,7 @@
     <div class="chip">🐍 Python · ROS 2 Humble</div>
     <div class="chip">Before this: Lectures 2–6</div>
   </div>
+  <div class="skill-path" aria-label="Course path"><a class="done" href="01-installation-vmware-ros2-limo-intro.html">L1 · Install</a><a class="done" href="L02-first-node.html">L2 · Nodes</a><a class="done" href="L03-topics.html">L3 · Topics</a><a class="done" href="L04-services.html">L4 · Services</a><a class="done" href="L05-custom-interfaces.html">L5 · Interfaces</a><a class="done" href="L06-parameters-launch.html">L6 · Launch</a><a class="now" href="L07-catch-them-all.html">L7 · Project</a><a class="" href="L08-drive-limo.html">L8 · Drive</a><a class="" href="L09-limo-urdf-tf-rviz.html">L9 · URDF/TF</a><a class="" href="L10-limo-lidar-imu.html">L10 · LiDAR/IMU</a><a class="" href="L11-limo-camera-vision.html">L11 · Vision</a><a class="" href="L12-limo-slam-localization.html">L12 · SLAM</a><a class="" href="L13-limo-nav2.html">L13 · Nav2</a><a class="" href="L14-real-limo-mission.html">L14 · Real LIMO</a><a href="projects.html">+ Projects</a></div>
 </div>
 
 <div class="grid2">
@@ -59,6 +61,8 @@
   </div>
 </div>
 
+
+<div class="ig"><div class="ig-title"><span class="sim-tag">Infographic</span>Lecture 7 at a glance: six milestones to an autonomous system</div><div class="ig-flow"><div class="ig-step"><div class="ic">🗺️</div><b>Design</b><span>draw the node graph first</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🎯</div><b>M1 Controller</b><span>go to a fixed point</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🐣</div><b>M2 Spawner</b><span>call <code>/spawn</code> from a timer</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">📋</div><b>M3 Alive list</b><span>custom <code>TurtleArray</code> topic</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🎣</div><b>M4 Catch</b><span>custom <code>/catch_turtle</code> service</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🧠</div><b>M5 Closest</b><span>a smarter choice</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🚀</div><b>M6 Launch</b><span>parameters + one command</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">📼</div><b>Bag</b><span>record and replay</span></div></div></div>
 <details class="box teacher">
   <summary>🧑‍🏫 Instructor lesson plan (click to open)</summary>
   <div class="inner">
@@ -131,6 +135,11 @@ flowchart LR
 </div>
 
 <!-- ============================================================ -->
+
+<div data-widget="gotogoal"></div>
+
+<div class="game" data-widget="sort" data-cats="📻 Topic|🛎️ Service|🎛️ Parameter"><div class="kc-head"><span class="sim-tag">🎮 Game</span><b>Which ROS 2 tool does each part of the project use?</b></div><ul><li data-cat="0"><code>/turtle1/pose</code></li><li data-cat="1"><code>/spawn</code></li><li data-cat="2"><code>spawn_frequency</code></li><li data-cat="0"><code>/alive_turtles</code></li><li data-cat="1"><code>/catch_turtle</code></li><li data-cat="1"><code>/kill</code></li><li data-cat="2"><code>catch_closest_turtle_first</code></li><li data-cat="0"><code>/turtle1/cmd_vel</code></li></ul></div>
+
 <h2 id="m1"><span class="num">M1</span>Milestone 1 — Controller: go to a fixed point</h2>
 <div class="lab">
   <div class="lab-h"><span class="badge">MILESTONE 1 · 25 min</span><h3>turtle_controller v1 (Book §4.0.1)</h3></div>
@@ -737,6 +746,9 @@ ros2 bag play ~/bags/catch_run --topics /turtle1/cmd_vel</code></pre></div>
 </div>
 
 <!-- ============================================================ -->
+
+<div class="kc" data-widget="kc"><div class="kc-head"><span class="sim-tag">✅ Knowledge check</span><b>Lecture 7 check: 5 questions</b></div><div class="kc-q" data-a="2"><p>The turtle is at (2, 2), the target at (5, 6). What is the distance?</p><div class="kc-opts"><button>3</button><button>4</button><button>5</button><button>7</button></div><div class="kc-why">√(3² + 4²) = 5. This is the first line of every go-to-goal controller.</div></div><div class="kc-q" data-a="1"><p>What does <code>atan2(dist_y, dist_x)</code> return?</p><div class="kc-opts"><button>The distance</button><button>The direction to the target, in radians</button><button>The turtle's speed</button><button>The time to arrive</button></div><div class="kc-why">goal_theta is the angle from the x-axis to the target.</div></div><div class="kc-q" data-a="1"><p>Without wrapping <code>diff</code> into [−π, π], what can happen?</p><div class="kc-opts"><button>Nothing</button><button>The turtle may turn the long way round</button><button>It drives backwards</button><button>It stops</button></div><div class="kc-why">Switch off the wrap in the simulator and watch.</div></div><div class="kc-q" data-a="1"><p>Why does the spawner counter start at 1?</p><div class="kc-opts"><button>It is faster</button><button>turtle1 already exists, and turtlesim refuses a duplicate name</button><button>Python lists start at 1</button><button>For the launch file</button></div><div class="kc-why">The first spawned turtle is turtle2.</div></div><div class="kc-q" data-a="1"><p>What does <code>ros2 bag play</code> do?</p><div class="kc-opts"><button>Records topics</button><button>Republishes recorded messages as if the nodes were running</button><button>Deletes the bag</button><button>Plots data</button></div><div class="kc-why">Replaying the same inputs is a powerful way to debug.</div></div></div>
+
 <h2 id="exit"><span class="num">7.2</span>Exit ticket &amp; assessment</h2>
 <div class="quiz">
   <div class="q"><p>Why does <code>callback_turtle_pose</code> only store the pose instead of computing the command?</p><details><summary>Answer</summary><div class="inner">Keeping callbacks short and making decisions in one control timer gives a steady control rate and code that is easy to reason about.</div></details></div>
@@ -770,6 +782,7 @@ ros2 bag play ~/bags/catch_run --topics /turtle1/cmd_vel</code></pre></div>
 </div>
 </div>
 <script src="lab.js"></script>
+<script src="widgets.js"></script>
 <script src="annotate.js" defer></script>
 </body>
 </html>

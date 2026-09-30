@@ -13,7 +13,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Schedule — ROS and Robot Programming</title>
-<meta name="description" content="Week-by-week schedule for ROS and Robot Programming — 12 hands-on lectures across the term, with readings, labs, assignment deadlines, midterm, and final.">
+<meta name="description" content="Week-by-week schedule for ROS and Robot Programming — 14 hands-on lectures across the term, with readings, labs, assignment deadlines, midterm, and final.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="book.css">
@@ -35,7 +35,7 @@
 <div class="wrap">
 
   <div class="cover">
-    <div class="kicker">Course Schedule &nbsp;·&nbsp; 12 Hands-On Lectures + Finals</div>
+    <div class="kicker">Course Schedule &nbsp;·&nbsp; 14 Hands-On Lectures + Projects + Finals</div>
     <h1>Schedule</h1>
     <div class="subtitle">Three sections, one weekly lecture. <strong>Section B</strong> meets <strong>Mondays</strong>; <strong>Sections A &amp; C</strong> meet <strong>Thursdays</strong>. Each session is ~3&nbsp;h: a short concept part (20–30 min) and the rest hands-on labs. <strong>Part A</strong> (Wk 5–10) is the ROS&nbsp;2 Bootcamp from the book on turtlesim; <strong>Part B</strong> (Wk 11–15) applies it to the AgileX LIMO.</div>
     <div class="meta-row">
@@ -138,31 +138,38 @@
     </tr>
     <tr>
       <td>13</td><td>23 Nov / 26 Nov</td>
-      <td><a href="L10-limo-sensors.html">L10 — LIMO's Senses: LiDAR &amp; Camera</a>.</td>
+      <td><a href="L10-limo-lidar-imu.html">L10 — LiDAR &amp; IMU: Reactive Robots</a> + <a href="L11-limo-camera-vision.html">L11 — Camera &amp; Computer Vision</a> <em>(double session)</em>.</td>
       <td>ROS2: sensor_msgs; OpenCV-Python (colour spaces)</td>
-      <td>Nearest obstacle, wanderer, <code>color_tracker</code>, red follower</td>
+      <td>Nearest obstacle, wanderer, <code>imu_turn</code>; <code>color_tracker</code> + depth, red follower</td>
       <td><span class="tag due">A4 issued</span> &nbsp; <span class="tag exam">Final mission issued</span></td>
     </tr>
     <tr>
       <td>14</td><td>30 Nov / 3 Dec</td>
-      <td><a href="L11-limo-slam-nav2.html">L11 — Mapping &amp; Navigation: SLAM + Nav2</a>.</td>
-      <td>Book NAV2 Boot Camp (pp. 105–116); Nav2 docs</td>
-      <td><code>slam_toolbox</code> map, Nav2 goals, <code>nav_mission.py</code> waypoint patrol</td>
+      <td><a href="L12-limo-slam-localization.html">L12 — Mapping &amp; Localisation: SLAM + AMCL</a> + <a href="L13-limo-nav2.html">L13 — Autonomous Navigation: Nav2 + Actions</a> <em>(double session)</em>.</td>
+      <td>Book NAV2 Boot Camp (pp. 105–119); Nav2 docs</td>
+      <td>Drift, <code>slam_toolbox</code> map, AMCL; actions, Nav2 goals, <code>nav_mission.py</code> patrol</td>
       <td><span class="tag due">A4 due</span></td>
     </tr>
     <tr>
       <td>15</td><td>7 Dec / 10 Dec</td>
-      <td><a href="L12-real-limo-mission.html">L12 — The Real LIMO &amp; the Final Mission</a> <em>(final lab + demos)</em>.</td>
+      <td><a href="L14-real-limo-mission.html">L14 — The Real LIMO &amp; the Final Mission</a> <em>(final lab + demos)</em>.</td>
       <td>LIMO manual (safety, bring-up)</td>
       <td>Safety, bring-up, your nodes on the physical LIMO, "LIMO Delivery" mission runs</td>
       <td><span class="tag exam">Capstone Part 2 — final mission demo</span> &nbsp; <span class="tag exam">Final Exam (40)</span></td>
+    </tr>
+    <tr>
+      <td>+</td><td>after the term</td>
+      <td><a href="projects.html">Projects P1–P3 — Build Your Own Robot "Forge"</a> <em>(optional extension)</em>.</td>
+      <td>The Construct: Build Your First ROS 2 Based Robot</td>
+      <td>Motors &amp; power · driver, URDF &amp; sensors · digital twin &amp; 3D print</td>
+      <td>—</td>
     </tr>
   </table>
   </div>
 
   <div class="box mistake">
     <div class="box-title">⚠️ Note</div>
-    <p style="margin:0;">The course was restructured in Week 5 into the 12-lecture hands-on format above. Week 15 combines the last lab (real LIMO) with final-mission demos and the final exam; teams that cannot get robot time may demo the final mission in simulation. Dates and lab scope may shift by up to a week for holidays or hardware availability. Any change is announced in class and reflected here. This page is the source of truth.</p>
+    <p style="margin:0;">The course was restructured in Week 5 into the 14-lecture hands-on format above. Weeks 13 and 14 are <strong>double sessions</strong> (two lectures each): the concept parts and core labs are done in class, and the remaining lab steps are finished as homework. Week 15 combines the last lab (real LIMO) with final-mission demos and the final exam; teams that cannot get robot time may demo the final mission in simulation. Dates and lab scope may shift by up to a week for holidays or hardware availability. Any change is announced in class and reflected here. This page is the source of truth.</p>
   </div>
 
   <div class="footer-nav">

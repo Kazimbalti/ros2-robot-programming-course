@@ -10,20 +10,21 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
 <link rel="stylesheet" href="lab.css">
+<link rel="stylesheet" href="widgets.css">
 <link rel="stylesheet" href="projector.css">
 </head>
 <body>
 <button id="theme-toggle" aria-label="Toggle light/dark mode">🌙</button>
 <nav class="coursenav"><div class="inner">
   <span class="brand">ROS &amp; Robot Programming</span>
-  <a href="index.html">Home</a><a href="prerequisites.html">Mission Zero</a><a href="syllabus.html">Syllabus</a><a href="schedule.html">Schedule</a><a href="index.html#lectures">Lectures</a>
+  <a href="index.html">Home</a><a href="prerequisites.html">Mission Zero</a><a href="syllabus.html">Syllabus</a><a href="schedule.html">Schedule</a><a href="index.html#lectures">Lectures</a><a href="projects.html">Projects</a>
 </div></nav>
 
-<div class="wrap">
+<div class="wrap" data-enriched="1">
 <div class="lesson-progress"><div class="lp-top"><span>Lecture 5 · your progress</span><span><b class="lp-count">0 / 0 steps</b> · <a href="#" class="lp-reset">reset</a></span></div><div class="lp-bar"><div class="lp-fill"></div></div></div>
 
 <div class="cover">
-  <div class="kicker">Part A · ROS 2 Bootcamp · Lecture 5 of 12</div>
+  <div class="kicker">Part A · ROS 2 Bootcamp · Lecture 5 of 14</div>
   <h1>Custom Messages &amp; Services</h1>
   <div class="subtitle">So far we used messages that other people made. Real robots need their own: a hardware status report, a list of LEDs, a list of turtles to catch. Today you design, build and use your own interfaces.</div>
   <div class="meta-row">
@@ -32,6 +33,7 @@
     <div class="chip">🐍 Python · ROS 2 Humble</div>
     <div class="chip">Before this: Lecture 4</div>
   </div>
+  <div class="skill-path" aria-label="Course path"><a class="done" href="01-installation-vmware-ros2-limo-intro.html">L1 · Install</a><a class="done" href="L02-first-node.html">L2 · Nodes</a><a class="done" href="L03-topics.html">L3 · Topics</a><a class="done" href="L04-services.html">L4 · Services</a><a class="now" href="L05-custom-interfaces.html">L5 · Interfaces</a><a class="" href="L06-parameters-launch.html">L6 · Launch</a><a class="" href="L07-catch-them-all.html">L7 · Project</a><a class="" href="L08-drive-limo.html">L8 · Drive</a><a class="" href="L09-limo-urdf-tf-rviz.html">L9 · URDF/TF</a><a class="" href="L10-limo-lidar-imu.html">L10 · LiDAR/IMU</a><a class="" href="L11-limo-camera-vision.html">L11 · Vision</a><a class="" href="L12-limo-slam-localization.html">L12 · SLAM</a><a class="" href="L13-limo-nav2.html">L13 · Nav2</a><a class="" href="L14-real-limo-mission.html">L14 · Real LIMO</a><a href="projects.html">+ Projects</a></div>
 </div>
 
 <div class="grid2">
@@ -58,6 +60,8 @@
   </div>
 </div>
 
+
+<div class="ig"><div class="ig-title"><span class="sim-tag">Infographic</span>Lecture 5 at a glance: your own message, from text file to Python class</div><div class="ig-flow"><div class="ig-step"><div class="ic">✏️</div><b>Write</b><span><code>msg/HardwareStatus.msg</code></span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">⚙️</div><b>Configure</b><span><code>CMakeLists.txt</code> + <code>package.xml</code></span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🔨</div><b>Build</b><span><code>colcon build</code></span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🧬</div><b>Generate</b><span>Python + C++ code created for you</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🐍</div><b>Use</b><span><code>from my_robot_interfaces.msg import …</code></span></div></div></div>
 <details class="box teacher">
   <summary>🧑‍🏫 Instructor lesson plan (click to open)</summary>
   <div class="inner">
@@ -119,6 +123,12 @@ flowchart LR
 <li>Field names: <strong>snake_case</strong>, lower case: <code>are_motors_ready</code> ✔ <code>AreMotorsReady</code> ✘</li></ul></div>
 
 <!-- ============================================================ -->
+<h3>📘 Interfaces in the book</h3><div class="fig-pair"><figure class="book-fig"><img src="images/book/fig3_1.png" alt="Fig. 3.1: a msg is the content carried by a topic." loading="lazy"><figcaption>Fig. 3.1: a msg is the content carried by a topic.</figcaption></figure><figure class="book-fig"><img src="images/book/fig3_2.png" alt="Fig. 3.2: a srv is a request msg plus a response msg." loading="lazy"><figcaption>Fig. 3.2: a srv is a request msg plus a response msg.</figcaption></figure></div><figure class="book-fig"><img src="images/book/fig3_3.png" alt="Fig. 3.3: the build system turns one msg definition into code for every language." loading="lazy"><figcaption>Fig. 3.3: the build system turns one msg definition into code for every language.</figcaption></figure>
+<div data-widget="msgbuilder"></div>
+
+<h3>🃏 Key terms: tap a card to check yourself</h3>
+<div class="flip-grid" data-widget="flip"><div class="flip"><div class="flip-in"><div class="flip-front">Interface<small>tap to flip</small></div><div class="flip-back">The "form" sent on a topic (.msg) or service (.srv).</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">.msg<small>tap to flip</small></div><div class="flip-back">One field per line: <code>type name</code>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">.srv<small>tap to flip</small></div><div class="flip-back">Request fields <code>---</code> response fields.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">rosidl<small>tap to flip</small></div><div class="flip-back">The generator that turns .msg/.srv into Python/C++ code at build time.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">CamelCase<small>tap to flip</small></div><div class="flip-back">Rule for <b>file</b> names: <code>LedStateArray.msg</code>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">snake_case<small>tap to flip</small></div><div class="flip-back">Rule for <b>field</b> names: <code>led_states</code>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Array<small>tap to flip</small></div><div class="flip-back"><code>int64[] led_states</code> is a list in Python.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Nested type<small>tap to flip</small></div><div class="flip-back">A msg can contain another: <code>Turtle[] turtles</code>.</div></div></div></div>
+
 <h2 id="lab1"><span class="num">L1</span>Lab 1 — Your interfaces package + a .msg</h2>
 <div class="lab">
   <div class="lab-h"><span class="badge">LAB 1 · 30 min</span><h3>my_robot_interfaces with HardwareStatus.msg (Book §3.1.2)</h3></div>
@@ -311,6 +321,7 @@ my_robot_interfaces.srv.ComputeRectangleArea_Response(area=7.5)</pre></div>
 <div class="activity">
   <div class="lvl">Activity 5.1 · Core · 50 min · from Book §3.1.7–3.1.8</div>
   <h3>The battery and the LED panel</h3>
+<figure class="book-fig"><img src="images/book/fig3_4.png" alt="Fig. 3.4: the activity. Blue boxes are nodes, orange services, green topics." loading="lazy"><figcaption>Fig. 3.4: the activity. Blue boxes are nodes, orange services, green topics.</figcaption></figure><div class="fig-pair"><figure class="book-fig"><img src="images/book/fig3_5.png" alt="Fig. 3.5: battery empty → request LED 3 on." loading="lazy"><figcaption>Fig. 3.5: battery empty → request LED 3 on.</figcaption></figure><figure class="book-fig"><img src="images/book/fig3_6.png" alt="Fig. 3.6: battery full → request LED 3 off." loading="lazy"><figcaption>Fig. 3.6: battery full → request LED 3 off.</figcaption></figure></div>
   <p>When the battery is <strong>empty</strong>, the battery node asks the LED panel to turn LED 3 <strong>on</strong>. When the battery is <strong>full</strong> again, it asks to turn LED 3 <strong>off</strong>. The LED panel publishes its LED states all the time.</p>
   <div class="mermaid">
 flowchart LR
@@ -451,6 +462,13 @@ ros2 run my_py_pkg battery            # terminal 3</code></pre></div>
   </div></details>
 </div>
 
+
+<div class="game" data-widget="order"><div class="kc-head"><span class="sim-tag">🎮 Game</span><b>Adding a new .srv to an existing interfaces package: put the steps in order</b></div><ol><li>Create <code>srv/SetLed.srv</code></li><li>Add <code>"srv/SetLed.srv"</code> to <code>rosidl_generate_interfaces</code></li><li><code>colcon build --packages-select my_robot_interfaces</code></li><li><code>source ~/.bashrc</code></li><li>Check with <code>ros2 interface show my_robot_interfaces/srv/SetLed</code></li><li><code>from my_robot_interfaces.srv import SetLed</code> in your node</li></ol></div>
+
+<h3>🏅 Level up: choose your challenge</h3>
+<div class="levels"><div class="lv bronze"><b>🥉 Bronze: everyone</b><span>Activity 5.1 with all three nodes running together.</span></div><div class="lv silver"><b>🥈 Silver: confident</b><span>Add a 4th LED and a second battery that controls LED 1, with no changes to the LED panel code.</span></div><div class="lv gold"><b>🥇 Gold: future expert</b><span>Design <code>RobotStatus.msg</code> with a nested <code>geometry_msgs/Point position</code>, publish it, and echo it.</span></div></div>
+
+<div class="kc" data-widget="kc"><div class="kc-head"><span class="sim-tag">✅ Knowledge check</span><b>Lecture 5 check: 5 questions</b></div><div class="kc-q" data-a="1"><p>Which file name is valid?</p><div class="kc-opts"><button><code>hardware_status.msg</code></button><button><code>HardwareStatus.msg</code></button><button><code>Hardware_Status.msg</code></button><button><code>hardwareStatus.msg</code></button></div><div class="kc-why">CamelCase, starting with a capital, with no underscores.</div></div><div class="kc-q" data-a="1"><p>Why do interfaces live in their own package?</p><div class="kc-opts"><button>It is faster</button><button>So Python and C++ packages can all depend on them</button><button>ROS 2 forbids msg in Python packages only</button><button>For licensing</button></div><div class="kc-why">One interfaces package can be shared by every other package, whatever its language.</div></div><div class="kc-q" data-a="1"><p>What does <code>int64[] led_states</code> become in Python?</p><div class="kc-opts"><button>A string</button><button>A list of ints</button><button>A dict</button><button>A single int</button></div><div class="kc-why">Arrays become Python lists (or array-likes).</div></div><div class="kc-q" data-a="0"><p>You added a new .msg but the import fails. What did you most likely forget?</p><div class="kc-opts"><button>The line in <code>rosidl_generate_interfaces</code>, or rebuilding and sourcing</button><button>chmod +x</button><button>A timer</button><button>A launch file</button></div><div class="kc-why">Every new file needs its CMake line, then a build and a source.</div></div><div class="kc-q" data-a="1"><p>Where do you declare that <code>my_py_pkg</code> uses your interfaces?</p><div class="kc-opts"><button>setup.cfg</button><button><code>&lt;depend&gt;my_robot_interfaces&lt;/depend&gt;</code> in its package.xml</button><button>CMakeLists.txt of my_py_pkg</button><button>Nowhere</button></div><div class="kc-why">Python packages declare dependencies in package.xml.</div></div></div>
 <h2 id="errors"><span class="num">5.3</span>When things go wrong</h2>
 <div class="table-wrap"><table class="fix">
   <tr><th>You see…</th><th>Why</th><th>Fix</th></tr>
@@ -495,6 +513,7 @@ ros2 run my_py_pkg battery            # terminal 3</code></pre></div>
 </div>
 </div>
 <script src="lab.js"></script>
+<script src="widgets.js"></script>
 <script src="annotate.js" defer></script>
 </body>
 </html>

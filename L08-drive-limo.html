@@ -10,20 +10,21 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
 <link rel="stylesheet" href="lab.css">
+<link rel="stylesheet" href="widgets.css">
 <link rel="stylesheet" href="projector.css">
 </head>
 <body>
 <button id="theme-toggle" aria-label="Toggle light/dark mode">🌙</button>
 <nav class="coursenav"><div class="inner">
   <span class="brand">ROS &amp; Robot Programming</span>
-  <a href="index.html">Home</a><a href="prerequisites.html">Mission Zero</a><a href="syllabus.html">Syllabus</a><a href="schedule.html">Schedule</a><a href="index.html#lectures">Lectures</a>
+  <a href="index.html">Home</a><a href="prerequisites.html">Mission Zero</a><a href="syllabus.html">Syllabus</a><a href="schedule.html">Schedule</a><a href="index.html#lectures">Lectures</a><a href="projects.html">Projects</a>
 </div></nav>
 
-<div class="wrap">
+<div class="wrap" data-enriched="1">
 <div class="lesson-progress"><div class="lp-top"><span>Lecture 8 · your progress</span><span><b class="lp-count">0 / 0 steps</b> · <a href="#" class="lp-reset">reset</a></span></div><div class="lp-bar"><div class="lp-fill"></div></div></div>
 
 <div class="cover">
-  <div class="kicker">Part B · ROS 2 on the LIMO · Lecture 8 of 12</div>
+  <div class="kicker">Part B · ROS 2 on the LIMO · Lecture 8 of 14</div>
   <h1>From Turtle to LIMO — Drive with Code</h1>
   <div class="subtitle">Same ROS 2, real robot model. The LIMO in Gazebo takes the same <code>Twist</code> message you sent to the turtle, and reports its position on <code>/odom</code>. Today you drive it by terminal, then by Python, then with your own go-to-goal controller.</div>
   <div class="meta-row">
@@ -32,6 +33,7 @@
     <div class="chip">🐍 Python · ROS 2 Humble</div>
     <div class="chip">Before this: Lecture 7</div>
   </div>
+  <div class="skill-path" aria-label="Course path"><a class="done" href="01-installation-vmware-ros2-limo-intro.html">L1 · Install</a><a class="done" href="L02-first-node.html">L2 · Nodes</a><a class="done" href="L03-topics.html">L3 · Topics</a><a class="done" href="L04-services.html">L4 · Services</a><a class="done" href="L05-custom-interfaces.html">L5 · Interfaces</a><a class="done" href="L06-parameters-launch.html">L6 · Launch</a><a class="done" href="L07-catch-them-all.html">L7 · Project</a><a class="now" href="L08-drive-limo.html">L8 · Drive</a><a class="" href="L09-limo-urdf-tf-rviz.html">L9 · URDF/TF</a><a class="" href="L10-limo-lidar-imu.html">L10 · LiDAR/IMU</a><a class="" href="L11-limo-camera-vision.html">L11 · Vision</a><a class="" href="L12-limo-slam-localization.html">L12 · SLAM</a><a class="" href="L13-limo-nav2.html">L13 · Nav2</a><a class="" href="L14-real-limo-mission.html">L14 · Real LIMO</a><a href="projects.html">+ Projects</a></div>
 </div>
 
 <div class="grid2">
@@ -59,6 +61,8 @@
   </div>
 </div>
 
+
+<div class="ig"><div class="ig-title"><span class="sim-tag">Infographic</span>Lecture 8 at a glance: the turtle skills you already have, on a real robot model</div><div class="ig-cards"><div class="ig-card"><div class="big">🕹️</div><b>/cmd_vel</b><span>Twist in: <code>linear.x</code> m/s, <code>angular.z</code> rad/s. Publish at ≥ 10 Hz for the watchdog.</span></div><div class="ig-card"><div class="big">📍</div><b>/odom</b><span><code>nav_msgs/Odometry</code>: position from the start point, orientation as a quaternion.</span></div><div class="ig-card"><div class="big">🧭</div><b>yaw</b><span><code>atan2(2(wz+xy), 1−2(y²+z²))</code>: the LIMO's <code>theta</code>.</span></div><div class="ig-card"><div class="big">⏱️</div><b>sim time</b><span>Add <code>-p use_sim_time:=true</code> when running with Gazebo.</span></div><div class="ig-card"><div class="big">🔁</div><b>closed loop</b><span>Measure (odom) → compare with the goal → correct. Beats timing.</span></div></div></div>
 <details class="box teacher">
   <summary>🧑‍🏫 Instructor lesson plan (click to open)</summary>
   <div class="inner">
@@ -73,7 +77,7 @@
     <tr><td>2:10–2:50</td><td>Lab 5 — go_to_goal; Activity 8.1 for fast finishers</td><td><span class="tag do">Do</span></td></tr>
     <tr><td>2:50–3:00</td><td>Discuss: open loop vs closed loop. Exit ticket</td><td><span class="tag check">Check</span></td></tr>
   </table></div>
-  <p><strong>Teaching tip.</strong> Gazebo in a VM is slow. Ask students to close other programs and to use <code>use_sim_time:=true</code> on their nodes. If a VM cannot run Gazebo, pair that student with a neighbour. Everything today also works on the real LIMO in Lecture 12.</p>
+  <p><strong>Teaching tip.</strong> Gazebo in a VM is slow. Ask students to close other programs and to use <code>use_sim_time:=true</code> on their nodes. If a VM cannot run Gazebo, pair that student with a neighbour. Everything today also works on the real LIMO in Lecture 14.</p>
   </div>
 </details>
 
@@ -106,6 +110,12 @@ flowchart LR
 <p>Gazebo has its own clock, published on <code>/clock</code>. In a slow VM, 1 simulated second can take 2 real seconds. Add <code>--ros-args -p use_sim_time:=true</code> when you run your nodes, so their timers follow Gazebo's clock and not the wall clock.</p></div>
 
 <!-- ============================================================ -->
+
+<div data-widget="twist"></div>
+
+<h3>🃏 Key terms: tap a card to check yourself</h3>
+<div class="flip-grid" data-widget="flip"><div class="flip"><div class="flip-in"><div class="flip-front">Odometry<small>tap to flip</small></div><div class="flip-back">The robot's estimate of how far it moved, from its wheels. It <b>drifts</b>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Quaternion<small>tap to flip</small></div><div class="flip-back">4 numbers (x, y, z, w) for 3D orientation, used in /odom and TF.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Yaw<small>tap to flip</small></div><div class="flip-back">Heading around the vertical axis. 0 = facing +x, +90° = facing left.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Open loop<small>tap to flip</small></div><div class="flip-back">Send commands by time only; never check the result.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Closed loop<small>tap to flip</small></div><div class="flip-back">Measure, compare with the goal, correct. Again and again.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Watchdog<small>tap to flip</small></div><div class="flip-back">Stops the robot if /cmd_vel is silent for 0.5 s.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">odom frame<small>tap to flip</small></div><div class="flip-back">(0, 0) = where the robot started; +x = its first heading.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Differential drive<small>tap to flip</small></div><div class="flip-back">Left/right wheel speeds differ to turn; can spin on the spot.</div></div></div></div>
+
 <h2 id="lab1"><span class="num">L1</span>Lab 1 — Launch &amp; explore the LIMO</h2>
 <div class="lab">
   <div class="lab-h"><span class="badge">LAB 1 · 15 min</span><h3>Use your Part A tools on a new robot</h3></div>
@@ -300,6 +310,9 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard</code></pre></div>
 </div>
 
 <!-- ============================================================ -->
+
+<div data-widget="quat"></div>
+
 <h2 id="lab5"><span class="num">L5</span>Lab 5 — Go-to-goal on the LIMO (closed loop)</h2>
 <div class="lab">
   <div class="lab-h"><span class="badge">LAB 5 · 40 min</span><h3>Your Lecture 7 controller, now in metres</h3></div>
@@ -426,10 +439,16 @@ ros2 run limo_lab go_to_goal --ros-args -p goal_x:=1.0 -p goal_y:=0.5 -p use_sim
   <div class="lvl">Challenge 8.2 · Think · 10 min</div>
   <h3>Would it work on a car?</h3>
   <p>Close Gazebo and start the Ackermann LIMO: <code>ros2 launch limo_gazebosim limo_gazebo_ackerman_drive.launch.py</code>. Run <code>go_to_goal</code> to a goal at (0.0, 0.8), which is to the robot's left. What happens, and why? Which line of the controller assumes the robot can turn on the spot?</p>
-  <details class="solution"><summary>Discussion</summary><div class="inner">An Ackermann (car-like) robot cannot rotate with <code>linear.x = 0</code>. The line <code>if abs(diff) &lt; 0.4:</code> sets linear to 0 while turning, so the car never moves. Car-like robots need controllers that always move forward while steering. This is why the drive mode matters when you choose a controller, and why Nav2 (Lecture 11) has different controller plugins for them.</div></details>
+  <details class="solution"><summary>Discussion</summary><div class="inner">An Ackermann (car-like) robot cannot rotate with <code>linear.x = 0</code>. The line <code>if abs(diff) &lt; 0.4:</code> sets linear to 0 while turning, so the car never moves. Car-like robots need controllers that always move forward while steering. This is why the drive mode matters when you choose a controller, and why Nav2 (Lecture 13) has different controller plugins for them.</div></details>
 </div>
 
 <!-- ============================================================ -->
+
+<h3>🏅 Level up: choose your challenge</h3>
+<div class="levels"><div class="lv bronze"><b>🥉 Bronze: everyone</b><span>Activity 8.1: the precise square with waypoints.</span></div><div class="lv silver"><b>🥈 Silver: confident</b><span>Make gains and limits parameters and find the fastest settings with no overshoot.</span></div><div class="lv gold"><b>🥇 Gold: future expert</b><span>Add a <code>goal_yaw</code> parameter: after reaching (x, y), turn on the spot to face it.</span></div></div>
+
+<div class="kc" data-widget="kc"><div class="kc-head"><span class="sim-tag">✅ Knowledge check</span><b>Lecture 8 check: 5 questions</b></div><div class="kc-q" data-a="1"><p>Which topic drives the LIMO?</p><div class="kc-opts"><button><code>/turtle1/cmd_vel</code></button><button><code>/cmd_vel</code></button><button><code>/odom</code></button><button><code>/drive</code></button></div><div class="kc-why">Same Twist message as turtlesim, different topic name.</div></div><div class="kc-q" data-a="1"><p>Where is the LIMO's x position in an Odometry message?</p><div class="kc-opts"><button><code>msg.x</code></button><button><code>msg.pose.pose.position.x</code></button><button><code>msg.twist.x</code></button><button><code>msg.position.x</code></button></div><div class="kc-why">PoseWithCovariance → Pose → Point.</div></div><div class="kc-q" data-a="0"><p>Quaternion (0, 0, 0, 1) means yaw = ?</p><div class="kc-opts"><button>0°</button><button>90°</button><button>180°</button><button>−90°</button></div><div class="kc-why">w = 1 is "no rotation": facing +x.</div></div><div class="kc-q" data-a="1"><p>Why did the open-loop square not close?</p><div class="kc-opts"><button>A bug in ROS 2</button><button>Timing and wheel slip errors add up, and nothing corrects them</button><button>The LIMO is too slow</button><button>Wrong topic</button></div><div class="kc-why">Open loop cannot see its own errors. Closed loop can.</div></div><div class="kc-q" data-a="1"><p>The robot stutters every half second. Fix?</p><div class="kc-opts"><button>Lower the speed</button><button>Publish /cmd_vel at ≥ 10 Hz</button><button>Restart Gazebo</button><button>Use a bigger queue</button></div><div class="kc-why">The watchdog stops the robot after 0.5 s without commands.</div></div></div>
+
 <h2 id="exit"><span class="num">8.3</span>When things go wrong · Exit ticket · Homework</h2>
 <div class="table-wrap"><table class="fix">
   <tr><th>You see…</th><th>Why</th><th>Fix</th></tr>
@@ -461,6 +480,7 @@ ros2 run limo_lab go_to_goal --ros-args -p goal_x:=1.0 -p goal_y:=0.5 -p use_sim
 </div>
 </div>
 <script src="lab.js"></script>
+<script src="widgets.js"></script>
 <script src="annotate.js" defer></script>
 </body>
 </html>

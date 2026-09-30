@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){try{var t=localStorage.getItem('limo-book-theme');if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Projects — Build Your Own Robot</title>
+<meta name="description" content="Three extra projects after Lecture 14: build your own ROS 2 differential-drive robot, Forge, from motors and power through the ROS 2 driver, URDF and sensors to a Gazebo digital twin and a 3D-printed cover.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="lab.css">
+<link rel="stylesheet" href="widgets.css">
+<link rel="stylesheet" href="projector.css">
+<style>
+  .proj-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:16px; margin:20px 0;}
+  .proj{display:block; text-decoration:none; color:var(--text); background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:20px; transition:transform .15s, border-color .15s; border-top:6px solid var(--accent);}
+  .proj:nth-child(2){border-top-color:var(--accent2);} .proj:nth-child(3){border-top-color:var(--gold);}
+  .proj:hover{transform:translateY(-3px); border-color:var(--accent);}
+  .proj .pn{font-size:.8em; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:.5px;}
+  .proj h3{margin:6px 0 8px; color:var(--text);}
+  .proj p{font-size:.92em; margin:0 0 10px;}
+  .proj ul{font-size:.88em; margin:0;}
+</style>
+</head>
+<body>
+<button id="theme-toggle" aria-label="Toggle light/dark mode">🌙</button>
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html">Home</a><a href="prerequisites.html">Mission Zero</a><a href="syllabus.html">Syllabus</a><a href="schedule.html">Schedule</a><a href="index.html#lectures">Lectures</a><a href="projects.html">Projects</a>
+</div></nav>
+
+<div class="wrap">
+<div class="cover">
+  <div class="kicker">Projects · after Lecture 14 · optional extension</div>
+  <h1>Build Your Own Robot: "Forge"</h1>
+  <div class="subtitle">You drove someone else's robot for 14 lectures. Now build your own: a small differential-drive ROS 2 robot, from a bare motor and an empty microSD card to a digital twin in Gazebo and a 3D-printed cover. Every skill from the course comes back, and this time every design decision is yours.</div>
+  <div class="meta-row">
+    <div class="chip">3 projects · 4–6 h each</div>
+    <div class="chip">Teams of 3–4</div>
+    <div class="chip">Real hardware or design-only</div>
+    <div class="chip">Reference: The Construct, "Build Your First ROS 2 Based Robot" (FastBot)</div>
+  </div>
+</div>
+
+<div class="ig"><div class="ig-title"><span class="sim-tag">Infographic</span>The build arc: from parts to a robot</div><div class="ig-flow">
+  <div class="ig-step"><div class="ic">⚙️</div><b>Motors &amp; encoders</b><span>P1</span></div><div class="ig-arrow">→</div>
+  <div class="ig-step"><div class="ic">🔋</div><b>Power</b><span>P1</span></div><div class="ig-arrow">→</div>
+  <div class="ig-step"><div class="ic">🧠</div><b>Computer + ROS 2</b><span>P1</span></div><div class="ig-arrow">→</div>
+  <div class="ig-step"><div class="ic">🧩</div><b>Driver node</b><span>P2</span></div><div class="ig-arrow">→</div>
+  <div class="ig-step"><div class="ic">🦴</div><b>CAD → URDF</b><span>P2</span></div><div class="ig-arrow">→</div>
+  <div class="ig-step"><div class="ic">📡</div><b>LiDAR + camera</b><span>P2</span></div><div class="ig-arrow">→</div>
+  <div class="ig-step"><div class="ic">🌍</div><b>Digital twin</b><span>P3</span></div><div class="ig-arrow">→</div>
+  <div class="ig-step"><div class="ic">🖨️</div><b>3D-printed cover</b><span>P3</span></div>
+</div></div>
+
+<div class="proj-grid">
+  <a class="proj" href="12-diy-robot-motors-power-compute.html">
+    <div class="pn">Project 1</div><h3>⚙️ Motors, Power &amp; Compute</h3>
+    <p>Give Forge muscles, a heart and a brain.</p>
+    <ul><li>Gear motors with encoders, L298N + Arduino Nano wiring</li><li>ros_arduino_bridge firmware, first motion, calibration</li><li>Power budget, battery choice, power distribution</li><li>Ubuntu Server + ROS 2 Humble on the robot's computer</li></ul>
+  </a>
+  <a class="proj" href="13-diy-robot-ros2-driver-urdf-lidar-camera.html">
+    <div class="pn">Project 2</div><h3>🧩 ROS 2 Driver, CAD, URDF &amp; Sensors</h3>
+    <p>A nervous system, a body and senses.</p>
+    <ul><li>Custom messages and differential-drive kinematics</li><li>The driver node: <code>/cmd_vel</code> in, <code>/odom</code> out</li><li>Onshape CAD → URDF, robot_state_publisher</li><li>udev rules, LiDAR and camera bring-up</li></ul>
+  </a>
+  <a class="proj" href="14-diy-robot-simulation-3dprint-capstone.html">
+    <div class="pn">Project 3</div><h3>🌍 Simulation, 3D Print &amp; Review</h3>
+    <p>A digital twin, a shell and a final review.</p>
+    <ul><li>Parameterised Xacro and Gazebo plugins</li><li>The launch hierarchy; driving the twin</li><li>Designing a 3D-printed cover</li><li>The capstone build review</li></ul>
+  </a>
+</div>
+
+<h2><span class="num">↺</span>Every lecture comes back</h2>
+<div class="table-wrap"><table>
+  <tr><th>In the project you…</th><th>…using what you learned in</th></tr>
+  <tr><td>write a driver node with publishers, subscribers, timers</td><td><a href="L02-first-node.html">L2</a>–<a href="L04-services.html">L4</a></td></tr>
+  <tr><td>define custom messages for motor commands and encoder counts</td><td><a href="L05-custom-interfaces.html">L5</a></td></tr>
+  <tr><td>configure wheel radius, track width, serial port as parameters; one bringup launch</td><td><a href="L06-parameters-launch.html">L6</a></td></tr>
+  <tr><td>compute odometry and a go-to-goal test</td><td><a href="L07-catch-them-all.html">L7</a>, <a href="L08-drive-limo.html">L8</a></td></tr>
+  <tr><td>describe the robot in URDF/Xacro and publish TF</td><td><a href="L09-limo-urdf-tf-rviz.html">L9</a></td></tr>
+  <tr><td>bring up a LiDAR and a camera</td><td><a href="L10-limo-lidar-imu.html">L10</a>, <a href="L11-limo-camera-vision.html">L11</a></td></tr>
+  <tr><td>map and navigate with your own robot (extension)</td><td><a href="L12-limo-slam-localization.html">L12</a>, <a href="L13-limo-nav2.html">L13</a></td></tr>
+  <tr><td>test safely on the floor and measure sim-to-real gaps</td><td><a href="L14-real-limo-mission.html">L14</a></td></tr>
+</table></div>
+
+<div class="box idea"><div class="box-title">🧰 No hardware? Do it design-only</div>
+<p>Every project also works without buying parts: write the driver against a simulated serial device, build the URDF from CAD, and drive the digital twin in Gazebo. The review then assesses your design package instead of the physical robot.</p></div>
+
+<div class="game" data-widget="order"><div class="kc-head"><span class="sim-tag">🎮 Game</span><b>Put the build in a sensible order</b></div><ol>
+  <li>Spin one motor from the microcontroller and calibrate its encoder</li>
+  <li>Size the battery with a power budget</li>
+  <li>Install Ubuntu Server + ROS 2 on the robot's computer</li>
+  <li>Write the driver node: <code>/cmd_vel</code> → wheels, encoders → <code>/odom</code></li>
+  <li>Create the URDF from CAD and publish TF</li>
+  <li>Bring up the LiDAR and camera</li>
+  <li>Build the Gazebo digital twin and compare it with the real robot</li>
+  <li>Design and print the cover; final review</li>
+</ol></div>
+
+<div class="kc" data-widget="kc"><div class="kc-head"><span class="sim-tag">✅ Knowledge check</span><b>Are you ready to start?</b></div>
+  <div class="kc-q" data-a="1"><p>What must your driver node publish so Nav2 and RViz can use your robot?</p><div class="kc-opts"><button>/scan only</button><button>/odom and the odom → base_link transform</button><button>/map</button><button>/cmd_vel</button></div><div class="kc-why">Exactly what the LIMO's base driver provided in Lectures 8–14.</div></div>
+  <div class="kc-q" data-a="0"><p>Why build a Gazebo twin of a robot you already have?</p><div class="kc-opts"><button>To test code safely and quickly before running it on hardware</button><button>It is required by ROS 2</button><button>To replace the robot</button><button>For the 3D print</button></div><div class="kc-why">Simulation first, then hardware: the same workflow as the whole course.</div></div>
+</div>
+
+<div class="footer-nav">
+  <a href="L14-real-limo-mission.html">← Lecture 14: The Real LIMO</a>
+  <a href="index.html#lectures">All lectures</a>
+  <a href="12-diy-robot-motors-power-compute.html">Start Project 1 →</a>
+</div>
+</div>
+<script src="lab.js"></script>
+<script src="widgets.js"></script>
+<script src="annotate.js" defer></script>
+</body>
+</html>

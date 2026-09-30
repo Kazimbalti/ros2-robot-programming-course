@@ -93,12 +93,12 @@
   <p><strong>Deliverable:</strong> both packages + report with <code>ros2 interface show</code> output, the YAML file and a capture of <code>/led_states</code> changing.</p>
 
   <h3 id="a4">A4 — LIMO sensors: the safe red-object follower <span class="tag due">Wk 13 → Wk 14</span></h3>
-  <p><strong>Objective (CLO5):</strong> turn LiDAR and camera data into safe behaviour on the LIMO in Gazebo. Builds on Lectures 8–10.</p>
+  <p><strong>Objective (CLO5):</strong> turn LiDAR and camera data into safe behaviour on the LIMO in Gazebo. Builds on Lectures 8, 10 and 11.</p>
   <p><strong>Tasks:</strong></p>
   <ol>
     <li>In <code>limo_lab</code>: <code>color_tracker</code> (publishes the red object's horizontal error and area) and <code>red_follower</code> (searches, turns toward, and approaches the object).</li>
     <li>Add the LiDAR safety layer: never drive forward if anything is closer than a <code>safety_distance</code> parameter in the front ±20° sector.</li>
-    <li>Make every driving node publish a zero <code>Twist</code> on exit (safe <code>main()</code> from Lecture 12).</li>
+    <li>Make every driving node publish a zero <code>Twist</code> on exit (safe <code>main()</code> from Lecture 14).</li>
     <li>Test with the red box and an obstacle placed between the robot and the box; report what the robot does.</li>
   </ol>
   <p><strong>Deliverable:</strong> the <code>limo_lab</code> package + report with annotated camera/mask screenshots and a ≤60 s clip of the behaviour in Gazebo.</p>
@@ -109,7 +109,7 @@
   <p>
     The capstone has two parts. <strong>Part 1</strong> is the <a href="L07-catch-them-all.html">Catch Them All</a> project
     from Lecture 7: everything from the ROS 2 Bootcamp in one system. <strong>Part 2</strong> is the
-    <a href="L12-real-limo-mission.html#mission">LIMO Delivery</a> final mission, done in teams of 3–4 on the real LIMO
+    <a href="L14-real-limo-mission.html#mission">LIMO Delivery</a> final mission, done in teams of 3–4 on the real LIMO
     (or in simulation if robot time is not available). One written report covers both.
   </p>
 
@@ -118,7 +118,7 @@
   <table>
     <tr><th>When</th><th>Milestone</th><th>What's assessed</th><th>Marks</th></tr>
     <tr><td>Wk 10 (2 Nov) → Wk 11 (9 Nov)</td><td>Part 1 — Catch Them All demo</td><td>Milestones M1–M6: go-to-goal controller, spawner with <code>/alive_turtles</code>, catching through a custom service, closest-turtle strategy, parameters + one launch file, plus a <code>ros2 bag</code> of a run (rubric in <a href="L07-catch-them-all.html#exit">Lecture 7</a>)</td><td>10</td></tr>
-    <tr><td>Wk 13 (23 Nov) → Wk 15 (7 Dec)</td><td>Part 2 — LIMO Delivery demo</td><td>Map the arena, visit Stations A and B, find and stop at the red object at Station C, return home, with no collisions and a <code>/mission_status</code> topic (rubric in <a href="L12-real-limo-mission.html#mission">Lecture 12</a>)</td><td>15</td></tr>
+    <tr><td>Wk 13 (23 Nov) → Wk 15 (7 Dec)</td><td>Part 2 — LIMO Delivery demo</td><td>Map the arena, visit Stations A and B, find and stop at the red object at Station C, return home, with no collisions and a <code>/mission_status</code> topic (rubric in <a href="L14-real-limo-mission.html#mission">Lecture 14</a>)</td><td>15</td></tr>
     <tr><td>Wk 15 (7 Dec)</td><td>Report + short oral defence</td><td>Report on both parts (node graphs, what went wrong, three measured sim-to-real differences) and a 5-minute Q&amp;A per team</td><td>5</td></tr>
   </table>
   </div>

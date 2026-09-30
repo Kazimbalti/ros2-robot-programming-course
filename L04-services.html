@@ -10,20 +10,21 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
 <link rel="stylesheet" href="lab.css">
+<link rel="stylesheet" href="widgets.css">
 <link rel="stylesheet" href="projector.css">
 </head>
 <body>
 <button id="theme-toggle" aria-label="Toggle light/dark mode">🌙</button>
 <nav class="coursenav"><div class="inner">
   <span class="brand">ROS &amp; Robot Programming</span>
-  <a href="index.html">Home</a><a href="prerequisites.html">Mission Zero</a><a href="syllabus.html">Syllabus</a><a href="schedule.html">Schedule</a><a href="index.html#lectures">Lectures</a>
+  <a href="index.html">Home</a><a href="prerequisites.html">Mission Zero</a><a href="syllabus.html">Syllabus</a><a href="schedule.html">Schedule</a><a href="index.html#lectures">Lectures</a><a href="projects.html">Projects</a>
 </div></nav>
 
-<div class="wrap">
+<div class="wrap" data-enriched="1">
 <div class="lesson-progress"><div class="lp-top"><span>Lecture 4 · your progress</span><span><b class="lp-count">0 / 0 steps</b> · <a href="#" class="lp-reset">reset</a></span></div><div class="lp-bar"><div class="lp-fill"></div></div></div>
 
 <div class="cover">
-  <div class="kicker">Part A · ROS 2 Bootcamp · Lecture 4 of 12</div>
+  <div class="kicker">Part A · ROS 2 Bootcamp · Lecture 4 of 14</div>
   <h1>Services — Request &amp; Response</h1>
   <div class="subtitle">Topics stream data one way. Services <em>ask a question and get an answer</em>. Today you clear, spawn and kill turtles with services, then write your own service server and client.</div>
   <div class="meta-row">
@@ -32,6 +33,7 @@
     <div class="chip">🐍 Python · ROS 2 Humble</div>
     <div class="chip">Before this: Lecture 3 (number counter ready)</div>
   </div>
+  <div class="skill-path" aria-label="Course path"><a class="done" href="01-installation-vmware-ros2-limo-intro.html">L1 · Install</a><a class="done" href="L02-first-node.html">L2 · Nodes</a><a class="done" href="L03-topics.html">L3 · Topics</a><a class="now" href="L04-services.html">L4 · Services</a><a class="" href="L05-custom-interfaces.html">L5 · Interfaces</a><a class="" href="L06-parameters-launch.html">L6 · Launch</a><a class="" href="L07-catch-them-all.html">L7 · Project</a><a class="" href="L08-drive-limo.html">L8 · Drive</a><a class="" href="L09-limo-urdf-tf-rviz.html">L9 · URDF/TF</a><a class="" href="L10-limo-lidar-imu.html">L10 · LiDAR/IMU</a><a class="" href="L11-limo-camera-vision.html">L11 · Vision</a><a class="" href="L12-limo-slam-localization.html">L12 · SLAM</a><a class="" href="L13-limo-nav2.html">L13 · Nav2</a><a class="" href="L14-real-limo-mission.html">L14 · Real LIMO</a><a href="projects.html">+ Projects</a></div>
 </div>
 
 <div class="grid2">
@@ -59,6 +61,8 @@
   </div>
 </div>
 
+
+<div class="ig"><div class="ig-title"><span class="sim-tag">Infographic</span>Lecture 4 at a glance: ask a question, get an answer</div><div class="ig-flow"><div class="ig-step"><div class="ic">🧑‍💻</div><b>Client</b><span><code>create_client(Type, "name")</code></span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">📨</div><b>Request</b><span>the fields above <code>---</code></span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">⚙️</div><b>Server</b><span>callback fills the response</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">📬</div><b>Response</b><span><code>return response</code></span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🔔</div><b>Done callback</b><span><code>call_async</code> + <code>add_done_callback</code></span></div></div></div>
 <details class="box teacher">
   <summary>🧑‍🏫 Instructor lesson plan (click to open)</summary>
   <div class="inner">
@@ -117,6 +121,14 @@ sequenceDiagram
 </table></div>
 
 <!-- ============================================================ -->
+<h3>📘 Services in the book</h3><figure class="book-fig"><img src="images/book/fig2_8.png" alt="Fig. 2.8: one weather server, many clients. The server exists once and answers everyone." loading="lazy"><figcaption>Fig. 2.8: one weather server, many clients. The server exists once and answers everyone.</figcaption></figure><div class="fig-pair"><figure class="book-fig"><img src="images/book/fig2_9.png" alt="Fig. 2.9: the battery (client) asks the LED panel (server) to turn LED 3 on…" loading="lazy"><figcaption>Fig. 2.9: the battery (client) asks the LED panel (server) to turn LED 3 on…</figcaption></figure><figure class="book-fig"><img src="images/book/fig2_10.png" alt="Fig. 2.10: …and later to turn it off. You build this in Lecture 5." loading="lazy"><figcaption>Fig. 2.10: …and later to turn it off. You build this in Lecture 5.</figcaption></figure></div>
+<div data-widget="service"></div>
+
+<h3>🃏 Key terms: tap a card to check yourself</h3>
+<div class="flip-grid" data-widget="flip"><div class="flip"><div class="flip-in"><div class="flip-front">Service<small>tap to flip</small></div><div class="flip-back">Request → response between a client and a server.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Server<small>tap to flip</small></div><div class="flip-back">Exists <b>once</b>. Its callback fills and returns the response.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Client<small>tap to flip</small></div><div class="flip-back">Sends a request. Many clients may use one server.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">.srv<small>tap to flip</small></div><div class="flip-back">Request fields, then <code>---</code>, then response fields.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">call_async<small>tap to flip</small></div><div class="flip-back">Sends the request and returns a <b>future</b> immediately.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Future<small>tap to flip</small></div><div class="flip-back">A "ticket" that will hold the response later.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">add_done_callback<small>tap to flip</small></div><div class="flip-back">Run a function when the answer arrives: never block!</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">partial<small>tap to flip</small></div><div class="flip-back">Pre-fills extra arguments for a callback: <code>partial(f, a=a)</code>.</div></div></div></div>
+
+<div class="game" data-widget="sort" data-cats="📻 Topic|🛎️ Service"><div class="kc-head"><span class="sim-tag">🎮 Game</span><b>Topic or service?</b></div><ul><li data-cat="0">Stream the LiDAR scan</li><li data-cat="1">Spawn a turtle at (3, 3)</li><li data-cat="0">Publish the robot pose</li><li data-cat="1">Reset the odometry</li><li data-cat="1">Clear the drawing</li><li data-cat="0">Send velocity commands</li><li data-cat="1">Switch the LED panel on</li><li data-cat="0">Camera images</li></ul></div>
+
 <h2 id="lab1"><span class="num">L1</span>Lab 1 — Services with turtlesim</h2>
 <div class="lab">
   <div class="lab-h"><span class="badge">LAB 1 · 25 min</span><h3>Clear, spawn, kill and change pen colour (Book §2.2.9)</h3></div>
@@ -397,6 +409,7 @@ ros2 run my_py_pkg add_two_ints_client --ros-args -r add_two_ints:=calculator</c
 <div class="activity">
   <div class="lvl">Activity 4.1 · Core · 40 min · from Book §2.2.10</div>
   <h3>Reset the number counter</h3>
+<figure class="book-fig"><img src="images/book/fig2_11.png" alt="Fig. 2.11: the service activity: /reset_counter added to the number counter." loading="lazy"><figcaption>Fig. 2.11: the service activity: /reset_counter added to the number counter.</figcaption></figure>
   <div class="mermaid">
 flowchart LR
   A(["number_publisher"]) --> T1[["/number"]] --> B(["number_counter"]) --> T2[["/number_count"]]
@@ -502,6 +515,11 @@ if __name__ == "__main__":
     main()</code></pre></div></div></details>
 </div>
 
+
+<h3>🏅 Level up: choose your challenge</h3>
+<div class="levels"><div class="lv bronze"><b>🥉 Bronze: everyone</b><span>Activity 4.1: reset the counter from the terminal while the publisher keeps running.</span></div><div class="lv silver"><b>🥈 Silver: confident</b><span>Challenge 4.2: the turtle army, then kill them all again with <code>/kill</code> from code.</span></div><div class="lv gold"><b>🥇 Gold: future expert</b><span>Write a <code>counter_supervisor</code> client that resets the counter automatically when it passes 50 (that's assignment A2).</span></div></div>
+
+<div class="kc" data-widget="kc"><div class="kc-head"><span class="sim-tag">✅ Knowledge check</span><b>Lecture 4 check: 5 questions</b></div><div class="kc-q" data-a="0"><p>How many servers can offer <code>/add_two_ints</code> at once?</p><div class="kc-opts"><button>One</button><button>Two</button><button>Unlimited</button><button>One per client</button></div><div class="kc-why">A service name has exactly one server; any number of clients can call it.</div></div><div class="kc-q" data-a="1"><p>What must the server callback end with?</p><div class="kc-opts"><button><code>rclpy.spin()</code></button><button><code>return response</code></button><button><code>publish(response)</code></button><button><code>time.sleep(1)</code></button></div><div class="kc-why">If the response is not returned, the client never gets an answer.</div></div><div class="kc-q" data-a="1"><p>Why use <code>call_async</code> + <code>add_done_callback</code> inside a node?</p><div class="kc-opts"><button>It is faster to type</button><button>So the node keeps running its timers and subscribers while it waits</button><button>It is required by C++</button><button>To call two servers</button></div><div class="kc-why">Blocking inside a callback freezes the whole node, as you saw in the simulator.</div></div><div class="kc-q" data-a="1"><p>In <code>turtlesim/srv/Spawn</code>, what is below the <code>---</code>?</p><div class="kc-opts"><button>x, y, theta</button><button>The response: <code>name</code></button><button>Nothing</button><button>The service name</button></div><div class="kc-why">Above the line is the request, below is the response.</div></div><div class="kc-q" data-a="1"><p>The client prints "Waiting for server…" forever. Most likely cause?</p><div class="kc-opts"><button>Wrong message type in a topic</button><button>Server not running, or the name is remapped on one side only</button><button>Queue size too small</button><button>Missing <code>spin</code> in the server</button></div><div class="kc-why">Check <code>ros2 service list</code> for the exact name.</div></div></div>
 <h2 id="errors"><span class="num">4.3</span>When things go wrong</h2>
 <div class="table-wrap"><table class="fix">
   <tr><th>You see…</th><th>Why</th><th>Fix</th></tr>
@@ -549,6 +567,7 @@ if __name__ == "__main__":
 </div>
 </div>
 <script src="lab.js"></script>
+<script src="widgets.js"></script>
 <script src="annotate.js" defer></script>
 </body>
 </html>

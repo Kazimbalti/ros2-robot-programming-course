@@ -41,7 +41,7 @@
     <div class="meta-row">
       <div class="chip">Week 15 — Section B: Mon 7 Dec · Sections A &amp; C: Thu 10 Dec 2026</div>
       <div class="chip">Written 2 h + short practical</div>
-      <div class="chip">Cumulative; emphasis on Lectures 5–12</div>
+      <div class="chip">Cumulative; emphasis on Lectures 5–14</div>
       <div class="chip">Weight: 40% of the final grade</div>
     </div>
   </div>
@@ -52,7 +52,7 @@
     <tr><th>Part</th><th>Marks</th><th>Style</th></tr>
     <tr><td>A — Concepts across the whole course</td><td>10</td><td>Short answer: terminology, "why", read an <code>rqt_graph</code> / TF tree / LaserScan, choose the right ROS 2 tool</td></tr>
     <tr><td>B — ROS 2 system design</td><td>10</td><td>Design or fix a multi-node system: custom msg/srv, parameters, a launch file with remaps (Lectures 5–7)</td></tr>
-    <tr><td>C — Robot reasoning</td><td>12</td><td>Worked problems on the LIMO: odometry and yaw, open vs closed loop, go-to-goal, frames, LiDAR sectors, colour detection, SLAM and Nav2 (Lectures 8–12)</td></tr>
+    <tr><td>C — Robot reasoning</td><td>12</td><td>Worked problems on the LIMO: odometry and yaw, open vs closed loop, go-to-goal, frames, LiDAR sectors, IMU, colour detection and depth, SLAM, AMCL, Nav2 and actions (Lectures 8–14)</td></tr>
     <tr><td>D — Short practical</td><td>8</td><td>At a lab machine: extend a given node (e.g. add a parameter, a service, or a LiDAR safety check), build, run and demonstrate it</td></tr>
   </table>
   </div>
@@ -68,9 +68,11 @@
     <tr><td><a href="L07-catch-them-all.html">L7</a> — Catch Them All</td><td>Explain the system design; the go-to-goal maths (distance, <code>atan2</code>, angle wrap, P-control); record and replay with <code>ros2 bag</code></td></tr>
     <tr><td><a href="L08-drive-limo.html">L8</a> — Drive the LIMO</td><td>The LIMO's key topics; the Odometry message; quaternion → yaw; open vs closed loop; sim time</td></tr>
     <tr><td><a href="L09-limo-urdf-tf-rviz.html">L9</a> — URDF, TF &amp; RViz</td><td>Links and joint types; read a URDF; the TF tree and who publishes it; look up a transform</td></tr>
-    <tr><td><a href="L10-limo-sensors.html">L10</a> — LiDAR &amp; camera</td><td>LaserScan fields and index → angle; sector checks; reactive control; HSV masks, contours and following a target</td></tr>
-    <tr><td><a href="L11-limo-slam-nav2.html">L11</a> — SLAM &amp; Nav2</td><td>SLAM vs localisation; the saved map files; map → odom → base_link; costmaps and inflation; planner vs controller; waypoint missions</td></tr>
-    <tr><td><a href="L12-real-limo-mission.html">L12</a> — The real LIMO</td><td>Safety rules; bring-up; what changes from sim to real and why</td></tr>
+    <tr><td><a href="L10-limo-lidar-imu.html">L10</a> — LiDAR &amp; IMU</td><td>LaserScan fields and index → angle; sector checks; reactive control; integrating the gyro</td></tr>
+    <tr><td><a href="L11-limo-camera-vision.html">L11</a> — Camera &amp; vision</td><td>cv_bridge; HSV masks, contours and following a target; distance from the depth image</td></tr>
+    <tr><td><a href="L12-limo-slam-localization.html">L12</a> — SLAM &amp; AMCL</td><td>Odometry drift; SLAM vs localisation; the saved map files; map → odom → base_link; the particle filter</td></tr>
+    <tr><td><a href="L13-limo-nav2.html">L13</a> — Nav2 &amp; actions</td><td>Actions (goal, feedback, result, cancel); costmaps and inflation; planner vs controller; waypoint missions</td></tr>
+    <tr><td><a href="L14-real-limo-mission.html">L14</a> — The real LIMO</td><td>Safety rules; bring-up; what changes from sim to real and why</td></tr>
   </table>
   </div>
 
@@ -89,9 +91,9 @@
   <h2>✅ How to Prepare</h2>
   <ul>
     <li>Rebuild Catch Them All from an empty package; be able to explain every node, topic and service in its graph.</li>
-    <li>Re-run the LIMO labs (Lectures 8–11) in Gazebo, and change one parameter in each to see its effect.</li>
+    <li>Re-run the LIMO labs (Lectures 8–13) in Gazebo, and change one parameter in each to see its effect.</li>
     <li>Write the go-to-goal controller and the quaternion → yaw formula from memory.</li>
-    <li>Answer every warm-up and exit-ticket question of Lectures 5–12 again, and review each "When things go wrong" table.</li>
+    <li>Answer every warm-up and exit-ticket question of Lectures 5–14 again, and review each "When things go wrong" table.</li>
   </ul>
 
   <div class="box real">

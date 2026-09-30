@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){try{var t=localStorage.getItem('limo-book-theme');if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 13 — Autonomous Navigation: Nav2 + Actions</title>
+<meta name="description" content="Hands-on Lecture 13: ROS 2 actions, the Nav2 stack (planner, controller, costmaps, behaviour tree), sending navigation goals from RViz, the terminal and Python, and a waypoint patrol for the LIMO.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<link rel="stylesheet" href="lab.css">
+<link rel="stylesheet" href="widgets.css">
+<link rel="stylesheet" href="projector.css">
+</head>
+<body>
+<button id="theme-toggle" aria-label="Toggle light/dark mode">🌙</button>
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html">Home</a><a href="prerequisites.html">Mission Zero</a><a href="syllabus.html">Syllabus</a><a href="schedule.html">Schedule</a><a href="index.html#lectures">Lectures</a><a href="projects.html">Projects</a>
+</div></nav>
+
+<div class="wrap" data-enriched="1">
+<div class="lesson-progress"><div class="lp-top"><span>Lecture 13 · your progress</span><span><b class="lp-count">0 / 0 steps</b> · <a href="#" class="lp-reset">reset</a></span></div><div class="lp-bar"><div class="lp-fill"></div></div></div>
+
+<div class="cover">
+  <div class="kicker">Part B · ROS 2 on the LIMO · Lecture 13 of 14</div>
+  <h1>Autonomous Navigation — Nav2 + Actions</h1>
+  <div class="subtitle">From "react to what's in front of me" to "go to the kitchen". Today you learn the last ROS 2 communication type, <strong>actions</strong>, and use it to command Nav2: the LIMO plans its own path on your map, avoids obstacles it has never seen, and runs a patrol you program in Python.</div>
+  <div class="meta-row">
+    <div class="chip">⏱ 3 h · 25 min teach · 2 h 35 min hands-on</div>
+    <div class="chip">🧭 Nav2 · actions · nav2_simple_commander</div>
+    <div class="chip">📘 Book: NAV2 Boot Camp pp. 105–119</div>
+    <div class="chip">Before this: Lecture 12 (map + limo_nav2.yaml)</div>
+  </div>
+  <div class="skill-path" aria-label="Course path"><a class="done" href="01-installation-vmware-ros2-limo-intro.html">L1 · Install</a><a class="done" href="L02-first-node.html">L2 · Nodes</a><a class="done" href="L03-topics.html">L3 · Topics</a><a class="done" href="L04-services.html">L4 · Services</a><a class="done" href="L05-custom-interfaces.html">L5 · Interfaces</a><a class="done" href="L06-parameters-launch.html">L6 · Launch</a><a class="done" href="L07-catch-them-all.html">L7 · Project</a><a class="done" href="L08-drive-limo.html">L8 · Drive</a><a class="done" href="L09-limo-urdf-tf-rviz.html">L9 · URDF/TF</a><a class="done" href="L10-limo-lidar-imu.html">L10 · LiDAR/IMU</a><a class="done" href="L11-limo-camera-vision.html">L11 · Vision</a><a class="done" href="L12-limo-slam-localization.html">L12 · SLAM</a><a class="now" href="L13-limo-nav2.html">L13 · Nav2</a><a class="" href="L14-real-limo-mission.html">L14 · Real LIMO</a><a href="projects.html">+ Projects</a></div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h3>🎯 By the end of today you can…</h3>
+    <ul class="outcomes">
+      <li>Explain an <strong>action</strong> (goal, feedback, result, cancel) and use <code>ros2 action</code>.</li>
+      <li>Name Nav2's parts: planner, controller, costmaps, behaviour tree, recoveries.</li>
+      <li>Explain costmap inflation and why a goal can be rejected.</li>
+      <li>Send Nav2 goals from RViz, from the terminal and from Python.</li>
+      <li>Program and tune a waypoint patrol.</li>
+    </ul>
+  </div>
+  <div class="card toc">
+    <h3>🗺️ Today's route</h3>
+    <a href="#warmup"><span>13.0</span>Warm-up</a>
+    <a href="#idea"><span>13.1</span>The idea: a GPS app for robots</a>
+    <a href="#lab1"><span>Lab 1</span>Actions with turtlesim</a>
+    <a href="#lab2"><span>Lab 2</span>Navigate with Nav2</a>
+    <a href="#lab3"><span>Lab 3</span>A Nav2 goal from the terminal</a>
+    <a href="#lab4"><span>Lab 4</span>A waypoint mission in Python</a>
+    <a href="#activity"><span>13.2</span>Activities</a>
+    <a href="#exit"><span>13.3</span>Errors, exit ticket &amp; homework</a>
+  </div>
+</div>
+
+<div class="ig"><div class="ig-title"><span class="sim-tag">Infographic</span>Lecture 13 at a glance: what happens after you click a goal</div><div class="ig-flow">
+  <div class="ig-step"><div class="ic">🎯</div><b>Goal (action)</b><span><code>NavigateToPose</code></span></div><div class="ig-arrow">→</div>
+  <div class="ig-step"><div class="ic">🌳</div><b>BT navigator</b><span>runs the behaviour tree</span></div><div class="ig-arrow">→</div>
+  <div class="ig-step"><div class="ic">🗺️</div><b>Planner</b><span>path on the <em>global</em> costmap</span></div><div class="ig-arrow">→</div>
+  <div class="ig-step"><div class="ic">🚗</div><b>Controller</b><span>follows it on the <em>local</em> costmap</span></div><div class="ig-arrow">→</div>
+  <div class="ig-step"><div class="ic">🛟</div><b>Recoveries</b><span>spin · back up · wait</span></div><div class="ig-arrow">→</div>
+  <div class="ig-step"><div class="ic">🕹️</div><b>/cmd_vel</b><span>the LIMO drives</span></div>
+</div></div>
+
+<details class="box teacher">
+  <summary>🧑‍🏫 Instructor lesson plan (click to open)</summary>
+  <div class="inner">
+  <div class="table-wrap"><table>
+    <tr><th>Time</th><th>Activity</th><th>Type</th></tr>
+    <tr><td>0:00–0:10</td><td>Warm-up</td><td><span class="tag check">Check</span></td></tr>
+    <tr><td>0:10–0:35</td><td>Actions; Nav2 blocks with the book's figures; costmap simulator on the projector</td><td><span class="tag teach">Teach</span></td></tr>
+    <tr><td>0:35–0:55</td><td>Lab 1: actions with turtlesim</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>0:55–1:40</td><td>Lab 2: Nav2 bringup, initial pose, goals</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>1:40–1:50</td><td>Break</td><td></td></tr>
+    <tr><td>1:50–2:05</td><td>Lab 3: NavigateToPose from the terminal</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>2:05–2:45</td><td>Lab 4: nav_mission.py</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>2:45–3:00</td><td>Activity 13.2 demo (surprise obstacle) + exit ticket</td><td><span class="tag check">Check</span></td></tr>
+  </table></div>
+  <p><strong>Teaching tip.</strong> Connect actions to what students already know: "a service that takes a while, keeps you updated, and can be cancelled". Nav2 is the best real example they will ever see.</p>
+  </div>
+</details>
+
+<h2 id="warmup"><span class="num">13.0</span>Warm-up (5 min)</h2>
+<div class="quiz">
+  <div class="q"><p>A service call to "drive to the door" would take 30 s. What is wrong with using a service?</p><details><summary>Answer</summary><div class="inner">No progress updates, no way to cancel half-way, and the client waits the whole time. That's what actions fix.</div></details></div>
+  <div class="q"><p>Which two files did you create in Lecture 12 that Nav2 needs today?</p><details><summary>Answer</summary><div class="inner">The map (<code>~/maps/limo_table.yaml</code> + .pgm) and the parameters (<code>~/ros2_ws/params/limo_nav2.yaml</code>).</div></details></div>
+</div>
+
+<h2 id="idea"><span class="num">13.1</span>The idea in 15 minutes</h2>
+<h3>Part 1: actions, the third way to communicate</h3>
+<div class="table-wrap"><table>
+  <tr><th></th><th>Topic 📻</th><th>Service 🛎️</th><th>Action 🎯</th></tr>
+  <tr><td>Pattern</td><td>stream</td><td>request → response</td><td>goal → feedback… → result</td></tr>
+  <tr><td>Duration</td><td>continuous</td><td>short</td><td>long (seconds to minutes)</td></tr>
+  <tr><td>Cancel?</td><td>–</td><td>no</td><td><strong>yes</strong></td></tr>
+  <tr><td>Example</td><td><code>/scan</code></td><td><code>/spawn</code></td><td><code>/navigate_to_pose</code>, <code>/turtle1/rotate_absolute</code></td></tr>
+</table></div>
+<div data-widget="action"></div>
+
+<h3>Part 2: Nav2 = a GPS navigation app for robots</h3>
+<div class="analogy"><div class="emoji">📱</div><div>
+  <p>It has a map, a "you are here" dot (AMCL, Lecture 12), a route planner, a driver who follows the route while dodging new obstacles, and "recalculating…" when stuck.</p>
+</div></div>
+<figure class="book-fig"><img src="images/book/fig5_1.png" alt="Robot moving from A to B around obstacles" loading="lazy"><figcaption>Fig. 5.1: the navigation problem: move from A to B safely around obstacles.</figcaption></figure>
+<div class="fig-pair">
+  <figure class="book-fig"><img src="images/book/fig5_13.png" alt="Simple Nav2 architecture" loading="lazy"><figcaption>Fig. 5.13: the simple view: global costmap → planner, local costmap → controller, plus recovery behaviour.</figcaption></figure>
+  <figure class="book-fig"><img src="images/book/fig5_12.png" alt="Official Nav2 architecture" loading="lazy"><figcaption>Fig. 5.12: the official Nav2 architecture: BT navigator, planner, controller and recovery servers.</figcaption></figure>
+</div>
+<figure class="book-fig"><img src="images/book/fig5_6.png" alt="Global and local planner costmaps" loading="lazy"><figcaption>Fig. 5.6: the costmaps around the robot: lethal (pink/blue) near obstacles, fading inflation (cyan).</figcaption></figure>
+
+<div data-widget="planner"></div>
+
+<div class="game" data-widget="sort" data-cats="Planner|Controller|Costmap|AMCL|BT navigator"><div class="kc-head"><span class="sim-tag">🎮 Game</span><b>Which Nav2 part does this job?</b></div><ul>
+  <li data-cat="0">Finds a path from the robot to the goal on the whole map</li>
+  <li data-cat="1">Turns the path into <code>/cmd_vel</code> 20 times per second</li>
+  <li data-cat="2">Marks cells near walls as expensive (inflation)</li>
+  <li data-cat="3">Estimates where the robot is on the map</li>
+  <li data-cat="4">Decides what to do next: plan, follow, or try a recovery</li>
+  <li data-cat="2">Adds a new box seen by the LiDAR as an obstacle</li>
+</ul></div>
+
+<h3>🃏 Key terms: tap a card to check yourself</h3>
+<div class="flip-grid" data-widget="flip">
+  <div class="flip"><div class="flip-in"><div class="flip-front">Action<small>tap to flip</small></div><div class="flip-back">Goal → feedback → result, and it can be cancelled.</div></div></div>
+  <div class="flip"><div class="flip-in"><div class="flip-front">Global costmap<small>tap to flip</small></div><div class="flip-back">The whole map + inflation: used by the planner.</div></div></div>
+  <div class="flip"><div class="flip-in"><div class="flip-front">Local costmap<small>tap to flip</small></div><div class="flip-back">A small rolling window from live sensors: used by the controller.</div></div></div>
+  <div class="flip"><div class="flip-in"><div class="flip-front">Inflation<small>tap to flip</small></div><div class="flip-back">Cost that fades with distance from obstacles: keeps paths away from walls.</div></div></div>
+  <div class="flip"><div class="flip-in"><div class="flip-front">Behaviour tree<small>tap to flip</small></div><div class="flip-back">The "brain" of Nav2 that chains planning, following and recovery.</div></div></div>
+  <div class="flip"><div class="flip-in"><div class="flip-front">Lifecycle node<small>tap to flip</small></div><div class="flip-back">A node started in steps (configure → activate) by the lifecycle manager.</div></div></div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab1"><span class="num">L1</span>Lab 1 — Actions with turtlesim</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 1 · 20 min</span><h3>goal, feedback, result, cancel</h3></div>
+  <div class="step" id="a1-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Find the action and read its type</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminals 1 &amp; 2</div><pre><code>ros2 run turtlesim turtlesim_node
+ros2 action list
+ros2 action info /turtle1/rotate_absolute
+ros2 interface show turtlesim/action/RotateAbsolute</code></pre></div>
+    <div class="out"><div class="out-h">✅ Three parts, separated by two ---</div><pre># The desired heading in radians
+float32 theta          ← goal
+---
+# The angular displacement in radians to the starting position
+float32 delta          ← result
+---
+# The remaining rotation in radians
+float32 remaining      ← feedback</pre></div>
+  </div>
+  <div class="step" id="a1-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Send a goal and watch the feedback</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>ros2 action send_goal /turtle1/rotate_absolute turtlesim/action/RotateAbsolute "{theta: 1.57}" --feedback</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>Goal accepted with ID: 5c1f…
+Feedback:
+    remaining: 1.53
+Feedback:
+    remaining: 1.49
+...
+Result:
+    delta: -1.56
+Goal finished with status: SUCCEEDED</pre></div>
+    <p>Now send <code>{theta: -3.0}</code> and, while it turns, run <code>ros2 run turtlesim turtle_teleop_key</code> and press <kbd>F</kbd>: teleop <strong>cancels</strong> the goal. Compare with the action simulator above.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab2"><span class="num">L2</span>Lab 2 — Navigate with Nav2</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 2 · 45 min</span><h3>Click a goal; the LIMO plans and drives</h3></div>
+  <div class="step" id="n2-2">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Start Gazebo, Nav2 with your map, and RViz</span></div>
+    <p>Start Gazebo fresh so the LIMO is at its start pose, which is (0, 0) on your map from Lecture 12.</p>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 1</div><pre><code>ros2 launch limo_gazebosim limo_gazebo_diff.launch.py</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>ros2 launch nav2_bringup bringup_launch.py use_sim_time:=True \
+  map:=$HOME/maps/limo_table.yaml params_file:=$HOME/ros2_ws/params/limo_nav2.yaml</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 3</div><pre><code>rviz2 -d $(ros2 pkg prefix nav2_bringup)/share/nav2_bringup/rviz/nav2_default_view.rviz --ros-args -p use_sim_time:=true</code></pre></div>
+    <p>Wait for "Managed nodes are active" in Terminal 2. <code>bringup_launch.py</code> starts everything from Lecture 12 (map_server + AMCL) <em>plus</em> the navigation servers.</p>
+  </div>
+  <div class="step" id="n2-3">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Tell AMCL where the robot is: "2D Pose Estimate"</span></div>
+    <p>Same as Lecture 12: click <strong>2D Pose Estimate</strong>, click where the LIMO is and drag in the direction it faces (at the start: the map origin, along +x). The laser dots should sit on the black walls.</p>
+  </div>
+  <div class="step" id="n2-4">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Send a goal: "Nav2 Goal"</span></div>
+    <p>Click <strong>Nav2 Goal</strong>, then click and drag on a free (white) spot. Watch:</p>
+    <ul>
+      <li>the <strong>global path</strong> (a line from robot to goal),</li>
+      <li>the <strong>costmaps</strong>: coloured halos around walls (inflation), like in the simulator,</li>
+      <li>the LIMO driving there by itself.</li>
+    </ul>
+    <div class="fig-pair">
+      <figure class="book-fig"><img src="images/book/fig5_5.png" alt="RViz Nav2 goal" loading="lazy"><figcaption>Fig. 5.5: setting a Nav2 goal in RViz.</figcaption></figure>
+      <figure class="book-fig"><img src="images/book/fig5_18.png" alt="Gazebo and RViz using Nav2" loading="lazy"><figcaption>Fig. 5.18: Gazebo and RViz side by side during navigation.</figcaption></figure>
+    </div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 4: peek inside</div><pre><code>ros2 node list | grep -E "planner|controller|amcl|bt_navigator"
+ros2 action list
+ros2 topic echo /cmd_vel --field linear.x</code></pre></div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab3"><span class="num">L3</span>Lab 3 — A Nav2 goal from the terminal</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 3 · 15 min</span><h3>RViz's "Nav2 Goal" button is just an action client</h3></div>
+  <div class="step" id="a3-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Send NavigateToPose yourself</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 4</div><pre><code>ros2 action info /navigate_to_pose
+ros2 action send_goal /navigate_to_pose nav2_msgs/action/NavigateToPose \
+  "{pose: {header: {frame_id: map}, pose: {position: {x: 0.8, y: 0.0, z: 0.0}, orientation: {w: 1.0}}}}" --feedback</code></pre></div>
+    <p>The feedback includes <code>distance_remaining</code> and <code>navigation_time</code>; the result arrives when the robot is there. Press <kbd>Ctrl</kbd>+<kbd>C</kbd> half-way to cancel the goal: the robot stops.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab4"><span class="num">L4</span>Lab 4 — A waypoint mission in Python</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 4 · 40 min</span><h3>nav_mission.py with nav2_simple_commander</h3></div>
+  <div class="step" id="n3-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Write the mission</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 limo_lab/limo_lab/nav_mission.py</div><pre><code>#!/usr/bin/env python3
+import math
+import rclpy
+from geometry_msgs.msg import PoseStamped
+from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
+
+
+def make_pose(navigator, x, y, yaw):
+    """A goal on the map: position in metres, heading in radians."""
+    pose = PoseStamped()
+    pose.header.frame_id = "map"
+    pose.header.stamp = navigator.get_clock().now().to_msg()
+    pose.pose.position.x = x
+    pose.pose.position.y = y
+    pose.pose.orientation.z = math.sin(yaw / 2.0)      # yaw -> quaternion (reverse of Lecture 8)
+    pose.pose.orientation.w = math.cos(yaw / 2.0)
+    return pose
+
+
+def main():
+    rclpy.init()
+    navigator = BasicNavigator()
+
+    # 1. tell AMCL where we start (same as "2D Pose Estimate")
+    navigator.setInitialPose(make_pose(navigator, 0.0, 0.0, 0.0))
+    navigator.waitUntilNav2Active()
+
+    # 2. the mission: a square patrol (map coordinates, metres)
+    waypoints = [
+        make_pose(navigator, 0.8, 0.0, math.pi / 2),
+        make_pose(navigator, 0.8, 0.8, math.pi),
+        make_pose(navigator, 0.0, 0.8, -math.pi / 2),
+        make_pose(navigator, 0.0, 0.0, 0.0),
+    ]
+    navigator.followWaypoints(waypoints)              # an action goal under the hood
+
+    # 3. wait, printing the action feedback
+    while not navigator.isTaskComplete():
+        feedback = navigator.getFeedback()
+        if feedback:
+            navigator.get_logger().info(
+                f"Heading to waypoint {feedback.current_waypoint + 1}/{len(waypoints)}",
+                throttle_duration_sec=2.0)
+
+    # 4. the action result
+    result = navigator.getResult()
+    if result == TaskResult.SUCCEEDED:
+        navigator.get_logger().info("Mission complete! 🎉")
+    elif result == TaskResult.CANCELED:
+        navigator.get_logger().warn("Mission was cancelled")
+    else:
+        navigator.get_logger().error("Mission failed")
+
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+  </div>
+  <div class="step" id="n3-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Run it (Gazebo + Nav2 + RViz still running)</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 4</div><pre><code># limo_lab/package.xml:  &lt;depend&gt;nav2_simple_commander&lt;/depend&gt;
+# limo_lab/setup.py:     "nav_mission = limo_lab.nav_mission:main",
+cd ~/ros2_ws &amp;&amp; colcon build --packages-select limo_lab --symlink-install &amp;&amp; source ~/.bashrc
+ros2 run limo_lab nav_mission --ros-args -p use_sim_time:=true</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>[INFO] [basic_navigator]: Nav2 is ready for use!
+[INFO] [basic_navigator]: Heading to waypoint 1/4
+...
+[INFO] [basic_navigator]: Mission complete! 🎉</pre></div>
+    <p>Map (0, 0) is where you started SLAM; +x is the direction the LIMO faced then. If a waypoint is inside an obstacle on <em>your</em> map, Nav2 skips it. Change the numbers to fit your map.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="activity"><span class="num">13.2</span>Your turn</h2>
+<div class="activity">
+  <div class="lvl">Activity 13.1 · Core · 20 min</div>
+  <h3>The security patrol</h3>
+  <p>Change <code>nav_mission.py</code> so the robot patrols its square <strong>3 times</strong>, then returns to (0, 0) and logs how long the whole patrol took (in simulated seconds, using <code>navigator.get_clock().now()</code>).</p>
+  <details class="hint"><summary>Hint</summary><div class="inner">Multiply the list: <code>navigator.followWaypoints(waypoints * 3)</code>. Save the start time before, subtract after, and use <code>.nanoseconds / 1e9</code>.</div></details>
+</div>
+<div class="activity">
+  <div class="lvl">Activity 13.2 · Observe &amp; explain · 10 min</div>
+  <h3>The surprise obstacle</h3>
+  <p>Send a goal across the table. While the LIMO drives, drop a box on its path in Gazebo. Watch the <strong>local costmap</strong> in RViz. What happens to the path? The box is not on your saved map, so which part of Nav2 noticed it, and using which sensor?</p>
+  <details class="solution"><summary>Discussion</summary><div class="inner">The costmaps' obstacle layer marks the box from live <code>/scan</code> data. The planner replans around it and the controller follows the new path. If the way is completely blocked, the behaviour tree runs recoveries (spin, back up, wait) before reporting the action as FAILED.</div></details>
+</div>
+<div class="activity">
+  <div class="lvl">Challenge 13.3 · Stretch · tuning</div>
+  <h3>Faster but safe</h3>
+  <p>In <code>limo_nav2.yaml</code>, find <code>max_vel_x</code> in the controller section and <code>max_velocity</code> in <code>velocity_smoother</code>. Increase them carefully (for example 0.26 → 0.4), restart Nav2 and time your patrol. Then increase <code>inflation_radius</code> to 0.4. Where does the robot now refuse to go? Try the same change in the costmap simulator first.</p>
+  <figure class="book-fig"><img src="images/book/fig5_7.png" alt="Costmap parameters in rqt" loading="lazy"><figcaption>Fig. 5.7: costmap parameters (inflation radius, robot radius…) can also be changed live with rqt.</figcaption></figure>
+</div>
+
+<h3>🏅 Level up: choose your challenge</h3>
+<div class="levels">
+  <div class="lv bronze"><b>🥉 Bronze: everyone</b><span>Goals from RViz and from the terminal; explain goal / feedback / result.</span></div>
+  <div class="lv silver"><b>🥈 Silver: confident</b><span>Activity 13.1 patrol with timing; Activity 13.2 explained.</span></div>
+  <div class="lv gold"><b>🥇 Gold: future expert</b><span>Read the waypoints from a YAML parameter file, and cancel the mission if the battery (a parameter) is "low".</span></div>
+</div>
+
+<div class="kc" data-widget="kc"><div class="kc-head"><span class="sim-tag">✅ Knowledge check</span><b>Lecture 13 check: 5 questions</b></div>
+  <div class="kc-q" data-a="2"><p>What does an action have that a service doesn't?</p><div class="kc-opts"><button>A name</button><button>A type</button><button>Feedback while it runs, and cancellation</button><button>A publisher</button></div><div class="kc-why">Goal → feedback… → result, cancellable at any time.</div></div>
+  <div class="kc-q" data-a="1"><p>Which part of Nav2 turns the path into velocity commands?</p><div class="kc-opts"><button>Planner</button><button>Controller</button><button>AMCL</button><button>map_server</button></div><div class="kc-why">The controller follows the path using the local costmap, about 20 Hz.</div></div>
+  <div class="kc-q" data-a="0"><p>Your goal is rejected: "Failed to create plan". Most likely cause?</p><div class="kc-opts"><button>The goal is inside an obstacle or its inflated (lethal) zone</button><button>The LiDAR is off</button><button>use_sim_time is true</button><button>The map is too big</button></div><div class="kc-why">Try it in the costmap simulator: put the goal next to a wall and raise the robot radius.</div></div>
+  <div class="kc-q" data-a="3"><p>A box appears that is not on the map. How does Nav2 avoid it?</p><div class="kc-opts"><button>It doesn't</button><button>AMCL removes it</button><button>You must re-map the room</button><button>The costmap obstacle layer adds it from /scan and the planner replans</button></div><div class="kc-why">Costmaps combine the static map with live sensor data.</div></div>
+  <div class="kc-q" data-a="1"><p>Which action does RViz's "Nav2 Goal" button call?</p><div class="kc-opts"><button><code>/spawn</code></button><button><code>/navigate_to_pose</code></button><button><code>/cmd_vel</code></button><button><code>/amcl_pose</code></button></div><div class="kc-why">You called the same action from the terminal in Lab 3.</div></div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="exit"><span class="num">13.3</span>When things go wrong · Exit ticket · Homework</h2>
+<div class="table-wrap"><table class="fix">
+  <tr><th>You see…</th><th>Why</th><th>Fix</th></tr>
+  <tr><td>RViz: no map / "Frame [map] does not exist"</td><td>map_server not running, or no initial pose yet.</td><td>Check Terminal 2 for errors; set 2D Pose Estimate.</td></tr>
+  <tr><td>Goal rejected / "Failed to create plan"</td><td>Goal inside inflated space or unknown area.</td><td>Click on clear white space; reduce <code>inflation_radius</code>.</td></tr>
+  <tr><td>Robot spins in place, never moves</td><td>Wrong initial pose, so the laser doesn't match the map.</td><td>Redo 2D Pose Estimate carefully (position <em>and</em> direction).</td></tr>
+  <tr><td>"Timed out waiting for transform"</td><td>Sim time mismatch.</td><td>Every node and RViz needs <code>use_sim_time:=true</code>.</td></tr>
+  <tr><td>nav_mission hangs at "waiting for Nav2"</td><td>Nav2 not started, or not active yet.</td><td>Start <code>bringup_launch.py</code> first; wait for "Managed nodes are active".</td></tr>
+  <tr><td>send_goal: "Action server not available"</td><td>Wrong action name, or Nav2 not up.</td><td><code>ros2 action list</code></td></tr>
+</table></div>
+<div class="quiz">
+  <div class="q"><p>Topic, service or action? (a) "go to the charging dock" (b) "what is 3 + 4?" (c) the camera image.</p><details><summary>Answer</summary><div class="inner">(a) action (long, needs feedback and cancel) (b) service (c) topic.</div></details></div>
+  <div class="q"><p>What is a costmap's inflation layer for?</p><details><summary>Answer</summary><div class="inner">It makes cells near obstacles "expensive", so paths keep a safe distance from walls.</div></details></div>
+</div>
+<div class="box book">
+  <div class="box-title">🏠 Homework</div>
+  <ol>
+    <li>Finish Activity 13.1. Record a bag of the patrol: <code>ros2 bag record /odom /cmd_vel /plan -o patrol</code>.</li>
+    <li>Read the book's <em>NAV2 Architecture</em> and <em>Build Your Own World</em> sections (pp. 116–128).</li>
+    <li>Bring your <code>limo_lab</code> package on a USB stick or GitHub next week: <strong>it runs on the real LIMO</strong>.</li>
+  </ol>
+</div>
+
+<div class="footer-nav">
+  <a href="L12-limo-slam-localization.html">← Lecture 12: Mapping &amp; Localisation</a>
+  <a href="index.html#lectures">All lectures</a>
+  <a href="L14-real-limo-mission.html">Lecture 14: The Real LIMO →</a>
+</div>
+</div>
+<script src="lab.js"></script>
+<script src="widgets.js"></script>
+<script src="annotate.js" defer></script>
+</body>
+</html>

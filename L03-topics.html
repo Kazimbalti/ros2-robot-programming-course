@@ -10,20 +10,21 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
 <link rel="stylesheet" href="lab.css">
+<link rel="stylesheet" href="widgets.css">
 <link rel="stylesheet" href="projector.css">
 </head>
 <body>
 <button id="theme-toggle" aria-label="Toggle light/dark mode">🌙</button>
 <nav class="coursenav"><div class="inner">
   <span class="brand">ROS &amp; Robot Programming</span>
-  <a href="index.html">Home</a><a href="prerequisites.html">Mission Zero</a><a href="syllabus.html">Syllabus</a><a href="schedule.html">Schedule</a><a href="index.html#lectures">Lectures</a>
+  <a href="index.html">Home</a><a href="prerequisites.html">Mission Zero</a><a href="syllabus.html">Syllabus</a><a href="schedule.html">Schedule</a><a href="index.html#lectures">Lectures</a><a href="projects.html">Projects</a>
 </div></nav>
 
-<div class="wrap">
+<div class="wrap" data-enriched="1">
 <div class="lesson-progress"><div class="lp-top"><span>Lecture 3 · your progress</span><span><b class="lp-count">0 / 0 steps</b> · <a href="#" class="lp-reset">reset</a></span></div><div class="lp-bar"><div class="lp-fill"></div></div></div>
 
 <div class="cover">
-  <div class="kicker">Part A · ROS 2 Bootcamp · Lecture 3 of 12</div>
+  <div class="kicker">Part A · ROS 2 Bootcamp · Lecture 3 of 14</div>
   <h1>Topics — Publish &amp; Subscribe</h1>
   <div class="subtitle">Topics are how robot data flows: velocity commands, laser scans, camera images. Today you move a turtle by publishing on a topic, then write your own publisher and subscriber nodes.</div>
   <div class="meta-row">
@@ -32,6 +33,7 @@
     <div class="chip">🐍 Python · ROS 2 Humble</div>
     <div class="chip">Before this: Lecture 2</div>
   </div>
+  <div class="skill-path" aria-label="Course path"><a class="done" href="01-installation-vmware-ros2-limo-intro.html">L1 · Install</a><a class="done" href="L02-first-node.html">L2 · Nodes</a><a class="now" href="L03-topics.html">L3 · Topics</a><a class="" href="L04-services.html">L4 · Services</a><a class="" href="L05-custom-interfaces.html">L5 · Interfaces</a><a class="" href="L06-parameters-launch.html">L6 · Launch</a><a class="" href="L07-catch-them-all.html">L7 · Project</a><a class="" href="L08-drive-limo.html">L8 · Drive</a><a class="" href="L09-limo-urdf-tf-rviz.html">L9 · URDF/TF</a><a class="" href="L10-limo-lidar-imu.html">L10 · LiDAR/IMU</a><a class="" href="L11-limo-camera-vision.html">L11 · Vision</a><a class="" href="L12-limo-slam-localization.html">L12 · SLAM</a><a class="" href="L13-limo-nav2.html">L13 · Nav2</a><a class="" href="L14-real-limo-mission.html">L14 · Real LIMO</a><a href="projects.html">+ Projects</a></div>
 </div>
 
 <div class="grid2">
@@ -59,6 +61,8 @@
   </div>
 </div>
 
+
+<div class="ig"><div class="ig-title"><span class="sim-tag">Infographic</span>Lecture 3 at a glance: one-way data streams</div><div class="ig-flow"><div class="ig-step"><div class="ic">📡</div><b>Publisher</b><span><code>create_publisher(Type, "name", 10)</code></span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">📻</div><b>Topic</b><span>a <b>name</b> + a <b>message type</b></span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">📱</div><b>Subscriber</b><span><code>create_subscription(…, callback, 10)</code></span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🔍</div><b>Inspect</b><span><code>ros2 topic list / echo / info / hz</code></span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🔀</div><b>Remap</b><span><code>--ros-args -r old:=new</code></span></div></div></div>
 <details class="box teacher">
   <summary>🧑‍🏫 Instructor lesson plan (click to open)</summary>
   <div class="inner">
@@ -109,6 +113,14 @@ flowchart LR
 <p><strong>When to use a topic:</strong> for <em>continuous streams</em> of data such as sensor readings, robot position and velocity commands. (For "do this and tell me the result", we use services, next lecture.)</p>
 
 <!-- ============================================================ -->
+<h3>📘 Topics in the book</h3><figure class="book-fig"><img src="images/book/fig2_1.png" alt="Fig. 2.1: a topic is like a radio frequency. Publishers broadcast, subscribers tune in." loading="lazy"><figcaption>Fig. 2.1: a topic is like a radio frequency. Publishers broadcast, subscribers tune in.</figcaption></figure><div class="fig-pair"><figure class="book-fig"><img src="images/book/fig2_2.png" alt="Fig. 2.2: several publishers and subscribers on different topics." loading="lazy"><figcaption>Fig. 2.2: several publishers and subscribers on different topics.</figcaption></figure><figure class="book-fig"><img src="images/book/fig2_3.png" alt="Fig. 2.3: one node can publish and subscribe to many topics." loading="lazy"><figcaption>Fig. 2.3: one node can publish and subscribe to many topics.</figcaption></figure></div>
+<div data-widget="pubsub"></div>
+
+<h3>🃏 Key terms: tap a card to check yourself</h3>
+<div class="flip-grid" data-widget="flip"><div class="flip"><div class="flip-in"><div class="flip-front">Topic<small>tap to flip</small></div><div class="flip-back">A named, <b>one-way</b> data bus with one message type.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Publisher<small>tap to flip</small></div><div class="flip-back">Sends messages on a topic. Does not know who listens.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Subscriber<small>tap to flip</small></div><div class="flip-back">Receives messages through a <b>callback</b>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Message type<small>tap to flip</small></div><div class="flip-back">The "form" both sides agree on, e.g. <code>geometry_msgs/msg/Twist</code>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Queue size (10)<small>tap to flip</small></div><div class="flip-back">How many messages to keep if the network is slow.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Twist<small>tap to flip</small></div><div class="flip-back"><code>linear.x</code> = forward m/s, <code>angular.z</code> = turn rad/s.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Remap<small>tap to flip</small></div><div class="flip-back">Rename a topic at runtime without touching the code.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">hz<small>tap to flip</small></div><div class="flip-back"><code>ros2 topic hz</code> measures how often a topic publishes.</div></div></div></div>
+
+<div class="game" data-widget="sort" data-cats="✅ Topic|❌ Needs a reply (service)"><div class="kc-head"><span class="sim-tag">🎮 Game</span><b>Topic or not? Decide which data suits a topic</b></div><ul><li data-cat="0">LiDAR scans, 10 times per second</li><li data-cat="1">"Compute 3 + 4 and tell me the answer"</li><li data-cat="0">The robot's position, 50 times per second</li><li data-cat="1">"Reset the counter now, and confirm"</li><li data-cat="0">Velocity commands to the wheels</li><li data-cat="0">Battery percentage every second</li><li data-cat="1">"Save the map to disk"</li><li data-cat="0">Camera images</li></ul></div>
+
 <h2 id="lab1"><span class="num">L1</span>Lab 1 — Topics from the command line</h2>
 <div class="lab">
   <div class="lab-h"><span class="badge">LAB 1 · 25 min</span><h3>Move the turtle without the keyboard (Book §2.1.8)</h3></div>
@@ -400,10 +412,12 @@ rqt_graph</code></pre></div>
 </div>
 
 <!-- ============================================================ -->
+<h3>📘 Remapping in the book</h3><div class="fig-pair"><figure class="book-fig"><img src="images/book/fig2_4.png" alt="Fig. 2.4: rqt_graph with renamed stations and a remapped topic, as in Lab 4 step 4." loading="lazy"><figcaption>Fig. 2.4: rqt_graph with renamed stations and a remapped topic, as in Lab 4 step 4.</figcaption></figure><figure class="book-fig"><img src="images/book/fig2_5.png" alt="Fig. 2.5: the rqt_graph of turtlesim + teleop." loading="lazy"><figcaption>Fig. 2.5: the rqt_graph of turtlesim + teleop.</figcaption></figure></div>
 <h2 id="activity"><span class="num">3.2</span>Your turn</h2>
 <div class="activity">
   <div class="lvl">Activity 3.1 · Core · 40 min · from Book §2.1.9</div>
   <h3>The number counter</h3>
+<figure class="book-fig"><img src="images/book/fig2_6.png" alt="Fig. 2.6: the number counter activity: blue boxes are nodes, green boxes are topics." loading="lazy"><figcaption>Fig. 2.6: the number counter activity: blue boxes are nodes, green boxes are topics.</figcaption></figure>
   <div class="mermaid">
 flowchart LR
   A(["number_publisher"]) -- "Int64" --> T1[["/number"]] --> B(["number_counter"]) -- "Int64" --> T2[["/number_count"]]
@@ -523,6 +537,11 @@ if __name__ == "__main__":
     main()</code></pre></div></div></details>
 </div>
 
+
+<h3>🏅 Level up: choose your challenge</h3>
+<div class="levels"><div class="lv bronze"><b>🥉 Bronze: everyone</b><span>Activity 3.1: number_publisher + number_counter working, checked with <code>ros2 topic echo /number_count</code>.</span></div><div class="lv silver"><b>🥈 Silver: confident</b><span>Challenge 3.2: the spiral. Then run two spirals on two turtles using remapping only.</span></div><div class="lv gold"><b>🥇 Gold: future expert</b><span>Write a node that subscribes to <code>/turtle1/pose</code> and publishes a warning String when the turtle is near a wall (x or y &lt; 1 or &gt; 10).</span></div></div>
+
+<div class="kc" data-widget="kc"><div class="kc-head"><span class="sim-tag">✅ Knowledge check</span><b>Lecture 3 check: 5 questions</b></div><div class="kc-q" data-a="1"><p>A topic is…</p><div class="kc-opts"><button>two-way: request and reply</button><button>one-way: publishers → subscribers</button><button>only for one publisher</button><button>a type of node</button></div><div class="kc-why">Topics are one-way streams. For a reply you need a service (Lecture 4).</div></div><div class="kc-q" data-a="1"><p>Your subscriber prints nothing. What do you check first?</p><div class="kc-opts"><button>Reinstall ROS 2</button><button><code>ros2 topic info /name</code>: are the publisher and subscription counts ≥ 1?</button><button>Change the queue size</button><button>Rename the node</button></div><div class="kc-why">Most "no data" bugs are name or type mismatches. <code>ros2 topic info</code> shows both sides.</div></div><div class="kc-q" data-a="2"><p>Which field makes a wheeled robot turn?</p><div class="kc-opts"><button><code>linear.x</code></button><button><code>linear.z</code></button><button><code>angular.z</code></button><button><code>angular.x</code></button></div><div class="kc-why"><code>angular.z</code> is rotation about the vertical axis (rad/s). Positive means turn left.</div></div><div class="kc-q" data-a="2"><p>Who calls <code>callback_robot_news(msg)</code>?</p><div class="kc-opts"><button>You, in <code>main()</code></button><button>The publisher directly</button><button>ROS 2, inside <code>spin</code>, when a message arrives</button><button>The timer</button></div><div class="kc-why">Callbacks are called for you. That is why <code>spin</code> is needed.</div></div><div class="kc-q" data-a="1"><p>The station publishes on <code>/robot_news</code>, the phone is remapped to <code>/my_news</code>. What happens?</p><div class="kc-opts"><button>The phone receives everything</button><button>Nothing arrives and there is no error</button><button>The station crashes</button><button>ROS 2 merges the topics</button></div><div class="kc-why">Topics are anonymous. Nobody is told that the names differ, so both sides simply never meet.</div></div></div>
 <h2 id="errors"><span class="num">3.3</span>When things go wrong</h2>
 <div class="table-wrap"><table class="fix">
   <tr><th>You see…</th><th>Why</th><th>Fix</th></tr>
@@ -570,6 +589,7 @@ if __name__ == "__main__":
 </div>
 </div>
 <script src="lab.js"></script>
+<script src="widgets.js"></script>
 <script src="annotate.js" defer></script>
 </body>
 </html>

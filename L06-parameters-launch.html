@@ -10,20 +10,21 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
 <link rel="stylesheet" href="lab.css">
+<link rel="stylesheet" href="widgets.css">
 <link rel="stylesheet" href="projector.css">
 </head>
 <body>
 <button id="theme-toggle" aria-label="Toggle light/dark mode">🌙</button>
 <nav class="coursenav"><div class="inner">
   <span class="brand">ROS &amp; Robot Programming</span>
-  <a href="index.html">Home</a><a href="prerequisites.html">Mission Zero</a><a href="syllabus.html">Syllabus</a><a href="schedule.html">Schedule</a><a href="index.html#lectures">Lectures</a>
+  <a href="index.html">Home</a><a href="prerequisites.html">Mission Zero</a><a href="syllabus.html">Syllabus</a><a href="schedule.html">Schedule</a><a href="index.html#lectures">Lectures</a><a href="projects.html">Projects</a>
 </div></nav>
 
-<div class="wrap">
+<div class="wrap" data-enriched="1">
 <div class="lesson-progress"><div class="lp-top"><span>Lecture 6 · your progress</span><span><b class="lp-count">0 / 0 steps</b> · <a href="#" class="lp-reset">reset</a></span></div><div class="lp-bar"><div class="lp-fill"></div></div></div>
 
 <div class="cover">
-  <div class="kicker">Part A · ROS 2 Bootcamp · Lecture 6 of 12</div>
+  <div class="kicker">Part A · ROS 2 Bootcamp · Lecture 6 of 14</div>
   <h1>Parameters &amp; Launch Files</h1>
   <div class="subtitle">Stop hard-coding numbers, and stop opening ten terminals. Parameters let you change a node's settings without touching its code, and a launch file starts a whole application with one command. These are exactly the tools you'll use to start the LIMO.</div>
   <div class="meta-row">
@@ -32,6 +33,7 @@
     <div class="chip">🐍 Python · ROS 2 Humble</div>
     <div class="chip">Before this: Lectures 3–5</div>
   </div>
+  <div class="skill-path" aria-label="Course path"><a class="done" href="01-installation-vmware-ros2-limo-intro.html">L1 · Install</a><a class="done" href="L02-first-node.html">L2 · Nodes</a><a class="done" href="L03-topics.html">L3 · Topics</a><a class="done" href="L04-services.html">L4 · Services</a><a class="done" href="L05-custom-interfaces.html">L5 · Interfaces</a><a class="now" href="L06-parameters-launch.html">L6 · Launch</a><a class="" href="L07-catch-them-all.html">L7 · Project</a><a class="" href="L08-drive-limo.html">L8 · Drive</a><a class="" href="L09-limo-urdf-tf-rviz.html">L9 · URDF/TF</a><a class="" href="L10-limo-lidar-imu.html">L10 · LiDAR/IMU</a><a class="" href="L11-limo-camera-vision.html">L11 · Vision</a><a class="" href="L12-limo-slam-localization.html">L12 · SLAM</a><a class="" href="L13-limo-nav2.html">L13 · Nav2</a><a class="" href="L14-real-limo-mission.html">L14 · Real LIMO</a><a href="projects.html">+ Projects</a></div>
 </div>
 
 <div class="grid2">
@@ -59,6 +61,8 @@
   </div>
 </div>
 
+
+<div class="ig"><div class="ig-title"><span class="sim-tag">Infographic</span>Lecture 6 at a glance: configure, then launch everything at once</div><div class="ig-flow"><div class="ig-step"><div class="ic">🎛️</div><b>Declare</b><span><code>declare_parameter("name", default)</code></span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">⌨️</div><b>Set</b><span><code>--ros-args -p name:=value</code></span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">💾</div><b>Save / load</b><span><code>ros2 param dump</code> · <code>--params-file</code></span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🚀</div><b>Launch file</b><span><code>Node(package, executable, name, remappings, parameters)</code></span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🎬</div><b>One command</b><span><code>ros2 launch my_robot_bringup app.launch.py</code></span></div></div></div>
 <details class="box teacher">
   <summary>🧑‍🏫 Instructor lesson plan (click to open)</summary>
   <div class="inner">
@@ -101,6 +105,10 @@ flowchart LR
 </div>
 
 <!-- ============================================================ -->
+<h3>📘 Parameters and launch files in the book</h3><figure class="book-fig"><img src="images/book/fig3_7.png" alt="Fig. 3.7: one camera-driver program started twice, each with its own parameters (device, fps, simulation mode)." loading="lazy"><figcaption>Fig. 3.7: one camera-driver program started twice, each with its own parameters (device, fps, simulation mode).</figcaption></figure><div class="fig-pair"><figure class="book-fig"><img src="images/book/fig3_8.png" alt="Fig. 3.8: many nodes, each with parameters: too many terminals to start by hand…" loading="lazy"><figcaption>Fig. 3.8: many nodes, each with parameters: too many terminals to start by hand…</figcaption></figure><figure class="book-fig"><img src="images/book/fig3_9.png" alt="Fig. 3.9: …so one launch file starts and configures them all." loading="lazy"><figcaption>Fig. 3.9: …so one launch file starts and configures them all.</figcaption></figure></div>
+<h3>🃏 Key terms: tap a card to check yourself</h3>
+<div class="flip-grid" data-widget="flip"><div class="flip"><div class="flip-in"><div class="flip-front">Parameter<small>tap to flip</small></div><div class="flip-back">A named, typed <b>setting</b> of one node.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Default value<small>tap to flip</small></div><div class="flip-back">Also fixes the <b>type</b>: <code>2</code> int, <code>2.0</code> float.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">use_sim_time<small>tap to flip</small></div><div class="flip-back">Every node has it. True means "follow Gazebo's clock".</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">YAML file<small>tap to flip</small></div><div class="flip-back">Many parameters saved in one file; Nav2 uses hundreds.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Launch file<small>tap to flip</small></div><div class="flip-back">A Python script that starts and configures many nodes.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Node(…)<small>tap to flip</small></div><div class="flip-back">One launch entry = one <code>ros2 run</code>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">remappings<small>tap to flip</small></div><div class="flip-back"><code>[("old", "new")]</code> in a launch file.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">bringup package<small>tap to flip</small></div><div class="flip-back">The package that holds your launch files.</div></div></div></div>
+
 <h2 id="lab1"><span class="num">L1</span>Lab 1 — Add parameters to a node</h2>
 <div class="lab">
   <div class="lab-h"><span class="badge">LAB 1 · 25 min</span><h3>number_publisher with two knobs (Book §3.2.1–3.2.2)</h3></div>
@@ -179,11 +187,14 @@ cat ~/ros2_ws/params/turtlesim.yaml
 # stop turtlesim, then start it with the saved settings:
 ros2 run turtlesim turtlesim_node --ros-args --params-file ~/ros2_ws/params/turtlesim.yaml</code></pre></div>
     <div class="box idea"><div class="box-title">💡 Why this matters for the LIMO</div>
-    <p>Big robot software (SLAM, Nav2) has <em>hundreds</em> of parameters, and they are always stored in YAML files like this one. In Lecture 11 you will load Nav2's YAML file.</p></div>
+    <p>Big robot software (SLAM, Nav2) has <em>hundreds</em> of parameters, and they are always stored in YAML files like this one. In Lecture 12 you will load Nav2's YAML file.</p></div>
   </div>
 </div>
 
 <!-- ============================================================ -->
+
+<div data-widget="launchbuilder" data-hint="Pick a preset, edit any box, and watch the launch file and the equivalent <code>ros2 run</code> commands update. Try the radio preset: that is Activity 6.1."></div>
+
 <h2 id="lab3"><span class="num">L3</span>Lab 3 — Your first launch file</h2>
 <div class="lab">
   <div class="lab-h"><span class="badge">LAB 3 · 25 min</span><h3>my_robot_bringup + number_app.launch.py (Book §3.3)</h3></div>
@@ -318,6 +329,7 @@ average rate: 5.000</pre></div>
 <div class="activity">
   <div class="lvl">Activity 6.1 · Core · 40 min · from Book §3.3.2</div>
   <h3>The radio network</h3>
+<figure class="book-fig"><img src="images/book/fig3_10.png" alt="Fig. 3.10: the radio activity: 5 renamed stations and one smartphone on /robot_news." loading="lazy"><figcaption>Fig. 3.10: the radio activity: 5 renamed stations and one smartphone on /robot_news.</figcaption></figure>
   <p>Write <code>radio.launch.py</code> that starts <strong>5 robot_news_station nodes</strong> and <strong>1 smartphone</strong>. Robot names: <code>Giskard, BB8, Daneel, Jander, C3PO</code>. Each station has a different node name and publishes "Hi, this is &lt;name&gt; …". The smartphone receives all of them. You don't need to change any node, only write one launch file.</p>
   <div class="mermaid">
 flowchart LR
@@ -366,6 +378,7 @@ rqt_graph      # second terminal: compare with the diagram above</code></pre></d
 <div class="activity">
   <div class="lvl">Mini-project 6.3 · Homework · from Book §3.4</div>
   <h3>The cylinder calculator</h3>
+<figure class="book-fig"><img src="images/book/fig3_11.png" alt="Fig. 3.11: the cylinder project: radius and height in, volume and surface area out." loading="lazy"><figcaption>Fig. 3.11: the cylinder project: radius and height in, volume and surface area out.</figcaption></figure>
   <p>Build a 3-node system that calculates the <strong>volume</strong> and <strong>surface area</strong> of a cylinder:</p>
   <p style="text-align:center"><code>Volume = π · r² · h</code> &nbsp;&nbsp; <code>Surface area = 2 · π · r · (r + h)</code></p>
   <div class="mermaid">
@@ -436,6 +449,11 @@ if __name__ == "__main__":
   </div></details>
 </div>
 
+
+<h3>🏅 Level up: choose your challenge</h3>
+<div class="levels"><div class="lv bronze"><b>🥉 Bronze: everyone</b><span>Activity 6.1: the radio launch file, checked in rqt_graph.</span></div><div class="lv silver"><b>🥈 Silver: confident</b><span>Mini-project 6.3: the cylinder calculator with its own launch file.</span></div><div class="lv gold"><b>🥇 Gold: future expert</b><span>Load all the station names from a YAML file in the launch file (<code>parameters=[path]</code>).</span></div></div>
+
+<div class="kc" data-widget="kc"><div class="kc-head"><span class="sim-tag">✅ Knowledge check</span><b>Lecture 6 check: 5 questions</b></div><div class="kc-q" data-a="1"><p><code>declare_parameter("rate", 1)</code>, then you run with <code>-p rate:=2.5</code>. What happens?</p><div class="kc-opts"><button>It works: rate = 2.5</button><button>Error: the type was fixed to integer by the default 1</button><button>It is rounded to 2</button><button>It is ignored silently</button></div><div class="kc-why">Use <code>1.0</code> as the default if you want a float.</div></div><div class="kc-q" data-a="1"><p>Which command saves all parameters of a running node?</p><div class="kc-opts"><button><code>ros2 param save</code></button><button><code>ros2 param dump /node > file.yaml</code></button><button><code>ros2 bag record</code></button><button><code>ros2 param list > file</code></button></div><div class="kc-why">dump writes YAML that <code>--params-file</code> can load again.</div></div><div class="kc-q" data-a="0"><p>In a launch file, how do you rename a node?</p><div class="kc-opts"><button><code>name="new_name"</code></button><button><code>rename="new_name"</code></button><button><code>remappings=[("__node","new")]</code> only</button><button>It is not possible</button></div><div class="kc-why"><code>name=</code> is the launch-file version of <code>-r __node:=</code>.</div></div><div class="kc-q" data-a="1"><p>Where must launch files be installed for <code>ros2 launch</code> to find them?</p><div class="kc-opts"><button>Anywhere in home</button><button>In the package's share folder, via <code>install(DIRECTORY launch …)</code></button><button>In /opt/ros</button><button>In src only</button></div><div class="kc-why">Without the install rule the file is never copied into install/.</div></div><div class="kc-q" data-a="1"><p>You ran <code>ros2 param set</code> on number_publisher but nothing changed. Why?</p><div class="kc-opts"><button>ROS 2 is broken</button><button>The node reads its parameters only once, in <code>__init__</code></button><button>Wrong type</button><button>You need sudo</button></div><div class="kc-why">Most simple nodes read parameters at start-up. turtlesim listens for changes, which is why its background changed.</div></div></div>
 <h2 id="errors"><span class="num">6.3</span>When things go wrong</h2>
 <div class="table-wrap"><table class="fix">
   <tr><th>You see…</th><th>Why</th><th>Fix</th></tr>
@@ -480,6 +498,7 @@ if __name__ == "__main__":
 </div>
 </div>
 <script src="lab.js"></script>
+<script src="widgets.js"></script>
 <script src="annotate.js" defer></script>
 </body>
 </html>

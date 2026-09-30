@@ -12,7 +12,7 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lecture 12 — Build Your Own Robot I: Motors, Power &amp; Compute</title>
+<title>Project 1 — Build Your Own Robot I: Motors, Power &amp; Compute</title>
 <meta name="description" content="Meet Forge: choosing gear motors with encoders, wiring an L298N H-bridge to an Arduino Nano, flashing ros_arduino_bridge firmware, calibrating encoder counts-per-revolution, building a real power budget, sizing a LiPo pack, adding a power-distribution module, and standing up Ubuntu Server + ROS 2 Humble on a Raspberry Pi 4 from a blank microSD card.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -150,6 +150,7 @@
   #theme-toggle:hover{transform:scale(1.08);}
   @media (max-width:640px){ #theme-toggle{top:12px; left:12px; width:42px; height:42px; font-size:17px;} }
 </style>
+<link rel="stylesheet" href="widgets.css">
 <link rel="stylesheet" href="projector.css">
 </head>
 <body>
@@ -178,50 +179,53 @@ html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
   <span id="theme-toggle-icon">🌙</span>
 </button>
 <div id="lightbox" role="dialog" aria-label="Enlarged figure"><img alt=""><div class="lb-cap"></div></div>
-<div class="wrap">
+<div class="wrap" data-project="1">
 
   <div class="cover">
-    <div class="kicker">LIMO Robotics &amp; ROS 2 Lecture &nbsp;·&nbsp; Session 12 of 14 — Build Your Own Robot</div>
-    <h1>Lecture 12: Build Your Own Robot I — Motors, Power &amp; Compute</h1>
+    <div class="kicker">Projects · after Lecture 14 &nbsp;·&nbsp; Project 1 of 3 — Build Your Own Robot "Forge"</div>
+    <h1>Project 1: Build Your Own Robot I — Motors, Power &amp; Compute</h1>
     <div class="subtitle">From a bag of parts to a robot with wheels that spin, a battery that feeds them, and a brain running ROS 2 — meet Forge</div>
     <div class="meta-row">
       <div class="chip">Duration: 4-5 hours</div>
-      <div class="chip">Prerequisite: Lecture 11</div>
+      <div class="chip">Prerequisite: Lecture 14</div>
       <div class="chip">Project: Forge — your own ROS 2 robot</div>
       <div class="chip">Hands-on: motors spin by the end</div>
     </div>
   </div>
 
-  <div class="toc">
+  
+<div class="ig"><div class="ig-title"><span class="sim-tag">Infographic</span>Project 1 at a glance: Build Your Own Robot I — Motors, Power &amp; Compute</div><div class="ig-flow"><div class="ig-step"><div class="ic">⚙️</div><b>Motors</b><span>gear motors with encoders</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🔌</div><b>Driver</b><span>L298N H-bridge + Arduino Nano</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">💾</div><b>Firmware</b><span>ros_arduino_bridge</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">📏</div><b>Calibrate</b><span>counts per revolution</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🔋</div><b>Power</b><span>budget, battery, distribution</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🧠</div><b>Brain</b><span>Ubuntu Server + ROS 2 on the SBC</span></div></div></div>
+
+<div class="toc">
     <strong style="color:var(--text)">In this session</strong>
-    <a href="#intro"><span>12.1</span>The build arc — meet Forge</a>
-    <a href="#bom"><span>12.2</span>What you need before you start</a>
-    <a href="#motors"><span>12.3</span>Motors — specifications and pinout</a>
-    <a href="#hardware"><span>12.4</span>Motor control hardware — L298N &amp; Arduino Nano</a>
-    <a href="#wiring"><span>12.5</span>Wiring Forge, step by step</a>
-    <a href="#firmware"><span>12.6</span>Firmware — <code>ros_arduino_bridge</code> on the Nano</a>
-    <a href="#firstmotion"><span>12.7</span>First motion &amp; encoder calibration</a>
-    <a href="#budget"><span>12.8</span>The power budget</a>
-    <a href="#battery"><span>12.9</span>Battery selection &amp; safety</a>
-    <a href="#powermodule"><span>12.10</span>Power distribution — the DFRobot module</a>
-    <a href="#brain"><span>12.11</span>The brain — Ubuntu Server, static IP &amp; SSH</a>
-    <a href="#ros2install"><span>12.12</span>Installing ROS 2 Humble (and fixing a real bug)</a>
-    <a href="#summary"><span>12.13</span>Summary, checkpoint, quiz &amp; glossary</a>
+    <a href="#intro"><span>P1.1</span>The build arc — meet Forge</a>
+    <a href="#bom"><span>P1.2</span>What you need before you start</a>
+    <a href="#motors"><span>P1.3</span>Motors — specifications and pinout</a>
+    <a href="#hardware"><span>P1.4</span>Motor control hardware — L298N &amp; Arduino Nano</a>
+    <a href="#wiring"><span>P1.5</span>Wiring Forge, step by step</a>
+    <a href="#firmware"><span>P1.6</span>Firmware — <code>ros_arduino_bridge</code> on the Nano</a>
+    <a href="#firstmotion"><span>P1.7</span>First motion &amp; encoder calibration</a>
+    <a href="#budget"><span>P1.8</span>The power budget</a>
+    <a href="#battery"><span>P1.9</span>Battery selection &amp; safety</a>
+    <a href="#powermodule"><span>P1.10</span>Power distribution — the DFRobot module</a>
+    <a href="#brain"><span>P1.11</span>The brain — Ubuntu Server, static IP &amp; SSH</a>
+    <a href="#ros2install"><span>P1.12</span>Installing ROS 2 Humble (and fixing a real bug)</a>
+    <a href="#summary"><span>P1.13</span>Summary, checkpoint, quiz &amp; glossary</a>
   </div>
 
   <section id="intro">
-    <h2><span class="num">12.1</span>The build arc — meet Forge</h2>
+    <h2><span class="num">P1.1</span>The build arc — meet Forge</h2>
     <p>
       For eleven lectures, "the robot" has meant a professional, pre-engineered platform: the AgileX LIMO, with
       its four bolt-on drive modules, its sealed motor drivers, its factory-calibrated sensors. You learned to
-      drive it, simulate it, sense with it, localize on it, and — in Lecture 11 — open it up and understand the
+      drive it, simulate it, sense with it, localize on it, and — in Lecture 14 — open it up and understand the
       real electronics inside it well enough to test and trust it.
     </p>
     <p>
       For these last three lectures, you build your own. Not in simulation — a real, physical, wheeled robot,
       assembled from a bare gear motor, an empty microSD card, and a spool of wire, using <em>every single skill</em>
-      this course has given you: H-bridges and PWM from Lecture 11, ROS 2 node/topic architecture from Lecture 2,
-      URDF from Lecture 4, sensor drivers from Lecture 7, Gazebo from Lecture 6. Nothing here is new in kind —
+      this course has given you: H-bridges and PWM from Lecture 14, ROS 2 node/topic architecture from Lecture 3,
+      URDF from Lecture 9, sensor drivers from Lecture 10, Gazebo from Lecture 8. Nothing here is new in kind —
       it's everything you already know, applied without a manufacturer's chassis doing the hard parts for you.
     </p>
     <p>
@@ -232,18 +236,18 @@ html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
     <div class="fig-grid">
       <figure class="figure">
         <img loading="lazy" src="images/fastbot-course/1-2-fastbot-intro_p02_01.jpeg" alt="CAD render of the finished robot: three stacked plates on standoffs, two yellow wheels, a cylindrical LiDAR on top">
-        <figcaption><b>Figure 12.1</b> — Forge, rendered from the CAD assembly you'll build in Lecture 13. Three plates on standoffs, two driven wheels, LiDAR on top.</figcaption>
+        <figcaption><b>Figure 12.1</b> — Forge, rendered from the CAD assembly you'll build in Project 2. Three plates on standoffs, two driven wheels, LiDAR on top.</figcaption>
       </figure>
       <figure class="figure">
         <img loading="lazy" src="images/fastbot-course/1-3-intro-demo_p02_01.png" alt="Photograph of the fully assembled robot on a workbench surrounded by its component parts: motors, driver board, battery, Raspberry Pi, camera and cabling">
-        <figcaption><b>Figure 12.2</b> — The same robot in reality, surrounded by everything that goes into it. Every part in this photo is covered across Lectures 12-14.</figcaption>
+        <figcaption><b>Figure 12.2</b> — The same robot in reality, surrounded by everything that goes into it. Every part in this photo is covered across Projects 1–3.</figcaption>
       </figure>
     </div>
 
     <div class="box def">
       <div class="box-title">📖 Forge is a build of the FastBot reference design</div>
       <p style="margin-bottom:10px;">
-        Lectures 12-14 follow the <strong>FastBot</strong> reference design from The Construct's course
+        Projects 1–3 follow the <strong>FastBot</strong> reference design from The Construct's course
         <em>Build Your First ROS 2 Based Robot</em>. Everything here — part choices, pin assignments, firmware,
         the ROS 2 driver, the CAD documents, the Gazebo plugins — comes from that build, so every command and
         config file in these three sessions is copy-paste-correct against real, published hardware.
@@ -254,7 +258,7 @@ html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
         <code>robot_name</code> stays <code>fastbot</code>, and the Pi's hostname is <code>fastbot</code>. That is
         deliberate, not a typo — it keeps your workspace aligned with the upstream CAD documents and reference
         repositories. "Forge" is what you call the machine on your bench; <code>fastbot</code> is what its software
-        calls itself. If you'd rather rename everything, do it <em>after</em> Lecture 14, when nothing external
+        calls itself. If you'd rather rename everything, do it <em>after</em> Project 3, when nothing external
         depends on the names any more.
       </p>
     </div>
@@ -262,8 +266,8 @@ html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
     <div class="mermaid">
 flowchart TB
     subgraph BUILD["The build arc"]
-      W12["Lecture 12<br/>Motors · Firmware · Power · Compute"] --> W13["Lecture 13<br/>ROS 2 driver · CAD · URDF · LiDAR · Camera"]
-      W13 --> W14["Lecture 14<br/>Gazebo · 3D-printed cover · Capstone"]
+      W12["Project 1<br/>Motors · Firmware · Power · Compute"] --> W13["Project 2<br/>ROS 2 driver · CAD · URDF · LiDAR · Camera"]
+      W13 --> W14["Project 3<br/>Gazebo · 3D-printed cover · Capstone"]
     end
     style W12 fill:#eef0ff,stroke:#3d4bf5
     style W13 fill:#f4effe,stroke:#8b5cf6
@@ -273,31 +277,31 @@ flowchart TB
     <p>
       By the end of <strong>this</strong> session, Forge's wheels will physically spin under closed-loop encoder
       control, off its own battery, and its Raspberry Pi will be running ROS 2 Humble over SSH. By the end of
-      Lecture 13 it will drive from <code>/cmd_vel</code>, describe its own body in URDF, and publish LiDAR and
-      camera data. By the end of Lecture 14 it will exist in Gazebo and wear a 3D-printed cover you designed.
+      Project 2 it will drive from <code>/cmd_vel</code>, describe its own body in URDF, and publish LiDAR and
+      camera data. By the end of Project 3 it will exist in Gazebo and wear a 3D-printed cover you designed.
     </p>
 
     <div class="fig-grid">
       <figure class="figure">
         <img loading="lazy" src="images/fastbot-course/1-1-course-intro_p02_01.png" alt="Onshape CAD workspace showing the simplified FastBot assembly with its feature tree on the left">
-        <figcaption><b>Figure 12.3</b> — Lecture 13: the CAD assembly that becomes Forge's URDF automatically.</figcaption>
+        <figcaption><b>Figure 12.3</b> — Project 2: the CAD assembly that becomes Forge's URDF automatically.</figcaption>
       </figure>
       <figure class="figure">
         <img loading="lazy" src="images/fastbot-course/1-3-intro-demo_p03_02.png" alt="Gazebo simulation showing the robot model driving in a virtual environment">
-        <figcaption><b>Figure 12.4</b> — Lecture 14: the same robot, simulated in Gazebo.</figcaption>
+        <figcaption><b>Figure 12.4</b> — Project 3: the same robot, simulated in Gazebo.</figcaption>
       </figure>
       <figure class="figure">
         <img loading="lazy" src="images/fastbot-course/1-4-course-outline_p10_09.png" alt="Gazebo warehouse world with the robot driving between marked lanes">
-        <figcaption><b>Figure 12.5</b> — Lecture 14: Forge in a warehouse world, ready for the Nav2 stack from Lectures 9-10.</figcaption>
+        <figcaption><b>Figure 12.5</b> — Project 3: Forge in a warehouse world, ready for the Nav2 stack from Lectures 12–13.</figcaption>
       </figure>
     </div>
 
     <div class="box idea">
       <div class="box-title">💡 The three sessions in one sentence each</div>
       <ul style="margin-bottom:0;">
-        <li><strong>Lecture 12 (today)</strong> — make the hardware work: motors, encoders, driver board, microcontroller, battery, power distribution, and a Raspberry Pi running ROS 2.</li>
-        <li><strong>Lecture 13</strong> — make ROS 2 own the hardware: a workspace, a differential-drive driver node, a CAD-derived URDF, and two working sensors.</li>
-        <li><strong>Lecture 14</strong> — make it reproducible and finished: a Gazebo digital twin, a 3D-printed cover, and a capstone review.</li>
+        <li><strong>Project 1 (today)</strong> — make the hardware work: motors, encoders, driver board, microcontroller, battery, power distribution, and a Raspberry Pi running ROS 2.</li>
+        <li><strong>Project 2</strong> — make ROS 2 own the hardware: a workspace, a differential-drive driver node, a CAD-derived URDF, and two working sensors.</li>
+        <li><strong>Project 3</strong> — make it reproducible and finished: a Gazebo digital twin, a 3D-printed cover, and a capstone review.</li>
       </ul>
     </div>
   </section>
@@ -305,7 +309,7 @@ flowchart TB
   <div class="divider"></div>
 
   <section id="bom">
-    <h2><span class="num">12.2</span>What you need before you start</h2>
+    <h2><span class="num">P1.2</span>What you need before you start</h2>
 
     <h3>The bill of materials</h3>
     <p>
@@ -321,7 +325,7 @@ flowchart TB
       <tr><td rowspan="4">Electronics &amp; Control</td><td>L298N motor driver board</td><td>Dual H-bridge, PWM speed control</td><td>1</td><td>Drives both motors from one board — §12.4</td></tr>
       <tr><td>Arduino Nano (or compatible)</td><td>ATmega328P, USB-mini</td><td>1</td><td>Owns the real-time motor loop — §12.4</td></tr>
       <tr><td>Raspberry Pi 4</td><td>4&nbsp;GB+ RAM, microSD 32&nbsp;GB+ (A1/A2)</td><td>1</td><td>Ubuntu Server 22.04 + ROS 2 Humble — §12.11</td></tr>
-      <tr><td>LSLiDAR N-10 + Raspicam</td><td>360° USB-C LiDAR; Pi Camera Module 2 (CSI)</td><td>1 each</td><td>Brought up in Lecture 13 — buy now, wire later</td></tr>
+      <tr><td>LSLiDAR N-10 + Raspicam</td><td>360° USB-C LiDAR; Pi Camera Module 2 (CSI)</td><td>1 each</td><td>Brought up in Project 2 — buy now, wire later</td></tr>
       <tr><td rowspan="4">Cables &amp; Power</td><td>LiPo battery</td><td>3S, 11.1&nbsp;V, 2200&nbsp;mAh, 35&nbsp;C</td><td>1</td><td>Sized against a real power budget in §12.8-12.9</td></tr>
       <tr><td>DFRobot Power Module</td><td>Regulated 12&nbsp;V + 5&nbsp;V distribution</td><td>1</td><td>Feeds motors and Pi from one pack — §12.10</td></tr>
       <tr><td>Dupont jumper cables</td><td>20&nbsp;cm, female-female <em>and</em> male-male</td><td>1 set each</td><td>You will use more of these than you expect</td></tr>
@@ -329,7 +333,7 @@ flowchart TB
       <tr><td rowspan="3">Fasteners &amp; Mounting</td><td>M3 hardware</td><td>4&nbsp;cm male-female spacers, 6/12&nbsp;mm nylon screws, nylon spacers, nuts</td><td>~30-40</td><td>Plate stack and motor mounts</td></tr>
       <tr><td>M2.5 hardware</td><td>10&nbsp;mm spacers, 6&nbsp;mm screws, nuts</td><td>~12</td><td>Raspberry Pi standoffs</td></tr>
       <tr><td>M2 hardware</td><td>6&nbsp;mm and 20&nbsp;mm screws</td><td>~10</td><td>Camera and small brackets</td></tr>
-      <tr><td>Safety</td><td>LiPo-safe charging bag or case</td><td>—</td><td>1</td><td>Same lithium discipline as Lecture 11's LIMO battery</td></tr>
+      <tr><td>Safety</td><td>LiPo-safe charging bag or case</td><td>—</td><td>1</td><td>Same lithium discipline as Lecture 14's LIMO battery</td></tr>
     </table>
     </div>
 
@@ -357,7 +361,7 @@ flowchart TB
   <div class="divider"></div>
 
   <section id="motors">
-    <h2><span class="num">12.3</span>Motors — specifications and pinout</h2>
+    <h2><span class="num">P1.3</span>Motors — specifications and pinout</h2>
     <p>
       Choosing the motors is the single most consequential decision about how Forge interacts with the physical
       world. Forge is small and light, so almost any hobby gear motor could physically move it — which means the
@@ -386,8 +390,8 @@ flowchart TB
       <div class="box-title">🌍 Encoders are also non-negotiable for odometry</div>
       <p>
         Beyond smooth motion, the encoder counts are what Forge's driver node turns into <code>/odom</code> in
-        Lecture 13 — the same wheel odometry you fused with an IMU through an EKF back in Lecture 9, and the same
-        signal AMCL and Nav2 lean on in Lecture 10. A robot without encoders cannot do dead reckoning at all.
+        Project 2 — the same wheel odometry you fused with an IMU through an EKF back in Lecture 12, and the same
+        signal AMCL and Nav2 lean on in Lecture 13. A robot without encoders cannot do dead reckoning at all.
         And since a motor with an integrated encoder costs barely more than one without, there is no reason to
         compromise here.
       </p>
@@ -411,7 +415,7 @@ flowchart TB
       <tr><th>Wire</th><th>Signal</th><th>Connects to</th><th>Notes</th></tr>
       <tr><td>01</td><td>Encoder ground</td><td>Nano GND</td><td>Logic-level ground, shared with the Nano</td></tr>
       <tr><td>02</td><td>Encoder output, A phase</td><td>Nano digital input</td><td>Square wave; phase-offset from B</td></tr>
-      <tr><td>03</td><td>Encoder output, B phase</td><td>Nano digital input</td><td>The A/B edge order gives direction — the quadrature idea from Lecture 11, §9.4</td></tr>
+      <tr><td>03</td><td>Encoder output, B phase</td><td>Nano digital input</td><td>The A/B edge order gives direction — the quadrature idea from Lecture 14, §9.4</td></tr>
       <tr><td>04</td><td>Encoder power supply</td><td>Nano 5&nbsp;V (3.3-5&nbsp;V)</td><td>Over-voltage here can destroy the encoder. Check before connecting.</td></tr>
       <tr><td>05</td><td>Motor line +</td><td>L298N OUT terminal</td><td>High current — never to an MCU pin</td></tr>
       <tr><td>06</td><td>Motor line −</td><td>L298N OUT terminal</td><td>Swapping 05/06 simply reverses spin direction</td></tr>
@@ -433,7 +437,7 @@ flowchart TB
     <div class="exercise">
       <div class="level">Exercise · Easy</div>
       <p>
-        Using the tick-to-distance relationship from Lecture 11
+        Using the tick-to-distance relationship from Lecture 14
         (<code>distance_per_tick = (2 &times; &pi; &times; R) / N</code>), and Forge's 65&nbsp;mm wheel
         (<code>R = 0.0325&nbsp;m</code>): if your encoder turns out to produce 3450 counts per wheel revolution
         (you'll measure the real figure in §12.7), how far does Forge travel per encoder count? How many counts
@@ -445,7 +449,7 @@ flowchart TB
   <div class="divider"></div>
 
   <section id="hardware">
-    <h2><span class="num">12.4</span>Motor control hardware — L298N &amp; Arduino Nano</h2>
+    <h2><span class="num">P1.4</span>Motor control hardware — L298N &amp; Arduino Nano</h2>
     <p>
       A motor connected straight to a battery spins one way, at one speed, forever. To make it "smart" — fast, slow,
       forward, backward, on demand — two pieces of hardware sit between the battery and the motor.
@@ -455,7 +459,7 @@ flowchart TB
     <p>
       A DC motor reverses when you reverse the polarity across its terminals. Doing that under software control
       means an <strong>H-bridge</strong>: four switches arranged so that closing one diagonal pair drives the motor
-      one way and closing the other pair drives it the other. You met this concept on LIMO in Lecture 11, sealed
+      one way and closing the other pair drives it the other. You met this concept on LIMO in Lecture 14, sealed
       inside the chassis. On Forge it's a board on your bench: the <strong>L298N</strong>.
     </p>
     <p>The L298N does three jobs at once:</p>
@@ -472,7 +476,7 @@ flowchart TB
         the <strong>duty cycle</strong>. 100% duty cycle means the signal is always on, so full power. 50% means it's
         on half the time, so roughly half power. 0% means always off, so no power. The motor's own inertia smooths
         the chopped supply into steady rotation. Below some low duty cycle — the motor's <em>deadband</em> — you get
-        audible buzzing and no visible motion at all, exactly the symptom Lecture 11 warned you to expect on real
+        audible buzzing and no visible motion at all, exactly the symptom Lecture 14 warned you to expect on real
         hardware.
       </p>
     </div>
@@ -506,7 +510,7 @@ flowchart TB
     <div class="box real">
       <div class="box-title">🌍 You have seen this architecture before — on LIMO</div>
       <p>
-        This is the <strong>exact same split</strong> AgileX designed into LIMO and you studied in Lecture 11: a
+        This is the <strong>exact same split</strong> AgileX designed into LIMO and you studied in Lecture 14: a
         general-purpose Linux computer running ROS 2, and a separate embedded controller that owns motor PWM and
         encoder reading, talking to each other over a serial link. Forge's Nano is that lesson applied by your own
         hand. A heavy perception callback on the Pi must never be able to delay a motor command long enough for
@@ -557,7 +561,7 @@ flowchart LR
   <div class="divider"></div>
 
   <section id="wiring">
-    <h2><span class="num">12.5</span>Wiring Forge, step by step</h2>
+    <h2><span class="num">P1.5</span>Wiring Forge, step by step</h2>
     <p>
       Time to connect things. Work through this in order, and keep the wheels off the ground (or the motors
       unmounted) until §12.7 — a mis-wired first test that sends the robot off the bench is a very avoidable way to
@@ -718,7 +722,7 @@ IN1 = LOW,  IN2 = LOW   -&gt;  Motor A stopped
   <div class="divider"></div>
 
   <section id="firmware">
-    <h2><span class="num">12.6</span>Firmware — <code>ros_arduino_bridge</code> on the Nano</h2>
+    <h2><span class="num">P1.6</span>Firmware — <code>ros_arduino_bridge</code> on the Nano</h2>
     <p>
       The Nano is wired but empty. It needs firmware that (a) reads the encoders, (b) closes a velocity loop, and
       (c) accepts commands over serial. Rather than writing that from scratch, Forge uses a well-established
@@ -800,7 +804,7 @@ IN1 = LOW,  IN2 = LOW   -&gt;  Motor A stopped
   <div class="divider"></div>
 
   <section id="firstmotion">
-    <h2><span class="num">12.7</span>First motion &amp; encoder calibration</h2>
+    <h2><span class="num">P1.7</span>First motion &amp; encoder calibration</h2>
     <p>
       This is the payoff for §12.3-12.6. Before you start: make sure the battery is powering the motors through
       the L298N, the Nano is connected to your PC by USB, and <strong>the wheels are off the ground</strong>.
@@ -827,7 +831,7 @@ IN1 = LOW,  IN2 = LOW   -&gt;  Motor A stopped
       <p>
         The baud rate must match the firmware exactly. A mismatch does not produce an error — it produces garbage
         bytes, silently. Remember this number: it reappears as the <code>baud_rate</code> parameter of the ROS 2
-        driver node in Lecture 13, and it must match there too.
+        driver node in Project 2, and it must match there too.
       </p>
     </div>
 
@@ -925,7 +929,7 @@ IN1 = LOW,  IN2 = LOW   -&gt;  Motor A stopped
               = 115 counts/loop     (for a target of 1 rev/sec)</code></pre>
       <p style="margin-bottom:0;">
         So each PID cycle should accumulate 115 counts if the wheel is turning once per second. That same
-        conversion, generalised, is exactly what the ROS 2 driver node computes in Lecture 13 — you're deriving it
+        conversion, generalised, is exactly what the ROS 2 driver node computes in Project 2 — you're deriving it
         by hand now so the code isn't magic later.
       </p>
     </div>
@@ -948,7 +952,7 @@ IN1 = LOW,  IN2 = LOW   -&gt;  Motor A stopped
     <div class="box mistake">
       <div class="box-title">⚠️ A deliberate inconsistency to notice</div>
       <p>
-        In Lecture 13 you'll meet two reference files that declare <code>encoder_cpr</code> defaults of
+        In Project 2 you'll meet two reference files that declare <code>encoder_cpr</code> defaults of
         <strong>2500</strong> (the driver launch file) and <strong>2550</strong> (the bringup launch file) — neither
         of which is the 3450 derived above. That's not a trick question, it's what real projects look like: a
         default value gets typed once, copied into a second file, and drifts. <strong>Your measured value is the
@@ -972,7 +976,7 @@ IN1 = LOW,  IN2 = LOW   -&gt;  Motor A stopped
         Record your own measured <code>encoder_cpr</code> for both motors separately. Are they identical? If they
         differ by more than a percent or two, what would that do to Forge's ability to drive in a straight line
         under <em>open</em>-loop control — and why does closed-loop control largely rescue you? Keep this number
-        written down; Lecture 13 needs it.
+        written down; Project 2 needs it.
       </p>
     </div>
   </section>
@@ -980,7 +984,7 @@ IN1 = LOW,  IN2 = LOW   -&gt;  Motor A stopped
   <div class="divider"></div>
 
   <section id="budget">
-    <h2><span class="num">12.8</span>The power budget</h2>
+    <h2><span class="num">P1.8</span>The power budget</h2>
     <figure class="figure">
       <img loading="lazy" src="images/fastbot-course/3-1-battery-unit-summary_p02_01.png" alt="Icon of a battery with a lightning bolt through it, marking the start of the power and battery unit" style="max-width:200px;">
       <figcaption>Everything from here to §12.10 is one question: <em>where does the energy come from, and for how long?</em></figcaption>
@@ -1048,7 +1052,7 @@ Runtime = 24.42 Wh / 78.5 W  &asymp; 0.31 h  &asymp; 18-22 minutes</code></pre>
   <div class="divider"></div>
 
   <section id="battery">
-    <h2><span class="num">12.9</span>Battery selection &amp; safety</h2>
+    <h2><span class="num">P1.9</span>Battery selection &amp; safety</h2>
     <p>
       With the power requirements known, you can pick a pack. Forge uses a <strong>LiPo</strong>
       (lithium-polymer) — a rechargeable chemistry with high energy density that can also deliver high discharge
@@ -1077,13 +1081,13 @@ Runtime = 24.42 Wh / 78.5 W  &asymp; 0.31 h  &asymp; 18-22 minutes</code></pre>
       rating, the pack is nowhere near being the bottleneck — which is exactly the confirmation you want. The failure
       mode to avoid is the opposite: a pack with plenty of energy capacity but too <em>low</em> a C-rating for your
       peak current. Under load it sags badly or trips its own protection, which is the same voltage-sag warning sign
-      Lecture 11 taught you to watch for in LIMO's <code>battery_voltage</code> field.
+      Lecture 14 taught you to watch for in LIMO's <code>battery_voltage</code> field.
     </p>
 
     <div class="box mistake">
       <div class="box-title">⚠️ Lithium safety, restated for a robot you wired yourself</div>
       <p>
-        Everything Lecture 11 taught about lithium handling on LIMO applies without exception here: never leave a
+        Everything Lecture 14 taught about lithium handling on LIMO applies without exception here: never leave a
         pack fully discharged for long, always charge with a proper <strong>balance charger</strong> in a fire-safe
         bag or case on a non-flammable surface, never puncture or short the terminals, and retire any pack showing
         swelling, unusual heat or casing damage. A DIY build adds a risk LIMO's sealed pack doesn't have —
@@ -1108,7 +1112,7 @@ Runtime = 24.42 Wh / 78.5 W  &asymp; 0.31 h  &asymp; 18-22 minutes</code></pre>
   <div class="divider"></div>
 
   <section id="powermodule">
-    <h2><span class="num">12.10</span>Power distribution — the DFRobot module</h2>
+    <h2><span class="num">P1.10</span>Power distribution — the DFRobot module</h2>
     <p>
       One battery, several very different consumers. The motors want ~12&nbsp;V and are electrically noisy. The
       Raspberry Pi wants a clean, well-regulated 5&nbsp;V and will misbehave — or corrupt its SD card — if that rail
@@ -1166,7 +1170,7 @@ flowchart LR
         powered the Pi's or the Nano's logic, those spikes could reset or corrupt them mid-operation — and a Pi
         that browns out during an SD-card write can lose its filesystem. Keeping motor power and logic power on
         distinct regulated rails, joined only by a common ground, is standard practice on essentially every
-        motor-driven robot, and it echoes the same power-distribution reasoning Lecture 11 walked through for
+        motor-driven robot, and it echoes the same power-distribution reasoning Lecture 14 walked through for
         LIMO's own battery and BMS.
       </p>
     </div>
@@ -1190,7 +1194,7 @@ flowchart LR
   <div class="divider"></div>
 
   <section id="brain">
-    <h2><span class="num">12.11</span>The brain — Ubuntu Server, static IP &amp; SSH</h2>
+    <h2><span class="num">P1.11</span>The brain — Ubuntu Server, static IP &amp; SSH</h2>
     <p>
       Forge's brain is a <strong>Raspberry Pi 4</strong> running <strong>Ubuntu Server 22.04 LTS (64-bit)</strong> —
       a headless, no-desktop build, because a robot you drive around a room is not a machine you want to plug a
@@ -1204,7 +1208,7 @@ flowchart LR
       </figure>
       <figure class="figure">
         <img loading="lazy" src="images/fastbot-course/4-1-computer-unit-summary_p03_02.png" alt="Top-down photograph of a Raspberry Pi 4 Model B board showing its USB ports, Ethernet jack, GPIO header, CSI camera connector and USB-C power input">
-        <figcaption><b>Figure 12.30</b> — The Pi 4 Model B. Note the CSI camera connector — Lecture 13 uses it.</figcaption>
+        <figcaption><b>Figure 12.30</b> — The Pi 4 Model B. Note the CSI camera connector — Project 2 uses it.</figcaption>
       </figure>
       <figure class="figure">
         <img loading="lazy" src="images/fastbot-course/4-1-computer-unit-summary_p03_03.png" alt="A USB-C connector and a USB-A connector on a black cable">
@@ -1349,7 +1353,7 @@ fastbot@fastbot:~$</span></div>
   <div class="divider"></div>
 
   <section id="ros2install">
-    <h2><span class="num">12.12</span>Installing ROS 2 Humble (and fixing a real bug)</h2>
+    <h2><span class="num">P1.12</span>Installing ROS 2 Humble (and fixing a real bug)</h2>
     <p>
       Ubuntu Server ships with nothing ROS-related. Forge's Pi needs the same ROS 2 Humble install every other
       machine in this course has used — except this time you run it yourself, over SSH, on a completely blank system.
@@ -1421,7 +1425,7 @@ $(. /etc/os-release &amp;&amp; echo $UBUNTU_CODENAME) main" | \
         visualization, nothing that wants a display. That's exactly right for a headless robot: it installs faster,
         uses far less of the SD card, and doesn't drag in GUI dependencies the Pi will never use. RViz runs on
         <em>your</em> machine, subscribing over the network. <code>teleop_twist_keyboard</code> comes along because
-        Lecture 13 uses it to drive Forge by hand.
+        Project 2 uses it to drive Forge by hand.
       </p>
     </div>
 
@@ -1516,13 +1520,13 @@ source /opt/ros/humble/setup.bash</code></pre>
         low-voltage lightning-bolt warnings. The Pi 4 is genuinely fussy about a clean 5&nbsp;V under load, and an
         undervolted Pi behaves like a flaky Pi — random freezes, dropped USB devices, corrupted SD cards — while
         reporting nothing obviously wrong. This is the same "no error is not the same as working" discipline
-        Lecture 11 built around LIMO's <code>error_code</code> field, and Lecture 13 turns it into a full
+        Lecture 14 built around LIMO's <code>error_code</code> field, and Project 2 turns it into a full
         debugging exercise.
       </p>
     </div>
 
     <div class="box real">
-      <div class="box-title">🌍 Where Forge stands at the end of Lecture 12</div>
+      <div class="box-title">🌍 Where Forge stands at the end of Project 1</div>
       <ul style="margin-bottom:0;">
         <li>✅ Motors wired to an L298N, driven by an Arduino Nano running <code>ros_arduino_bridge</code></li>
         <li>✅ Encoders read back, and <code>encoder_cpr</code> measured for <em>your</em> hardware</li>
@@ -1537,15 +1541,15 @@ source /opt/ros/humble/setup.bash</code></pre>
   <div class="divider"></div>
 
   <section id="summary">
-    <h2><span class="num">12.13</span>Summary, checkpoint, quiz &amp; glossary</h2>
+    <h2><span class="num">P1.13</span>Summary, checkpoint, quiz &amp; glossary</h2>
     <p>
       This session took Forge from a bag of components to a robot whose wheels physically spin under closed-loop
       encoder control, off its own battery, with a networked Linux brain running ROS 2. You chose motors on
       voltage and feedback rather than raw torque, wired an H-bridge and a microcontroller by hand, flashed real
       firmware, measured your own encoder constant instead of trusting a default, built an honest power budget and
       sized a pack against both its energy <em>and</em> its current rating, and stood up Ubuntu Server + ROS 2
-      Humble from a blank card. Lecture 13 gives Forge a ROS 2 nervous system, a body it can describe, and senses
-      it can trust; Lecture 14 puts it in Gazebo, gives it a printed cover, and closes out the course.
+      Humble from a blank card. Project 2 gives Forge a ROS 2 nervous system, a body it can describe, and senses
+      it can trust; Project 3 puts it in Gazebo, gives it a printed cover, and closes out the course.
     </p>
 
     <div class="checkpoint">
@@ -1554,7 +1558,7 @@ source /opt/ros/humble/setup.bash</code></pre>
         <li>I can explain why 12&nbsp;V motors <em>with encoders</em> are the right class of part for this robot, in terms of both power distribution and closed-loop control.</li>
         <li>I can identify a gear motor's encoder and power lines from its published pinout, and I know why I can't trust wire colour alone.</li>
         <li>I can explain how an H-bridge and PWM together give a motor bidirectional, speed-controllable motion, and what a duty cycle is.</li>
-        <li>I can explain why the motor loop runs on a dedicated MCU rather than the Pi, and connect it directly to LIMO's SBC/embedded-controller split from Lecture 11.</li>
+        <li>I can explain why the motor loop runs on a dedicated MCU rather than the Pi, and connect it directly to LIMO's SBC/embedded-controller split from Lecture 14.</li>
         <li>I wired the L298N, the Nano and both encoders using the documented pin map, and I know why those specific pins were chosen.</li>
         <li>I flashed <code>ros_arduino_bridge</code> and drove the motors with <code>o</code>, <code>e</code>, <code>r</code> and <code>m</code> over serial at 57600 baud.</li>
         <li>I measured my own <code>encoder_cpr</code> and converted it to counts-per-PID-loop for a 30&nbsp;Hz controller.</li>
@@ -1577,7 +1581,7 @@ source /opt/ros/humble/setup.bash</code></pre>
       </div>
       <div class="quiz-q">
         <p><strong>Q3.</strong> Why does the motor loop run on an Arduino Nano instead of the Raspberry Pi?</p>
-        <details><summary>Reveal answer</summary><p>Three reasons: dedicated hardware PWM timers give a rock-steady signal; a dedicated MCU gives real-time, predictable response with no OS scheduling jitter; and it frees the Pi for ROS 2, perception and navigation. It's the same SBC/embedded-controller split LIMO uses (Lecture 11).</p></details>
+        <details><summary>Reveal answer</summary><p>Three reasons: dedicated hardware PWM timers give a rock-steady signal; a dedicated MCU gives real-time, predictable response with no OS scheduling jitter; and it frees the Pi for ROS 2, perception and navigation. It's the same SBC/embedded-controller split LIMO uses (Lecture 14).</p></details>
       </div>
       <div class="quiz-q">
         <p><strong>Q4.</strong> On Forge, ENA and ENB are jumpered to 5&nbsp;V. So where does speed control come from?</p>
@@ -1589,7 +1593,7 @@ source /opt/ros/humble/setup.bash</code></pre>
       </div>
       <div class="quiz-q">
         <p><strong>Q6.</strong> A pack has plenty of capacity (Ah) but too low a C-rating for Forge's peak current. What symptom would you expect under load?</p>
-        <details><summary>Reveal answer</summary><p>Voltage sag under load, or the pack's own protection circuitry tripping — the same warning sign Lecture 11 taught you to watch for in LIMO's <code>battery_voltage</code> field.</p></details>
+        <details><summary>Reveal answer</summary><p>Voltage sag under load, or the pack's own protection circuitry tripping — the same warning sign Lecture 14 taught you to watch for in LIMO's <code>battery_voltage</code> field.</p></details>
       </div>
       <div class="quiz-q">
         <p><strong>Q7. (Gotcha)</strong> You installed <code>ros-humble-*</code> packages, sourced <code>.bashrc</code>, and <code>ros2 topic list</code> still misbehaves. Where's the bug most likely hiding?</p>
@@ -1599,7 +1603,7 @@ source /opt/ros/humble/setup.bash</code></pre>
 
     <h3>Glossary</h3>
     <dl class="glossary">
-      <dt>H-bridge</dt><dd>A switch arrangement that lets a motor be driven in either direction by choosing which diagonal pair is closed. Forge's is an L298N; LIMO's was sealed inside the chassis (Lecture 11).</dd>
+      <dt>H-bridge</dt><dd>A switch arrangement that lets a motor be driven in either direction by choosing which diagonal pair is closed. Forge's is an L298N; LIMO's was sealed inside the chassis (Lecture 14).</dd>
       <dt>PWM (Pulse-Width Modulation)</dt><dd>Controlling delivered power by switching a signal on and off rapidly and varying the fraction of time it's on (the duty cycle).</dd>
       <dt>Duty cycle</dt><dd>The on-fraction of a PWM signal. 100% = full power, 50% ≈ half power, 0% = off.</dd>
       <dt>Deadband</dt><dd>The low range of duty cycles where a motor buzzes but doesn't turn, because the commanded power can't overcome static friction.</dd>
@@ -1627,10 +1631,13 @@ source /opt/ros/humble/setup.bash</code></pre>
     </ul>
   </section>
 
-  <div class="footer-nav">
-    <a href="11-limo-hardware-six-systems.html">&larr; Lecture 11: LIMO Hardware Deep-Dive</a>
-    <a href="index.html">Table of Contents</a>
-    <a href="13-diy-robot-ros2-driver-urdf-lidar-camera.html">Lecture 13: Build Your Own Robot II &rarr;</a>
+  
+<div class="kc" data-widget="kc"><div class="kc-head"><span class="sim-tag">✅ Knowledge check</span><b>Project 1 check</b></div><div class="kc-q" data-a="1"><p>What does an H-bridge (L298N) let the microcontroller do?</p><div class="kc-opts"><button>Charge the battery</button><button>Drive a motor forwards and backwards with variable speed</button><button>Read the LiDAR</button><button>Run ROS 2</button></div><div class="kc-why">It switches the motor supply in either direction under PWM control.</div></div><div class="kc-q" data-a="1"><p>Why calibrate counts per revolution?</p><div class="kc-opts"><button>To make the LEDs blink</button><button>So encoder ticks convert correctly into distance and speed</button><button>To save power</button><button>It is optional decoration</button></div><div class="kc-why">distance_per_tick = 2πR / N: a wrong N makes all odometry wrong.</div></div><div class="kc-q" data-a="0"><p>What is a power budget for?</p><div class="kc-opts"><button>Choosing a battery that can supply every component long enough</button><button>Paying for parts</button><button>Setting ROS parameters</button><button>Tuning the PID</button></div><div class="kc-why">Add up the current of every part and the runtime you need.</div></div></div>
+
+<div class="footer-nav">
+    <a href="L14-real-limo-mission.html">&larr; Lecture 14: The Real LIMO</a>
+    <a href="projects.html">All projects</a>
+    <a href="13-diy-robot-ros2-driver-urdf-lidar-camera.html">Project 2: Build Your Own Robot II &rarr;</a>
   </div>
 
 </div>
@@ -1684,6 +1691,7 @@ source /opt/ros/humble/setup.bash</code></pre>
   document.addEventListener('keydown', function(e){ if(e.key === 'Escape') close(); });
 })();
 </script>
+<script src="widgets.js"></script>
 <script src="annotate.js" defer></script>
 </body>
 </html>

@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){try{var t=localStorage.getItem('limo-book-theme');if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 10 — LiDAR &amp; IMU: Reactive Robots</title>
+<meta name="description" content="Hands-on Lecture 10: read the LIMO's LiDAR and IMU in Python. Find the nearest obstacle, build an obstacle-avoiding wanderer, and turn exactly 90 degrees using the gyroscope.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<link rel="stylesheet" href="lab.css">
+<link rel="stylesheet" href="widgets.css">
+<link rel="stylesheet" href="projector.css">
+</head>
+<body>
+<button id="theme-toggle" aria-label="Toggle light/dark mode">🌙</button>
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html">Home</a><a href="prerequisites.html">Mission Zero</a><a href="syllabus.html">Syllabus</a><a href="schedule.html">Schedule</a><a href="index.html#lectures">Lectures</a><a href="projects.html">Projects</a>
+</div></nav>
+
+<div class="wrap" data-enriched="1">
+<div class="lesson-progress"><div class="lp-top"><span>Lecture 10 · your progress</span><span><b class="lp-count">0 / 0 steps</b> · <a href="#" class="lp-reset">reset</a></span></div><div class="lp-bar"><div class="lp-fill"></div></div></div>
+
+<div class="cover">
+  <div class="kicker">Part B · ROS 2 on the LIMO · Lecture 10 of 14</div>
+  <h1>LiDAR &amp; IMU — Reactive Robots</h1>
+  <div class="subtitle">A robot that can't sense just follows a script. Today the LIMO starts reacting to the world: it measures distances with its LiDAR, avoids obstacles on its own, and uses its gyroscope to turn by an exact angle.</div>
+  <div class="meta-row">
+    <div class="chip">⏱ 3 h · 20 min teach · 2 h 40 min hands-on</div>
+    <div class="chip">🤖 /scan · /imu</div>
+    <div class="chip">🐍 Python · ROS 2 Humble</div>
+    <div class="chip">Before this: Lectures 8–9</div>
+  </div>
+  <div class="skill-path" aria-label="Course path"><a class="done" href="01-installation-vmware-ros2-limo-intro.html">L1 · Install</a><a class="done" href="L02-first-node.html">L2 · Nodes</a><a class="done" href="L03-topics.html">L3 · Topics</a><a class="done" href="L04-services.html">L4 · Services</a><a class="done" href="L05-custom-interfaces.html">L5 · Interfaces</a><a class="done" href="L06-parameters-launch.html">L6 · Launch</a><a class="done" href="L07-catch-them-all.html">L7 · Project</a><a class="done" href="L08-drive-limo.html">L8 · Drive</a><a class="done" href="L09-limo-urdf-tf-rviz.html">L9 · URDF/TF</a><a class="now" href="L10-limo-lidar-imu.html">L10 · LiDAR/IMU</a><a class="" href="L11-limo-camera-vision.html">L11 · Vision</a><a class="" href="L12-limo-slam-localization.html">L12 · SLAM</a><a class="" href="L13-limo-nav2.html">L13 · Nav2</a><a class="" href="L14-real-limo-mission.html">L14 · Real LIMO</a><a href="projects.html">+ Projects</a></div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h3>🎯 By the end of today you can…</h3>
+    <ul class="outcomes">
+      <li>Read a <code>LaserScan</code> and convert an index into an angle.</li>
+      <li>Find the nearest obstacle and check a "sector" in front of the robot.</li>
+      <li>Build a <strong>reactive</strong> controller: drive, detect, turn away.</li>
+      <li>Read an <code>Imu</code> message and integrate the gyro to measure a turn.</li>
+      <li>Explain what each sensor is good (and bad) at.</li>
+    </ul>
+  </div>
+  <div class="card toc">
+    <h3>🗺️ Today's route</h3>
+    <a href="#warmup"><span>10.0</span>Warm-up</a>
+    <a href="#idea"><span>10.1</span>The idea: sense → think → act</a>
+    <a href="#lab1"><span>Lab 1</span>Look inside a LaserScan</a>
+    <a href="#lab2"><span>Lab 2</span>Nearest obstacle</a>
+    <a href="#lab3"><span>Lab 3</span>The obstacle-avoiding wanderer</a>
+    <a href="#lab4"><span>Lab 4</span>The IMU: turn exactly 90°</a>
+    <a href="#activity"><span>10.2</span>Activities</a>
+    <a href="#exit"><span>10.3</span>Errors, exit ticket &amp; homework</a>
+  </div>
+</div>
+
+<div class="ig"><div class="ig-title"><span class="sim-tag">Infographic</span>Lecture 10 at a glance: the reactive loop</div><div class="ig-flow">
+  <div class="ig-step"><div class="ic">📡</div><b>LiDAR</b><span>360 distances per sweep on <code>/scan</code></span></div><div class="ig-arrow">→</div>
+  <div class="ig-step"><div class="ic">📐</div><b>Index → angle</b><span><code>angle_min + i × angle_increment</code></span></div><div class="ig-arrow">→</div>
+  <div class="ig-step"><div class="ic">🔭</div><b>Sectors</b><span>front / left / right minimum</span></div><div class="ig-arrow">→</div>
+  <div class="ig-step"><div class="ic">🧠</div><b>Decide</b><span>clear → go · blocked → turn to open side</span></div><div class="ig-arrow">→</div>
+  <div class="ig-step"><div class="ic">🕹️</div><b>Act</b><span><code>/cmd_vel</code> at 10 Hz</span></div><div class="ig-arrow">→</div>
+  <div class="ig-step"><div class="ic">🧭</div><b>IMU</b><span>gyro tells how fast you really turn</span></div>
+</div></div>
+
+<details class="box teacher">
+  <summary>🧑‍🏫 Instructor lesson plan (click to open)</summary>
+  <div class="inner">
+  <div class="table-wrap"><table>
+    <tr><th>Time</th><th>Activity</th><th>Type</th></tr>
+    <tr><td>0:00–0:10</td><td>Warm-up</td><td><span class="tag check">Check</span></td></tr>
+    <tr><td>0:10–0:30</td><td>Sense-think-act; how a LiDAR and a gyro work; play with the LaserScan simulator on the projector</td><td><span class="tag teach">Teach</span></td></tr>
+    <tr><td>0:30–1:05</td><td>Labs 1–2: LaserScan fields, nearest_obstacle</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>1:05–1:40</td><td>Lab 3: wanderer</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>1:40–1:50</td><td>Break</td><td></td></tr>
+    <tr><td>1:50–2:30</td><td>Lab 4: IMU, imu_turn</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>2:30–2:55</td><td>Activities 10.1 / 10.2</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>2:55–3:00</td><td>Exit ticket</td><td><span class="tag check">Check</span></td></tr>
+  </table></div>
+  <p><strong>Teaching tip.</strong> Before coding Lab 2, draw the LIMO seen from above on the board with the scan fan from −115° to +115° and index 0 on the right. Ask "which index looks straight ahead?" before anyone writes code. The simulator below answers it live.</p>
+  </div>
+</details>
+
+<h2 id="warmup"><span class="num">10.0</span>Warm-up (5 min)</h2>
+<div class="quiz">
+  <div class="q"><p>In which frame are the LiDAR's measurements, and where is that frame on the robot?</p><details><summary>Answer</summary><div class="inner"><code>laser_link</code>, about 10 cm in front of <code>base_link</code> (Lecture 9).</div></details></div>
+  <div class="q"><p>What's the pattern for a controller that uses sensor data?</p><details><summary>Answer</summary><div class="inner">Store the latest message in the callback; decide and publish in a timer (Lecture 7).</div></details></div>
+</div>
+
+<h2 id="idea"><span class="num">10.1</span>The idea in 10 minutes</h2>
+<div class="mermaid">
+flowchart LR
+  S["👀 SENSE<br/>/scan · /imu"] --> T["🧠 THINK<br/>your node:<br/>obstacle ahead? turned enough?"] --> A["🦾 ACT<br/>/cmd_vel"]
+  A -. "robot moves, the world looks different" .-> S
+</div>
+<div class="grid2">
+  <div class="analogy"><div class="emoji">📡</div><div>
+    <p><strong>LiDAR = a spinning tape measure.</strong> It fires a laser in many directions and measures the distance in each. One sweep is one <code>LaserScan</code>: a list of distances, <code>ranges[]</code>, plus the angle of the first one and the step between them.</p>
+    <p>The LIMO (sim): <strong>360 rays</strong> from <strong>−2.0 to +2.0 rad</strong> (±115°), 0.12–8 m, 8 Hz. A ray that hits nothing gives <code>inf</code>.</p>
+  </div></div>
+  <div class="analogy"><div class="emoji">🧭</div><div>
+    <p><strong>IMU = your inner ear.</strong> A gyroscope measures how fast you rotate (rad/s) and an accelerometer measures acceleration. It knows nothing about walls, but it knows exactly how fast you turn, even if the wheels slip.</p>
+  </div></div>
+</div>
+<div class="figure">
+<svg viewBox="0 0 420 230" role="img" aria-label="LIMO seen from above; the scan fan goes from index 0 at -115 degrees on the right, through index 180 straight ahead, to index 359 at +115 degrees on the left" style="width:100%;max-width:460px;background:var(--panel);border:1px solid var(--border);border-radius:14px">
+  <path d="M210 190 L 90 60 A 170 170 0 0 1 330 60 Z" fill="#3d4bf5" opacity=".08"/>
+  <path d="M210 190 L 360 250" stroke="#d64a3c" stroke-width="2"/>
+  <path d="M210 190 L 60 250" stroke="#0e9e6e" stroke-width="2"/>
+  <line x1="210" y1="190" x2="210" y2="25" stroke="#3d4bf5" stroke-width="3"/>
+  <line x1="210" y1="190" x2="162" y2="32" stroke="#c8862c" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <line x1="210" y1="190" x2="258" y2="32" stroke="#c8862c" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <rect x="192" y="170" width="36" height="44" rx="6" fill="#211f1a" opacity=".8"/>
+  <text x="216" y="20" font-size="13" fill="currentColor">index ≈180 · angle 0 (straight ahead)</text>
+  <text x="262" y="52" font-size="12" fill="#c8862c">front sector ±20°</text>
+  <text x="300" y="222" font-size="12" fill="#d64a3c">index 0 · −115° (right)</text>
+  <text x="8" y="222" font-size="12" fill="#0e9e6e">index 359 · +115° (left)</text>
+</svg>
+<figcaption><code>angle(i) = angle_min + i × angle_increment</code>. Positive angles are to the <strong>left</strong> (y is left in ROS).</figcaption>
+</div>
+
+<div data-widget="scan"></div>
+
+<h3>🃏 Key terms: tap a card to check yourself</h3>
+<div class="flip-grid" data-widget="flip">
+  <div class="flip"><div class="flip-in"><div class="flip-front">LaserScan<small>tap to flip</small></div><div class="flip-back">One LiDAR sweep: <code>ranges[]</code> + <code>angle_min</code> + <code>angle_increment</code>.</div></div></div>
+  <div class="flip"><div class="flip-in"><div class="flip-front">inf<small>tap to flip</small></div><div class="flip-back">"Nothing hit within range_max". Filter it out with <code>math.isfinite()</code>.</div></div></div>
+  <div class="flip"><div class="flip-in"><div class="flip-front">Sector<small>tap to flip</small></div><div class="flip-back">A slice of angles, e.g. front ±20°. We take its minimum range.</div></div></div>
+  <div class="flip"><div class="flip-in"><div class="flip-front">Reactive control<small>tap to flip</small></div><div class="flip-back">Decide only from what you sense <b>now</b>. No map, no goal.</div></div></div>
+  <div class="flip"><div class="flip-in"><div class="flip-front">Gyroscope<small>tap to flip</small></div><div class="flip-back">Measures angular velocity (rad/s): <code>imu.angular_velocity.z</code>.</div></div></div>
+  <div class="flip"><div class="flip-in"><div class="flip-front">Integration<small>tap to flip</small></div><div class="flip-back">angle += rate × dt, every message. Small errors add up (drift).</div></div></div>
+</div>
+
+<div class="box tip"><div class="box-title">📦 Check today's tools</div>
+<div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>ros2 launch limo_gazebosim limo_gazebo_diff.launch.py</code></pre></div>
+<p>Leave Gazebo running in Terminal 1 for the whole lecture. All code goes into your <code>limo_lab</code> package from Lecture 8.</p></div>
+
+<!-- ============================================================ -->
+<h2 id="lab1"><span class="num">L1</span>Lab 1 — Look inside a LaserScan</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 1 · 15 min</span><h3>Read the numbers before writing code</h3></div>
+  <div class="step" id="x1-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Inspect the message</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>ros2 interface show sensor_msgs/msg/LaserScan | grep -v "^\s*#"
+ros2 topic hz /scan
+ros2 topic echo /scan --once --field angle_min
+ros2 topic echo /scan --once --field angle_increment
+ros2 topic echo /scan --once --field ranges | head -20</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>average rate: 8.0
+-2.0
+0.011142061...          ← 4.0 rad / 359 steps
+- .inf                  ← nothing hit in that direction
+- 1.2345...</pre></div>
+  </div>
+  <div class="step" id="x1-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Place an obstacle and watch it in RViz</span></div>
+    <p>Open your saved RViz config from Lecture 9 (<code>rviz2 -d ~/ros2_ws/limo.rviz --ros-args -p use_sim_time:=true</code>). In Gazebo, click the <strong>box</strong> tool in the top toolbar and drop a box about 0.5 m in front of the LIMO. Red dots appear on it in RViz.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab2"><span class="num">L2</span>Lab 2 — Nearest obstacle</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 2 · 20 min</span><h3>nearest_obstacle.py</h3></div>
+  <div class="step" id="x2-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Write the node</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 limo_lab/limo_lab/nearest_obstacle.py</div><pre><code>#!/usr/bin/env python3
+import math
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import LaserScan
+
+
+class NearestObstacle(Node):
+    def __init__(self):
+        super().__init__("nearest_obstacle")
+        self.create_subscription(LaserScan, "scan", self.callback_scan, 10)
+
+    def callback_scan(self, msg):
+        nearest_range = math.inf
+        nearest_index = -1
+        for i, r in enumerate(msg.ranges):
+            if math.isfinite(r) and msg.range_min &lt;= r &lt;= msg.range_max and r &lt; nearest_range:
+                nearest_range = r
+                nearest_index = i
+
+        if nearest_index == -1:
+            self.get_logger().info("Nothing in range")
+            return
+        angle = msg.angle_min + nearest_index * msg.angle_increment
+        side = "LEFT" if angle > 0.1 else "RIGHT" if angle &lt; -0.1 else "AHEAD"
+        self.get_logger().info(
+            f"nearest: {nearest_range:.2f} m at {math.degrees(angle):.0f} deg ({side})",
+            throttle_duration_sec=0.5)
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    rclpy.spin(NearestObstacle())
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+    <p><code>throttle_duration_sec=0.5</code> prints at most twice per second, so the terminal stays readable.</p>
+  </div>
+  <div class="step" id="x2-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Run it and move the box in Gazebo</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>#  setup.py:  "nearest_obstacle = limo_lab.nearest_obstacle:main",
+cd ~/ros2_ws &amp;&amp; colcon build --packages-select limo_lab --symlink-install &amp;&amp; source ~/.bashrc
+ros2 run limo_lab nearest_obstacle --ros-args -p use_sim_time:=true</code></pre></div>
+    <p>In Gazebo press <kbd>T</kbd> (translate) and drag the box around the robot. Does LEFT/RIGHT match what you see? Compare with the simulator above.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab3"><span class="num">L3</span>Lab 3 — The obstacle-avoiding wanderer</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 3 · 35 min</span><h3>Drive forward; if something is close in front, turn toward the more open side</h3></div>
+  <div class="step" id="x3-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Write <code>wanderer.py</code></span></div>
+    <div class="cmd file"><div class="cmd-h">📄 limo_lab/limo_lab/wanderer.py</div><pre><code>#!/usr/bin/env python3
+import math
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import LaserScan
+from geometry_msgs.msg import Twist
+
+
+def sector_min(msg, from_angle, to_angle):
+    """Smallest valid range between two angles (radians)."""
+    best = math.inf
+    for i, r in enumerate(msg.ranges):
+        angle = msg.angle_min + i * msg.angle_increment
+        if from_angle &lt;= angle &lt;= to_angle and math.isfinite(r) and r >= msg.range_min:
+            best = min(best, r)
+    return best
+
+
+class Wanderer(Node):
+    def __init__(self):
+        super().__init__("wanderer")
+        self.declare_parameter("safety_distance", 0.4)   # metres
+        self.declare_parameter("speed", 0.15)            # m/s
+        self.safety_ = self.get_parameter("safety_distance").value
+        self.speed_ = self.get_parameter("speed").value
+        self.scan_ = None
+        self.cmd_pub_ = self.create_publisher(Twist, "cmd_vel", 10)
+        self.create_subscription(LaserScan, "scan", self.callback_scan, 10)
+        self.create_timer(0.1, self.control_loop)           # 10 Hz, keeps the watchdog happy
+
+    def callback_scan(self, msg):
+        self.scan_ = msg                                     # store...
+
+    def control_loop(self):                                  # ...and decide here
+        msg = Twist()
+        if self.scan_ is None:
+            self.cmd_pub_.publish(msg)
+            return
+        front = sector_min(self.scan_, -0.35, 0.35)          # about ±20°
+        left = sector_min(self.scan_, 0.35, 1.5)
+        right = sector_min(self.scan_, -1.5, -0.35)
+
+        if front > self.safety_:
+            msg.linear.x = self.speed_                       # path clear: go
+        else:
+            msg.angular.z = 0.6 if left > right else -0.6    # blocked: turn to the open side
+            self.get_logger().info(f"Obstacle {front:.2f} m ahead, turning "
+                                   f"{'left' if left > right else 'right'}",
+                                   throttle_duration_sec=1.0)
+        self.cmd_pub_.publish(msg)
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    rclpy.spin(Wanderer())
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+  </div>
+  <div class="step" id="x3-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Let it roam</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>#  setup.py:  "wanderer = limo_lab.wanderer:main",
+cd ~/ros2_ws &amp;&amp; colcon build --packages-select limo_lab --symlink-install &amp;&amp; source ~/.bashrc
+ros2 run limo_lab wanderer --ros-args -p use_sim_time:=true</code></pre></div>
+    <p>✅ The LIMO drives around the table without touching the walls or obstacles. <strong>Experiment:</strong> try <code>-p safety_distance:=0.2</code> and <code>0.8</code>. What is the trade-off? (Try the same in the simulator first.)</p>
+    <div class="box warn"><div class="box-title">⚠️ Why this is not yet "navigation"</div>
+    <p>The wanderer only reacts: it has no map and no goal, and it can get stuck in a corner. Lectures 12–13 add a map and a planner (Nav2). Reactive safety, however, is used on every real robot as the last line of defence.</p></div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab4"><span class="num">L4</span>Lab 4 — The IMU: turn exactly 90°</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 4 · 40 min</span><h3>Read the gyro, then use it for closed-loop turning</h3></div>
+  <div class="step" id="x4-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Look inside an Imu message</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminals 2 &amp; 3</div><pre><code>ros2 interface show sensor_msgs/msg/Imu | grep -v "^\s*#"
+ros2 topic hz /imu
+ros2 topic echo /imu --field angular_velocity.z
+ros2 run teleop_twist_keyboard teleop_twist_keyboard</code></pre></div>
+    <div class="out"><div class="out-h">✅ The three parts you get</div><pre>orientation            ← quaternion (Gazebo fills it in)
+angular_velocity       ← gyroscope, rad/s   (we use .z)
+linear_acceleration    ← accelerometer, m/s² (.z ≈ 9.8 = gravity)</pre></div>
+    <p>Turn with teleop (<kbd>j</kbd>/<kbd>l</kbd>): <code>angular_velocity.z</code> should be close to the <code>angular.z</code> you command, positive when turning left. The IMU publishes about <strong>100 times per second</strong>.</p>
+  </div>
+  <div class="step" id="x4-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Write <code>imu_turn.py</code>: integrate the gyro, stop at the target</span></div>
+    <p>Angle turned = sum of (rate × time step). We use the time stamps inside the messages, so it also works with simulation time.</p>
+    <div class="cmd file"><div class="cmd-h">📄 limo_lab/limo_lab/imu_turn.py</div><pre><code>#!/usr/bin/env python3
+import math
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Imu
+from geometry_msgs.msg import Twist
+
+
+class ImuTurn(Node):
+    def __init__(self):
+        super().__init__("imu_turn")
+        self.declare_parameter("target_deg", 90.0)
+        self.declare_parameter("turn_speed", 0.5)                  # rad/s
+        self.target_ = math.radians(self.get_parameter("target_deg").value)
+        self.speed_ = self.get_parameter("turn_speed").value
+        self.turned_ = 0.0                                          # radians so far
+        self.last_stamp_ = None
+        self.done_ = False
+        self.cmd_pub_ = self.create_publisher(Twist, "cmd_vel", 10)
+        self.create_subscription(Imu, "imu", self.callback_imu, 50)
+        self.create_timer(0.05, self.control_loop)                  # 20 Hz
+
+    def callback_imu(self, msg):
+        t = msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9
+        if self.last_stamp_ is not None:
+            dt = t - self.last_stamp_
+            self.turned_ += msg.angular_velocity.z * dt             # integrate the gyro
+        self.last_stamp_ = t
+
+    def control_loop(self):
+        if self.done_:
+            return
+        cmd = Twist()
+        remaining = abs(self.target_) - abs(self.turned_)
+        if remaining > 0.01:
+            # slow down for the last 20 degrees so we don't overshoot
+            speed = self.speed_ if remaining > 0.35 else max(0.1, self.speed_ * remaining / 0.35)
+            cmd.angular.z = math.copysign(speed, self.target_)
+        else:
+            self.done_ = True
+            self.get_logger().info(f"Done: turned {math.degrees(self.turned_):.1f} deg")
+        self.cmd_pub_.publish(cmd)
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    rclpy.spin(ImuTurn())
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+  </div>
+  <div class="step" id="x4-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Run it and check with odometry</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminals 2 &amp; 3</div><pre><code>#  setup.py:  "imu_turn = limo_lab.imu_turn:main",
+cd ~/ros2_ws &amp;&amp; colcon build --packages-select limo_lab --symlink-install &amp;&amp; source ~/.bashrc
+ros2 run limo_lab odom_reader --ros-args -p use_sim_time:=true
+ros2 run limo_lab imu_turn --ros-args -p use_sim_time:=true -p target_deg:=90.0</code></pre></div>
+    <p>✅ <code>imu_turn</code> reports about 90°, and <code>odom_reader</code> (Lecture 8) shows the yaw changing by the same amount. Try <code>-p target_deg:=-180.0</code>. Why do we slow down near the end? Try <code>-p turn_speed:=1.5</code> and compare the overshoot.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="activity"><span class="num">10.2</span>Your turn</h2>
+<div class="activity">
+  <div class="lvl">Activity 10.1 · Core · 20 min</div>
+  <h3>The safe square</h3>
+  <p>Combine what you have: drive forward 0.5 m (odometry, Lecture 8), turn 90° (IMU, today), four times, but <strong>stop immediately</strong> if the front sector is closer than 0.3 m. Put an obstacle on one side of the square to test the stop.</p>
+  <details class="hint"><summary>Hint</summary><div class="inner">Use a small state machine: <code>"forward"</code> / <code>"turn"</code> / <code>"blocked"</code>. Subscribe to <code>/odom</code>, <code>/imu</code> and <code>/scan</code>; decide in one 10 Hz timer. Reuse <code>sector_min</code>.</div></details>
+</div>
+<div class="activity">
+  <div class="lvl">Challenge 10.2 · Stretch</div>
+  <h3>Wall follower</h3>
+  <p>Write <code>wall_follower.py</code> that keeps the LIMO about 0.4 m from the wall on its <strong>right</strong>, driving along the table's edge. Use the right sector (−100° to −80°) as the distance to the wall and a P-controller: <code>angular.z = k × (right_distance − 0.4)</code>, plus the front check from the wanderer so it turns left at corners.</p>
+  <details class="solution"><summary>Solution: the control loop</summary><div class="inner">
+  <div class="cmd file"><div class="cmd-h">📄 wall_follower.py (control_loop only; the rest is like wanderer.py)</div><pre><code>    def control_loop(self):
+        msg = Twist()
+        if self.scan_ is None:
+            self.cmd_pub_.publish(msg)
+            return
+        front = sector_min(self.scan_, -0.35, 0.35)
+        right = sector_min(self.scan_, -1.75, -1.40)            # about -100° … -80°
+        if front &lt; 0.4:
+            msg.angular.z = 0.6                                  # corner: turn left
+        else:
+            msg.linear.x = 0.12
+            error = min(right, 1.0) - 0.4                        # too far → positive → turn right
+            msg.angular.z = max(-0.8, min(0.8, -1.5 * error))
+        self.cmd_pub_.publish(msg)</code></pre></div></div></details>
+</div>
+
+<h3>🏅 Level up: choose your challenge</h3>
+<div class="levels">
+  <div class="lv bronze"><b>🥉 Bronze: everyone</b><span>nearest_obstacle + wanderer running; explain LEFT/RIGHT from the angle.</span></div>
+  <div class="lv silver"><b>🥈 Silver: confident</b><span>imu_turn to ±90° and ±180° within 2°; Activity 10.1.</span></div>
+  <div class="lv gold"><b>🥇 Gold: future expert</b><span>Wall follower that laps the whole table without touching it.</span></div>
+</div>
+
+<div class="kc" data-widget="kc"><div class="kc-head"><span class="sim-tag">✅ Knowledge check</span><b>Lecture 10 check: 5 questions</b></div>
+  <div class="kc-q" data-a="2"><p>angle_min = −2.0 and angle_increment = 0.0111. Which index looks straight ahead?</p><div class="kc-opts"><button>0</button><button>90</button><button>≈180</button><button>359</button></div><div class="kc-why">(0 − (−2.0)) / 0.0111 ≈ 180.</div></div>
+  <div class="kc-q" data-a="1"><p>A range value is <code>inf</code>. What does it mean?</p><div class="kc-opts"><button>An obstacle touching the robot</button><button>Nothing was hit within range_max</button><button>The LiDAR is broken</button><button>The robot is moving</button></div><div class="kc-why">Always filter with <code>math.isfinite()</code> before taking a minimum.</div></div>
+  <div class="kc-q" data-a="0"><p>Positive <code>angular_velocity.z</code> on the IMU means the robot turns…</p><div class="kc-opts"><button>left (counter-clockwise)</button><button>right</button><button>forward</button><button>it is falling</button></div><div class="kc-why">Right-hand rule around z (up): positive = counter-clockwise = left.</div></div>
+  <div class="kc-q" data-a="1"><p>Why integrate the gyro instead of using wheel odometry to measure a turn?</p><div class="kc-opts"><button>It is simpler</button><button>The gyro measures the real rotation even when wheels slip</button><button>Odometry has no yaw</button><button>The gyro never drifts</button></div><div class="kc-why">Wheels can slip while turning; the gyro feels the body's real rotation. (It does drift slowly over long times.)</div></div>
+  <div class="kc-q" data-a="3"><p>The wanderer gets stuck in a corner, turning back and forth. Why?</p><div class="kc-opts"><button>A bug in Gazebo</button><button>The LiDAR is too slow</button><button>Wrong topic</button><button>It is purely reactive: no memory, no map, no goal</button></div><div class="kc-why">That is why Lectures 12–13 add mapping and planning.</div></div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="exit"><span class="num">10.3</span>When things go wrong · Exit ticket · Homework</h2>
+<div class="table-wrap"><table class="fix">
+  <tr><th>You see…</th><th>Why</th><th>Fix</th></tr>
+  <tr><td>min() is always inf or 0.0</td><td>Invalid readings not filtered.</td><td>Keep only <code>math.isfinite(r)</code> and <code>r &gt;= range_min</code>.</td></tr>
+  <tr><td>Robot turns the wrong way</td><td>Sign confusion.</td><td>Positive angle / positive <code>angular.z</code> = LEFT.</td></tr>
+  <tr><td>imu_turn never stops</td><td>No IMU messages (wrong topic) or <code>use_sim_time</code> mismatch.</td><td><code>ros2 topic hz /imu</code>; run with <code>-p use_sim_time:=true</code>.</td></tr>
+  <tr><td>imu_turn overshoots</td><td>Too fast; the robot can't stop instantly.</td><td>Lower <code>turn_speed</code>, or slow down earlier.</td></tr>
+  <tr><td>Wanderer hits obstacles</td><td>Front sector too narrow or safety too small.</td><td>Widen to ±30°; increase <code>safety_distance</code>.</td></tr>
+</table></div>
+<div class="quiz">
+  <div class="q"><p>Is the wanderer open-loop or closed-loop? Is it navigation?</p><details><summary>Answer</summary><div class="inner">Closed-loop (it reacts to the LiDAR), but reactive only: no map, no goal, so it's not navigation.</div></details></div>
+  <div class="q"><p>Which sensor would you trust for "how far is the wall?" and which for "how much have I turned?"</p><details><summary>Answer</summary><div class="inner">LiDAR for distances; IMU gyro (short term) for rotation.</div></details></div>
+</div>
+<div class="box book">
+  <div class="box-title">🏠 Homework</div>
+  <ol>
+    <li>Finish Activity 10.1 and record a bag: <code>ros2 bag record /scan /imu /cmd_vel -o safe_square</code>.</li>
+    <li>Check your OpenCV install for next week: <code>sudo apt install ros-humble-cv-bridge python3-opencv ros-humble-rqt-image-view</code></li>
+  </ol>
+</div>
+
+<div class="footer-nav">
+  <a href="L09-limo-urdf-tf-rviz.html">← Lecture 9: URDF, TF &amp; RViz</a>
+  <a href="index.html#lectures">All lectures</a>
+  <a href="L11-limo-camera-vision.html">Lecture 11: Camera &amp; Vision →</a>
+</div>
+</div>
+<script src="lab.js"></script>
+<script src="widgets.js"></script>
+<script src="annotate.js" defer></script>
+</body>
+</html>

@@ -122,6 +122,7 @@
   #theme-toggle:hover{transform:scale(1.08);}
   @media (max-width:640px){ #theme-toggle{top:12px; left:12px; width:42px; height:42px; font-size:17px;} }
 </style>
+<link rel="stylesheet" href="widgets.css">
 <link rel="stylesheet" href="projector.css">
 </head>
 <body>
@@ -149,16 +150,18 @@ html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
 <button id="theme-toggle" aria-label="Toggle light/dark mode" title="Light/dark mode">
   <span id="theme-toggle-icon">🌙</span>
 </button>
-<div class="wrap">
+<div class="wrap" data-enriched="1">
 
   <div class="cover">
-    <div class="kicker">LIMO Robotics &amp; ROS 2 Lecture &nbsp;·&nbsp; Session 1 of 14</div>
+    <div class="kicker">LIMO Robotics &amp; ROS 2 Lecture &nbsp;·&nbsp; Lecture 1 of 14 · Part A: ROS 2 Bootcamp</div>
     <h1>Lecture 1: Getting Started — VMware, Ubuntu 22.04 &amp; ROS 2 Humble</h1>
     <div class="subtitle">Installing your Linux robotics workstation from zero, then meeting the AgileX LIMO.</div>
     <div class="meta-row">
       <div class="chip">Duration: 3 hours</div>
       <div class="chip">Prerequisite: None — start here</div>
       <div class="chip">You'll leave with: a working ROS 2 Humble desktop + LIMO simulator</div>
+
+  <div class="skill-path" aria-label="Course path"><a class="now" href="01-installation-vmware-ros2-limo-intro.html">L1 · Install</a><a class="" href="L02-first-node.html">L2 · Nodes</a><a class="" href="L03-topics.html">L3 · Topics</a><a class="" href="L04-services.html">L4 · Services</a><a class="" href="L05-custom-interfaces.html">L5 · Interfaces</a><a class="" href="L06-parameters-launch.html">L6 · Launch</a><a class="" href="L07-catch-them-all.html">L7 · Project</a><a class="" href="L08-drive-limo.html">L8 · Drive</a><a class="" href="L09-limo-urdf-tf-rviz.html">L9 · URDF/TF</a><a class="" href="L10-limo-lidar-imu.html">L10 · LiDAR/IMU</a><a class="" href="L11-limo-camera-vision.html">L11 · Vision</a><a class="" href="L12-limo-slam-localization.html">L12 · SLAM</a><a class="" href="L13-limo-nav2.html">L13 · Nav2</a><a class="" href="L14-real-limo-mission.html">L14 · Real LIMO</a><a href="projects.html">+ Projects</a></div>
     </div>
   </div>
 
@@ -178,6 +181,9 @@ html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
   </div>
 
   <section id="sec0">
+
+<div class="ig"><div class="ig-title"><span class="sim-tag">Infographic</span>Lecture 1 at a glance: from a blank laptop to a driving robot</div><div class="ig-flow"><div class="ig-step"><div class="ic">💻</div><b>VMware</b><span>a virtual computer on your laptop</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🐧</div><b>Ubuntu 22.04</b><span>the operating system robots use</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🤖</div><b>ROS 2 Humble</b><span><code>source /opt/ros/humble/setup.bash</code></span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🧰</div><b>Tools</b><span>Terminator · VS Code · colcon</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">📦</div><b>LIMO workspace</b><span><code>~/limo_ws</code> built with colcon</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🚗</div><b>First drive</b><span>LIMO in Gazebo + teleop</span></div></div></div>
+<div class="fig-pair"><figure class="book-fig"><img src="images/book/fig1_1.png" alt="Fig. 1.1: why ROS 2: a robot program is split into nodes that talk to each other." loading="lazy"><figcaption>Fig. 1.1: why ROS 2: a robot program is split into nodes that talk to each other.</figcaption></figure><figure class="book-fig"><img src="images/book/fig1_2.png" alt="Fig. 1.2: reuse libraries and mix Python and C++." loading="lazy"><figcaption>Fig. 1.2: reuse libraries and mix Python and C++.</figcaption></figure></div>
     <h2><span class="num">1.0</span>The Big Picture: How It All Connects</h2>
     <p>
       Before you install anything, it helps to have a mental model of <strong>how everything inside a robot is
@@ -488,7 +494,7 @@ flowchart TD
 
     <h3>Step 1 — Download the ISO</h3>
     <ol>
-      <li>On your host machine's browser, go to <strong>ubuntu.com/download/desktop</strong>.</li> or download from here <a href="https://drive.google.com/file/d/1CKV0ScWRPglf0b3SXX_Si_faGvNHm_aN/view?usp=sharing" target="_blank" rel="noopener">Ubuntu 22.04 LTS ISO</a>.</li>
+      <li>On your host machine's browser, go to <strong>ubuntu.com/download/desktop</strong>, or download it from here: <a href="https://drive.google.com/file/d/1CKV0ScWRPglf0b3SXX_Si_faGvNHm_aN/view?usp=sharing" target="_blank" rel="noopener">Ubuntu 22.04 LTS ISO</a>.</li>
       <li>Find <strong>Ubuntu 22.04.x LTS</strong> in the list of releases (it may be labeled "Jammy Jellyfish") and download the desktop ISO image. It's roughly 4–5 GB, so this can take a while depending on your connection.</li>
     </ol>
 
@@ -555,7 +561,7 @@ The following NEW packages will be installed:
   open-vm-tools open-vm-tools-desktop ...
 Setting up open-vm-tools-desktop (2:12.x.x-1) ...
 Processing triggers for man-db ...</span>
-<span class="term-prompt">you@ubuntu-vm:~$</span> sudo reboot</span>
+<span class="term-prompt">you@ubuntu-vm:~$</span> sudo reboot
       </div>
     </div>
 
@@ -1247,7 +1253,15 @@ flowchart LR
     </ul>
   </section>
 
-  <div class="footer-nav">
+  
+<h3>🃏 Key terms: tap a card to check yourself</h3>
+<div class="flip-grid" data-widget="flip"><div class="flip"><div class="flip-in"><div class="flip-front">VM<small>tap to flip</small></div><div class="flip-back">A computer inside your computer, so Ubuntu can run on Windows/macOS safely.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Ubuntu 22.04<small>tap to flip</small></div><div class="flip-back">The Linux version that ROS 2 Humble is built for.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">ROS 2 Humble<small>tap to flip</small></div><div class="flip-back">The long-term-support ROS 2 release used in this course.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">source<small>tap to flip</small></div><div class="flip-back">Loads ROS 2 into the current terminal.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">~/.bashrc<small>tap to flip</small></div><div class="flip-back">A script run in every new terminal. We put the source lines here.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">rosdep<small>tap to flip</small></div><div class="flip-back">Installs the system packages that a workspace needs.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Gazebo<small>tap to flip</small></div><div class="flip-back">The physics simulator where the virtual LIMO lives.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">teleop_twist_keyboard<small>tap to flip</small></div><div class="flip-back">Drive a robot with the keyboard by publishing /cmd_vel.</div></div></div></div>
+
+<div class="game" data-widget="order"><div class="kc-head"><span class="sim-tag">🎮 Game</span><b>Put the Lecture 1 set-up steps in order</b></div><ol><li>Install VMware Workstation Pro</li><li>Create the VM (4 cores, 8 GB RAM, 60 GB disk)</li><li>Install Ubuntu 22.04 inside the VM</li><li>Install ROS 2 Humble with apt</li><li>Add <code>source /opt/ros/humble/setup.bash</code> to <code>~/.bashrc</code></li><li>Clone <code>limo_ros2</code> into <code>~/limo_ws</code></li><li><code>rosdep install</code>, then <code>colcon build</code></li><li><code>ros2 launch limo_gazebosim limo_gazebo_diff.launch.py</code></li></ol></div>
+
+<div class="kc" data-widget="kc"><div class="kc-head"><span class="sim-tag">✅ Knowledge check</span><b>Lecture 1 check: 5 questions</b></div><div class="kc-q" data-a="1"><p>Why do we run Ubuntu in a VM in this course?</p><div class="kc-opts"><button>It is faster than a real install</button><button>It is safe, identical for everyone, and easy to reset</button><button>ROS 2 only runs in VMs</button><button>Windows cannot open terminals</button></div><div class="kc-why">A VM cannot damage your main system, and everyone gets the same environment.</div></div><div class="kc-q" data-a="1"><p>Which command makes <code>ros2</code> work in a terminal?</p><div class="kc-opts"><button><code>sudo ros2</code></button><button><code>source /opt/ros/humble/setup.bash</code></button><button><code>colcon build</code></button><button><code>apt update</code></button></div><div class="kc-why">We add it to <code>~/.bashrc</code> so every new terminal gets it.</div></div><div class="kc-q" data-a="1"><p>In <code>~/.bashrc</code>, which order is correct?</p><div class="kc-opts"><button>Workspace first, then ROS 2</button><button>ROS 2 first, then the workspace</button><button>The order does not matter</button><button>Only one line is allowed</button></div><div class="kc-why">Workspaces are "overlays" on top of the ROS 2 install.</div></div><div class="kc-q" data-a="1"><p>What does <code>rosdep install --from-paths src …</code> do?</p><div class="kc-opts"><button>Builds the code</button><button>Installs the system dependencies the packages declare</button><button>Deletes old builds</button><button>Starts Gazebo</button></div><div class="kc-why">rosdep reads every package.xml and installs what is missing.</div></div><div class="kc-q" data-a="1"><p>The LIMO stops when you stop pressing keys. Why?</p><div class="kc-opts"><button>A bug</button><button>The twist watchdog stops it when /cmd_vel is silent for 0.5 s</button><button>The battery is empty</button><button>Gazebo is paused</button></div><div class="kc-why">A safety feature you will meet again in Lecture 8.</div></div></div>
+
+<div class="footer-nav">
     <a href="index.html">&larr; Table of Contents</a>
     <a href="L02-first-node.html">Lecture 2: Your First ROS 2 Node &rarr;</a>
   </div>
@@ -1284,6 +1298,7 @@ flowchart LR
   });
 })();
 </script>
+<script src="widgets.js"></script>
 <script src="annotate.js" defer></script>
 </body>
 </html>

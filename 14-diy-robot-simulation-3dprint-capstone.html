@@ -12,7 +12,7 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lecture 14 — Build Your Own Robot III: Simulation, 3D-Printed Cover &amp; Capstone</title>
+<title>Project 3 — Build Your Own Robot III: Simulation, 3D-Printed Cover &amp; Capstone</title>
 <meta name="description" content="Close the course: convert Forge's generated URDF into a parameterised Xacro, add Gazebo differential-drive, LiDAR and camera plugins, build the four-file simulation launch hierarchy, publish the packages to GitHub and run the simulation, design a 3D-printable cover in Onshape around the one rule that governs every print, and present the capstone build review.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -147,6 +147,7 @@
   #theme-toggle:hover{transform:scale(1.08);}
   @media (max-width:640px){ #theme-toggle{top:12px; left:12px; width:42px; height:42px; font-size:17px;} }
 </style>
+<link rel="stylesheet" href="widgets.css">
 <link rel="stylesheet" href="projector.css">
 </head>
 <body>
@@ -175,50 +176,53 @@ html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
   <span id="theme-toggle-icon">🌙</span>
 </button>
 <div id="lightbox" role="dialog" aria-label="Enlarged figure"><img alt=""><div class="lb-cap"></div></div>
-<div class="wrap">
+<div class="wrap" data-project="1">
 
   <div class="cover">
-    <div class="kicker">LIMO Robotics &amp; ROS 2 Lecture &nbsp;·&nbsp; Session 14 of 14 — Course Capstone</div>
-    <h1>Lecture 14: Build Your Own Robot III — Simulation, 3D-Printed Cover &amp; Capstone</h1>
+    <div class="kicker">Projects · after Lecture 14 &nbsp;·&nbsp; Project 3 of 3 — Build Your Own Robot "Forge"</div>
+    <h1>Project 3: Build Your Own Robot III — Simulation, 3D-Printed Cover &amp; Capstone</h1>
     <div class="subtitle">Building Forge's digital twin, finishing the physical robot, and closing out the course</div>
     <div class="meta-row">
       <div class="chip">Duration: 5-6 hours</div>
-      <div class="chip">Prerequisite: Lecture 13</div>
+      <div class="chip">Prerequisite: Project 2</div>
       <div class="chip">Project: Forge — your own ROS 2 robot</div>
       <div class="chip">Deliverable: capstone build review</div>
     </div>
   </div>
 
-  <div class="toc">
+  
+<div class="ig"><div class="ig-title"><span class="sim-tag">Infographic</span>Project 3 at a glance: Build Your Own Robot III — Simulation, 3D-Printed Cover &amp; Capstone</div><div class="ig-flow"><div class="ig-step"><div class="ic">🧬</div><b>Xacro</b><span>parameterised model</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🔌</div><b>Plugins</b><span>diff-drive, LiDAR, camera</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🚀</div><b>Launch</b><span>the four-file hierarchy</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🌍</div><b>Digital twin</b><span>drive Forge in Gazebo</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🖨️</div><b>3D print</b><span>design the cover</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🏆</div><b>Review</b><span>capstone build review</span></div></div></div>
+
+<div class="toc">
     <strong style="color:var(--text)">In this session</strong>
-    <a href="#recap"><span>14.1</span>The road here — and today's goal</a>
-    <a href="#xacro"><span>14.2</span>From URDF to Xacro</a>
-    <a href="#fullxacro"><span>14.3</span>Forge's complete Xacro, block by block</a>
-    <a href="#diffdrive"><span>14.4</span>Gazebo plugins — the differential-drive plugin</a>
-    <a href="#sensors"><span>14.5</span>LiDAR and camera sensor plugins</a>
-    <a href="#launch"><span>14.6</span>The simulation launch hierarchy</a>
-    <a href="#run"><span>14.7</span>Publishing your packages &amp; running the simulation</a>
-    <a href="#compare"><span>14.8</span>Forge's Gazebo vs. LIMO's Gazebo</a>
-    <a href="#cover"><span>14.9</span>Designing the 3D-printed cover</a>
-    <a href="#printing"><span>14.10</span>3D printing considerations</a>
-    <a href="#capstone"><span>14.11</span>The capstone build review</a>
-    <a href="#summary"><span>14.12</span>Summary, checkpoint, quiz &amp; where to go next</a>
+    <a href="#recap"><span>P3.1</span>The road here — and today's goal</a>
+    <a href="#xacro"><span>P3.2</span>From URDF to Xacro</a>
+    <a href="#fullxacro"><span>P3.3</span>Forge's complete Xacro, block by block</a>
+    <a href="#diffdrive"><span>P3.4</span>Gazebo plugins — the differential-drive plugin</a>
+    <a href="#sensors"><span>P3.5</span>LiDAR and camera sensor plugins</a>
+    <a href="#launch"><span>P3.6</span>The simulation launch hierarchy</a>
+    <a href="#run"><span>P3.7</span>Publishing your packages &amp; running the simulation</a>
+    <a href="#compare"><span>P3.8</span>Forge's Gazebo vs. LIMO's Gazebo</a>
+    <a href="#cover"><span>P3.9</span>Designing the 3D-printed cover</a>
+    <a href="#printing"><span>P3.10</span>3D printing considerations</a>
+    <a href="#capstone"><span>P3.11</span>The capstone build review</a>
+    <a href="#summary"><span>P3.12</span>Summary, checkpoint, quiz &amp; where to go next</a>
   </div>
 
   <section id="recap">
-    <h2><span class="num">14.1</span>The road here — and today's goal</h2>
+    <h2><span class="num">P3.1</span>The road here — and today's goal</h2>
     <p>
       This is the last session of the course, and it's worth pausing to see the whole arc before diving back in.
-      Lectures 1-8 built your ROS 2 fundamentals on the AgileX LIMO in simulation — nodes and topics, URDF and
-      TF2, Gazebo and controllers, sensors and computer vision. Lectures 9-10 layered state estimation and autonomy
-      on top: the EKF, AMCL, SLAM and Nav2. Lecture 11 cracked LIMO open for real and made you fluent in its actual
-      electronics. Lectures 12-13 handed you a blank workbench and had you build <strong>Forge</strong> — motors,
+      Lectures 1–11 built your ROS 2 fundamentals on the AgileX LIMO in simulation — nodes and topics, URDF and
+      TF2, Gazebo and controllers, sensors and computer vision. Lectures 12–13 layered state estimation and autonomy
+      on top: the EKF, AMCL, SLAM and Nav2. Lecture 14 cracked LIMO open for real and made you fluent in its actual
+      electronics. Projects 1–2 handed you a blank workbench and had you build <strong>Forge</strong> — motors,
       encoders, an H-bridge, a microcontroller, a power budget, a Linux brain, a ROS 2 driver, a CAD-derived URDF,
       and two working sensors.
     </p>
     <p>
-      Today closes the loop three times over. You'll take the URDF from Lecture 13 and adapt it for Gazebo, so
-      Forge exists in simulation the way LIMO has since Lecture 6 — except every plugin parameter is one you
+      Today closes the loop three times over. You'll take the URDF from Project 2 and adapt it for Gazebo, so
+      Forge exists in simulation the way LIMO has since Lecture 8 — except every plugin parameter is one you
       derived yourself rather than one a manufacturer shipped for you. You'll design a 3D-printed cover, the one
       part of Forge that is purely yours to shape. And then the course ends the way it should: with you presenting
       the robot you built.
@@ -227,10 +231,10 @@ html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
     <div class="box idea">
       <div class="box-title">🧠 Why simulate a robot you already built?</div>
       <p>
-        It might seem backwards to simulate Forge <em>after</em> building it, when Lecture 6 simulated LIMO long
+        It might seem backwards to simulate Forge <em>after</em> building it, when Lecture 8 simulated LIMO long
         before you touched real hardware. Both orderings were deliberate. With LIMO, simulation came first because
         you didn't yet know enough to touch real motors safely. With Forge, you built the hardware first because by
-        Lecture 12 you had that judgement — and simulating it now lets you develop and test navigation behaviours
+        Project 1 you had that judgement — and simulating it now lets you develop and test navigation behaviours
         without burning battery cycles or risking a collision on every iteration. It's a good idea to create a
         simulation for <em>every</em> robot you use: it makes testing and validation dramatically faster. Simulation
         isn't a rehearsal for reality here; it's a faster, safer sandbox that sits <em>alongside</em> the real Forge
@@ -240,8 +244,8 @@ html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
 
     <div class="mermaid">
 flowchart LR
-    REAL["Real Forge<br/>fastbot_bringup<br/>(Lecture 13)"] -- "same topics<br/>same TF tree<br/>same URDF" --> SIM["Simulated Forge<br/>fastbot_gazebo<br/>(today)"]
-    SIM --> DEV["Develop &amp; test<br/>navigation, perception,<br/>Nav2 from Lectures 9-10"]
+    REAL["Real Forge<br/>fastbot_bringup<br/>(Project 2)"] -- "same topics<br/>same TF tree<br/>same URDF" --> SIM["Simulated Forge<br/>fastbot_gazebo<br/>(today)"]
+    SIM --> DEV["Develop &amp; test<br/>navigation, perception,<br/>Nav2 from Lectures 12–13"]
     DEV -- "deploy" --> REAL
     style REAL fill:#fdeee4,stroke:#c8622c
     style SIM fill:#eef0ff,stroke:#3d4bf5
@@ -267,7 +271,7 @@ flowchart LR
   <div class="divider"></div>
 
   <section id="xacro">
-    <h2><span class="num">14.2</span>From URDF to Xacro</h2>
+    <h2><span class="num">P3.2</span>From URDF to Xacro</h2>
     <p>
       The URDF that <code>onshape-to-robot</code> generated is accurate and complete — and completely static. Every
       link name is hardcoded, so two Forges in one world would collide on frame names. There are no variables, so
@@ -353,7 +357,7 @@ flowchart LR
     <div class="box eng">
       <div class="box-title">🔧 The <code>${robot_name}</code> pattern, for the third time</div>
       <p>
-        You met it in Lecture 13's driver launch file, again in <code>robot_state_publisher</code>, and now in the
+        You met it in Project 2's driver launch file, again in <code>robot_state_publisher</code>, and now in the
         robot description itself. That consistency is the whole point: with the body wrapped in a macro
         parameterised by <code>robot_name</code>, spawning a second, independently-named Forge — for a classmate, or
         for a two-robot Gazebo scenario — is a one-argument change, not a find-and-replace across every file in the
@@ -384,7 +388,7 @@ check_urdf /tmp/expanded.urdf</code></pre>
   <div class="divider"></div>
 
   <section id="fullxacro">
-    <h2><span class="num">14.3</span>Forge's complete Xacro, block by block</h2>
+    <h2><span class="num">P3.3</span>Forge's complete Xacro, block by block</h2>
     <p>
       Here is the whole file after the five edits, so you can check your own against it. Read it as a reference
       rather than something to type: the geometry, origins and inertials were all machine-generated from the CAD
@@ -696,7 +700,7 @@ check_urdf /tmp/expanded.urdf</code></pre>
     <div class="box mistake">
       <div class="box-title">⚠️ Three details in that file worth staring at</div>
       <ol style="margin-bottom:0;">
-        <li>The two wheel joints have <strong>opposite axis signs</strong>: <code>axis xyz="0 0 1"</code> on the right, <code>"0 0 -1"</code> on the left. That's what makes a positive command spin both wheels the geometrically correct way. Get it wrong and nothing errors — the robot just drives in a slow circle. Lecture 4 warned you about exactly this on LIMO.</li>
+        <li>The two wheel joints have <strong>opposite axis signs</strong>: <code>axis xyz="0 0 1"</code> on the right, <code>"0 0 -1"</code> on the left. That's what makes a positive command spin both wheels the geometrically correct way. Get it wrong and nothing errors — the robot just drives in a slow circle. Lecture 9 warned you about exactly this on LIMO.</li>
         <li>The <code>caster</code> joint is the <em>only</em> name in the file without a <code>${robot_name}_</code> prefix. That's an oversight in the reference file, and it means two Forges in one world would collide on that one joint name. Fix it in yours.</li>
         <li>The camera <em>joint</em> and the camera <em>link</em> share the name <code>${robot_name}_camera</code>. URDF tolerates this because links and joints live in separate namespaces, but it makes error messages ambiguous and is worth renaming.</li>
       </ol>
@@ -716,7 +720,7 @@ check_urdf /tmp/expanded.urdf</code></pre>
   <div class="divider"></div>
 
   <section id="diffdrive">
-    <h2><span class="num">14.4</span>Gazebo plugins — the differential-drive plugin</h2>
+    <h2><span class="num">P3.4</span>Gazebo plugins — the differential-drive plugin</h2>
     <p>
       A URDF describes shape and structure; it says nothing about how a robot behaves. <strong>Gazebo plugins</strong>
       add that behaviour and tie it into ROS messages — think of them as virtual motors and virtual sensors bolted
@@ -779,7 +783,7 @@ check_urdf /tmp/expanded.urdf</code></pre>
     <div class="tw">
     <table>
       <tr><th>Element</th><th>What it does</th></tr>
-      <tr><td><code>libgazebo_ros_diff_drive.so</code></td><td>Gazebo's stock differential-drive plugin — conceptually the same one you studied for LIMO in Lecture 6.</td></tr>
+      <tr><td><code>libgazebo_ros_diff_drive.so</code></td><td>Gazebo's stock differential-drive plugin — conceptually the same one you studied for LIMO in Lecture 8.</td></tr>
       <tr><td><code>&lt;namespace&gt;</code> + <code>&lt;argument&gt;</code></td><td>Isolates the subscribed and published topics under the robot name: <code>/fastbot/cmd_vel</code> rather than a bare <code>/cmd_vel</code>. The same isolation the real driver does.</td></tr>
       <tr><td><code>&lt;left_joint&gt;</code> / <code>&lt;right_joint&gt;</code></td><td>Which URDF joints the plugin actuates. <strong>These names must match the Xacro exactly</strong>, prefix and all.</td></tr>
       <tr><td><code>&lt;wheel_separation&gt;</code> / <code>&lt;wheel_diameter&gt;</code></td><td>The kinematics: 0.12&nbsp;m apart, 0.065&nbsp;m diameter. Directly analogous to the driver node's parameters in §13.5.</td></tr>
@@ -805,7 +809,7 @@ check_urdf /tmp/expanded.urdf</code></pre>
         The real robot's odometry comes from encoder counts integrated by <code>motor_driver.py</code>; the
         simulated robot's comes from Gazebo's physics engine, which knows the ground truth exactly. Which of these
         will drift, and which won't? What does that mean for testing a localization algorithm — like the AMCL from
-        Lecture 10 — purely in simulation?
+        Lecture 13 — purely in simulation?
       </p>
     </div>
   </section>
@@ -813,7 +817,7 @@ check_urdf /tmp/expanded.urdf</code></pre>
   <div class="divider"></div>
 
   <section id="sensors">
-    <h2><span class="num">14.5</span>LiDAR and camera sensor plugins</h2>
+    <h2><span class="num">P3.5</span>LiDAR and camera sensor plugins</h2>
     <p>
       Now Forge needs to <em>perceive</em> the simulated world. Add both sensor blocks to the same
       <code>fastbot_plugins.gazebo</code> file, inside the same macro.
@@ -875,7 +879,7 @@ check_urdf /tmp/expanded.urdf</code></pre>
         when the real one starts at 20. An obstacle-avoidance or SLAM algorithm tuned against this sensor has never
         had to cope with a single noisy return, has learned to trust long-range readings the real sensor cannot
         provide, and may rely on close-range returns the real sensor will simply report as invalid. That is the same
-        sim-to-real gap Lecture 11 raised for LIMO's real sensors versus their Gazebo counterparts. If you plan to
+        sim-to-real gap Lecture 14 raised for LIMO's real sensors versus their Gazebo counterparts. If you plan to
         run SLAM or AMCL on simulated Forge, set the range limits honestly and add a realistic
         <code>stddev</code> — the datasheet's ±3&nbsp;cm is a reasonable starting point.
       </p>
@@ -955,7 +959,7 @@ check_urdf /tmp/expanded.urdf</code></pre>
       <div class="level">Exercise · Intermediate</div>
       <p>
         Spawn simulated Forge, subscribe to the simulated camera's image topic, and compare a captured frame against
-        one from the real Raspicam in Lecture 13 (same object, similar lighting). List three visible differences —
+        one from the real Raspicam in Project 2 (same object, similar lighting). List three visible differences —
         resolution, field of view, noise character, colour — and for each, decide whether it's a simulation
         limitation worth fixing or one that doesn't matter for your purposes.
       </p>
@@ -965,7 +969,7 @@ check_urdf /tmp/expanded.urdf</code></pre>
   <div class="divider"></div>
 
   <section id="launch">
-    <h2><span class="num">14.6</span>The simulation launch hierarchy</h2>
+    <h2><span class="num">P3.6</span>The simulation launch hierarchy</h2>
     <p>
       Three plugin blocks don't spawn a robot by themselves. A small tree of launch files has to start Gazebo, load
       a world, wait for the physics server to be ready, publish the robot description, and then ask Gazebo to spawn
@@ -1295,7 +1299,7 @@ def generate_launch_description():
       <div class="box-title">📖 Want to go deeper on Gazebo?</div>
       <p>
         This section covers what Forge needs, not everything Gazebo can do. Worlds, models, physics tuning, custom
-        plugins and sensor modelling are a whole subject in their own right — Lecture 6 of this course is the
+        plugins and sensor modelling are a whole subject in their own right — Lecture 8 of this course is the
         starting point, and The Construct's <a href="https://www.theconstruct.ai/robotigniteacademy_learnros/ros-courses-library/mastering-gazebo-simulator-online-course/">Mastering Gazebo Simulator</a>
         goes considerably further.
       </p>
@@ -1305,7 +1309,7 @@ def generate_launch_description():
   <div class="divider"></div>
 
   <section id="run">
-    <h2><span class="num">14.7</span>Publishing your packages &amp; running the simulation</h2>
+    <h2><span class="num">P3.7</span>Publishing your packages &amp; running the simulation</h2>
     <p>
       One practical wrinkle: the simulation needs a machine with a display and a decent GPU, and Forge's Pi has
       neither. Your packages live on the Pi; the simulation runs on your workstation (or a cloud dev environment).
@@ -1433,14 +1437,14 @@ git status --porcelain      # api-keys.sh must NOT appear</code></pre>
   <div class="divider"></div>
 
   <section id="compare">
-    <h2><span class="num">14.8</span>Forge's Gazebo vs. LIMO's Gazebo</h2>
+    <h2><span class="num">P3.8</span>Forge's Gazebo vs. LIMO's Gazebo</h2>
     <p>
       It's worth naming explicitly what's the same and what's different between what you just built and LIMO's
-      simulation from Lecture 6 — because the differences are the entire point of Lectures 12-14.
+      simulation from Lecture 8 — because the differences are the entire point of Projects 1–3.
     </p>
     <div class="tw">
     <table>
-      <tr><th></th><th>LIMO in Gazebo (Lecture 6)</th><th>Forge in Gazebo (today)</th></tr>
+      <tr><th></th><th>LIMO in Gazebo (Lecture 8)</th><th>Forge in Gazebo (today)</th></tr>
       <tr><td>Underlying mechanism</td><td><code>gazebo_ros</code> diff-drive plugin</td><td>The same plugin family</td></tr>
       <tr><td>Wheel separation / diameter</td><td>AgileX's published values, already in the package you installed</td><td>Your own measured values, from your own build</td></tr>
       <tr><td>URDF / Xacro</td><td>Pre-written by AgileX (<code>limo_description</code>)</td><td>Generated from a CAD assembly you designed</td></tr>
@@ -1463,7 +1467,7 @@ git status --porcelain      # api-keys.sh must NOT appear</code></pre>
   <div class="divider"></div>
 
   <section id="cover">
-    <h2><span class="num">14.9</span>Designing the 3D-printed cover</h2>
+    <h2><span class="num">P3.9</span>Designing the 3D-printed cover</h2>
     <p>
       Forge's structural chassis is laser-cut sheet — fast, cheap, and needing no 3D printer at all. But the top
       cover, the part that gives Forge its finished look and protects the electronics underneath, is a natural fit
@@ -1522,7 +1526,7 @@ git status --porcelain      # api-keys.sh must NOT appear</code></pre>
   <div class="divider"></div>
 
   <section id="printing">
-    <h2><span class="num">14.10</span>3D printing considerations</h2>
+    <h2><span class="num">P3.10</span>3D printing considerations</h2>
 
     <div class="box def">
       <div class="box-title">📖 The one rule that governs every 3D-print design decision</div>
@@ -1571,7 +1575,7 @@ flowchart LR
       <p>
         What would you actually change about Forge — power budget, sensor placement, URDF, chassis material, cover
         design — if the goal shifted from "drive a simple path" to "run Nav2 autonomously for an hour in a cluttered
-        room," using everything you learned about costmaps, localization and mapping in Lectures 9 and 10?
+        room," using everything you learned about costmaps, localization and mapping in Project 1 and 13?
       </p>
     </div>
 
@@ -1590,7 +1594,7 @@ flowchart LR
   <div class="divider"></div>
 
   <section id="capstone">
-    <h2><span class="num">14.11</span>The capstone build review</h2>
+    <h2><span class="num">P3.11</span>The capstone build review</h2>
     <p>
       This is the course's final deliverable. Individually or in small groups, demo Forge — physically if you built
       the real hardware, or in Gazebo if hardware access was limited — driving a path of your choosing. A straight
@@ -1625,9 +1629,9 @@ flowchart LR
     <div class="assignment">
       <div class="label">Assignment — design reflection</div>
       <p>
-        Write a roughly one-page design reflection for Forge: the power and motor decisions from Lecture 12, the
-        sensor and URDF decisions from Lecture 13, the simulation decisions from today, one thing you'd redesign if
-        you built Forge again from scratch, and — using what you know from Lectures 9-10 — a concrete first step
+        Write a roughly one-page design reflection for Forge: the power and motor decisions from Project 1, the
+        sensor and URDF decisions from Project 2, the simulation decisions from today, one thing you'd redesign if
+        you built Forge again from scratch, and — using what you know from Lectures 12–13 — a concrete first step
         toward adding autonomous navigation.
       </p>
       <p style="margin-bottom:0;">
@@ -1641,7 +1645,7 @@ flowchart LR
   <div class="divider"></div>
 
   <section id="summary">
-    <h2><span class="num">14.12</span>Summary, checkpoint, quiz &amp; where to go next</h2>
+    <h2><span class="num">P3.12</span>Summary, checkpoint, quiz &amp; where to go next</h2>
     <p>
       You closed the loop on Forge: a parameterised Xacro built from a CAD-generated URDF, three Gazebo plugins
       configured with your own measured values, a launch hierarchy that spawns your robot on demand, packages
@@ -1656,7 +1660,7 @@ flowchart LR
     </p>
 
     <div class="checkpoint">
-      <strong style="color:var(--text); display:block; margin-bottom:10px;">✅ Lecture 14 &amp; course checkpoint</strong>
+      <strong style="color:var(--text); display:block; margin-bottom:10px;">✅ Project 3 &amp; course checkpoint</strong>
       <ul>
         <li>I converted the generated URDF into a Xacro with the five edits, and validated it with <code>xacro</code> + <code>check_urdf</code>.</li>
         <li>I converted repeated raw numbers into <code>xacro:property</code> values and confirmed RViz renders identically afterward.</li>
@@ -1684,7 +1688,7 @@ flowchart LR
       </div>
       <div class="quiz-q">
         <p><strong>Q3.</strong> The simulated LiDAR has <code>stddev 0.0</code> and a 20&nbsp;m range; the real one is ±3&nbsp;cm and 12&nbsp;m. What's the risk?</p>
-        <details><summary>Reveal answer</summary><p>An algorithm tuned only against the simulation becomes quietly overconfident: it has never coped with a noisy return, and it may rely on long-range readings the real sensor cannot provide. That's a textbook sim-to-real gap, the same one Lecture 11 raised for LIMO.</p></details>
+        <details><summary>Reveal answer</summary><p>An algorithm tuned only against the simulation becomes quietly overconfident: it has never coped with a noisy return, and it may rely on long-range readings the real sensor cannot provide. That's a textbook sim-to-real gap, the same one Lecture 14 raised for LIMO.</p></details>
       </div>
       <div class="quiz-q">
         <p><strong>Q4.</strong> Why does a <code>TimerAction</code> delay sit between starting the world and spawning Forge?</p>
@@ -1695,7 +1699,7 @@ flowchart LR
         <details><summary>Reveal answer</summary><p>It takes the description from the namespaced topic that <code>robot_state_publisher</code> just published, so the visualization and the physics come from one expanded Xacro. That's what makes the <code>${robot_name}</code> parameterisation work end to end and lets two robots spawn from the same file.</p></details>
       </div>
       <div class="quiz-q">
-        <p><strong>Q6.</strong> <code>use_sim_time: True</code> is correct here but was flagged as a bug in Lecture 13. Why both?</p>
+        <p><strong>Q6.</strong> <code>use_sim_time: True</code> is correct here but was flagged as a bug in Project 2. Why both?</p>
         <details><summary>Reveal answer</summary><p>It tells a node to take its clock from <code>/clock</code>, which only Gazebo publishes. Correct in simulation; on real hardware there is no <code>/clock</code>, so timestamps stall and TF lookups fail with extrapolation errors. It should be a launch argument, not a hardcoded constant.</p></details>
       </div>
       <div class="quiz-q">
@@ -1714,7 +1718,7 @@ flowchart LR
       <dt>Gazebo plugin</dt><dd>A shared library that gives a simulated model behaviour and ties it to ROS messages — virtual motors and virtual sensors.</dd>
       <dt>Diff-drive plugin</dt><dd>Converts <code>/cmd_vel</code> into simulated wheel motion and reports <code>/odom</code> plus TF, with no separate hardware interface layer.</dd>
       <dt>Ray sensor</dt><dd>Gazebo's simulated LiDAR: casts a fan of virtual rays each timestep and reports the distance to whatever they intersect.</dd>
-      <dt>Sim-to-real gap</dt><dd>The set of real-world imperfections — sensor noise, wear, timing jitter, range limits — a simulation may not model. Introduced for real LIMO hardware in Lecture 11 and measured for Forge in §14.7.</dd>
+      <dt>Sim-to-real gap</dt><dd>The set of real-world imperfections — sensor noise, wear, timing jitter, range limits — a simulation may not model. Introduced for real LIMO hardware in Lecture 14 and measured for Forge in §14.7.</dd>
       <dt><code>gzserver</code> / <code>gzclient</code></dt><dd>Gazebo's headless physics engine and its 3D viewer, launched separately so simulation can run without a display.</dd>
       <dt><code>use_sim_time</code></dt><dd>Tells a node to take its clock from the <code>/clock</code> topic. True in simulation, false on hardware.</dd>
       <dt>Digital twin</dt><dd>A simulation that presents the same interface as the real robot — same topics, frames and description — so software developed against one runs unchanged on the other.</dd>
@@ -1744,7 +1748,7 @@ flowchart LR
     </p>
     <ul>
       <li><strong>Close the sim-to-real gap properly.</strong> Add realistic LiDAR noise, correct the range limits, reconcile the wheel geometry between plugin and driver, and re-run §14.7's measurement exercise until the two agree.</li>
-      <li><strong>Give Forge full autonomy.</strong> Bring the Nav2 stack from Lectures 9-10 onto your own robot: SLAM a map of your room, run AMCL against it, and send navigation goals. Everything Forge publishes is already the right message type.</li>
+      <li><strong>Give Forge full autonomy.</strong> Bring the Nav2 stack from Lectures 12–13 onto your own robot: SLAM a map of your room, run AMCL against it, and send navigation goals. Everything Forge publishes is already the right message type.</li>
       <li><strong>Enter a student robotics competition.</strong> A hard external deadline is one of the fastest ways to keep improving, and Forge is a legitimate starting platform.</li>
       <li><strong>Contribute back.</strong> You relied on <code>ros_arduino_bridge</code>, the LSLiDAR driver, <code>ros2_v4l2_camera</code>, <code>onshape-to-robot</code>, Nav2 and Gazebo across these fourteen lectures — every one of them open source, and every one of them improved by exactly the kind of hands-on grounding you now have. You found real inconsistencies in published material during this build arc. Report them.</li>
     </ul>
@@ -1754,9 +1758,13 @@ flowchart LR
     </p>
   </section>
 
-  <div class="footer-nav">
-    <a href="13-diy-robot-ros2-driver-urdf-lidar-camera.html">&larr; Lecture 13: Build Your Own Robot II</a>
-    <a href="index.html">Table of Contents &nbsp;·&nbsp; Course Complete 🎉</a>
+  
+<div class="kc" data-widget="kc"><div class="kc-head"><span class="sim-tag">✅ Knowledge check</span><b>Project 3 check</b></div><div class="kc-q" data-a="1"><p>What does Xacro add to URDF?</p><div class="kc-opts"><button>Physics</button><button>Variables and macros, so the model is shorter and reusable</button><button>A GUI</button><button>Sensors</button></div><div class="kc-why">You met Xacro on the LIMO in Lecture 9.</div></div><div class="kc-q" data-a="1"><p>What does a Gazebo diff-drive plugin do?</p><div class="kc-opts"><button>Draws the robot</button><button>Turns /cmd_vel into wheel motion and publishes /odom</button><button>Builds the map</button><button>Runs AMCL</button></div><div class="kc-why">It plays the role of your real driver node in simulation.</div></div><div class="kc-q" data-a="1"><p>Name one sim-to-real gap you should expect.</p><div class="kc-opts"><button>Topic names change</button><button>Wheel slip, sensor noise, latency and battery sag</button><button>Python stops working</button><button>There are none</button></div><div class="kc-why">Lecture 14 measured these on the LIMO.</div></div></div>
+
+<div class="footer-nav">
+    <a href="13-diy-robot-ros2-driver-urdf-lidar-camera.html">&larr; Project 2: Build Your Own Robot II</a>
+    <a href="projects.html">All projects</a>
+    <a href="index.html">Course home 🎉</a>
   </div>
 
 </div>
@@ -1810,6 +1818,7 @@ flowchart LR
   document.addEventListener('keydown', function(e){ if(e.key === 'Escape') close(); });
 })();
 </script>
+<script src="widgets.js"></script>
 <script src="annotate.js" defer></script>
 </body>
 </html>

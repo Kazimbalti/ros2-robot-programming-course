@@ -10,20 +10,21 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
 <link rel="stylesheet" href="lab.css">
+<link rel="stylesheet" href="widgets.css">
 <link rel="stylesheet" href="projector.css">
 </head>
 <body>
 <button id="theme-toggle" aria-label="Toggle light/dark mode">🌙</button>
 <nav class="coursenav"><div class="inner">
   <span class="brand">ROS &amp; Robot Programming</span>
-  <a href="index.html">Home</a><a href="prerequisites.html">Mission Zero</a><a href="syllabus.html">Syllabus</a><a href="schedule.html">Schedule</a><a href="index.html#lectures">Lectures</a>
+  <a href="index.html">Home</a><a href="prerequisites.html">Mission Zero</a><a href="syllabus.html">Syllabus</a><a href="schedule.html">Schedule</a><a href="index.html#lectures">Lectures</a><a href="projects.html">Projects</a>
 </div></nav>
 
-<div class="wrap">
+<div class="wrap" data-enriched="1">
 <div class="lesson-progress"><div class="lp-top"><span>Lecture 9 · your progress</span><span><b class="lp-count">0 / 0 steps</b> · <a href="#" class="lp-reset">reset</a></span></div><div class="lp-bar"><div class="lp-fill"></div></div></div>
 
 <div class="cover">
-  <div class="kicker">Part B · ROS 2 on the LIMO · Lecture 9 of 12</div>
+  <div class="kicker">Part B · ROS 2 on the LIMO · Lecture 9 of 14</div>
   <h1>LIMO's Body — URDF, TF &amp; RViz</h1>
   <div class="subtitle">A robot must know its own shape: where the LiDAR sits, where the wheels are, which way the camera points. Today you describe a robot in URDF, read the LIMO's description, watch its coordinate frames move live, and see everything the robot "knows" in RViz.</div>
   <div class="meta-row">
@@ -32,6 +33,7 @@
     <div class="chip">🐍 Python · ROS 2 Humble</div>
     <div class="chip">Before this: Lecture 8</div>
   </div>
+  <div class="skill-path" aria-label="Course path"><a class="done" href="01-installation-vmware-ros2-limo-intro.html">L1 · Install</a><a class="done" href="L02-first-node.html">L2 · Nodes</a><a class="done" href="L03-topics.html">L3 · Topics</a><a class="done" href="L04-services.html">L4 · Services</a><a class="done" href="L05-custom-interfaces.html">L5 · Interfaces</a><a class="done" href="L06-parameters-launch.html">L6 · Launch</a><a class="done" href="L07-catch-them-all.html">L7 · Project</a><a class="done" href="L08-drive-limo.html">L8 · Drive</a><a class="now" href="L09-limo-urdf-tf-rviz.html">L9 · URDF/TF</a><a class="" href="L10-limo-lidar-imu.html">L10 · LiDAR/IMU</a><a class="" href="L11-limo-camera-vision.html">L11 · Vision</a><a class="" href="L12-limo-slam-localization.html">L12 · SLAM</a><a class="" href="L13-limo-nav2.html">L13 · Nav2</a><a class="" href="L14-real-limo-mission.html">L14 · Real LIMO</a><a href="projects.html">+ Projects</a></div>
 </div>
 
 <div class="grid2">
@@ -60,6 +62,8 @@
   </div>
 </div>
 
+
+<div class="ig"><div class="ig-title"><span class="sim-tag">Infographic</span>Lecture 9 at a glance: from a text description to live frames on screen</div><div class="ig-flow"><div class="ig-step"><div class="ic">🦴</div><b>URDF / Xacro</b><span>links + joints of the robot</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">📡</div><b>robot_state_publisher</b><span>turns the URDF into TF</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🌳</div><b>TF tree</b><span>every frame, updated live</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🧭</div><b>odom → base_link</b><span>published by odometry</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">👀</div><b>RViz</b><span>draws model, frames and sensors</span></div></div></div>
 <details class="box teacher">
   <summary>🧑‍🏫 Instructor lesson plan (click to open)</summary>
   <div class="inner">
@@ -111,6 +115,12 @@ flowchart TB
 </table></div>
 
 <!-- ============================================================ -->
+<h3>📘 Frames in the book (NAV2 Boot Camp)</h3><figure class="book-fig"><img src="images/book/fig5_8.png" alt="Fig. 5.8: a transform is a rotation plus a translation between two coordinate frames." loading="lazy"><figcaption>Fig. 5.8: a transform is a rotation plus a translation between two coordinate frames.</figcaption></figure><div class="fig-pair"><figure class="book-fig"><img src="images/book/fig5_10.png" alt="Fig. 5.10: map, odom and base_footprint: how they relate in reality…" loading="lazy"><figcaption>Fig. 5.10: map, odom and base_footprint: how they relate in reality…</figcaption></figure><figure class="book-fig"><img src="images/book/fig5_11.png" alt="Fig. 5.11: …and as a ROS tree: map → odom → base_footprint." loading="lazy"><figcaption>Fig. 5.11: …and as a ROS tree: map → odom → base_footprint.</figcaption></figure></div>
+<h3>🃏 Key terms: tap a card to check yourself</h3>
+<div class="flip-grid" data-widget="flip"><div class="flip"><div class="flip-in"><div class="flip-front">Link<small>tap to flip</small></div><div class="flip-back">A rigid part of the robot with its own frame.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Joint<small>tap to flip</small></div><div class="flip-back">Connects parent → child: fixed, continuous or revolute.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Frame<small>tap to flip</small></div><div class="flip-back">A coordinate system: x forward, y left, z up.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Transform<small>tap to flip</small></div><div class="flip-back">Translation + rotation between two frames.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">TF tree<small>tap to flip</small></div><div class="flip-back">All frames; each has exactly <b>one</b> parent.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">robot_state_publisher<small>tap to flip</small></div><div class="flip-back">Reads the URDF and publishes the body's transforms.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Xacro<small>tap to flip</small></div><div class="flip-back">URDF with variables and macros; expands to URDF.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Fixed Frame (RViz)<small>tap to flip</small></div><div class="flip-back">The frame everything is drawn in, e.g. odom or map.</div></div></div></div>
+
+<div class="game" data-widget="sort" data-cats="fixed|continuous|revolute"><div class="kc-head"><span class="sim-tag">🎮 Game</span><b>Which joint type?</b></div><ul><li data-cat="0">A LiDAR bolted to the chassis</li><li data-cat="1">A drive wheel</li><li data-cat="2">A steering hinge limited to ±37°</li><li data-cat="0">A camera on a mast</li><li data-cat="2">A robot-arm elbow with limits</li><li data-cat="1">A caster wheel spinning freely</li></ul></div>
+
 <h2 id="lab1"><span class="num">L1</span>Lab 1 — Write your own mini robot</h2>
 <div class="lab">
   <div class="lab-h"><span class="badge">LAB 1 · 35 min</span><h3>mini_bot.urdf: a box, a LiDAR and two wheels</h3></div>
@@ -234,6 +244,9 @@ check_urdf /tmp/limo.urdf</code></pre></div>
 </div>
 
 <!-- ============================================================ -->
+
+<div data-widget="tf2d"></div>
+
 <h2 id="lab3"><span class="num">L3</span>Lab 3 — The live TF tree</h2>
 <div class="lab">
   <div class="lab-h"><span class="badge">LAB 3 · 25 min</span><h3>Frames that move while you drive</h3></div>
@@ -378,10 +391,16 @@ ros2 run limo_lab where_am_i --ros-args -p use_sim_time:=true -p target_frame:=b
 </div>
 
 <!-- ============================================================ -->
+
+<h3>🏅 Level up: choose your challenge</h3>
+<div class="levels"><div class="lv bronze"><b>🥉 Bronze: everyone</b><span>Activity 9.1: mini_bot with a camera mast.</span></div><div class="lv silver"><b>🥈 Silver: confident</b><span>Activity 9.2, then publish a static <code>front_bumper</code> frame from a launch file.</span></div><div class="lv gold"><b>🥇 Gold: future expert</b><span>Turn mini_bot.urdf into Xacro with a <code>wheel</code> macro used twice.</span></div></div>
+
+<div class="kc" data-widget="kc"><div class="kc-head"><span class="sim-tag">✅ Knowledge check</span><b>Lecture 9 check: 5 questions</b></div><div class="kc-q" data-a="1"><p>Which node turns a URDF into TF?</p><div class="kc-opts"><button>rviz2</button><button>robot_state_publisher</button><button>tf2_echo</button><button>gazebo</button></div><div class="kc-why">It publishes /tf_static for fixed joints and /tf for moving ones.</div></div><div class="kc-q" data-a="1"><p>Who publishes <code>odom → base_link</code> in simulation?</p><div class="kc-opts"><button>robot_state_publisher</button><button>the Gazebo diff-drive plugin (odometry)</button><button>RViz</button><button>You, by hand</button></div><div class="kc-why">It moves as the robot drives, so it comes from odometry, not from the URDF.</div></div><div class="kc-q" data-a="1"><p>The laser sees a point 1.0 m straight ahead. Where is it in base_link?</p><div class="kc-opts"><button>(1.0, 0)</button><button>(1.103, 0)</button><button>(0.897, 0)</button><button>(0, 1.0)</button></div><div class="kc-why">Add the laser's 0.103 m forward offset. Check with the simulator above.</div></div><div class="kc-q" data-a="1"><p>RViz shows "No transform" with Gazebo running. First fix?</p><div class="kc-opts"><button>Reinstall RViz</button><button>Start RViz with <code>use_sim_time:=true</code></button><button>Delete the URDF</button><button>Change the colour</button></div><div class="kc-why">RViz must use the same clock as Gazebo.</div></div><div class="kc-q" data-a="2"><p>In ROS, the y-axis of a robot points…</p><div class="kc-opts"><button>forward</button><button>up</button><button>left</button><button>right</button></div><div class="kc-why">x forward, y left, z up (right-hand rule).</div></div></div>
+
 <h2 id="exit"><span class="num">9.3</span>When things go wrong · Exit ticket · Homework</h2>
 <div class="table-wrap"><table class="fix">
   <tr><th>You see…</th><th>Why</th><th>Fix</th></tr>
-  <tr><td>RViz: "Fixed Frame [map] does not exist"</td><td>No map yet (that's Lecture 11).</td><td>Set Fixed Frame to <code>odom</code>.</td></tr>
+  <tr><td>RViz: "Fixed Frame [map] does not exist"</td><td>No map yet (that's Lecture 12).</td><td>Set Fixed Frame to <code>odom</code>.</td></tr>
   <tr><td>RViz: robot model white / "No transform"</td><td>RViz uses wall time while Gazebo publishes sim time.</td><td>Start RViz with <code>--ros-args -p use_sim_time:=true</code>.</td></tr>
   <tr><td>LaserScan shows nothing</td><td>Wrong topic or QoS.</td><td>Topic <code>/scan</code>; try Reliability Policy "Best Effort".</td></tr>
   <tr><td>check_urdf: command not found</td><td>Tool not installed.</td><td><code>sudo apt install liburdfdom-tools</code></td></tr>
@@ -405,10 +424,11 @@ ros2 run limo_lab where_am_i --ros-args -p use_sim_time:=true -p target_frame:=b
 <div class="footer-nav">
   <a href="L08-drive-limo.html">← Lecture 8: Drive the LIMO</a>
   <a href="index.html#lectures">All lectures</a>
-  <a href="L10-limo-sensors.html">Lecture 10: LiDAR &amp; Camera →</a>
+  <a href="L10-limo-lidar-imu.html">Lecture 10: LiDAR &amp; IMU →</a>
 </div>
 </div>
 <script src="lab.js"></script>
+<script src="widgets.js"></script>
 <script src="annotate.js" defer></script>
 </body>
 </html>

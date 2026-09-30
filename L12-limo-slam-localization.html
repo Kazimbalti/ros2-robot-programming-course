@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){try{var t=localStorage.getItem('limo-book-theme');if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 12 — Mapping &amp; Localisation: SLAM + AMCL</title>
+<meta name="description" content="Hands-on Lecture 12: measure odometry drift, build and save a map of the LIMO's world with slam_toolbox, and localise on it with AMCL's particle filter, including the kidnapped-robot test.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<link rel="stylesheet" href="lab.css">
+<link rel="stylesheet" href="widgets.css">
+<link rel="stylesheet" href="projector.css">
+</head>
+<body>
+<button id="theme-toggle" aria-label="Toggle light/dark mode">🌙</button>
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html">Home</a><a href="prerequisites.html">Mission Zero</a><a href="syllabus.html">Syllabus</a><a href="schedule.html">Schedule</a><a href="index.html#lectures">Lectures</a><a href="projects.html">Projects</a>
+</div></nav>
+
+<div class="wrap" data-enriched="1">
+<div class="lesson-progress"><div class="lp-top"><span>Lecture 12 · your progress</span><span><b class="lp-count">0 / 0 steps</b> · <a href="#" class="lp-reset">reset</a></span></div><div class="lp-bar"><div class="lp-fill"></div></div></div>
+
+<div class="cover">
+  <div class="kicker">Part B · ROS 2 on the LIMO · Lecture 12 of 14</div>
+  <h1>Mapping &amp; Localisation — SLAM + AMCL</h1>
+  <div class="subtitle">"Where am I?" is the hardest question in mobile robotics. Today you see why wheel odometry alone is not enough, draw a map of the LIMO's world with SLAM, and then let AMCL find the robot on that map, even after someone picks it up and moves it.</div>
+  <div class="meta-row">
+    <div class="chip">⏱ 3 h · 25 min teach · 2 h 35 min hands-on</div>
+    <div class="chip">🗺️ slam_toolbox · map_server · AMCL</div>
+    <div class="chip">📘 Book: NAV2 Boot Camp pp. 105–110, 114–116</div>
+    <div class="chip">Before this: Lectures 8–11</div>
+  </div>
+  <div class="skill-path" aria-label="Course path"><a class="done" href="01-installation-vmware-ros2-limo-intro.html">L1 · Install</a><a class="done" href="L02-first-node.html">L2 · Nodes</a><a class="done" href="L03-topics.html">L3 · Topics</a><a class="done" href="L04-services.html">L4 · Services</a><a class="done" href="L05-custom-interfaces.html">L5 · Interfaces</a><a class="done" href="L06-parameters-launch.html">L6 · Launch</a><a class="done" href="L07-catch-them-all.html">L7 · Project</a><a class="done" href="L08-drive-limo.html">L8 · Drive</a><a class="done" href="L09-limo-urdf-tf-rviz.html">L9 · URDF/TF</a><a class="done" href="L10-limo-lidar-imu.html">L10 · LiDAR/IMU</a><a class="done" href="L11-limo-camera-vision.html">L11 · Vision</a><a class="now" href="L12-limo-slam-localization.html">L12 · SLAM</a><a class="" href="L13-limo-nav2.html">L13 · Nav2</a><a class="" href="L14-real-limo-mission.html">L14 · Real LIMO</a><a href="projects.html">+ Projects</a></div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h3>🎯 By the end of today you can…</h3>
+    <ul class="outcomes">
+      <li>Explain why odometry drifts, and measure the drift.</li>
+      <li>Build a map with slam_toolbox and save it as <code>.pgm</code> + <code>.yaml</code>.</li>
+      <li>Read an occupancy grid: free, occupied, unknown, resolution, origin.</li>
+      <li>Localise on a saved map with AMCL and explain its particle filter.</li>
+      <li>Explain the frames <code>map → odom → base_link</code> and who publishes each.</li>
+    </ul>
+  </div>
+  <div class="card toc">
+    <h3>🗺️ Today's route</h3>
+    <a href="#warmup"><span>12.0</span>Warm-up</a>
+    <a href="#idea"><span>12.1</span>The idea: explorer + detective</a>
+    <a href="#lab1"><span>Lab 1</span>Measure odometry drift</a>
+    <a href="#lab2"><span>Lab 2</span>Build a map with SLAM</a>
+    <a href="#lab3"><span>Lab 3</span>Localise with AMCL</a>
+    <a href="#lab4"><span>Lab 4</span>Stress test: lost and kidnapped</a>
+    <a href="#activity"><span>12.2</span>Activities</a>
+    <a href="#exit"><span>12.3</span>Errors, exit ticket &amp; homework</a>
+  </div>
+</div>
+
+<div class="ig"><div class="ig-title"><span class="sim-tag">Infographic</span>Lecture 12 at a glance: from "roughly here" to "exactly here"</div><div class="ig-flow">
+  <div class="ig-step"><div class="ic">🛞</div><b>Odometry</b><span>smooth but drifts: <code>odom → base_link</code></span></div><div class="ig-arrow">→</div>
+  <div class="ig-step"><div class="ic">🔦</div><b>SLAM</b><span>draw the map while driving</span></div><div class="ig-arrow">→</div>
+  <div class="ig-step"><div class="ic">💾</div><b>Save</b><span><code>map_saver_cli</code> → .pgm + .yaml</span></div><div class="ig-arrow">→</div>
+  <div class="ig-step"><div class="ic">🗺️</div><b>Load</b><span><code>map_server</code> publishes <code>/map</code></span></div><div class="ig-arrow">→</div>
+  <div class="ig-step"><div class="ic">🎲</div><b>AMCL</b><span>particles + LiDAR vs map</span></div><div class="ig-arrow">→</div>
+  <div class="ig-step"><div class="ic">📍</div><b>Corrected</b><span><code>map → odom</code> cancels the drift</span></div>
+</div></div>
+
+<details class="box teacher">
+  <summary>🧑‍🏫 Instructor lesson plan (click to open)</summary>
+  <div class="inner">
+  <div class="table-wrap"><table>
+    <tr><th>Time</th><th>Activity</th><th>Type</th></tr>
+    <tr><td>0:00–0:10</td><td>Warm-up: the open-loop square from Lecture 8</td><td><span class="tag check">Check</span></td></tr>
+    <tr><td>0:10–0:35</td><td>Drift; SLAM; occupancy grids; the particle filter simulator on the projector</td><td><span class="tag teach">Teach</span></td></tr>
+    <tr><td>0:35–1:00</td><td>Lab 1: drift_demo</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>1:00–1:40</td><td>Lab 2: SLAM + save the map</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>1:40–1:50</td><td>Break</td><td></td></tr>
+    <tr><td>1:50–2:30</td><td>Lab 3: AMCL localisation</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>2:30–2:55</td><td>Lab 4: wrong pose, global localisation, kidnapping</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>2:55–3:00</td><td>Exit ticket</td><td><span class="tag check">Check</span></td></tr>
+  </table></div>
+  <p><strong>Teaching tip.</strong> Play "find the student": blindfold a volunteer in the classroom and let them touch only walls and doors. Their growing certainty is a particle filter. Heavy lecture for VMs: at least 4 cores and 8 GB RAM; students can pair up.</p>
+  </div>
+</details>
+
+<div class="box tip"><div class="box-title">📦 Install (once)</div>
+<div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>sudo apt install ros-humble-slam-toolbox ros-humble-navigation2 ros-humble-nav2-bringup ros-humble-nav2-simple-commander</code></pre></div></div>
+
+<h2 id="warmup"><span class="num">12.0</span>Warm-up (5 min)</h2>
+<div class="quiz">
+  <div class="q"><p>Why did your open-loop square (Lecture 8) not end where it started?</p><details><summary>Answer</summary><div class="inner">Small errors (timing, slip) added up and nothing corrected them. Odometry has the same problem, only slower.</div></details></div>
+  <div class="q"><p>Why can't the wanderer "go to the door"?</p><details><summary>Answer</summary><div class="inner">It has no map (it doesn't know where the door is) and no idea where it is on a map. Today fixes both.</div></details></div>
+</div>
+
+<h2 id="idea"><span class="num">12.1</span>The idea in 15 minutes</h2>
+<div class="grid2">
+  <div class="analogy"><div class="emoji">🔦</div><div>
+    <p><strong>SLAM = exploring a dark house with a torch and a notebook.</strong> As you walk, you draw the walls you see <em>and</em> use those same walls to work out where you are. <strong>S</strong>imultaneous <strong>L</strong>ocalisation <strong>A</strong>nd <strong>M</strong>apping.</p>
+  </div></div>
+  <div class="analogy"><div class="emoji">🕵️</div><div>
+    <p><strong>AMCL = a detective with a map.</strong> It keeps hundreds of guesses (particles) of where the robot might be. Guesses that explain the LiDAR scan well survive; bad ones die. After a little driving only the true position is left.</p>
+  </div></div>
+</div>
+<h3>📘 Maps in the book</h3>
+<div class="fig-pair">
+  <figure class="book-fig"><img src="images/book/fig5_3.png" alt="House map generated by the TurtleBot3" loading="lazy"><figcaption>Fig. 5.3: a house map built by SLAM: black = walls, white = free, grey = unknown.</figcaption></figure>
+  <figure class="book-fig"><img src="images/book/fig5_4.png" alt="RViz showing a map with costmaps" loading="lazy"><figcaption>Fig. 5.4: the same kind of map in RViz, with the robot and its costmaps (Lecture 13).</figcaption></figure>
+</div>
+<div class="fig-pair">
+  <figure class="book-fig"><img src="images/book/fig5_10.png" alt="map, odom and base_footprint relation" loading="lazy"><figcaption>Fig. 5.10: in reality the robot is somewhere in the map, and odom has drifted.</figcaption></figure>
+  <figure class="book-fig"><img src="images/book/fig5_11.png" alt="map to odom to base_footprint tree" loading="lazy"><figcaption>Fig. 5.11: in ROS, that is a chain: map → odom → base_footprint.</figcaption></figure>
+</div>
+<div class="box idea"><div class="box-title">🧭 Three frames, three jobs</div>
+<p><code>map → odom → base_link</code>. <strong>Odometry</strong> publishes <code>odom → base_link</code>: smooth, but it drifts. <strong>SLAM or AMCL</strong> publishes <code>map → odom</code>: the small correction that cancels the drift, using the LiDAR against the map. Together they give a position that is both smooth <em>and</em> correct.</p></div>
+<div class="table-wrap"><table>
+  <tr><th>Map pixel</th><th>Meaning</th><th>In the .yaml</th></tr>
+  <tr><td>⬜ white</td><td>free</td><td>darker than <code>free_thresh</code> → not free</td></tr>
+  <tr><td>⬛ black</td><td>occupied (wall)</td><td>above <code>occupied_thresh</code></td></tr>
+  <tr><td>▩ grey</td><td>unknown: not seen yet</td><td>in between</td></tr>
+  <tr><td>1 pixel</td><td><code>resolution</code> metres (0.05 = 5 cm)</td><td><code>origin</code> = where pixel (0, 0) is</td></tr>
+</table></div>
+
+<div data-widget="particles"></div>
+
+<h3>🃏 Key terms: tap a card to check yourself</h3>
+<div class="flip-grid" data-widget="flip">
+  <div class="flip"><div class="flip-in"><div class="flip-front">Drift<small>tap to flip</small></div><div class="flip-back">Odometry error that grows with distance travelled.</div></div></div>
+  <div class="flip"><div class="flip-in"><div class="flip-front">SLAM<small>tap to flip</small></div><div class="flip-back">Build the map <b>and</b> localise in it at the same time.</div></div></div>
+  <div class="flip"><div class="flip-in"><div class="flip-front">Occupancy grid<small>tap to flip</small></div><div class="flip-back">A map made of cells: free, occupied or unknown.</div></div></div>
+  <div class="flip"><div class="flip-in"><div class="flip-front">AMCL<small>tap to flip</small></div><div class="flip-back">Adaptive Monte Carlo Localisation: a particle filter on a known map.</div></div></div>
+  <div class="flip"><div class="flip-in"><div class="flip-front">Particle<small>tap to flip</small></div><div class="flip-back">One guess of the robot's pose (x, y, yaw).</div></div></div>
+  <div class="flip"><div class="flip-in"><div class="flip-front">Kidnapped robot<small>tap to flip</small></div><div class="flip-back">Moved without its odometry knowing: the hardest test for localisation.</div></div></div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab1"><span class="num">L1</span>Lab 1 — Measure odometry drift</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 1 · 25 min</span><h3>Dead reckoning with a tiny error, compared with the truth</h3></div>
+  <p class="lab-goal">In Gazebo, <code>/odom</code> is almost perfect. A real robot's wheels slip a few percent. This node re-computes the pose from the <em>velocities</em> with a small, realistic error, and prints how far it drifts from <code>/odom</code>.</p>
+  <div class="step" id="g1-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Write <code>drift_demo.py</code></span></div>
+    <div class="cmd file"><div class="cmd-h">📄 limo_lab/limo_lab/drift_demo.py</div><pre><code>#!/usr/bin/env python3
+import math
+import rclpy
+from rclpy.node import Node
+from nav_msgs.msg import Odometry
+
+
+def yaw_from_quaternion(q):
+    return math.atan2(2.0 * (q.w * q.z + q.x * q.y), 1.0 - 2.0 * (q.y * q.y + q.z * q.z))
+
+
+class DriftDemo(Node):
+    def __init__(self):
+        super().__init__("drift_demo")
+        self.declare_parameter("wheel_slip", 0.03)          # 3 % distance error
+        self.declare_parameter("gyro_bias", 0.02)           # rad/s heading error
+        self.slip_ = self.get_parameter("wheel_slip").value
+        self.bias_ = self.get_parameter("gyro_bias").value
+        self.est_ = None                                     # dead-reckoned (x, y, yaw)
+        self.true_ = None
+        self.last_t_ = None
+        self.travelled_ = 0.0
+        self.create_subscription(Odometry, "odom", self.callback_odom, 10)
+        self.create_timer(1.0, self.report)
+
+    def callback_odom(self, msg):
+        p = msg.pose.pose
+        self.true_ = (p.position.x, p.position.y, yaw_from_quaternion(p.orientation))
+        t = msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9
+        if self.est_ is None:
+            self.est_ = self.true_
+        elif self.last_t_ is not None:
+            dt = t - self.last_t_
+            v = msg.twist.twist.linear.x * (1.0 + self.slip_)
+            w = msg.twist.twist.angular.z + (self.bias_ if abs(msg.twist.twist.angular.z) > 0.01 or abs(v) > 0.01 else 0.0)
+            x, y, th = self.est_
+            self.est_ = (x + v * math.cos(th) * dt, y + v * math.sin(th) * dt, th + w * dt)
+            self.travelled_ += abs(msg.twist.twist.linear.x) * dt
+        self.last_t_ = t
+
+    def report(self):
+        if self.est_ is None:
+            return
+        err = math.hypot(self.est_[0] - self.true_[0], self.est_[1] - self.true_[1])
+        self.get_logger().info(f"travelled {self.travelled_:.2f} m → position error {err * 100:.1f} cm")
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    rclpy.spin(DriftDemo())
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+  </div>
+  <div class="step" id="g1-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Drive around and watch the error grow</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminals 1–3</div><pre><code>ros2 launch limo_gazebosim limo_gazebo_diff.launch.py
+#  setup.py:  "drift_demo = limo_lab.drift_demo:main",
+cd ~/ros2_ws &amp;&amp; colcon build --packages-select limo_lab --symlink-install &amp;&amp; source ~/.bashrc
+ros2 run limo_lab drift_demo --ros-args -p use_sim_time:=true
+ros2 run teleop_twist_keyboard teleop_twist_keyboard</code></pre></div>
+    <div class="out"><div class="out-h">✅ Something like</div><pre>[INFO] [drift_demo]: travelled 0.50 m → position error 1.8 cm
+[INFO] [drift_demo]: travelled 2.10 m → position error 9.6 cm
+[INFO] [drift_demo]: travelled 4.80 m → position error 31.2 cm</pre></div>
+    <p>The error only grows, especially after turns. Plot error against distance in your notebook. <strong>This is why we need a map.</strong></p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab2"><span class="num">L2</span>Lab 2 — Build a map with SLAM</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 2 · 40 min</span><h3>Drive, draw, save (Book §5, "Generate a Map with SLAM")</h3></div>
+  <div class="step" id="n1-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Start the robot and slam_toolbox</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 1 (restart Gazebo so the robot is at its start pose)</div><pre><code>ros2 launch limo_gazebosim limo_gazebo_diff.launch.py</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>ros2 launch slam_toolbox online_async_launch.py use_sim_time:=true</code></pre></div>
+  </div>
+  <div class="step" id="n1-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Watch the map grow in RViz</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 3</div><pre><code>rviz2 -d ~/ros2_ws/limo.rviz --ros-args -p use_sim_time:=true</code></pre></div>
+    <p>Change <strong>Fixed Frame</strong> to <code>map</code>, then <strong>Add → Map</strong>, Topic <code>/map</code>. A grey area appears, with white where the LiDAR has seen free space and black on the walls.</p>
+  </div>
+  <div class="step" id="n1-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Drive slowly around the whole table</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 4</div><pre><code>ros2 run teleop_twist_keyboard teleop_twist_keyboard</code></pre></div>
+    <p>Press <kbd>z</kbd> a few times to slow down. Turn slowly and pass every wall and obstacle. Slow, smooth driving gives a sharp map; fast spinning gives a blurred, doubled map. Aim for closed black outlines and no grey gaps inside.</p>
+  </div>
+  <div class="step" id="n1-4">
+    <div class="step-h"><span class="step-n">4</span><span class="step-t">Save the map (before you stop SLAM!)</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 5</div><pre><code>mkdir -p ~/maps
+ros2 run nav2_map_server map_saver_cli -f ~/maps/limo_table
+ls ~/maps &amp;&amp; cat ~/maps/limo_table.yaml</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>limo_table.pgm  limo_table.yaml
+
+image: limo_table.pgm
+mode: trinary
+resolution: 0.05          ← each pixel = 5 cm
+origin: [-1.9, -2.4, 0]   ← where pixel (0,0) is (your numbers will differ)
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.25</pre></div>
+    <p>The <code>.pgm</code> is just a greyscale picture; open it with the image viewer. Also try <code>ros2 run tf2_ros tf2_echo map odom</code>: that is the drift correction SLAM is publishing. Now stop everything (<kbd>Ctrl</kbd>+<kbd>C</kbd> in all terminals).</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab3"><span class="num">L3</span>Lab 3 — Localise with AMCL</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 3 · 40 min</span><h3>Load the map, give a first guess, watch the particles converge</h3></div>
+  <div class="step" id="n2-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Make a LIMO-sized copy of Nav2's parameters (used today and in Lecture 13)</span></div>
+    <p>Nav2's defaults are for a bigger robot. Our table is small, so we shrink the robot radius and the "keep-away" inflation. You're applying Lecture 6 (parameters in YAML) to a real system.</p>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>mkdir -p ~/ros2_ws/params
+cp $(ros2 pkg prefix nav2_bringup)/share/nav2_bringup/params/nav2_params.yaml ~/ros2_ws/params/limo_nav2.yaml
+sed -i 's/robot_radius: 0.22/robot_radius: 0.16/g; s/inflation_radius: 0.55/inflation_radius: 0.25/g' ~/ros2_ws/params/limo_nav2.yaml
+grep -n "robot_radius\|inflation_radius\|max_particles\|base_frame_id" ~/ros2_ws/params/limo_nav2.yaml</code></pre></div>
+    <p>Check that every <code>robot_radius</code> now says 0.16 and every <code>inflation_radius</code> says 0.25. If your file used other numbers, edit them by hand. Find the <code>amcl:</code> section and read its parameters: <code>min_particles</code>, <code>max_particles</code>, <code>alpha1</code>…<code>alpha5</code> (how much AMCL distrusts odometry).</p>
+  </div>
+  <div class="step" id="g3-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Start Gazebo, the map server + AMCL, and RViz</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 1</div><pre><code>ros2 launch limo_gazebosim limo_gazebo_diff.launch.py</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>ros2 launch nav2_bringup localization_launch.py use_sim_time:=True \
+  map:=$HOME/maps/limo_table.yaml params_file:=$HOME/ros2_ws/params/limo_nav2.yaml</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 3</div><pre><code>rviz2 -d $(ros2 pkg prefix nav2_bringup)/share/nav2_bringup/rviz/nav2_default_view.rviz --ros-args -p use_sim_time:=true</code></pre></div>
+    <p>You see your map, but no robot yet. AMCL is waiting for a first guess.</p>
+  </div>
+  <div class="step" id="g3-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Give the first guess: "2D Pose Estimate"</span></div>
+    <p>In the RViz toolbar click <strong>2D Pose Estimate</strong>, then click on the map where the LIMO is and <strong>drag</strong> in the direction it faces (at the start pose: the map origin, pointing along +x, red). The robot model, the laser dots and a cloud of green arrows (the <em>particles</em>) appear. The laser dots should sit on the black walls.</p>
+  </div>
+  <div class="step" id="g3-4">
+    <div class="step-h"><span class="step-n">4</span><span class="step-t">Drive and watch the cloud shrink</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminals 4 &amp; 5</div><pre><code>ros2 run teleop_twist_keyboard teleop_twist_keyboard
+ros2 topic echo /amcl_pose --field pose.pose.position</code></pre></div>
+    <p>As the robot moves and sees walls, the particles gather into a tight group. <code>/amcl_pose</code> is AMCL's best estimate on the map. <code>ros2 run tf2_ros tf2_echo map odom</code> shows the correction it publishes.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab4"><span class="num">L4</span>Lab 4 — Stress test: lost and kidnapped</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 4 · 25 min</span><h3>What happens when the first guess is wrong?</h3></div>
+  <div class="step" id="g4-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">A wrong initial pose</span></div>
+    <p>Give a 2D Pose Estimate about 0.5 m away from the true position, facing the wrong way. The laser dots no longer match the walls. Drive a little: does AMCL recover? (With a small error it usually does; with a big one it may not.)</p>
+  </div>
+  <div class="step" id="g4-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Global localisation: particles everywhere</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>ros2 service call /reinitialize_global_localization std_srvs/srv/Empty "{}"</code></pre></div>
+    <p>The particles spread over the whole map, exactly like pressing "↺ Reset" in the simulator above. Drive around slowly: in a small, fairly symmetric world it may take a while, or settle on a wrong but similar-looking place. Why?</p>
+  </div>
+  <div class="step" id="g4-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Kidnap the robot</span></div>
+    <p>In Gazebo, select the LIMO and move it with the translate tool (<kbd>T</kbd>) to another place. Odometry didn't see that move. What does RViz show? Fix it with a new 2D Pose Estimate. (The simulator's "🧲 Kidnap" button shows why AMCL adds a few random particles.)</p>
+  </div>
+</div>
+
+<details class="box">
+  <summary>➕ Going further (optional): sensor fusion with an EKF</summary>
+  <div class="inner">
+  <p>Another way to reduce drift <em>without</em> a map is to fuse several sensors: wheel odometry (good at distance), the IMU gyro (good at rotation), and laser scan matching. The standard ROS 2 package is <code>robot_localization</code>, an Extended Kalman Filter that publishes a better <code>odom → base_link</code>. A minimal configuration looks like this:</p>
+  <div class="cmd file"><div class="cmd-h">📄 ekf.yaml (excerpt)</div><pre><code>ekf_filter_node:
+  ros__parameters:
+    use_sim_time: true
+    frequency: 30.0
+    two_d_mode: true
+    odom_frame: odom
+    base_link_frame: base_link
+    world_frame: odom
+    odom0: /odom
+    odom0_config: [false, false, false,  false, false, false,
+                   true,  false, false,  false, false, false,
+                   false, false, false]          # use vx from the wheels
+    imu0: /imu
+    imu0_config:  [false, false, false,  false, false, false,
+                   false, false, false,  false, false, true,
+                   false, false, false]          # use yaw rate from the gyro</code></pre></div>
+  <p>The <a href="09-odometry-ekf-amcl-localization.html">extended notes on odometry, EKF and AMCL</a> walk through the full experiment and AMCL tuning with rqt_reconfigure.</p>
+  </div>
+</details>
+
+<!-- ============================================================ -->
+<h2 id="activity"><span class="num">12.2</span>Your turn</h2>
+<div class="activity">
+  <div class="lvl">Activity 12.1 · Core · 20 min</div>
+  <h3>Map a second world</h3>
+  <p>Map the empty table world as well, save it as <code>~/maps/limo_empty</code>, and compare the two maps. Start Gazebo with:</p>
+  <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>ros2 launch limo_gazebosim limo_gazebo_diff.launch.py \
+  world:=$(ros2 pkg prefix limo_gazebosim)/share/limo_gazebosim/worlds/simulation_table.world</code></pre></div>
+  <p>Which world is easier for AMCL to localise in, and why? (Hint: think about symmetry and landmarks.)</p>
+</div>
+<div class="activity">
+  <div class="lvl">Activity 12.2 · Experiment · 15 min</div>
+  <h3>The kidnapped-robot table</h3>
+  <p>Repeat Lab 4 step 3 five times with different distances. Record whether AMCL recovers by itself after 30 s of driving.</p>
+  <div class="table-wrap"><table><tr><th>Moved by</th><th>Recovered alone?</th><th>Time</th></tr><tr><td>0.2 m</td><td></td><td></td></tr><tr><td>0.5 m</td><td></td><td></td></tr><tr><td>1.0 m</td><td></td><td></td></tr><tr><td>1.0 m + 90°</td><td></td><td></td></tr><tr><td>global reinit</td><td></td><td></td></tr></table></div>
+</div>
+
+<h3>🏅 Level up: choose your challenge</h3>
+<div class="levels">
+  <div class="lv bronze"><b>🥉 Bronze: everyone</b><span>A clean saved map + AMCL localised after a correct 2D Pose Estimate.</span></div>
+  <div class="lv silver"><b>🥈 Silver: confident</b><span>Activity 12.2 filled in, with an explanation of each result.</span></div>
+  <div class="lv gold"><b>🥇 Gold: future expert</b><span>A node that prints the distance between <code>/amcl_pose</code> and <code>/odom</code> every second while you drive.</span></div>
+</div>
+
+<div class="kc" data-widget="kc"><div class="kc-head"><span class="sim-tag">✅ Knowledge check</span><b>Lecture 12 check: 5 questions</b></div>
+  <div class="kc-q" data-a="2"><p>Which transform does AMCL publish?</p><div class="kc-opts"><button><code>odom → base_link</code></button><button><code>map → base_link</code></button><button><code>map → odom</code></button><button><code>base_link → laser_link</code></button></div><div class="kc-why">A frame has one parent; odometry already owns <code>odom → base_link</code>, so AMCL publishes the correction above it.</div></div>
+  <div class="kc-q" data-a="1"><p>A map has <code>resolution: 0.05</code>. A wall is 40 pixels long. How long is it?</p><div class="kc-opts"><button>0.4 m</button><button>2.0 m</button><button>4.0 m</button><button>40 m</button></div><div class="kc-why">40 × 0.05 m = 2.0 m.</div></div>
+  <div class="kc-q" data-a="0"><p>Why do AMCL's particles gather at the true position over time?</p><div class="kc-opts"><button>Guesses that match the LiDAR scan get high weight and survive resampling</button><button>The robot tells AMCL its position</button><button>The map moves</button><button>Random luck</button></div><div class="kc-why">Move → sense → weight → resample, repeated.</div></div>
+  <div class="kc-q" data-a="3"><p>When should you save the SLAM map?</p><div class="kc-opts"><button>After stopping slam_toolbox</button><button>Before driving</button><button>It saves itself</button><button>While slam_toolbox is still running</button></div><div class="kc-why">map_saver_cli reads the live <code>/map</code> topic.</div></div>
+  <div class="kc-q" data-a="1"><p>Why does odometry drift?</p><div class="kc-opts"><button>Because of the map</button><button>Small errors (slip, wheel size, timing) are added up at every step and never corrected</button><button>Because of the LiDAR</button><button>It doesn't</button></div><div class="kc-why">Integration adds up errors; only an outside reference (a map) can remove them.</div></div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="exit"><span class="num">12.3</span>When things go wrong · Exit ticket · Homework</h2>
+<div class="table-wrap"><table class="fix">
+  <tr><th>You see…</th><th>Why</th><th>Fix</th></tr>
+  <tr><td>RViz: "Frame [map] does not exist"</td><td>SLAM / map_server not running, or no 2D Pose Estimate yet.</td><td>Check Terminal 2 for errors; set the initial pose.</td></tr>
+  <tr><td>Map looks doubled / smeared</td><td>You drove or turned too fast during SLAM.</td><td>Start again; drive slowly (press <kbd>z</kbd>).</td></tr>
+  <tr><td>map_saver: "Failed to spin map subscription"</td><td>No <code>/map</code> topic (SLAM already stopped).</td><td>Keep SLAM running while saving.</td></tr>
+  <tr><td>Laser dots don't match the walls</td><td>Wrong initial pose.</td><td>Redo 2D Pose Estimate (position <em>and</em> direction).</td></tr>
+  <tr><td>"Timed out waiting for transform"</td><td>Sim time mismatch.</td><td>Every node and RViz needs <code>use_sim_time:=true</code>.</td></tr>
+</table></div>
+<div class="quiz">
+  <div class="q"><p>What do the letters in SLAM stand for?</p><details><summary>Answer</summary><div class="inner">Simultaneous Localisation And Mapping.</div></details></div>
+  <div class="q"><p>SLAM vs AMCL: which one needs a map beforehand?</p><details><summary>Answer</summary><div class="inner">AMCL. SLAM builds the map; AMCL localises on an existing map.</div></details></div>
+</div>
+<div class="box book">
+  <div class="box-title">🏠 Homework</div>
+  <ol>
+    <li>Keep <code>~/maps/limo_table.yaml</code> and <code>~/ros2_ws/params/limo_nav2.yaml</code>: Lecture 13 uses both.</li>
+    <li>Read the book's <em>NAV2 Stack Introduction</em> (pp. 111–116): global planner, local planner, costmaps, recovery behaviours.</li>
+  </ol>
+</div>
+
+<div class="footer-nav">
+  <a href="L11-limo-camera-vision.html">← Lecture 11: Camera &amp; Vision</a>
+  <a href="index.html#lectures">All lectures</a>
+  <a href="L13-limo-nav2.html">Lecture 13: Navigation with Nav2 →</a>
+</div>
+</div>
+<script src="lab.js"></script>
+<script src="widgets.js"></script>
+<script src="annotate.js" defer></script>
+</body>
+</html>

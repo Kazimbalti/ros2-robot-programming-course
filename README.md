@@ -2,23 +2,37 @@
 
 **Live site:** https://kazimbalti.github.io/ros2-robot-programming-course/
 
-A complete, free, 14-lecture hands-on Robotics and ROS 2 Humble course built around the
-**AgileX LIMO** robot — from a blank laptop through VMware/Ubuntu/ROS 2 install, URDF, TF2,
-Gazebo, sensors, computer vision, EKF/AMCL localization, SLAM and Nav2, a real-hardware
-deep-dive on LIMO, and finally building your own ROS 2 robot from a bare motor and an empty
-microSD card.
+A free, hands-on Robotics and ROS 2 Humble course for students meeting ROS for the first time:
+**Mission Zero** (Linux survival training), **14 lectures** in two parts, and **3 Build-Your-Own-Robot projects**.
+Every lecture follows the same learning format (outcomes → warm-up → the idea in 10 minutes → step-by-step labs
+with expected output → activities with hints and solutions → common errors → knowledge check → homework) and has
+infographics, figures from the course book, and interactive simulators built into the page.
 
 Built and taught by **Dr. Muhammad Kazim**, Assistant Professor, Department of Intelligent
 Systems, University of Lahore, Pakistan.
 
 ## Structure
 
-- `index.html` — course home page (curriculum, stats, per-student lecture progress tracker)
-- `01-...html` … `14-...html` — the 14 lectures, in order
-- `syllabus.html`, `schedule.html`, `assignments.html`, `midterm.html`, `final.html`, `attendance.html` — course-admin pages
-- `book.css` / `projector.css` — shared styling (course-admin pages + a high-legibility projector override used on every page)
-- `annotate.js` — in-browser pen/whiteboard annotation tool available on every page
-- `images/` — figures, diagrams, and screenshots used throughout the lectures
+| Part | Lectures | Files |
+|---|---|---|
+| Part A — ROS 2 Bootcamp (course book, turtlesim) | 1 Install · 2 Nodes · 3 Topics · 4 Services · 5 Interfaces · 6 Parameters & Launch · 7 Catch Them All | `01-…html`, `L02-…html` … `L07-…html` |
+| Part B — ROS 2 on the AgileX LIMO | 8 Drive · 9 URDF/TF/RViz · 10 LiDAR & IMU · 11 Camera & Vision · 12 SLAM & AMCL · 13 Nav2 & Actions · 14 Real LIMO & final mission | `L08-…html` … `L14-…html` |
+| Projects — Build Your Own Robot "Forge" | P1 Motors, power & compute · P2 Driver, URDF & sensors · P3 Simulation, 3D print & review | `projects.html`, `12-diy-…`, `13-diy-…`, `14-diy-…` |
+| Extended reference notes | the original long-form lectures 02–11 | `02-…html` … `11-…html` |
+
+Other files:
+
+- `index.html` — course home page (roadmap, curriculum, per-student progress tracker)
+- `prerequisites.html` — Mission Zero
+- `syllabus.html`, `schedule.html`, `assignments.html`, `midterm.html`, `final.html`, `attendance.html` — course admin
+- `lab.css` / `lab.js` — lecture layout, copy buttons, step ticks and progress bar
+- `widgets.css` / `widgets.js` — interactive widgets: knowledge checks, flip cards, ordering/sorting games,
+  code explorer, and simulators (pub/sub, service, action, interface builder, launch builder, go-to-goal,
+  Twist/drift, quaternion, TF chain, LaserScan, HSV vision, particle filter, costmap planner)
+- `book.css` / `projector.css` — course-admin styling and the high-legibility projector layer
+- `annotate.js` — in-browser pen/whiteboard annotation tool
+- `images/` — figures; `images/book/` holds the figures from the course book
+- `L10-limo-sensors.html`, `L11-limo-slam-nav2.html`, `L12-real-limo-mission.html` — redirects to the renamed lectures
 
 ## Running locally
 

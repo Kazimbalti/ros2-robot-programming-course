@@ -12,7 +12,7 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lecture 13 — Build Your Own Robot II: ROS 2 Driver, CAD, URDF, LiDAR &amp; Camera</title>
+<title>Project 2 — Build Your Own Robot II: ROS 2 Driver, CAD, URDF, LiDAR &amp; Camera</title>
 <meta name="description" content="Give Forge a ROS 2 nervous system: a colcon workspace, custom messages, a differential-drive serial motor driver node, a bringup package, a CAD chassis designed in Onshape, a URDF generated automatically with onshape-to-robot, robot_state_publisher, udev rules, the LSLiDAR N-10 driver, and a Raspicam brought up through V4L2 — including the silent camera-stack failure and how to fix it.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -148,6 +148,7 @@
   #theme-toggle:hover{transform:scale(1.08);}
   @media (max-width:640px){ #theme-toggle{top:12px; left:12px; width:42px; height:42px; font-size:17px;} }
 </style>
+<link rel="stylesheet" href="widgets.css">
 <link rel="stylesheet" href="projector.css">
 </head>
 <body>
@@ -176,43 +177,46 @@ html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
   <span id="theme-toggle-icon">🌙</span>
 </button>
 <div id="lightbox" role="dialog" aria-label="Enlarged figure"><img alt=""><div class="lb-cap"></div></div>
-<div class="wrap">
+<div class="wrap" data-project="1">
 
   <div class="cover">
-    <div class="kicker">LIMO Robotics &amp; ROS 2 Lecture &nbsp;·&nbsp; Session 13 of 14 — Build Your Own Robot</div>
-    <h1>Lecture 13: Build Your Own Robot II — ROS 2 Driver, CAD, URDF, LiDAR &amp; Camera</h1>
+    <div class="kicker">Projects · after Lecture 14 &nbsp;·&nbsp; Project 2 of 3 — Build Your Own Robot "Forge"</div>
+    <h1>Project 2: Build Your Own Robot II — ROS 2 Driver, CAD, URDF, LiDAR &amp; Camera</h1>
     <div class="subtitle">Giving Forge a nervous system, a body it can describe, and senses it can trust</div>
     <div class="meta-row">
       <div class="chip">Duration: 5-6 hours</div>
-      <div class="chip">Prerequisite: Lecture 12</div>
+      <div class="chip">Prerequisite: Project 1</div>
       <div class="chip">Project: Forge — your own ROS 2 robot</div>
       <div class="chip">Hands-on: <code>/cmd_vel</code> drives real wheels</div>
     </div>
   </div>
 
-  <div class="toc">
+  
+<div class="ig"><div class="ig-title"><span class="sim-tag">Infographic</span>Project 2 at a glance: Build Your Own Robot II — ROS 2 Driver, CAD, URDF, LiDAR &amp; Camera</div><div class="ig-flow"><div class="ig-step"><div class="ic">🗂️</div><b>Workspace</b><span>driver + bringup packages</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">📐</div><b>Kinematics</b><span>v, ω ↔ wheel speeds</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🧩</div><b>Driver node</b><span>/cmd_vel in, /odom out</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🖥️</div><b>CAD → URDF</b><span>onshape-to-robot</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🌳</div><b>TF</b><span>robot_state_publisher</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">📡</div><b>Sensors</b><span>LiDAR + camera, udev rules</span></div></div></div>
+
+<div class="toc">
     <strong style="color:var(--text)">In this session</strong>
-    <a href="#intro"><span>13.1</span>Where Forge stands — and today's goal</a>
-    <a href="#workspace"><span>13.2</span>The ROS 2 workspace</a>
-    <a href="#packages"><span>13.3</span>The motor driver packages &amp; custom messages</a>
-    <a href="#kinematics"><span>13.4</span>Differential-drive kinematics — the maths first</a>
-    <a href="#node"><span>13.5</span>The motor driver node</a>
-    <a href="#driverlaunch"><span>13.6</span>The driver launch file &amp; the namespacing pattern</a>
-    <a href="#bringup"><span>13.7</span>The bringup package</a>
-    <a href="#cad"><span>13.8</span>Designing Forge's structure in CAD</a>
-    <a href="#urdf"><span>13.9</span>URDF — and why not to hand-write this one</a>
-    <a href="#onshape2robot"><span>13.10</span><code>onshape-to-robot</code> — CAD to URDF automatically</a>
-    <a href="#rsp"><span>13.11</span>Bringing up <code>robot_state_publisher</code></a>
-    <a href="#udev"><span>13.12</span>udev rules — a transferable skill</a>
-    <a href="#lidar"><span>13.13</span>The LiDAR — LSLiDAR N-10</a>
-    <a href="#camera"><span>13.14</span>The camera — Raspicam, V4L2 &amp; a silent failure</a>
-    <a href="#summary"><span>13.15</span>Summary, checkpoint, quiz &amp; glossary</a>
+    <a href="#intro"><span>P2.1</span>Where Forge stands — and today's goal</a>
+    <a href="#workspace"><span>P2.2</span>The ROS 2 workspace</a>
+    <a href="#packages"><span>P2.3</span>The motor driver packages &amp; custom messages</a>
+    <a href="#kinematics"><span>P2.4</span>Differential-drive kinematics — the maths first</a>
+    <a href="#node"><span>P2.5</span>The motor driver node</a>
+    <a href="#driverlaunch"><span>P2.6</span>The driver launch file &amp; the namespacing pattern</a>
+    <a href="#bringup"><span>P2.7</span>The bringup package</a>
+    <a href="#cad"><span>P2.8</span>Designing Forge's structure in CAD</a>
+    <a href="#urdf"><span>P2.9</span>URDF — and why not to hand-write this one</a>
+    <a href="#onshape2robot"><span>P2.10</span><code>onshape-to-robot</code> — CAD to URDF automatically</a>
+    <a href="#rsp"><span>P2.11</span>Bringing up <code>robot_state_publisher</code></a>
+    <a href="#udev"><span>P2.12</span>udev rules — a transferable skill</a>
+    <a href="#lidar"><span>P2.13</span>The LiDAR — LSLiDAR N-10</a>
+    <a href="#camera"><span>P2.14</span>The camera — Raspicam, V4L2 &amp; a silent failure</a>
+    <a href="#summary"><span>P2.15</span>Summary, checkpoint, quiz &amp; glossary</a>
   </div>
 
   <section id="intro">
-    <h2><span class="num">13.1</span>Where Forge stands — and today's goal</h2>
+    <h2><span class="num">P2.1</span>Where Forge stands — and today's goal</h2>
     <p>
-      After Lecture 12, Forge is a working piece of electromechanical hardware: motors wired to an L298N, an
+      After Project 1, Forge is a working piece of electromechanical hardware: motors wired to an L298N, an
       Arduino Nano running <code>ros_arduino_bridge</code> and holding closed-loop wheel speeds, a battery sized
       against a real power budget, a power module distributing 12&nbsp;V and 5&nbsp;V, and a Raspberry Pi 4 on a fixed
       IP running ROS 2 Humble.
@@ -252,8 +256,8 @@ flowchart TB
 
     <p>
       Nothing here works in isolation. The URDF gives the LiDAR and camera a place to live in the TF tree, exactly
-      the way Lectures 4 and 5 taught you for LIMO. The driver node's odometry is what the EKF from Lecture 9
-      would consume. The bringup file is what Lecture 14 mirrors in simulation. This session is where all the
+      the way Lecture 12 taught you for LIMO. The driver node's odometry is what the EKF from Lecture 12
+      would consume. The bringup file is what Project 3 mirrors in simulation. This session is where all the
       separate strands of the course finally converge on one machine.
     </p>
 
@@ -270,10 +274,10 @@ flowchart TB
   <div class="divider"></div>
 
   <section id="workspace">
-    <h2><span class="num">13.2</span>The ROS 2 workspace</h2>
+    <h2><span class="num">P2.2</span>The ROS 2 workspace</h2>
     <p>
       Everything you build today lives in a normal <code>colcon</code> workspace on the Pi — the same shape as every
-      workspace you've built since Lecture 3. Start by SSHing in:
+      workspace you've built since Lecture 2. Start by SSHing in:
     </p>
     <div class="term">
       <div class="term-bar">
@@ -323,7 +327,7 @@ source ~/ros2_ws/install/setup.bash</code></pre>
   <div class="divider"></div>
 
   <section id="packages">
-    <h2><span class="num">13.3</span>The motor driver packages &amp; custom messages</h2>
+    <h2><span class="num">P2.3</span>The motor driver packages &amp; custom messages</h2>
     <p>
       Forge needs a ROS 2 <strong>driver</strong> — the standard ROS concept for a node that lets you talk to a
       sensor or actuator through topics, services and actions instead of through its raw protocol. This one will
@@ -449,7 +453,7 @@ float32 mot_2_rad_sec</span></div>
   <div class="divider"></div>
 
   <section id="kinematics">
-    <h2><span class="num">13.4</span>Differential-drive kinematics — the maths first</h2>
+    <h2><span class="num">P2.4</span>Differential-drive kinematics — the maths first</h2>
     <p>
       Before the code, the maths. The node's job is to take a <code>geometry_msgs/Twist</code> off
       <code>/cmd_vel</code> and turn it into two numbers the Nano understands. That's four conversions in a row, and
@@ -544,7 +548,7 @@ flowchart LR
   <div class="divider"></div>
 
   <section id="node">
-    <h2><span class="num">13.5</span>The motor driver node</h2>
+    <h2><span class="num">P2.5</span>The motor driver node</h2>
     <p>
       Now the code. Create the file and make it executable:
     </p>
@@ -891,7 +895,7 @@ if __name__ == "__main__":
       <tr><td><code>__init__</code></td><td>Parses launch arguments; declares the parameters that make this driver reusable (<code>encoder_cpr</code>, <code>loop_rate</code>, <code>serial_port</code>, <code>baud_rate</code>, <code>wheel_diameter</code>, <code>wheel_separation</code>); creates the <code>/cmd_vel</code> subscription and the <code>motor_vels</code>, <code>encoder_vals</code> and <code>odom</code> publishers; starts a 10&nbsp;Hz timer; and opens the serial connection to the Nano.</td></tr>
       <tr><td><code>cmd_vel_callback</code></td><td>The whole of §13.4 in about twenty lines: extract <code>v</code> and <code>&omega;</code>, split into wheel speeds, divide by radius, scale to counts per loop, send <code>m</code>.</td></tr>
       <tr><td><code>check_encoders</code></td><td>Runs from the timer at 10&nbsp;Hz: sends <code>e</code>, differences the counts against the previous read, converts to rad/s using the elapsed time, and publishes <code>MotorVels</code> and <code>EncoderVals</code>.</td></tr>
-      <tr><td><code>publish_odometry</code></td><td>Dead reckoning: integrates wheel distances into an <code>(x, y, θ)</code> pose and publishes <code>nav_msgs/Odometry</code>. This is the same wheel odometry you fused with an IMU in Lecture 9.</td></tr>
+      <tr><td><code>publish_odometry</code></td><td>Dead reckoning: integrates wheel distances into an <code>(x, y, θ)</code> pose and publishes <code>nav_msgs/Odometry</code>. This is the same wheel odometry you fused with an IMU in Lecture 12.</td></tr>
       <tr><td><code>send_command</code></td><td>The only place that touches the serial port, guarded by a <code>Lock</code>. That mutex is essential: with a multi-threaded executor, the <code>/cmd_vel</code> callback and the encoder timer can fire simultaneously, and two interleaved writes to one serial port produce garbage.</td></tr>
     </table>
     </div>
@@ -914,7 +918,7 @@ if __name__ == "__main__":
         measured metre by hand-timed teleop and compare the reported <code>pose.position.x</code> against a tape
         measure. Any error you find traces back to one of three numbers: <code>encoder_cpr</code>,
         <code>wheel_diameter</code>, or <code>wheel_separation</code>. Which one would you suspect first if the
-        <em>straight-line distance</em> is wrong, and which if only the <em>turns</em> are wrong? (Lecture 11,
+        <em>straight-line distance</em> is wrong, and which if only the <em>turns</em> are wrong? (Lecture 14,
         §11.5 asked you exactly this about LIMO.)
       </p>
     </div>
@@ -934,7 +938,7 @@ if __name__ == "__main__":
   <div class="divider"></div>
 
   <section id="driverlaunch">
-    <h2><span class="num">13.6</span>The driver launch file &amp; the namespacing pattern</h2>
+    <h2><span class="num">P2.6</span>The driver launch file &amp; the namespacing pattern</h2>
     <p>
       Running the node with six parameters on the command line every time would be miserable. A launch file wraps
       them up — and, more importantly, introduces a design habit that runs through the rest of this course.
@@ -1091,7 +1095,7 @@ setup(
       <p>
         You'll meet this pattern — one identifier threaded through every name in a system — any time you need
         multiple instances of the same software side by side: multiple robots on one network, multiple simulated
-        agents in one Gazebo world (Lecture 14), even multiple instances of a microservice in a distributed system
+        agents in one Gazebo world (Project 3), even multiple instances of a microservice in a distributed system
         outside robotics entirely. Designing for it from day one, even when you only ever run one robot, costs
         almost nothing and saves a rewrite later.
       </p>
@@ -1141,7 +1145,7 @@ setup(
   <div class="divider"></div>
 
   <section id="bringup">
-    <h2><span class="num">13.7</span>The bringup package</h2>
+    <h2><span class="num">P2.7</span>The bringup package</h2>
     <p>
       Launching each piece by hand doesn't scale past two. The ROS convention is a dedicated <strong>bringup</strong>
       package holding the single launch file you run to start the entire robot. By the end of this session it will
@@ -1224,7 +1228,7 @@ install(
   <div class="divider"></div>
 
   <section id="cad">
-    <h2><span class="num">13.8</span>Designing Forge's structure in CAD</h2>
+    <h2><span class="num">P2.8</span>Designing Forge's structure in CAD</h2>
     <p>
       Forge's chassis is three flat plates held apart by hex standoffs — a shape that is cheap to make from sheet
       material (PVC, acrylic or thin plywood) on a laser cutter or CNC router, and easy to iterate on. This section
@@ -1285,7 +1289,7 @@ install(
         An M3 screw does not fit through a 3.00&nbsp;mm hole in a part you actually cut. Sheet material, kerf width
         and cutter accuracy all conspire against you. Draw clearance holes a few tenths of a millimetre oversize
         (3.2-3.4&nbsp;mm is typical for M3) and you'll assemble the robot with your fingers instead of a drill. This
-        is exactly the same tolerancing thinking Lecture 14 applies to 3D-printed parts.
+        is exactly the same tolerancing thinking Project 3 applies to 3D-printed parts.
       </p>
     </div>
 
@@ -1368,7 +1372,7 @@ install(
   <div class="divider"></div>
 
   <section id="urdf">
-    <h2><span class="num">13.9</span>URDF — and why not to hand-write this one</h2>
+    <h2><span class="num">P2.9</span>URDF — and why not to hand-write this one</h2>
     <p>
       ROS 2 needs to know Forge's physical structure in order to understand how it moves in space, simulate its
       kinematics and dynamics, and visualize it correctly in RViz. That description is a
@@ -1429,7 +1433,7 @@ install(
         <ol style="margin-top:10px; margin-bottom:0;">
           <li>Both joints name their parent as <code>base</code>, not <code>base_link</code> — a link that doesn't exist. <code>check_urdf</code> catches this immediately.</li>
           <li>The joints are <code>type="revolute"</code>, which requires <code>&lt;limit&gt;</code> tags. A wheel has no reason to stop at any particular angle, so it should be <code>type="continuous"</code>.</li>
-          <li>Both wheels share <code>axis xyz="0 1 0"</code>. Depending on how the wheels are oriented, the two sides often need opposite signs — and getting that wrong doesn't error, it just makes the robot drive in a slow circle. Lecture 4 warned you about exactly this on LIMO.</li>
+          <li>Both wheels share <code>axis xyz="0 1 0"</code>. Depending on how the wheels are oriented, the two sides often need opposite signs — and getting that wrong doesn't error, it just makes the robot drive in a slow circle. Lecture 9 warned you about exactly this on LIMO.</li>
         </ol>
       </details>
     </div>
@@ -1438,7 +1442,7 @@ install(
       <div class="level">Exercise · Easy</div>
       <p>
         Save the snippet as <code>two_wheeled_robot.urdf</code>, fix all three bugs, and validate with
-        <code>check_urdf two_wheeled_robot.urdf</code> — the same tool Lecture 4 used on LIMO's expanded Xacro.
+        <code>check_urdf two_wheeled_robot.urdf</code> — the same tool Lecture 9 used on LIMO's expanded Xacro.
         Confirm it reports a clean link tree before moving on.
       </p>
     </div>
@@ -1461,7 +1465,7 @@ install(
   <div class="divider"></div>
 
   <section id="onshape2robot">
-    <h2><span class="num">13.10</span><code>onshape-to-robot</code> — CAD to URDF automatically</h2>
+    <h2><span class="num">P2.10</span><code>onshape-to-robot</code> — CAD to URDF automatically</h2>
     <p>
       <a href="https://onshape-to-robot.readthedocs.io/">onshape-to-robot</a> is a command-line tool that talks to
       Onshape's REST API, walks your assembly's mate tree, and emits a complete URDF — links, joints, origins,
@@ -1515,7 +1519,7 @@ flowchart LR
         explicitly add to <code>.gitignore</code> and never commit — the same secrets hygiene you'd apply to a
         database password or a cloud token anywhere else in software engineering. A key pushed to a repository, even
         briefly, even a private one, should be treated as compromised and rotated immediately. This matters
-        concretely in Lecture 14, where you push these very packages to GitHub.
+        concretely in Project 3, where you push these very packages to GitHub.
       </p>
     </div>
 
@@ -1536,7 +1540,7 @@ flowchart LR
     <p>
       <code>fastbot_description</code> follows the ROS convention of a dedicated <code>*_description</code> package
       as the single centralized home for a robot's kinematic structure, physical properties and appearance —
-      exactly the role <code>limo_description</code> played back in Lecture 4.
+      exactly the role <code>limo_description</code> played back in Lecture 9.
     </p>
 
     <h3>Step 3 — The config file</h3>
@@ -1629,7 +1633,7 @@ WARNING: part raspicam &lt;1&gt; has no mass, maybe you should assign a material
     </div>
 
     <div class="box mistake">
-      <div class="box-title">⚠️ Those "no mass" warnings will bite you in Lecture 14</div>
+      <div class="box-title">⚠️ Those "no mass" warnings will bite you in Project 3</div>
       <p>
         A URDF with wrong inertial properties loads fine in RViz — visualization doesn't care about mass — and then
         behaves bizarrely in Gazebo, where physics very much does. Wheels with near-zero inertia jitter or sink
@@ -1675,11 +1679,11 @@ flowchart TD
   <div class="divider"></div>
 
   <section id="rsp">
-    <h2><span class="num">13.11</span>Bringing up <code>robot_state_publisher</code></h2>
+    <h2><span class="num">P2.11</span>Bringing up <code>robot_state_publisher</code></h2>
     <p>
       A URDF sitting on disk does nothing. <strong><code>robot_state_publisher</code></strong> is the node that loads
       it, listens for joint angles on <code>/joint_states</code>, and broadcasts the resulting TF tree — the same
-      role it played for LIMO in Lecture 5. This is what lets RViz draw Forge, and what lets a LiDAR scan be
+      role it played for LIMO in Lecture 9. This is what lets RViz draw Forge, and what lets a LiDAR scan be
       interpreted relative to the chassis rather than floating in space.
     </p>
     <div class="term">
@@ -1760,7 +1764,7 @@ def generate_launch_description():
         <code>/clock</code> topic that only Gazebo publishes. On the physical robot there is no <code>/clock</code>,
         so timestamps stall at zero and TF lookups start failing with "extrapolation into the future" errors that
         look like a TF bug and aren't. Wire it to the <code>use_sim_time</code> argument the bringup file already
-        declares — <code>False</code> on hardware, <code>True</code> in Lecture 14's simulation. This is a genuinely
+        declares — <code>False</code> on hardware, <code>True</code> in Project 3's simulation. This is a genuinely
         common real-world ROS 2 trap.
       </p>
     </div>
@@ -1849,7 +1853,7 @@ if(BUILD_TESTING)
   <div class="divider"></div>
 
   <section id="udev">
-    <h2><span class="num">13.12</span>udev rules — a transferable skill</h2>
+    <h2><span class="num">P2.12</span>udev rules — a transferable skill</h2>
     <p>
       You have probably hit this on Linux before: you plug in a USB device and it lands on
       <code>/dev/ttyUSB0</code>… or <code>/dev/ttyUSB1</code>… or <code>/dev/ttyACM0</code>, depending on what else
@@ -1944,7 +1948,7 @@ if(BUILD_TESTING)
   <div class="divider"></div>
 
   <section id="lidar">
-    <h2><span class="num">13.13</span>The LiDAR — LSLiDAR N-10</h2>
+    <h2><span class="num">P2.13</span>The LiDAR — LSLiDAR N-10</h2>
     <p>
       Forge's LiDAR is the <a href="https://www.lslidar.com/product/n10-navigation-obstacle-avoidance-lidar/">LSLiDAR
       N-10</a>. Before the driver, it's worth understanding why <em>this</em> sensor, because the reasoning is the
@@ -2096,7 +2100,7 @@ average rate: 9.980   min: 0.099s max: 0.104s std dev: 0.00117s window: 31</span
       <p>
         Place Forge a measured 1.00&nbsp;m from a flat wall, facing it squarely. Echo <code>/scan</code>, find the
         range reading nearest 0°, and compare it to your tape measure. Is it within the datasheet's ±3&nbsp;cm? If
-        not, what would you check first — the sensor, the mounting, or your measurement? (Lecture 11 asked you the
+        not, what would you check first — the sensor, the mounting, or your measurement? (Lecture 14 asked you the
         same question about LIMO's LiDAR, deliberately.)
       </p>
     </div>
@@ -2115,7 +2119,7 @@ average rate: 9.980   min: 0.099s max: 0.104s std dev: 0.00117s window: 31</span
   <div class="divider"></div>
 
   <section id="camera">
-    <h2><span class="num">13.14</span>The camera — Raspicam, V4L2 &amp; a silent failure</h2>
+    <h2><span class="num">P2.14</span>The camera — Raspicam, V4L2 &amp; a silent failure</h2>
     <p>
       Forge's camera is the <a href="https://www.raspberrypi.com/products/camera-module-v2/">Raspberry Pi Camera
       Module 2</a> (any Raspicam version works).
@@ -2241,7 +2245,7 @@ average rate: 9.980   min: 0.099s max: 0.104s std dev: 0.00117s window: 31</span
     <div class="box mistake">
       <div class="box-title">⚠️ A clean launch is not a working sensor</div>
       <p>
-        This is precisely the habit Lecture 11 built around LIMO's <code>error_code</code> field, and the same
+        This is precisely the habit Lecture 14 built around LIMO's <code>error_code</code> field, and the same
         pattern as the commented-out <code>publish_odometry()</code> in §13.5: <strong>a system reporting no error
         is not the same as a system that is working.</strong> Zero log output from a camera node means "nothing
         crashed," not "images are flowing." Verify actual data, every time — the same
@@ -2346,7 +2350,7 @@ start_x=1                   &lt;-- add this</code></pre>
     </div>
     <p>
       ✅ Forge now publishes <code>Image</code> and <code>CompressedImage</code> messages. View them from your
-      workstation with <code>rqt_image_view</code> — the same tool you used on LIMO in Lecture 8.
+      workstation with <code>rqt_image_view</code> — the same tool you used on LIMO in Lecture 11.
     </p>
 
     <div class="exercise">
@@ -2363,9 +2367,9 @@ start_x=1                   &lt;-- add this</code></pre>
     <div class="assignment">
       <div class="label">Assignment</div>
       <p>
-        Write a bring-up checklist for Forge, explicitly modelled on Lecture 11's LIMO physical bring-up checklist:
+        Write a bring-up checklist for Forge, explicitly modelled on Lecture 14's LIMO physical bring-up checklist:
         visual inspection first, then power, then a wheels-off-ground motor test, then sensor sanity checks last.
-        Adapt each step to Forge's own components from this session and Lecture 12. For every sensor step, state
+        Adapt each step to Forge's own components from this session and Project 1. For every sensor step, state
         the <em>specific command</em> that verifies real data flow rather than mere absence of errors — and explain
         why that order matters.
       </p>
@@ -2375,7 +2379,7 @@ start_x=1                   &lt;-- add this</code></pre>
   <div class="divider"></div>
 
   <section id="summary">
-    <h2><span class="num">13.15</span>Summary, checkpoint, quiz &amp; glossary</h2>
+    <h2><span class="num">P2.15</span>Summary, checkpoint, quiz &amp; glossary</h2>
     <p>
       Forge went from a bare compute board with a motor MCU attached to a robot with a real ROS 2 nervous system, a
       formally described body, and two working senses. You built a colcon workspace and custom messages, derived
@@ -2386,7 +2390,7 @@ start_x=1                   &lt;-- add this</code></pre>
       diagnosed rather than were handed.
     </p>
     <p>
-      Lecture 14 takes this exact URDF and these exact sensors into Gazebo, adds a 3D-printed cover, and closes out
+      Project 3 takes this exact URDF and these exact sensors into Gazebo, adds a 3D-printed cover, and closes out
       the course.
     </p>
 
@@ -2410,7 +2414,7 @@ start_x=1                   &lt;-- add this</code></pre>
         <li>I can explain why namespacing every topic and frame with <code>robot_name</code> matters beyond avoiding naming collisions.</li>
         <li>I drove real wheels from <code>/cmd_vel</code> using <code>teleop_twist_keyboard</code>.</li>
         <li>I designed parts and an assembly in CAD, and I know why mate names and types determine URDF joint names and types.</li>
-        <li>I generated a URDF with <code>onshape-to-robot</code>, and I know why the "no mass" warnings matter for Lecture 14.</li>
+        <li>I generated a URDF with <code>onshape-to-robot</code>, and I know why the "no mass" warnings matter for Project 3.</li>
         <li>I know why an API key pair must never be committed, and I added it to <code>.gitignore</code> before it existed.</li>
         <li>I brought up <code>robot_state_publisher</code> and inspected the resulting TF tree in RViz.</li>
         <li>I can perform the four-step udev workflow for any USB serial device.</li>
@@ -2461,7 +2465,7 @@ start_x=1                   &lt;-- add this</code></pre>
       <dt>ROS 2 driver</dt><dd>A node that exposes a piece of hardware through ROS 2 topics, services and actions instead of its native protocol.</dd>
       <dt>Differential drive</dt><dd>A two-wheel drive arrangement with no steering mechanism; heading changes come from the difference between wheel speeds.</dd>
       <dt>Wheel separation (<code>L</code>)</dt><dd>The distance between the two driven wheels' contact points. Errors here show up as turn-angle errors in odometry.</dd>
-      <dt>Dead reckoning</dt><dd>Estimating position by integrating measured motion from a known start, with no external reference. Drifts without bound — which is why Lecture 9's EKF and Lecture 10's AMCL exist.</dd>
+      <dt>Dead reckoning</dt><dd>Estimating position by integrating measured motion from a known start, with no external reference. Drifts without bound — which is why Lecture 12's EKF and Lecture 13's AMCL exist.</dd>
       <dt>Namespacing</dt><dd>Prefixing every topic, frame and node name with a shared identifier so multiple instances can coexist on one ROS 2 graph.</dd>
       <dt>Bringup package</dt><dd>The package holding the single top-level launch file that starts a robot's whole software stack.</dd>
       <dt>Mate (CAD)</dt><dd>A geometric constraint between parts in a CAD assembly. Its name and type determine the exported URDF joint's name and type.</dd>
@@ -2480,7 +2484,7 @@ start_x=1                   &lt;-- add this</code></pre>
       <li>Trusting a hardcoded <code>encoder_cpr</code> default (2500 or 2550) instead of passing your measured value.</li>
       <li>Leaving <code>use_sim_time: True</code> hardcoded in <code>robot_state_publisher.launch.py</code> on real hardware, then debugging phantom TF extrapolation errors.</li>
       <li>Feeding <code>onshape-to-robot</code> the full assembly instead of the simplified one, producing a link per screw.</li>
-      <li>Ignoring the "has no mass" export warnings, then finding the Gazebo model unusable in Lecture 14.</li>
+      <li>Ignoring the "has no mass" export warnings, then finding the Gazebo model unusable in Project 3.</li>
       <li>Committing an API key pair to a git repository, even a private one.</li>
       <li>Hardcoding <code>/dev/ttyUSB0</code> instead of a udev symlink, then being confused when it points elsewhere after a re-plug.</li>
       <li>Copying the example udev vendor/product IDs instead of reading your own from <code>dmesg</code>.</li>
@@ -2490,10 +2494,13 @@ start_x=1                   &lt;-- add this</code></pre>
     </ul>
   </section>
 
-  <div class="footer-nav">
-    <a href="12-diy-robot-motors-power-compute.html">&larr; Lecture 12: Build Your Own Robot I</a>
-    <a href="index.html">Table of Contents</a>
-    <a href="14-diy-robot-simulation-3dprint-capstone.html">Lecture 14: Build Your Own Robot III &rarr;</a>
+  
+<div class="kc" data-widget="kc"><div class="kc-head"><span class="sim-tag">✅ Knowledge check</span><b>Project 2 check</b></div><div class="kc-q" data-a="0"><p>A diff-drive robot must drive at v = 0.2 m/s and ω = 0. What are the wheel speeds?</p><div class="kc-opts"><button>Left 0.2, right 0.2 m/s</button><button>Left 0, right 0.4</button><button>Left −0.2, right 0.2</button><button>Both 0</button></div><div class="kc-why">With no rotation both wheels move at v.</div></div><div class="kc-q" data-a="1"><p>Which topics does a mobile-base driver node usually use?</p><div class="kc-opts"><button>/scan in, /map out</button><button>/cmd_vel in, /odom (+ TF) out</button><button>/image in, /cmd_vel out</button><button>only services</button></div><div class="kc-why">Exactly the interface the LIMO gave you in Lecture 8.</div></div><div class="kc-q" data-a="0"><p>Why write udev rules for USB sensors?</p><div class="kc-opts"><button>To give each device a fixed, predictable name like /dev/lidar</button><button>To speed up USB</button><button>To install drivers</button><button>For Wi-Fi</button></div><div class="kc-why">/dev/ttyUSB0 can change order after every reboot.</div></div></div>
+
+<div class="footer-nav">
+    <a href="12-diy-robot-motors-power-compute.html">&larr; Project 1: Build Your Own Robot I</a>
+    <a href="projects.html">All projects</a>
+    <a href="14-diy-robot-simulation-3dprint-capstone.html">Project 3: Build Your Own Robot III &rarr;</a>
   </div>
 
 </div>
@@ -2547,6 +2554,7 @@ start_x=1                   &lt;-- add this</code></pre>
   document.addEventListener('keydown', function(e){ if(e.key === 'Escape') close(); });
 })();
 </script>
+<script src="widgets.js"></script>
 <script src="annotate.js" defer></script>
 </body>
 </html>

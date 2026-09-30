@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){try{var t=localStorage.getItem('limo-book-theme');if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 11 — Camera &amp; Computer Vision</title>
+<meta name="description" content="Hands-on Lecture 11: use the LIMO's camera from ROS 2. cv_bridge, OpenCV basics, HSV colour detection, contours, measuring distance with the depth camera, and following a red object.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<link rel="stylesheet" href="lab.css">
+<link rel="stylesheet" href="widgets.css">
+<link rel="stylesheet" href="projector.css">
+</head>
+<body>
+<button id="theme-toggle" aria-label="Toggle light/dark mode">🌙</button>
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html">Home</a><a href="prerequisites.html">Mission Zero</a><a href="syllabus.html">Syllabus</a><a href="schedule.html">Schedule</a><a href="index.html#lectures">Lectures</a><a href="projects.html">Projects</a>
+</div></nav>
+
+<div class="wrap" data-enriched="1">
+<div class="lesson-progress"><div class="lp-top"><span>Lecture 11 · your progress</span><span><b class="lp-count">0 / 0 steps</b> · <a href="#" class="lp-reset">reset</a></span></div><div class="lp-bar"><div class="lp-fill"></div></div></div>
+
+<div class="cover">
+  <div class="kicker">Part B · ROS 2 on the LIMO · Lecture 11 of 14</div>
+  <h1>Camera &amp; Computer Vision</h1>
+  <div class="subtitle">LiDAR tells the robot <em>where</em> things are; the camera tells it <em>what</em> they are. Today you bring camera images into Python with cv_bridge, process them with OpenCV, find a red object, measure how far away it is with the depth camera, and make the LIMO follow it.</div>
+  <div class="meta-row">
+    <div class="chip">⏱ 3 h · 20 min teach · 2 h 40 min hands-on</div>
+    <div class="chip">🤖 /limo_camera/image · depth</div>
+    <div class="chip">🐍 Python + OpenCV · ROS 2 Humble</div>
+    <div class="chip">Before this: Lecture 10</div>
+  </div>
+  <div class="skill-path" aria-label="Course path"><a class="done" href="01-installation-vmware-ros2-limo-intro.html">L1 · Install</a><a class="done" href="L02-first-node.html">L2 · Nodes</a><a class="done" href="L03-topics.html">L3 · Topics</a><a class="done" href="L04-services.html">L4 · Services</a><a class="done" href="L05-custom-interfaces.html">L5 · Interfaces</a><a class="done" href="L06-parameters-launch.html">L6 · Launch</a><a class="done" href="L07-catch-them-all.html">L7 · Project</a><a class="done" href="L08-drive-limo.html">L8 · Drive</a><a class="done" href="L09-limo-urdf-tf-rviz.html">L9 · URDF/TF</a><a class="done" href="L10-limo-lidar-imu.html">L10 · LiDAR/IMU</a><a class="now" href="L11-limo-camera-vision.html">L11 · Vision</a><a class="" href="L12-limo-slam-localization.html">L12 · SLAM</a><a class="" href="L13-limo-nav2.html">L13 · Nav2</a><a class="" href="L14-real-limo-mission.html">L14 · Real LIMO</a><a href="projects.html">+ Projects</a></div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h3>🎯 By the end of today you can…</h3>
+    <ul class="outcomes">
+      <li>Explain what a <code>sensor_msgs/Image</code> contains, and view it with rqt_image_view.</li>
+      <li>Convert ROS images to OpenCV with <code>cv_bridge</code>, and apply grey, blur and edges.</li>
+      <li>Detect a colour with an HSV mask and find the biggest blob with contours.</li>
+      <li>Read the distance to an object from the depth image.</li>
+      <li>Close the loop from camera to motion: follow a red object and stop in front of it.</li>
+    </ul>
+  </div>
+  <div class="card toc">
+    <h3>🗺️ Today's route</h3>
+    <a href="#warmup"><span>11.0</span>Warm-up</a>
+    <a href="#idea"><span>11.1</span>The idea: from pixels to decisions</a>
+    <a href="#lab1"><span>Lab 1</span>See through the robot's eyes</a>
+    <a href="#lab2"><span>Lab 2</span>cv_bridge + OpenCV basics</a>
+    <a href="#lab3"><span>Lab 3</span>Find the red box</a>
+    <a href="#lab4"><span>Lab 4</span>How far is it? The depth camera</a>
+    <a href="#activity"><span>11.2</span>Activity: follow the red box</a>
+    <a href="#exit"><span>11.3</span>Errors, exit ticket &amp; homework</a>
+  </div>
+</div>
+
+<div class="ig"><div class="ig-title"><span class="sim-tag">Infographic</span>Lecture 11 at a glance: the vision pipeline</div><div class="ig-flow">
+  <div class="ig-step"><div class="ic">📷</div><b>Image topic</b><span><code>/limo_camera/image</code>, 640 px wide, ~10 Hz</span></div><div class="ig-arrow">→</div>
+  <div class="ig-step"><div class="ic">🌉</div><b>cv_bridge</b><span><code>imgmsg_to_cv2(msg, "bgr8")</code></span></div><div class="ig-arrow">→</div>
+  <div class="ig-step"><div class="ic">🎨</div><b>HSV</b><span><code>cv2.cvtColor(…, COLOR_BGR2HSV)</code></span></div><div class="ig-arrow">→</div>
+  <div class="ig-step"><div class="ic">⬛</div><b>Mask</b><span><code>cv2.inRange(hsv, low, high)</code></span></div><div class="ig-arrow">→</div>
+  <div class="ig-step"><div class="ic">🔲</div><b>Contours</b><span>biggest blob → centre x, area</span></div><div class="ig-arrow">→</div>
+  <div class="ig-step"><div class="ic">📏</div><b>Depth</b><span>metres at that pixel</span></div><div class="ig-arrow">→</div>
+  <div class="ig-step"><div class="ic">🕹️</div><b>Act</b><span>turn toward it, stop at 0.4 m</span></div>
+</div></div>
+
+<details class="box teacher">
+  <summary>🧑‍🏫 Instructor lesson plan (click to open)</summary>
+  <div class="inner">
+  <div class="table-wrap"><table>
+    <tr><th>Time</th><th>Activity</th><th>Type</th></tr>
+    <tr><td>0:00–0:10</td><td>Warm-up</td><td><span class="tag check">Check</span></td></tr>
+    <tr><td>0:10–0:30</td><td>Pixels, BGR vs HSV, masks; play the HSV simulator on the projector</td><td><span class="tag teach">Teach</span></td></tr>
+    <tr><td>0:30–1:10</td><td>Labs 1–2: image topics, cv_bridge, OpenCV basics</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>1:10–1:20</td><td>Break</td><td></td></tr>
+    <tr><td>1:20–2:00</td><td>Lab 3: spawn the red box, color_tracker</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>2:00–2:25</td><td>Lab 4: distance from the depth image</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>2:25–2:55</td><td>Activity 11.1: red follower</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>2:55–3:00</td><td>Exit ticket</td><td><span class="tag check">Check</span></td></tr>
+  </table></div>
+  <p><strong>Teaching tip.</strong> Students often think "red" is one number. Let them click pixels on the red box in the HSV simulator in the light and in the shadow: the <em>hue</em> hardly changes, while R, G and B all change. That is the whole argument for HSV.</p>
+  </div>
+</details>
+
+<div class="box tip"><div class="box-title">📦 Install / check today's tools</div>
+<div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>sudo apt install ros-humble-cv-bridge python3-opencv ros-humble-rqt-image-view</code></pre></div></div>
+
+<h2 id="warmup"><span class="num">11.0</span>Warm-up (5 min)</h2>
+<div class="quiz">
+  <div class="q"><p>The wanderer from Lecture 10 avoids a box. Can it tell a red box from a green one?</p><details><summary>Answer</summary><div class="inner">No. A LiDAR measures distance only. Colour and appearance need a camera.</div></details></div>
+  <div class="q"><p>What was the pattern for a node that uses sensor data?</p><details><summary>Answer</summary><div class="inner">Store (or process) in the callback; decide and publish <code>/cmd_vel</code> in a timer.</div></details></div>
+</div>
+
+<h2 id="idea"><span class="num">11.1</span>The idea in 10 minutes</h2>
+<div class="grid2">
+  <div class="analogy"><div class="emoji">🖼️</div><div>
+    <p><strong>An image is a grid of numbers.</strong> A 640 × 480 colour image is 640 × 480 × 3 numbers (Blue, Green, Red: OpenCV uses <strong>BGR</strong> order). A ROS <code>Image</code> message carries exactly these bytes, plus width, height and an <code>encoding</code> such as <code>rgb8</code>.</p>
+  </div></div>
+  <div class="analogy"><div class="emoji">🎨</div><div>
+    <p><strong>HSV separates "which colour" from "how bright".</strong> <b>H</b>ue = the colour (0–180 in OpenCV; red sits at both ends), <b>S</b>aturation = how strong, <b>V</b>alue = how bright. A shadow changes V a lot but H very little, so thresholds on H are robust.</p>
+  </div></div>
+</div>
+<div class="mermaid">
+flowchart LR
+  CAM["Gazebo camera"] -- "/limo_camera/image<br/>sensor_msgs/Image" --> CT(["color_tracker"])
+  DEP["depth camera"] -- "/limo_camera/depth/camera_image_depth" --> CT
+  CT -- "/red_target<br/>Point(x=error, z=area)" --> RF(["red_follower"])
+  CT -- "/red_distance<br/>Float32 (m)" --> RF
+  RF -- "/cmd_vel" --> LIMO["LIMO"]
+</div>
+
+<div data-widget="hsv"></div>
+
+<h3>🃏 Key terms: tap a card to check yourself</h3>
+<div class="flip-grid" data-widget="flip">
+  <div class="flip"><div class="flip-in"><div class="flip-front">cv_bridge<small>tap to flip</small></div><div class="flip-back">Converts <code>sensor_msgs/Image</code> ↔ OpenCV/NumPy arrays.</div></div></div>
+  <div class="flip"><div class="flip-in"><div class="flip-front">BGR<small>tap to flip</small></div><div class="flip-back">OpenCV's channel order: Blue, Green, Red.</div></div></div>
+  <div class="flip"><div class="flip-in"><div class="flip-front">HSV<small>tap to flip</small></div><div class="flip-back">Hue (colour) · Saturation (strength) · Value (brightness).</div></div></div>
+  <div class="flip"><div class="flip-in"><div class="flip-front">Mask<small>tap to flip</small></div><div class="flip-back">Black-and-white image: white where the pixel is in range.</div></div></div>
+  <div class="flip"><div class="flip-in"><div class="flip-front">Contour<small>tap to flip</small></div><div class="flip-back">The outline of a white blob in the mask.</div></div></div>
+  <div class="flip"><div class="flip-in"><div class="flip-front">Depth image<small>tap to flip</small></div><div class="flip-back">Each pixel holds a distance in metres (<code>32FC1</code>).</div></div></div>
+</div>
+
+<div class="game" data-widget="order"><div class="kc-head"><span class="sim-tag">🎮 Game</span><b>Put the vision pipeline in order</b></div><ol>
+  <li>Subscribe to <code>/limo_camera/image</code></li>
+  <li><code>frame = bridge.imgmsg_to_cv2(msg, "bgr8")</code></li>
+  <li><code>hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)</code></li>
+  <li><code>mask = cv2.inRange(hsv, low, high)</code></li>
+  <li><code>contours = cv2.findContours(mask, …)</code> → keep the biggest</li>
+  <li>Centre x → error in [−1, +1]</li>
+  <li>Publish <code>/cmd_vel</code> with <code>angular.z = −k × error</code></li>
+</ol></div>
+
+<!-- ============================================================ -->
+<h2 id="lab1"><span class="num">L1</span>Lab 1 — See through the robot's eyes</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 1 · 15 min</span><h3>Image topics and rqt_image_view</h3></div>
+  <div class="step" id="v1-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Launch, list the camera topics, inspect one message</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminals 1 &amp; 2</div><pre><code>ros2 launch limo_gazebosim limo_gazebo_diff.launch.py
+ros2 topic list | grep limo_camera
+ros2 topic hz /limo_camera/image
+ros2 topic echo /limo_camera/image --once --field encoding
+ros2 topic echo /limo_camera/image --once --field width</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>/limo_camera/camera_info_raw
+/limo_camera/camera_points
+/limo_camera/depth/camera_image_depth
+/limo_camera/image
+...
+average rate: ~10
+rgb8
+640</pre></div>
+    <p>Never <code>echo</code> a whole image: it's hundreds of thousands of numbers.</p>
+  </div>
+  <div class="step" id="v1-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">View it</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>ros2 run rqt_image_view rqt_image_view /limo_camera/image</code></pre></div>
+    <p>Drive with teleop in another terminal and watch the view change. Switch the drop-down to <code>/limo_camera/depth/camera_image_depth</code>: near things are dark, far things bright.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab2"><span class="num">L2</span>Lab 2 — cv_bridge + OpenCV basics</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 2 · 25 min</span><h3>image_viewer.py: grey, blur, edges</h3></div>
+  <div class="step" id="v2-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Write the node</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 limo_lab/limo_lab/image_viewer.py</div><pre><code>#!/usr/bin/env python3
+import cv2
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge
+
+
+class ImageViewer(Node):
+    def __init__(self):
+        super().__init__("image_viewer")
+        self.bridge_ = CvBridge()
+        self.create_subscription(Image, "/limo_camera/image", self.callback_image, 10)
+        self.debug_pub_ = self.create_publisher(Image, "/image_viewer/edges", 10)
+
+    def callback_image(self, msg):
+        frame = self.bridge_.imgmsg_to_cv2(msg, desired_encoding="bgr8")   # ROS → OpenCV (NumPy)
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)                      # 3 channels → 1
+        blur = cv2.GaussianBlur(gray, (5, 5), 0)                            # remove noise
+        edges = cv2.Canny(blur, 50, 150)                                    # outlines
+
+        self.get_logger().info(f"image {frame.shape[1]}x{frame.shape[0]}, mean brightness {gray.mean():.0f}",
+                               throttle_duration_sec=2.0)
+        # publish the result back into ROS so rqt_image_view / RViz can show it
+        self.debug_pub_.publish(self.bridge_.cv2_to_imgmsg(edges, encoding="mono8"))
+
+        cv2.imshow("camera", frame)
+        cv2.imshow("edges", edges)
+        cv2.waitKey(1)
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    rclpy.spin(ImageViewer())
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+  </div>
+  <div class="step" id="v2-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Register, build, run</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code># limo_lab/package.xml:  &lt;depend&gt;cv_bridge&lt;/depend&gt;
+# limo_lab/setup.py:     "image_viewer = limo_lab.image_viewer:main",
+cd ~/ros2_ws &amp;&amp; colcon build --packages-select limo_lab --symlink-install &amp;&amp; source ~/.bashrc
+ros2 run limo_lab image_viewer --ros-args -p use_sim_time:=true</code></pre></div>
+    <p>✅ Two windows: the camera and its edges. <code>rqt_image_view</code> can also show <code>/image_viewer/edges</code>: publishing a debug image is how you inspect vision on a robot without a screen. Change the Canny thresholds (50, 150) and the blur size (5, 5): what changes?</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab3"><span class="num">L3</span>Lab 3 — Find the red box</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 3 · 40 min</span><h3>An HSV mask + contours, published as a ROS topic</h3></div>
+  <div class="step" id="v3-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Spawn a red box in front of the LIMO</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>mkdir -p ~/ros2_ws/models &amp;&amp; code ~/ros2_ws/models/red_box.sdf</code></pre></div>
+    <div class="cmd file"><div class="cmd-h">📄 ~/ros2_ws/models/red_box.sdf</div><pre><code>&lt;?xml version="1.0"?&gt;
+&lt;sdf version="1.6"&gt;
+  &lt;model name="red_box"&gt;
+    &lt;link name="link"&gt;
+      &lt;inertial&gt;&lt;mass&gt;2.0&lt;/mass&gt;&lt;/inertial&gt;
+      &lt;visual name="visual"&gt;
+        &lt;geometry&gt;&lt;box&gt;&lt;size&gt;0.15 0.15 0.15&lt;/size&gt;&lt;/box&gt;&lt;/geometry&gt;
+        &lt;material&gt;&lt;ambient&gt;1 0 0 1&lt;/ambient&gt;&lt;diffuse&gt;1 0 0 1&lt;/diffuse&gt;&lt;/material&gt;
+      &lt;/visual&gt;
+      &lt;collision name="collision"&gt;
+        &lt;geometry&gt;&lt;box&gt;&lt;size&gt;0.15 0.15 0.15&lt;/size&gt;&lt;/box&gt;&lt;/geometry&gt;
+      &lt;/collision&gt;
+    &lt;/link&gt;
+  &lt;/model&gt;
+&lt;/sdf&gt;</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal (Gazebo running)</div><pre><code>ros2 run gazebo_ros spawn_entity.py -entity red_box -file ~/ros2_ws/models/red_box.sdf -x -0.5 -y -0.6 -z 0.08</code></pre></div>
+    <p>The LIMO spawns facing the world's −y direction, so this puts the box about 0.9 m in front of it. Check in rqt_image_view; move it with the translate tool (<kbd>T</kbd>) if needed.</p>
+  </div>
+  <div class="step" id="v3-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Write <code>color_tracker.py</code> (camera + depth)</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 limo_lab/limo_lab/color_tracker.py</div><pre><code>#!/usr/bin/env python3
+import cv2
+import numpy as np
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Image
+from geometry_msgs.msg import Point
+from std_msgs.msg import Float32
+from cv_bridge import CvBridge
+
+
+class ColorTracker(Node):
+    def __init__(self):
+        super().__init__("color_tracker")
+        self.declare_parameter("show_window", True)
+        self.show_ = self.get_parameter("show_window").value
+        self.bridge_ = CvBridge()
+        self.depth_ = None                                          # latest depth image (metres)
+        self.create_subscription(Image, "/limo_camera/image", self.callback_image, 10)
+        self.create_subscription(Image, "/limo_camera/depth/camera_image_depth", self.callback_depth, 10)
+        # x = horizontal error (-1 left ... +1 right), z = blob area in pixels (0 = not found)
+        self.target_pub_ = self.create_publisher(Point, "red_target", 10)
+        self.distance_pub_ = self.create_publisher(Float32, "red_distance", 10)
+
+    def callback_depth(self, msg):
+        self.depth_ = self.bridge_.imgmsg_to_cv2(msg, desired_encoding="passthrough")
+
+    def callback_image(self, msg):
+        frame = self.bridge_.imgmsg_to_cv2(msg, desired_encoding="bgr8")
+        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        # red sits at both ends of the hue circle, so we need two ranges
+        mask = cv2.inRange(hsv, (0, 120, 70), (10, 255, 255)) | \
+               cv2.inRange(hsv, (170, 120, 70), (180, 255, 255))
+
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        target = Point()
+        if contours:
+            biggest = max(contours, key=cv2.contourArea)
+            area = cv2.contourArea(biggest)
+            if area > 200:                                          # ignore specks of noise
+                x, y, w, h = cv2.boundingRect(biggest)
+                cx, cy = x + w // 2, y + h // 2
+                half = frame.shape[1] / 2
+                target.x = (cx - half) / half                       # -1 ... +1
+                target.z = float(area)
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                self.publish_distance(cx, cy)
+        self.target_pub_.publish(target)
+
+        if self.show_:
+            cv2.imshow("camera", frame)
+            cv2.imshow("red mask", mask)
+            cv2.waitKey(1)
+
+    def publish_distance(self, cx, cy):
+        if self.depth_ is None:
+            return
+        patch = self.depth_[max(0, cy - 3):cy + 4, max(0, cx - 3):cx + 4]   # 7x7 pixels around the centre
+        valid = patch[np.isfinite(patch)]
+        if valid.size:
+            d = float(np.median(valid))
+            self.distance_pub_.publish(Float32(data=d))
+            self.get_logger().info(f"red object at {d:.2f} m", throttle_duration_sec=0.5)
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    rclpy.spin(ColorTracker())
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+    <p>The colour and depth images come from the same simulated camera and have the same size, so the same pixel <code>(cx, cy)</code> gives the object's distance.</p>
+  </div>
+  <div class="step" id="v3-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Run it and move the box</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code># limo_lab/package.xml:  &lt;depend&gt;std_msgs&lt;/depend&gt;
+# limo_lab/setup.py:     "color_tracker = limo_lab.color_tracker:main",
+cd ~/ros2_ws &amp;&amp; colcon build --packages-select limo_lab --symlink-install &amp;&amp; source ~/.bashrc
+ros2 run limo_lab color_tracker --ros-args -p use_sim_time:=true
+ros2 topic echo /red_target      # second terminal</code></pre></div>
+    <p>✅ A green box surrounds the red object, and the mask window shows it in white. Drag the box left and right: <code>x</code> goes negative and positive. Drag it closer: <code>z</code> (area) grows.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab4"><span class="num">L4</span>Lab 4 — How far is it? The depth camera</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 4 · 25 min</span><h3>Check the distance three ways</h3></div>
+  <div class="step" id="v4-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Read <code>/red_distance</code></span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>ros2 topic echo /red_distance</code></pre></div>
+    <p>Drag the box towards and away from the robot. The number should follow.</p>
+  </div>
+  <div class="step" id="v4-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Compare with the LiDAR and with Gazebo</span></div>
+    <p>Run <code>nearest_obstacle</code> from Lecture 10 at the same time. Both sensors should agree to within a few centimetres (the camera sits at x = 0.084 m, the LiDAR at x = 0.103 m on the robot). In Gazebo you can read the box's true position in the left panel (<em>Models → red_box → pose</em>).</p>
+    <div class="table-wrap"><table>
+      <tr><th>Box position</th><th>/red_distance</th><th>nearest_obstacle</th><th>Difference</th></tr>
+      <tr><td>far</td><td>?</td><td>?</td><td>?</td></tr>
+      <tr><td>middle</td><td>?</td><td>?</td><td>?</td></tr>
+      <tr><td>near</td><td>?</td><td>?</td><td>?</td></tr>
+    </table></div>
+  </div>
+</div>
+
+<details class="box">
+  <summary>➕ Going further (optional): deep-learning detection with YOLO</summary>
+  <div class="inner">
+  <p>Colour thresholds work for coloured targets. To detect <em>kinds</em> of objects (people, chairs, stop signs) robots use neural networks such as YOLO. The idea is the same pipeline: image in, <em>bounding boxes + labels</em> out, published on a topic. The <a href="08-computer-vision-opencv-object-detection.html">extended notes on computer vision</a> cover Find-Object-2D, YOLO and turning a detection into a 3D position with TF.</p>
+  </div>
+</details>
+
+<!-- ============================================================ -->
+<h2 id="activity"><span class="num">11.2</span>Your turn</h2>
+<div class="activity">
+  <div class="lvl">Activity 11.1 · Core · 30 min</div>
+  <h3>Follow the red box, and stop in front of it</h3>
+  <p>Write <code>red_follower.py</code>. It subscribes to <code>/red_target</code> and <code>/red_distance</code> and publishes <code>/cmd_vel</code> at 10 Hz:</p>
+  <ul>
+    <li>Nothing found (<code>z == 0</code>) → turn slowly on the spot to search (<code>angular.z = 0.3</code>).</li>
+    <li>Found → turn toward it: <code>angular.z = −1.0 × x</code> (object on the right means turn right).</li>
+    <li>Drive forward at 0.1 m/s <strong>only while</strong> the distance is above 0.4 m; then stop.</li>
+  </ul>
+  <p>Test it by dragging the box around in Gazebo. The LIMO should follow it like a puppy.</p>
+  <details class="hint"><summary>Hint</summary><div class="inner">Same structure as the wanderer: store the latest <code>Point</code> and distance in callbacks, decide in a 0.1 s timer. Start with <code>self.distance_ = 99.0</code> so it drives before the first distance arrives.</div></details>
+  <details class="solution"><summary>Solution</summary><div class="inner">
+  <div class="cmd file"><div class="cmd-h">📄 limo_lab/limo_lab/red_follower.py</div><pre><code>#!/usr/bin/env python3
+import rclpy
+from rclpy.node import Node
+from geometry_msgs.msg import Point, Twist
+from std_msgs.msg import Float32
+
+
+class RedFollower(Node):
+    def __init__(self):
+        super().__init__("red_follower")
+        self.declare_parameter("stop_distance", 0.4)
+        self.stop_ = self.get_parameter("stop_distance").value
+        self.target_ = None
+        self.distance_ = 99.0
+        self.cmd_pub_ = self.create_publisher(Twist, "cmd_vel", 10)
+        self.create_subscription(Point, "red_target", self.callback_target, 10)
+        self.create_subscription(Float32, "red_distance", self.callback_distance, 10)
+        self.create_timer(0.1, self.control_loop)
+
+    def callback_target(self, msg):
+        self.target_ = msg
+
+    def callback_distance(self, msg):
+        self.distance_ = msg.data
+
+    def control_loop(self):
+        cmd = Twist()
+        if self.target_ is None or self.target_.z == 0.0:
+            cmd.angular.z = 0.3                          # search
+        else:
+            cmd.angular.z = -1.0 * self.target_.x        # centre the object
+            if self.distance_ > self.stop_:
+                cmd.linear.x = 0.1                       # approach
+        self.cmd_pub_.publish(cmd)
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    rclpy.spin(RedFollower())
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div></div></details>
+</div>
+<div class="activity">
+  <div class="lvl">Challenge 11.2 · Stretch</div>
+  <h3>A follower that never crashes</h3>
+  <p>Add a LiDAR safety check to <code>red_follower.py</code>: subscribe to <code>/scan</code>, and if anything is closer than 0.25 m in the front ±20° sector, force <code>linear.x = 0</code>, whatever the camera says. Reuse <code>sector_min</code> from Lecture 10. This rule-based fusion of two sensors is a common safety layer on real robots.</p>
+</div>
+
+<h3>🏅 Level up: choose your challenge</h3>
+<div class="levels">
+  <div class="lv bronze"><b>🥉 Bronze: everyone</b><span>color_tracker finds the box; you can explain the mask.</span></div>
+  <div class="lv silver"><b>🥈 Silver: confident</b><span>Activity 11.1: follow and stop at 0.4 m ± 5 cm.</span></div>
+  <div class="lv gold"><b>🥇 Gold: future expert</b><span>Challenge 11.2 + make the HSV ranges ROS parameters and tune them live.</span></div>
+</div>
+
+<div class="kc" data-widget="kc"><div class="kc-head"><span class="sim-tag">✅ Knowledge check</span><b>Lecture 11 check: 5 questions</b></div>
+  <div class="kc-q" data-a="1"><p>Why threshold in HSV rather than BGR?</p><div class="kc-opts"><button>HSV is faster</button><button>Hue stays almost the same when the lighting changes</button><button>ROS only sends HSV</button><button>BGR has no red</button></div><div class="kc-why">Shadows change V (brightness) a lot and H (colour) very little.</div></div>
+  <div class="kc-q" data-a="2"><p>Why does red need <em>two</em> <code>inRange</code> calls?</p><div class="kc-opts"><button>Red is brighter</button><button>For the depth image</button><button>Red hue wraps around: it is near 0 <em>and</em> near 180</button><button>It doesn't</button></div><div class="kc-why">OpenCV hue runs 0–180 around a circle; red is at both ends.</div></div>
+  <div class="kc-q" data-a="0"><p>What does <code>bridge.imgmsg_to_cv2(msg, "bgr8")</code> return?</p><div class="kc-opts"><button>A NumPy array (height × width × 3)</button><button>A ROS message</button><button>A file on disk</button><button>A mask</button></div><div class="kc-why">cv_bridge turns the message bytes into a NumPy array OpenCV can use.</div></div>
+  <div class="kc-q" data-a="3"><p>The object's centre is at x = 480 in a 640-wide image. What is the error?</p><div class="kc-opts"><button>−0.5</button><button>0</button><button>+1.0</button><button>+0.5</button></div><div class="kc-why">(480 − 320) / 320 = +0.5, so it is on the right and the robot should turn right (negative angular.z).</div></div>
+  <div class="kc-q" data-a="1"><p>Your OpenCV window is grey and frozen. What is missing?</p><div class="kc-opts"><button>A publisher</button><button><code>cv2.waitKey(1)</code> after <code>imshow</code></button><button>use_sim_time</button><button>A bigger queue</button></div><div class="kc-why">imshow only draws when waitKey gives the GUI a moment.</div></div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="exit"><span class="num">11.3</span>When things go wrong · Exit ticket · Homework</h2>
+<div class="table-wrap"><table class="fix">
+  <tr><th>You see…</th><th>Why</th><th>Fix</th></tr>
+  <tr><td>ModuleNotFoundError: cv_bridge / cv2</td><td>Not installed.</td><td><code>sudo apt install ros-humble-cv-bridge python3-opencv</code></td></tr>
+  <tr><td>Mask is all black</td><td>Object not red enough, or wrong thresholds.</td><td>Print <code>hsv[y, x]</code> of a pixel on the object and adjust (the simulator's pixel picker shows how).</td></tr>
+  <tr><td>OpenCV window frozen / grey</td><td>Missing <code>cv2.waitKey(1)</code>.</td><td>Call it after <code>imshow</code>.</td></tr>
+  <tr><td>/red_distance never published</td><td>Depth topic name differs, or all pixels are nan/inf.</td><td><code>ros2 topic list | grep depth</code>; move the box into view.</td></tr>
+  <tr><td>spawn_entity: "entity already exists"</td><td>The box is already there.</td><td>Use a new <code>-entity</code> name, or delete it in Gazebo.</td></tr>
+  <tr><td>Very slow, laggy images</td><td>Big images + imshow in a VM.</td><td>Run with <code>-p show_window:=false</code> and view <code>/image_viewer/edges</code> in rqt instead.</td></tr>
+</table></div>
+<div class="quiz">
+  <div class="q"><p>Name one thing the camera does better than the LiDAR, and one thing the LiDAR does better.</p><details><summary>Answer</summary><div class="inner">Camera: colour, texture, recognising what an object is. LiDAR: accurate distance all around, in any lighting.</div></details></div>
+</div>
+<div class="box book">
+  <div class="box-title">🏠 Homework</div>
+  <ol>
+    <li>Finish Activity 11.1 and record a 20 s screen video of the LIMO following the box.</li>
+    <li>Install next week's packages: <code>sudo apt install ros-humble-slam-toolbox ros-humble-navigation2 ros-humble-nav2-bringup ros-humble-nav2-simple-commander</code></li>
+    <li>Read the <em>NAV2 Boot Camp</em> introduction in the book (pp. 105–108): generating a map with SLAM.</li>
+  </ol>
+</div>
+
+<div class="footer-nav">
+  <a href="L10-limo-lidar-imu.html">← Lecture 10: LiDAR &amp; IMU</a>
+  <a href="index.html#lectures">All lectures</a>
+  <a href="L12-limo-slam-localization.html">Lecture 12: Mapping &amp; Localisation →</a>
+</div>
+</div>
+<script src="lab.js"></script>
+<script src="widgets.js"></script>
+<script src="annotate.js" defer></script>
+</body>
+</html>
