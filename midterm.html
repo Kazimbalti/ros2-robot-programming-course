@@ -37,11 +37,11 @@
   <div class="cover">
     <div class="kicker">Midterm Exam &nbsp;·&nbsp; 20 Marks &nbsp;·&nbsp; Week 8</div>
     <h1>Midterm Exam</h1>
-    <div class="subtitle">A checkpoint on the foundations — install and workspace hygiene, the ROS 2 computation graph, robot description and frames, simulation and control, and the sensor pipeline. Sat in each section's own Week 8 session.</div>
+    <div class="subtitle">A checkpoint on the ROS&nbsp;2 foundations: Linux and installation, workspaces and nodes, topics and services. Sat in each section's own Week 8 session.</div>
     <div class="meta-row">
       <div class="chip">Week 8 — Section B: Mon 19 Oct · Sections A &amp; C: Thu 22 Oct 2026</div>
       <div class="chip">In the first 90 min of the session</div>
-      <div class="chip">Covers Lectures 1–7</div>
+      <div class="chip">Covers Mission Zero + Lectures 1–4</div>
       <div class="chip">Weight: 20% of the final grade</div>
     </div>
   </div>
@@ -50,9 +50,9 @@
   <div class="table-scroll">
   <table>
     <tr><th>Part</th><th>Marks</th><th>Style</th></tr>
-    <tr><td>A — Short answer &amp; concepts</td><td>8</td><td>6–8 questions: define terms, read a <code>ros2 topic info</code> / TF tree, spot the bug in a snippet, explain <em>why</em></td></tr>
-    <tr><td>B — Applied reasoning</td><td>7</td><td>2–3 scenarios: choose topic vs service vs action; fix a broken URDF joint; predict what a launch file does</td></tr>
-    <tr><td>C — Short practical</td><td>5</td><td>At a lab machine: create a package, write a working publisher or subscriber to spec, run it, show the output</td></tr>
+    <tr><td>A — Short answer &amp; concepts</td><td>8</td><td>6–8 questions: define terms, read <code>ros2 topic info</code> / <code>ros2 interface show</code> output, spot the bug in a snippet, explain <em>why</em></td></tr>
+    <tr><td>B — Applied reasoning</td><td>7</td><td>2–3 scenarios: choose topic vs service; predict what a node prints; fix a broken <code>setup.py</code> entry or remap</td></tr>
+    <tr><td>C — Short practical</td><td>5</td><td>At a lab machine: create a package, write a working publisher, subscriber or service server to spec, build it, run it, show the output</td></tr>
   </table>
   </div>
   <p><strong>Materials:</strong> closed book. One A4 handwritten cheat-sheet (both sides) allowed. A ROS 2 CLI cheat-sheet is provided with the paper. Laptops used only for Part C, on the lab image.</p>
@@ -61,34 +61,32 @@
   <div class="table-scroll">
   <table>
     <tr><th>Lecture</th><th>You should be able to…</th></tr>
-    <tr><td>L1 — Install &amp; workspace</td><td>Explain the VM model, what <code>source</code>-ing does, what <code>colcon</code>/<code>rosdep</code> are for, the layout of a workspace</td></tr>
-    <tr><td>L2 — Architecture</td><td>Contrast nodes/topics/services/actions/parameters; read/interpret <code>ros2</code> CLI output; describe the LIMO node graph</td></tr>
-    <tr><td>L3 — Dev environment &amp; drive modes</td><td>Write a minimal Python publisher/subscriber; explain package structure; describe differential vs Ackermann vs Mecanum control</td></tr>
-    <tr><td>L4 — URDF &amp; Xacro</td><td>Read a URDF; identify links/joints/origins/inertials; explain what Xacro macros and parameters buy you</td></tr>
-    <tr><td>L5 — TF2 &amp; RViz</td><td>Explain the TF tree, static vs dynamic transforms, and the map → odom → base_link chain; use <code>tf2_echo</code> conceptually</td></tr>
-    <tr><td>L6 — Gazebo &amp; ros2_control</td><td>Describe the sim loop, <code>controller_manager</code>, and the idea behind on/off, proportional, and kinematic path controllers</td></tr>
-    <tr><td>L7 — Sensors</td><td>Interpret <code>LaserScan</code>/<code>Imu</code>/<code>Image</code> fields; explain why sensor data must be TF-transformed; outline a safe-stop node</td></tr>
+    <tr><td><a href="prerequisites.html">Mission Zero</a> — Linux survival</td><td>Navigate and manage files, use <code>grep</code>/<code>find</code>/pipes, <code>chmod</code>, <code>source</code> and environment variables</td></tr>
+    <tr><td><a href="01-installation-vmware-ros2-limo-intro.html">L1</a> — Installation</td><td>Explain the VM model, what sourcing does and why the order in <code>~/.bashrc</code> matters, what <code>colcon</code>/<code>rosdep</code> are for</td></tr>
+    <tr><td><a href="L02-first-node.html">L2</a> — Workspaces, packages &amp; first node</td><td>Create a workspace and a Python package; write, register and run a node with a timer; inspect and rename nodes; use turtlesim</td></tr>
+    <tr><td><a href="L03-topics.html">L3</a> — Topics</td><td>The 4 properties of a topic; the Twist message; <code>ros2 topic</code> tools; write a publisher and a subscriber; remap a topic</td></tr>
+    <tr><td><a href="L04-services.html">L4</a> — Services</td><td>Topic vs service; read a <code>.srv</code>; call a service from the terminal; write a server and a non-blocking client with <code>call_async</code></td></tr>
   </table>
   </div>
 
   <h2>🎯 Sample Questions</h2>
   <div class="box idea">
-    <div class="box-title">Representative of the real paper — not exhaustive</div>
+    <div class="box-title">Representative of the real paper, not exhaustive</div>
     <ol style="margin:0;">
-      <li>A teammate says "topics and services are basically the same, just pick one." Give two concrete situations from this course — one where a topic is correct and one where a service is — and justify each in one sentence.</li>
-      <li>Here is a URDF joint. It won't spawn the wheel where expected. Identify the error and write the corrected <code>&lt;origin&gt;</code>.</li>
-      <li>Sketch the TF tree for LIMO in a Nav2 run. Which transform does AMCL provide, and which does the wheel-odometry source provide?</li>
-      <li>Write a ROS 2 Python node that subscribes to <code>/scan</code> and prints a warning when any range in the forward 30° arc is below 0.4&nbsp;m. State your assumptions about the message.</li>
-      <li>You run <code>ros2 launch limo_gazebosim limo_gazebo_diff.launch.py</code> and Gazebo opens but <code>ros2 topic list</code> shows nothing from the robot. List three things you would check, in order.</li>
+      <li>A teammate says "topics and services are basically the same, just pick one." Give one situation where a topic is correct and one where a service is correct, and justify each in one sentence.</li>
+      <li>In <code>"py_node = my_py_pkg.my_first_node:main"</code>, name the executable, the module and the function. Which one do you type after <code>ros2 run</code>?</li>
+      <li>A subscriber prints nothing. List three commands you would run, in order, to find out why.</li>
+      <li>Write a Python node that subscribes to <code>/number</code> (<code>example_interfaces/msg/Int64</code>) and logs a warning when the value is above 10.</li>
+      <li>Write the terminal command that spawns a turtle called <code>bob</code> at (3, 3), and explain what the <code>---</code> in <code>turtlesim/srv/Spawn</code> separates.</li>
     </ol>
   </div>
 
   <h2>✅ How to Prepare</h2>
   <ul>
-    <li>Re-run Labs 1–7 from a clean workspace without looking at the solutions.</li>
-    <li>Be fluent with the CLI: <code>ros2 node/topic/service/action/param</code>, <code>ros2 run</code>, <code>ros2 launch</code>, <code>colcon build</code>, <code>tf2_echo</code>, <code>view_frames</code>.</li>
-    <li>Practise writing a publisher and a subscriber from a blank file — no template.</li>
-    <li>Review the "Common Mistakes" box at the end of each of Lectures 1–7.</li>
+    <li>Re-do the labs of Lectures 2–4 in a fresh package without looking at the solutions.</li>
+    <li>Be fluent with the CLI: <code>ros2 node/topic/service/interface</code>, <code>ros2 run</code>, <code>colcon build</code>, <code>--ros-args -r</code>.</li>
+    <li>Practise writing a publisher, a subscriber and a service server from a blank file.</li>
+    <li>Answer every warm-up and exit-ticket question of Lectures 2–4 again, and review each "When things go wrong" table.</li>
     <li>Bring your student ID, a pen, and your one-page cheat-sheet.</li>
   </ul>
 

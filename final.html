@@ -13,7 +13,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Final Exam — ROS and Robot Programming</title>
-<meta name="description" content="Format, coverage, date, and preparation guidance for the ROS and Robot Programming final exam (40 marks, finals week) — including the capstone defence.">
+<meta name="description" content="Format, coverage, date, and preparation guidance for the ROS and Robot Programming final exam (40 marks, finals week).">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="book.css">
@@ -37,11 +37,11 @@
   <div class="cover">
     <div class="kicker">Final Exam &nbsp;·&nbsp; 40 Marks &nbsp;·&nbsp; Finals Week</div>
     <h1>Final Exam</h1>
-    <div class="subtitle">Cumulative, but weighted toward the second half — perception, state estimation, SLAM and Nav2, real hardware, and the from-scratch build — plus a live defence of your capstone.</div>
+    <div class="subtitle">Cumulative, but weighted toward everything after the midterm: interfaces, parameters and launch files, the Catch Them All project, and ROS&nbsp;2 on the LIMO (driving, URDF/TF, sensors, SLAM and Nav2, the real robot).</div>
     <div class="meta-row">
       <div class="chip">Week 15 — Section B: Mon 7 Dec · Sections A &amp; C: Thu 10 Dec 2026</div>
-      <div class="chip">Written 2 h + capstone defence</div>
-      <div class="chip">Cumulative; emphasis on Lectures 8–14</div>
+      <div class="chip">Written 2 h + short practical</div>
+      <div class="chip">Cumulative; emphasis on Lectures 5–12</div>
       <div class="chip">Weight: 40% of the final grade</div>
     </div>
   </div>
@@ -50,55 +50,55 @@
   <div class="table-scroll">
   <table>
     <tr><th>Part</th><th>Marks</th><th>Style</th></tr>
-    <tr><td>A — Concepts across the whole course</td><td>10</td><td>Short answer: terminology, "why", read a rosgraph / TF tree / costmap, compare two approaches</td></tr>
-    <tr><td>B — State estimation &amp; autonomy</td><td>12</td><td>Odometry &amp; drift, EKF fusion, AMCL/particle filter, SLAM, Nav2 costmaps/planners/behaviour trees — worked reasoning</td></tr>
-    <tr><td>C — Hardware &amp; the build</td><td>8</td><td>LIMO's six subsystems; DIY robot — kinematics derivation, driver-node data flow, udev, launch hierarchy, sim-to-real gaps</td></tr>
-    <tr><td>D — Capstone defence (oral)</td><td>10</td><td>10 min + Q&amp;A: walk through your node graph, show quantified results, defend design choices</td></tr>
+    <tr><td>A — Concepts across the whole course</td><td>10</td><td>Short answer: terminology, "why", read an <code>rqt_graph</code> / TF tree / LaserScan, choose the right ROS 2 tool</td></tr>
+    <tr><td>B — ROS 2 system design</td><td>10</td><td>Design or fix a multi-node system: custom msg/srv, parameters, a launch file with remaps (Lectures 5–7)</td></tr>
+    <tr><td>C — Robot reasoning</td><td>12</td><td>Worked problems on the LIMO: odometry and yaw, open vs closed loop, go-to-goal, frames, LiDAR sectors, colour detection, SLAM and Nav2 (Lectures 8–12)</td></tr>
+    <tr><td>D — Short practical</td><td>8</td><td>At a lab machine: extend a given node (e.g. add a parameter, a service, or a LiDAR safety check), build, run and demonstrate it</td></tr>
   </table>
   </div>
-  <p><strong>Materials:</strong> written parts closed book; one A4 handwritten double-sided cheat-sheet allowed. A formula/CLI sheet is provided. Bring your capstone report (printed or on screen) to the defence.</p>
+  <p><strong>Materials:</strong> written parts closed book; one A4 handwritten double-sided cheat-sheet allowed. A CLI sheet is provided.</p>
 
   <h2>📚 Coverage</h2>
-  <p><strong>Carried forward from the midterm (assumed, lightly tested in Part A):</strong> the computation graph, URDF/TF2, Gazebo &amp; <code>ros2_control</code>, the sensor pipeline.</p>
+  <p><strong>Carried forward from the midterm (assumed, lightly tested in Part A):</strong> workspaces, nodes, topics, services.</p>
   <div class="table-scroll">
   <table>
     <tr><th>Lecture</th><th>You should be able to…</th></tr>
-    <tr><td>L8 — Perception</td><td>Explain <code>cv_bridge</code>, HSV vs RGB for detection, contour features; contrast classical detection with Find-Object-2D and YOLO</td></tr>
-    <tr><td>L9 — Odometry, EKF, AMCL</td><td>Explain wheel-odometry drift sources; what an EKF fuses and why; the particle-filter update; AMCL parameters that matter and their effect</td></tr>
-    <tr><td>L10 — SLAM &amp; Nav2</td><td>Describe SLAM vs localisation; the global/local costmap; planner vs controller; where the behaviour tree sits; waypoint following &amp; frontier exploration</td></tr>
-    <tr><td>L11 — LIMO hardware</td><td>For each of the six subsystems: what it is, how ROS 2 talks to it, one realistic failure mode</td></tr>
-    <tr><td>L12 — Motors, power, compute</td><td>H-bridge control, closed-loop wheel velocity, counts-per-rev calibration, a power budget, headless bring-up</td></tr>
-    <tr><td>L13 — Driver, CAD, URDF, sensors</td><td>Differential-drive forward/inverse kinematics; the <code>/cmd_vel</code> → wheels → encoders → <code>/odom</code> loop; udev rules; CAD → URDF</td></tr>
-    <tr><td>L14 — Simulation, 3D print, capstone</td><td>Parameterised Xacro; Gazebo plugins and their sim-to-real gaps; the four-file launch hierarchy; publishing packages</td></tr>
+    <tr><td><a href="L05-custom-interfaces.html">L5</a> — Custom interfaces</td><td>Write a <code>.msg</code>/<code>.srv</code> with arrays and nested types; configure an interfaces package; use it from Python</td></tr>
+    <tr><td><a href="L06-parameters-launch.html">L6</a> — Parameters &amp; launch</td><td>Declare/read parameters and their types; YAML parameter files; write a launch file that renames, remaps and sets parameters</td></tr>
+    <tr><td><a href="L07-catch-them-all.html">L7</a> — Catch Them All</td><td>Explain the system design; the go-to-goal maths (distance, <code>atan2</code>, angle wrap, P-control); record and replay with <code>ros2 bag</code></td></tr>
+    <tr><td><a href="L08-drive-limo.html">L8</a> — Drive the LIMO</td><td>The LIMO's key topics; the Odometry message; quaternion → yaw; open vs closed loop; sim time</td></tr>
+    <tr><td><a href="L09-limo-urdf-tf-rviz.html">L9</a> — URDF, TF &amp; RViz</td><td>Links and joint types; read a URDF; the TF tree and who publishes it; look up a transform</td></tr>
+    <tr><td><a href="L10-limo-sensors.html">L10</a> — LiDAR &amp; camera</td><td>LaserScan fields and index → angle; sector checks; reactive control; HSV masks, contours and following a target</td></tr>
+    <tr><td><a href="L11-limo-slam-nav2.html">L11</a> — SLAM &amp; Nav2</td><td>SLAM vs localisation; the saved map files; map → odom → base_link; costmaps and inflation; planner vs controller; waypoint missions</td></tr>
+    <tr><td><a href="L12-real-limo-mission.html">L12</a> — The real LIMO</td><td>Safety rules; bring-up; what changes from sim to real and why</td></tr>
   </table>
   </div>
 
   <h2>🎯 Sample Questions</h2>
   <div class="box idea">
-    <div class="box-title">Representative — not exhaustive</div>
+    <div class="box-title">Representative, not exhaustive</div>
     <ol style="margin:0;">
-      <li>Wheel odometry says the robot has driven straight for 5&nbsp;m; the LiDAR scan-match disagrees by 12&nbsp;cm and 3°. Explain what an EKF does with these two inputs and why it does not simply average them.</li>
-      <li>In a Nav2 run the global plan is fine but the robot oscillates near obstacles. Name the component most likely responsible and two parameters you would change.</li>
-      <li>Derive the inverse kinematics for a differential-drive robot: given <code>v</code> and <code>ω</code>, wheel radius <code>r</code>, track width <code>L</code>, give the left/right wheel angular velocities.</li>
-      <li>Your DIY robot drives well in Gazebo but veers left on the bench. Give three physical causes and the ROS-side calibration or fix for each.</li>
-      <li>Compare SLAM and AMCL: what does each assume about the map, and when do you run which?</li>
+      <li>Write a <code>.srv</code> for "move LED <em>n</em> to state <em>s</em>" and list every file you must edit to build and use it from <code>my_py_pkg</code>.</li>
+      <li>Write the <code>Node(...)</code> entry of a launch file that starts <code>robot_news_station</code> as <code>station_x</code>, with <code>robot_name = "X"</code>, publishing on <code>/news_x</code>.</li>
+      <li>An odometry quaternion is (0, 0, 0.707, 0.707). Give the yaw in degrees and explain which way the robot faces.</li>
+      <li>A LaserScan has <code>angle_min = −2.0</code> and <code>angle_increment = 0.0111</code>. Which indices cover the front ±20°? Write a function that returns the minimum valid range in that sector.</li>
+      <li>In a Nav2 run the robot spins in place and never reaches the goal. Give two likely causes and how you would check each.</li>
     </ol>
   </div>
 
   <h2>✅ How to Prepare</h2>
   <ul>
-    <li>Rebuild the Lecture 10 mission from scratch in sim; be able to explain every node in the graph.</li>
-    <li>Redo the Lecture 9 drift/fusion plots and be able to read them aloud.</li>
-    <li>Write the differential-drive kinematics from memory, both directions.</li>
-    <li>For each LIMO subsystem, write one sentence on the ROS 2 interface and one realistic failure mode.</li>
-    <li>Rehearse the capstone defence out loud against a timer; anticipate "why did you choose…" for every major decision.</li>
-    <li>Review the glossary and "Common Mistakes" boxes across Lectures 8–14.</li>
+    <li>Rebuild Catch Them All from an empty package; be able to explain every node, topic and service in its graph.</li>
+    <li>Re-run the LIMO labs (Lectures 8–11) in Gazebo, and change one parameter in each to see its effect.</li>
+    <li>Write the go-to-goal controller and the quaternion → yaw formula from memory.</li>
+    <li>Answer every warm-up and exit-ticket question of Lectures 5–12 again, and review each "When things go wrong" table.</li>
   </ul>
 
   <div class="box real">
-    <div class="box-title">🔗 Capstone &amp; the final are graded together</div>
-    <p style="margin:0;">The oral defence (Part D) is scored with the <a href="assignments.html#capstone">capstone rubric</a>. The written capstone report is due at the start of the final exam slot and cannot use late days.</p>
+    <div class="box-title">🔗 The capstone is graded separately</div>
+    <p style="margin:0;">The Part 2 final-mission demo, the capstone report and the short oral defence take place in the same week and are scored with the <a href="assignments.html#capstone">capstone rubric</a> (30 marks). The report is due at the start of your final exam slot and cannot use late days.</p>
   </div>
+
 
   <div class="footer-nav">
     <a href="midterm.html">&larr; Midterm</a>

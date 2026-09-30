@@ -37,7 +37,7 @@
   <div class="cover">
     <div class="kicker">Assignments &amp; Capstone &nbsp;·&nbsp; 10 + 30 Marks</div>
     <h1>Assignments</h1>
-    <div class="subtitle">Four graded assignments track the concept arc; the two-part capstone is where it all comes together — first in simulation, then on a robot you built yourself.</div>
+    <div class="subtitle">Each assignment grows out of the hands-on activities you already start in class, so you finish and polish them at home. The two-part capstone brings it all together: first the "Catch Them All" turtlesim project, then the "LIMO Delivery" mission on the LIMO.</div>
     <div class="meta-row">
       <div class="chip">A1–A4 + quizzes: 10 marks</div>
       <div class="chip">Capstone: 30 marks</div>
@@ -47,107 +47,100 @@
 
   <div class="box idea">
     <div class="box-title">📦 Submission rules (all assignments)</div>
-    <p style="margin-bottom:8px;">Push your ROS 2 package(s) to your course Git repository under <code>assignments/aN/</code>, and upload a short PDF report (2–4 pages: what you built, commands to run it, screenshots/plots, what broke and how you fixed it).</p>
-    <p style="margin-bottom:8px;">Every package must build clean with <code>colcon build</code> on Ubuntu 22.04 + ROS 2 Humble and run with the exact command(s) listed in your report.</p>
+    <p style="margin-bottom:8px;">Push your ROS 2 package(s) to your course Git repository under <code>assignments/aN/</code>, and upload a short PDF report (2–4 pages: what you built, commands to run it, screenshots, what broke and how you fixed it).</p>
+    <p style="margin-bottom:8px;">Every package must build cleanly with <code>colcon build</code> on Ubuntu 22.04 + ROS 2 Humble and run with the exact command(s) listed in your report.</p>
     <p style="margin-bottom:8px;">Include a one-line AI-use note. Late policy and integrity rules: see the <a href="syllabus.html#-course-policies">Syllabus</a>.</p>
-    <p style="margin:0;"><strong>Three sections:</strong> the dates below are the <strong>Section&nbsp;B (Monday)</strong> session. <strong>Sections&nbsp;A &amp; C</strong> are issued and due on the <strong>Thursday of the same week</strong> — the assignment is always issued in one week's session and due at the start of the next week's session for that section.</p>
+    <p style="margin:0;"><strong>Three sections:</strong> the dates below are the <strong>Section&nbsp;B (Monday)</strong> session. <strong>Sections&nbsp;A &amp; C</strong> are issued and due on the <strong>Thursday of the same week</strong>. An assignment is always issued in one week's session and due at the start of the next week's session for that section.</p>
   </div>
 
   <h2>📝 The Four Assignments</h2>
   <div class="table-scroll">
   <table>
-    <tr><th>ID</th><th>Title</th><th>Issued</th><th>Due</th><th>Marks</th></tr>
-    <tr><td>A1</td><td>Workspace &amp; a Python drive node</td><td>Wk 3 (14 Sep)</td><td>Wk 4 (21 Sep)</td><td>2.5</td></tr>
-    <tr><td>A2</td><td>URDF/Xacro extension &amp; the TF tree</td><td>Wk 5 (28 Sep)</td><td>Wk 6 (5 Oct)</td><td>2.5</td></tr>
-    <tr><td>A3</td><td>Reactive perception — avoidance + colour detection</td><td>Wk 7 (12 Oct)</td><td>Wk 8 (19 Oct)</td><td>2.5</td></tr>
-    <tr><td>A4</td><td>DIY differential-drive driver node</td><td>Wk 12 (16 Nov)</td><td>Wk 13 (23 Nov)</td><td>2.5</td></tr>
+    <tr><th>ID</th><th>Title</th><th>Builds on</th><th>Issued</th><th>Due</th><th>Marks</th></tr>
+    <tr><td>A1</td><td>Workspace &amp; a Python drive node <em>(completed)</em></td><td>L1</td><td>Wk 3 (14 Sep)</td><td>Wk 4 (21 Sep)</td><td>2.5</td></tr>
+    <tr><td>A2</td><td>Topics &amp; services: the resettable number counter</td><td><a href="L03-topics.html">L3</a>, <a href="L04-services.html">L4</a></td><td>Wk 6 (5 Oct)</td><td>Wk 7 (12 Oct)</td><td>2.5</td></tr>
+    <tr><td>A3</td><td>Custom interfaces + launch: the smart LED panel</td><td><a href="L05-custom-interfaces.html">L5</a>, <a href="L06-parameters-launch.html">L6</a></td><td>Wk 8 (19 Oct)</td><td>Wk 9 (26 Oct)</td><td>2.5</td></tr>
+    <tr><td>A4</td><td>LIMO sensors: the safe red-object follower</td><td><a href="L08-drive-limo.html">L8</a>–<a href="L10-limo-sensors.html">L10</a></td><td>Wk 13 (23 Nov)</td><td>Wk 14 (30 Nov)</td><td>2.5</td></tr>
   </table>
   </div>
-  <p style="font-size:.9em;color:var(--muted)">The remaining marks in this component come from short in-class quizzes at the start of Weeks 4, 7, 9, and 13.</p>
+  <p style="font-size:.9em;color:var(--muted)">The remaining marks in this component come from short in-class quizzes (the lecture exit tickets) at the start of Weeks 6, 9, 12 and 14.</p>
 
   <div class="divider"></div>
 
-  <h3 id="a1">A1 — Workspace &amp; a Python drive node <span class="tag due">Wk 3 → Wk 4</span></h3>
-  <p><strong>Objective (CLO1, CLO2):</strong> stand up a clean ROS 2 workspace and write your first node that commands the robot.</p>
-  <p><strong>Tasks:</strong></p>
-  <ol>
-    <li>Create <code>~/limo_ws</code> with a package <code>limo_drive</code> (ament_python).</li>
-    <li>Write a node <code>square_driver</code> that publishes <code>geometry_msgs/Twist</code> on <code>/cmd_vel</code> to drive LIMO in a 1&nbsp;m &times; 1&nbsp;m square, then stops.</li>
-    <li>Expose <code>side_length</code> and <code>linear_speed</code> as ROS parameters.</li>
-    <li>Add a launch file that starts Gazebo + your node; demonstrate the same node in differential and Ackermann modes and note the difference.</li>
-  </ol>
-  <p><strong>Deliverable:</strong> the <code>limo_drive</code> package + report with a screen recording link or a plot of the path from <code>/odom</code>.</p>
+  <h3 id="a1">A1 — Workspace &amp; a Python drive node <span class="tag due">Wk 3 → Wk 4 · completed</span></h3>
+  <p><strong>Objective (CLO1):</strong> set up a working ROS 2 workspace and command the LIMO from a first node. This assignment was issued and marked before the course was restructured; it is unchanged.</p>
 
-  <h3 id="a2">A2 — URDF/Xacro extension &amp; the TF tree <span class="tag due">Wk 5 → Wk 6</span></h3>
-  <p><strong>Objective (CLO3):</strong> modify a real robot description and reason about frames.</p>
+  <h3 id="a2">A2 — Topics &amp; services: the resettable number counter <span class="tag due">Wk 6 → Wk 7</span></h3>
+  <p><strong>Objective (CLO2):</strong> write publishers, subscribers, a service server and a non-blocking client. Builds on Activity 3.1 and Activity 4.1 (Book §2.1–2.2).</p>
   <p><strong>Tasks:</strong></p>
   <ol>
-    <li>Fork <code>limo_description</code>; add a new sensor link (e.g. a forward-facing ultrasonic or a second camera) as a Xacro macro with a fixed joint.</li>
-    <li>Give it correct <code>&lt;origin&gt;</code>, <code>&lt;inertial&gt;</code>, and a visual mesh or primitive.</li>
-    <li>Launch <code>robot_state_publisher</code> + RViz; capture <code>ros2 run tf2_tools view_frames</code> output showing your link in the tree.</li>
-    <li>Write a <code>static_transform_publisher</code> (in a launch file) for a bonus off-body frame and explain when a static vs dynamic transform is correct.</li>
+    <li>In <code>my_py_pkg</code>: <code>number_publisher</code> (publishes on <code>/number</code>) and <code>number_counter</code> (adds each number and publishes the total on <code>/number_count</code>).</li>
+    <li>Add a <code>/reset_counter</code> service (<code>example_interfaces/srv/SetBool</code>) to the counter.</li>
+    <li>Write a client node <code>counter_supervisor</code> that subscribes to <code>/number_count</code> and <strong>calls</strong> <code>/reset_counter</code> (non-blocking, with <code>call_async</code> + a done callback) whenever the total goes above 50.</li>
+    <li>Show the system in <code>rqt_graph</code> and prove it works with <code>ros2 topic echo /number_count</code>.</li>
   </ol>
-  <p><strong>Deliverable:</strong> modified description package + <code>frames.pdf</code> + report explaining the map → odom → base_link chain for LIMO.</p>
+  <p><strong>Deliverable:</strong> the package + report with the <code>rqt_graph</code> screenshot and a terminal capture of the count rising and resetting.</p>
 
-  <h3 id="a3">A3 — Reactive perception <span class="tag due">Wk 7 → Wk 8</span></h3>
-  <p><strong>Objective (CLO5):</strong> turn raw sensor streams into behaviour.</p>
+  <h3 id="a3">A3 — Custom interfaces + launch: the smart LED panel <span class="tag due">Wk 8 → Wk 9</span></h3>
+  <p><strong>Objective (CLO3):</strong> design your own msg/srv and configure a multi-node system with parameters and one launch file. Builds on Activity 5.1 and Lecture 6 (Book §3.1–3.3).</p>
   <p><strong>Tasks:</strong></p>
   <ol>
-    <li>Node <code>safe_stop</code>: subscribe to <code>/scan</code>, stop and rotate away when an obstacle is within a configurable distance in the front arc.</li>
-    <li>Node <code>colour_seeker</code>: use <code>cv_bridge</code> + OpenCV HSV thresholding + contours to detect a coloured target in <code>/camera/image_raw</code> and publish its pixel centroid and area.</li>
-    <li>Combine them: LIMO wanders, avoids obstacles, and slows when the target fills more than <em>X%</em> of the frame.</li>
+    <li>In <code>my_robot_interfaces</code>: <code>LedStateArray.msg</code> and <code>SetLed.srv</code>; the <code>led_panel</code> and <code>battery</code> nodes working together.</li>
+    <li>Make the panel's <code>led_states</code> and the battery's empty/full times (<code>empty_after</code>, <code>full_after</code>) <strong>parameters</strong>.</li>
+    <li>Write <code>led_system.launch.py</code> in <code>my_robot_bringup</code> that starts the panel with 5 LEDs and <strong>two</strong> battery nodes (renamed, each controlling a different LED, with different timings).</li>
+    <li>Save the parameters to a YAML file and load them from the launch file.</li>
   </ol>
-  <p><strong>Deliverable:</strong> <code>limo_perception</code> package + report with annotated detection frames and a short clip of the combined behaviour in Gazebo.</p>
+  <p><strong>Deliverable:</strong> both packages + report with <code>ros2 interface show</code> output, the YAML file and a capture of <code>/led_states</code> changing.</p>
 
-  <h3 id="a4">A4 — DIY differential-drive driver node <span class="tag due">Wk 12 → Wk 13</span></h3>
-  <p><strong>Objective (CLO8):</strong> implement the kinematics that a driver node hides.</p>
+  <h3 id="a4">A4 — LIMO sensors: the safe red-object follower <span class="tag due">Wk 13 → Wk 14</span></h3>
+  <p><strong>Objective (CLO5):</strong> turn LiDAR and camera data into safe behaviour on the LIMO in Gazebo. Builds on Lectures 8–10.</p>
   <p><strong>Tasks:</strong></p>
   <ol>
-    <li>Derive, by hand (show the working), the forward and inverse differential-drive kinematics for "Forge" given wheel radius and track width.</li>
-    <li>Implement a node that takes <code>/cmd_vel</code> → per-wheel target velocities → serial command, and reads encoder counts → publishes <code>nav_msgs/Odometry</code> + the <code>odom → base_link</code> TF.</li>
-    <li>Provide a <code>bringup.launch.py</code> that starts the driver + <code>robot_state_publisher</code>.</li>
-    <li>Validate: commanded vs measured straight-line distance and a 360° spin, with the error reported.</li>
+    <li>In <code>limo_lab</code>: <code>color_tracker</code> (publishes the red object's horizontal error and area) and <code>red_follower</code> (searches, turns toward, and approaches the object).</li>
+    <li>Add the LiDAR safety layer: never drive forward if anything is closer than a <code>safety_distance</code> parameter in the front ±20° sector.</li>
+    <li>Make every driving node publish a zero <code>Twist</code> on exit (safe <code>main()</code> from Lecture 12).</li>
+    <li>Test with the red box and an obstacle placed between the robot and the box; report what the robot does.</li>
   </ol>
-  <p><strong>Deliverable:</strong> <code>forge_base</code> package + derivation scan + validation table. Works fully as a simulation/bench exercise if you have no hardware.</p>
+  <p><strong>Deliverable:</strong> the <code>limo_lab</code> package + report with annotated camera/mask screenshots and a ≤60 s clip of the behaviour in Gazebo.</p>
 
   <div class="divider"></div>
 
   <h2 id="capstone">🏆 Capstone Project <span class="tag exam">30 marks</span></h2>
   <p>
-    The capstone is delivered in two parts. <strong>Part 1</strong> is the simulated autonomous mission built in
-    Lecture 10 — the dress rehearsal. <strong>Part 2</strong> is the review of your own robot from the Lecture
-    12–14 build arc. One written report covers both; the final defence is during finals week.
+    The capstone has two parts. <strong>Part 1</strong> is the <a href="L07-catch-them-all.html">Catch Them All</a> project
+    from Lecture 7: everything from the ROS 2 Bootcamp in one system. <strong>Part 2</strong> is the
+    <a href="L12-real-limo-mission.html#mission">LIMO Delivery</a> final mission, done in teams of 3–4 on the real LIMO
+    (or in simulation if robot time is not available). One written report covers both.
   </p>
 
   <h3>Milestones</h3>
   <div class="table-scroll">
   <table>
-    <tr><th>When</th><th>Milestone</th><th>What's assessed</th></tr>
-    <tr><td>Wk 10 (2 Nov)</td><td>Capstone Part 1 — live sim demo</td><td>LIMO maps an unknown area with <code>slam_toolbox</code>, then completes a waypoint mission + frontier exploration under Nav2 without collision or operator input</td></tr>
-    <tr><td>Wk 14 (30 Nov)</td><td>Capstone Part 2 — build review</td><td>Your robot (or full design package): driver node, URDF, at least one working sensor, a Gazebo digital twin, and packages published to GitHub</td></tr>
-    <tr><td>Wk 15 (7 Dec)</td><td>Report due + oral defence</td><td>Written report on both parts; 10-minute defence with Q&amp;A during the final exam slot</td></tr>
+    <tr><th>When</th><th>Milestone</th><th>What's assessed</th><th>Marks</th></tr>
+    <tr><td>Wk 10 (2 Nov) → Wk 11 (9 Nov)</td><td>Part 1 — Catch Them All demo</td><td>Milestones M1–M6: go-to-goal controller, spawner with <code>/alive_turtles</code>, catching through a custom service, closest-turtle strategy, parameters + one launch file, plus a <code>ros2 bag</code> of a run (rubric in <a href="L07-catch-them-all.html#exit">Lecture 7</a>)</td><td>10</td></tr>
+    <tr><td>Wk 13 (23 Nov) → Wk 15 (7 Dec)</td><td>Part 2 — LIMO Delivery demo</td><td>Map the arena, visit Stations A and B, find and stop at the red object at Station C, return home, with no collisions and a <code>/mission_status</code> topic (rubric in <a href="L12-real-limo-mission.html#mission">Lecture 12</a>)</td><td>15</td></tr>
+    <tr><td>Wk 15 (7 Dec)</td><td>Report + short oral defence</td><td>Report on both parts (node graphs, what went wrong, three measured sim-to-real differences) and a 5-minute Q&amp;A per team</td><td>5</td></tr>
   </table>
   </div>
 
-  <h3>Grading rubric</h3>
+  <h3>General grading principles</h3>
   <div class="table-scroll">
   <table>
     <tr><th>Criterion</th><th>Weight</th><th>Looking for</th></tr>
-    <tr><td>Technical difficulty &amp; correctness</td><td>30%</td><td>Kinematics, TF, and the ROS graph are right; the autonomy stack is configured, not just launched</td></tr>
-    <tr><td>System integration &amp; robustness</td><td>25%</td><td>Bringup is one command; recovers from a blocked path / lost localisation; no manual babysitting</td></tr>
-    <tr><td>Experimental rigour</td><td>20%</td><td>Quantified results — path error, success rate over repeated runs, map quality — not a single lucky take</td></tr>
-    <tr><td>Report clarity</td><td>15%</td><td>Someone else could reproduce your run from the report alone</td></tr>
-    <tr><td>Defence &amp; presentation</td><td>10%</td><td>You can explain every node in your graph and defend your design choices</td></tr>
+    <tr><td>It works</td><td>40%</td><td>The required behaviour happens, started with the documented command(s), without manual help</td></tr>
+    <tr><td>Correct ROS 2 design</td><td>25%</td><td>Sensible choice of topics vs services, clean interfaces, parameters instead of hard-coded values, one-command launch</td></tr>
+    <tr><td>Evidence</td><td>15%</td><td>Video, <code>ros2 bag</code>, <code>rqt_graph</code>, measured results rather than a single lucky run</td></tr>
+    <tr><td>Code quality &amp; safety</td><td>10%</td><td>Readable, commented code; safe stop on exit; speed limits on the LIMO</td></tr>
+    <tr><td>Explanation</td><td>10%</td><td>Every team member can explain every node in the graph</td></tr>
   </table>
   </div>
 
-  <h3>Extension bank (for higher grades / DIY build direction)</h3>
+  <h3>Extensions (for higher grades)</h3>
   <ul>
-    <li><strong>Navigation:</strong> dynamic obstacle avoidance with a moving actor; custom Nav2 behaviour-tree node; recovery-behaviour tuning.</li>
-    <li><strong>Perception-driven autonomy:</strong> drive to a YOLO-detected object; visual servoing on a colour target; AprilTag docking.</li>
-    <li><strong>Multi-sensor state estimation:</strong> add a second EKF instance (map frame) and compare localised vs dead-reckoned trajectories.</li>
-    <li><strong>Hardware:</strong> get the DIY robot driving under Nav2 for real; add a second sensor; 3D-print and fit the cover.</li>
-    <li><strong>Challenge tier:</strong> full sim-to-real transfer of the Lecture 10 mission onto LIMO or Forge.</li>
+    <li><strong>Part 1:</strong> a second hunter turtle; a service that pauses and resumes spawning; a smoother controller (limit acceleration).</li>
+    <li><strong>Part 2:</strong> patrol repeats until a red object is seen; the mission restarts from any station after a failure; waypoints loaded from a YAML file.</li>
+    <li><strong>Perception:</strong> detect two colours and deliver to the right one; use the depth image to stop at an exact distance.</li>
+    <li><strong>Challenge tier:</strong> the full Part 2 mission running on the physical LIMO with a map of the real lab.</li>
   </ul>
 
   <div class="footer-nav">
