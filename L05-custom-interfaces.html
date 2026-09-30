@@ -11,6 +11,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
 <link rel="stylesheet" href="lab.css">
 <link rel="stylesheet" href="widgets.css">
+<link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="projector.css">
 </head>
 <body>
@@ -24,12 +25,12 @@
 <div class="lesson-progress"><div class="lp-top"><span>Lecture 5 · your progress</span><span><b class="lp-count">0 / 0 steps</b> · <a href="#" class="lp-reset">reset</a></span></div><div class="lp-bar"><div class="lp-fill"></div></div></div>
 
 <div class="cover">
+    <div class="cover-art" aria-hidden="true">📝</div>
   <div class="kicker">Part A · ROS 2 Bootcamp · Lecture 5 of 14</div>
   <h1>Custom Messages &amp; Services</h1>
   <div class="subtitle">So far we used messages that other people made. Real robots need their own: a hardware status report, a list of LEDs, a list of turtles to catch. Today you design, build and use your own interfaces.</div>
   <div class="meta-row">
     <div class="chip">⏱ 3 h · 25 min teach · 2 h 35 min hands-on</div>
-    <div class="chip">📘 Book: §3.1, pp. 49–63</div>
     <div class="chip">🐍 Python · ROS 2 Humble</div>
     <div class="chip">Before this: Lecture 4</div>
   </div>
@@ -91,8 +92,8 @@
   <p><strong>An interface is a form with fixed boxes.</strong> A topic is the post box, and the interface is the form you post: everyone agrees that box 1 is "temperature (number)" and box 2 is "motors ready (yes/no)". If the sender and receiver use different forms, nothing works.</p>
 </div></div>
 
-<div class="box book">
-  <div class="box-title">📘 Name + definition (Book §3.1.1)</div>
+<div class="box note">
+  <div class="box-title">📌 Name + definition</div>
   <p>A <strong>topic</strong> is identified by two things: a <em>name</em> (<code>/number_count</code>) and a <em>msg definition</em> (<code>example_interfaces/msg/Int64</code>).<br>
   A <strong>service</strong> is identified by a <em>name</em> (<code>/reset_counter</code>) and a <em>srv definition</em> (<code>example_interfaces/srv/SetBool</code>).<br>
   Topics and services are the <strong>communication layer</strong>; interfaces are the <strong>content</strong> you send.</p>
@@ -123,7 +124,7 @@ flowchart LR
 <li>Field names: <strong>snake_case</strong>, lower case: <code>are_motors_ready</code> ✔ <code>AreMotorsReady</code> ✘</li></ul></div>
 
 <!-- ============================================================ -->
-<h3>📘 Interfaces in the book</h3><div class="fig-pair"><figure class="book-fig"><img src="images/book/fig3_1.png" alt="Fig. 3.1: a msg is the content carried by a topic." loading="lazy"><figcaption>Fig. 3.1: a msg is the content carried by a topic.</figcaption></figure><figure class="book-fig"><img src="images/book/fig3_2.png" alt="Fig. 3.2: a srv is a request msg plus a response msg." loading="lazy"><figcaption>Fig. 3.2: a srv is a request msg plus a response msg.</figcaption></figure></div><figure class="book-fig"><img src="images/book/fig3_3.png" alt="Fig. 3.3: the build system turns one msg definition into code for every language." loading="lazy"><figcaption>Fig. 3.3: the build system turns one msg definition into code for every language.</figcaption></figure>
+<h3>🖼️ Interfaces in pictures</h3><div class="fig-pair"><figure class="figure-card"><img src="images/figures/fig3_1.png" alt="A msg is the content carried by a topic." loading="lazy"><figcaption>A msg is the content carried by a topic.</figcaption></figure><figure class="figure-card"><img src="images/figures/fig3_2.png" alt="A srv is a request msg plus a response msg." loading="lazy"><figcaption>A srv is a request msg plus a response msg.</figcaption></figure></div><figure class="figure-card"><img src="images/figures/fig3_3.png" alt="The build system turns one msg definition into code for every language." loading="lazy"><figcaption>The build system turns one msg definition into code for every language.</figcaption></figure>
 <div data-widget="msgbuilder"></div>
 
 <h3>🃏 Key terms: tap a card to check yourself</h3>
@@ -131,7 +132,7 @@ flowchart LR
 
 <h2 id="lab1"><span class="num">L1</span>Lab 1 — Your interfaces package + a .msg</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB 1 · 30 min</span><h3>my_robot_interfaces with HardwareStatus.msg (Book §3.1.2)</h3></div>
+  <div class="lab-h"><span class="badge">LAB 1 · 30 min</span><h3>my_robot_interfaces with HardwareStatus.msg</h3></div>
   <p class="lab-goal">Goal: <code>ros2 interface show my_robot_interfaces/msg/HardwareStatus</code> prints your three fields.</p>
 
   <div class="step" id="c1-1">
@@ -194,7 +195,7 @@ string debug_message</pre></div>
 <!-- ============================================================ -->
 <h2 id="lab2"><span class="num">L2</span>Lab 2 — Publish your own message</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB 2 · 25 min</span><h3>The hardware status publisher (Book §3.1.3)</h3></div>
+  <div class="lab-h"><span class="badge">LAB 2 · 25 min</span><h3>The hardware status publisher</h3></div>
 
   <div class="step" id="c2-1">
     <div class="step-h"><span class="step-n">1</span><span class="step-t">Tell <code>my_py_pkg</code> that it uses your interfaces</span></div>
@@ -257,7 +258,7 @@ debug_message: Nothing special here
 <!-- ============================================================ -->
 <h2 id="lab3"><span class="num">L3</span>Lab 3 — Create and serve a .srv</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB 3 · 25 min</span><h3>ComputeRectangleArea (Book §3.1.5–3.1.6)</h3></div>
+  <div class="lab-h"><span class="badge">LAB 3 · 25 min</span><h3>ComputeRectangleArea</h3></div>
 
   <div class="step" id="c3-1">
     <div class="step-h"><span class="step-n">1</span><span class="step-t">Write the service definition</span></div>
@@ -319,9 +320,9 @@ my_robot_interfaces.srv.ComputeRectangleArea_Response(area=7.5)</pre></div>
 <!-- ============================================================ -->
 <h2 id="activity"><span class="num">5.2</span>Your turn</h2>
 <div class="activity">
-  <div class="lvl">Activity 5.1 · Core · 50 min · from Book §3.1.7–3.1.8</div>
+  <div class="lvl">Activity 5.1 · Core · 50 min</div>
   <h3>The battery and the LED panel</h3>
-<figure class="book-fig"><img src="images/book/fig3_4.png" alt="Fig. 3.4: the activity. Blue boxes are nodes, orange services, green topics." loading="lazy"><figcaption>Fig. 3.4: the activity. Blue boxes are nodes, orange services, green topics.</figcaption></figure><div class="fig-pair"><figure class="book-fig"><img src="images/book/fig3_5.png" alt="Fig. 3.5: battery empty → request LED 3 on." loading="lazy"><figcaption>Fig. 3.5: battery empty → request LED 3 on.</figcaption></figure><figure class="book-fig"><img src="images/book/fig3_6.png" alt="Fig. 3.6: battery full → request LED 3 off." loading="lazy"><figcaption>Fig. 3.6: battery full → request LED 3 off.</figcaption></figure></div>
+<figure class="figure-card"><img src="images/figures/fig3_4.png" alt="The activity. Blue boxes are nodes, orange services, green topics." loading="lazy"><figcaption>The activity. Blue boxes are nodes, orange services, green topics.</figcaption></figure><div class="fig-pair"><figure class="figure-card"><img src="images/figures/fig3_5.png" alt="Battery empty → request LED 3 on." loading="lazy"><figcaption>Battery empty → request LED 3 on.</figcaption></figure><figure class="figure-card"><img src="images/figures/fig3_6.png" alt="Battery full → request LED 3 off." loading="lazy"><figcaption>Battery full → request LED 3 off.</figcaption></figure></div>
   <p>When the battery is <strong>empty</strong>, the battery node asks the LED panel to turn LED 3 <strong>on</strong>. When the battery is <strong>full</strong> again, it asks to turn LED 3 <strong>off</strong>. The LED panel publishes its LED states all the time.</p>
   <div class="mermaid">
 flowchart LR
@@ -333,7 +334,7 @@ flowchart LR
     <li><strong>LED panel:</strong> an array <code>[0, 0, 0]</code>. It publishes the array on <code>/led_states</code> and offers the service <code>/set_led</code>.</li>
     <li>You need: <code>msg/LedStateArray.msg</code>, <code>srv/SetLed.srv</code>, the node <code>led_panel.py</code> and the node <code>battery.py</code>.</li>
   </ul>
-  <p><strong>Suggested order (Book §3.1.8):</strong> ① the msg + a panel that publishes; test with <code>echo</code> → ② the srv + the panel's server; test with <code>ros2 service call</code> → ③ the battery client.</p>
+  <p><strong>Suggested order:</strong> ① the msg + a panel that publishes; test with <code>echo</code> → ② the srv + the panel's server; test with <code>ros2 service call</code> → ③ the battery client.</p>
 
   <details class="hint"><summary>Hint 1: the two interface files</summary><div class="inner">
   <div class="cmd file"><div class="cmd-h">📄 msg/LedStateArray.msg</div><pre><code>int64[] led_states</code></pre></div>
@@ -342,7 +343,6 @@ int64 state
 ---
 bool success</code></pre></div>
   <p>Add both to <code>rosidl_generate_interfaces</code> and rebuild the interfaces package.</p>
-  <p><em>Note: the book's <code>SetLed.srv</code> names the second field <code>led_states</code>, but its code uses <code>request.state</code>. We use <code>state</code> in both places.</em></p>
   </div></details>
   <details class="hint"><summary>Hint 2: measuring time in the battery node</summary><div class="inner">Run a fast timer (every 0.1 s) that compares "now" with the last time the state changed:
   <code>self.get_clock().now().nanoseconds / 1e9</code> gives the current time in seconds.</div></details>
@@ -497,12 +497,12 @@ ros2 run my_py_pkg battery            # terminal 3</code></pre></div>
   <div><code>&lt;depend&gt;my_robot_interfaces&lt;/depend&gt;</code><span>in the user package's package.xml</span></div>
 </div>
 
-<div class="box book">
+<div class="box note">
   <div class="box-title">🏠 Homework</div>
   <ol>
     <li>Finish Activity 5.1 (all three nodes running together).</li>
     <li>Create <code>Turtle.msg</code> (<code>string name</code>, <code>float64 x</code>, <code>float64 y</code>, <code>float64 theta</code>) and <code>TurtleArray.msg</code> (<code>Turtle[] turtles</code>). Build and <code>ros2 interface show</code> them; you'll need them in Lecture 7.</li>
-    <li>Read Book §3.2–3.3, "Parameters" and "Launch Files" (pp. 64–76).</li>
+    <li>Preview: with turtlesim running, try <code>ros2 param list</code> and <code>ros2 param get /turtlesim background_r</code>.</li>
   </ol>
 </div>
 
@@ -514,6 +514,7 @@ ros2 run my_py_pkg battery            # terminal 3</code></pre></div>
 </div>
 <script src="lab.js"></script>
 <script src="widgets.js"></script>
+<script src="enhance.js"></script>
 <script src="annotate.js" defer></script>
 </body>
 </html>

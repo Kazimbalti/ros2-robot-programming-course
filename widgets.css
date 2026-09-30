@@ -127,10 +127,9 @@ html[data-theme="dark"] .ord-row.bad, html[data-theme="dark"] .sort-row.bad{back
 .ig-card span{font-size:.82em; color:var(--muted); display:block; line-height:1.5;}
 .ig svg{width:100%; height:auto; display:block;}
 .ig svg text{font-family:Inter, sans-serif;}
-.book-fig{margin:22px 0; text-align:center;}
-.book-fig img{max-width:100%; height:auto; background:#fff; border:1px solid var(--border); border-radius:14px; padding:6px;}
-.book-fig figcaption{font-size:.85em; color:var(--muted); margin-top:8px;}
-.book-fig figcaption::before{content:"📘 From the book · "; font-weight:800; color:var(--gold);}
+.figure-card{margin:22px 0; text-align:center;}
+.figure-card img{max-width:100%; height:auto; background:#fff; border:1px solid var(--border); border-radius:14px; padding:6px;}
+.figure-card figcaption{font-size:.85em; color:var(--muted); margin-top:8px;}
 .fig-pair{display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:center;}
 @media (max-width:700px){ .fig-pair{grid-template-columns:1fr;} }
 .levels{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:14px 0;}

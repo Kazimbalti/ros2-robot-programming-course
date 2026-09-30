@@ -11,6 +11,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
 <link rel="stylesheet" href="lab.css">
 <link rel="stylesheet" href="widgets.css">
+<link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="projector.css">
 </head>
 <body>
@@ -24,12 +25,12 @@
 <div class="lesson-progress"><div class="lp-top"><span>Lecture 2 · your progress</span><span><b class="lp-count">0 / 0 steps</b> · <a href="#" class="lp-reset">reset</a></span></div><div class="lp-bar"><div class="lp-fill"></div></div></div>
 
 <div class="cover">
+    <div class="cover-art" aria-hidden="true">🧩</div>
   <div class="kicker">Part A · ROS 2 Bootcamp · Lecture 2 of 14</div>
   <h1>Workspaces, Packages &amp; Your First Node</h1>
   <div class="subtitle">Today you stop <em>using</em> ROS 2 and start <em>programming</em> it. You will build your own workspace, write a node in Python, run it, look inside it, and then explore turtlesim with the same tools professional robot engineers use.</div>
   <div class="meta-row">
     <div class="chip">⏱ 3 h · 30 min teach · 2 h 30 min hands-on</div>
-    <div class="chip">📘 Book: Chapter 1, pp. 9–22</div>
     <div class="chip">🐍 Python · ROS 2 Humble</div>
     <div class="chip">Before this: Lecture 1 + Mission Zero</div>
   </div>
@@ -101,7 +102,7 @@
   <p>In ROS 2: a <strong>chef = node</strong>, a <strong>station = package</strong>, and the <strong>kitchen = workspace</strong>.</p>
 </div></div>
 
-<p>A robot program is not one giant file. It is split into small programs called <strong>nodes</strong>. On a mobile robot you might have a camera node, a LiDAR node, a motor-driver node and a navigation node. Each does one thing, and they talk to each other (Book Fig. 1.1 and 1.3).</p>
+<p>A robot program is not one giant file. It is split into small programs called <strong>nodes</strong>. On a mobile robot you might have a camera node, a LiDAR node, a motor-driver node and a navigation node. Each does one thing, and they talk to each other.</p>
 
 <div class="mermaid">
 flowchart LR
@@ -120,8 +121,8 @@ flowchart LR
   N4 --> N5
 </div>
 
-<div class="box book">
-  <div class="box-title">📘 Four words to remember (Book §1.2)</div>
+<div class="box note">
+  <div class="box-title">📌 Four words to remember</div>
   <ul>
     <li><strong>Node</strong> — a small program with one job. Nodes talk to each other through topics, services and parameters.</li>
     <li><strong>Package</strong> — a folder that holds related nodes. It is the unit you build and share (for example, one package for the camera, one for the wheels).</li>
@@ -130,14 +131,14 @@ flowchart LR
   </ul>
 </div>
 
-<h3>📘 The same ideas in the book</h3>
-<div class="fig-pair"><figure class="book-fig"><img src="images/book/fig1_1.png" alt="Fig. 1.1: a robot program split into nodes (camera, navigation, driver, joystick) that talk through ROS 2." loading="lazy"><figcaption>Fig. 1.1: a robot program split into nodes (camera, navigation, driver, joystick) that talk through ROS 2.</figcaption></figure><figure class="book-fig"><img src="images/book/fig1_2.png" alt="Fig. 1.2: reuse existing libraries and mix Python and C++ nodes in one system." loading="lazy"><figcaption>Fig. 1.2: reuse existing libraries and mix Python and C++ nodes in one system.</figcaption></figure></div><figure class="book-fig"><img src="images/book/fig1_3.png" alt="Fig. 1.3: nodes grouped into packages: camera, motion planning and hardware control." loading="lazy"><figcaption>Fig. 1.3: nodes grouped into packages: camera, motion planning and hardware control.</figcaption></figure>
+<h3>🖼️ The same ideas in pictures</h3>
+<div class="fig-pair"><figure class="figure-card"><img src="images/figures/fig1_1.png" alt="A robot program split into nodes (camera, navigation, driver, joystick) that talk through ROS 2." loading="lazy"><figcaption>A robot program split into nodes (camera, navigation, driver, joystick) that talk through ROS 2.</figcaption></figure><figure class="figure-card"><img src="images/figures/fig1_2.png" alt="Reuse existing libraries and mix Python and C++ nodes in one system." loading="lazy"><figcaption>Reuse existing libraries and mix Python and C++ nodes in one system.</figcaption></figure></div><figure class="figure-card"><img src="images/figures/fig1_3.png" alt="Nodes grouped into packages: camera, motion planning and hardware control." loading="lazy"><figcaption>Nodes grouped into packages: camera, motion planning and hardware control.</figcaption></figure>
 <h3>🃏 Key terms: tap a card to check yourself</h3>
 <div class="flip-grid" data-widget="flip"><div class="flip"><div class="flip-in"><div class="flip-front">Node<small>tap to flip</small></div><div class="flip-back">A small program with <b>one job</b>. Nodes talk through topics, services and parameters.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Package<small>tap to flip</small></div><div class="flip-back">A folder of related nodes: the unit you <b>build and share</b>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Workspace<small>tap to flip</small></div><div class="flip-back">The folder (<code>~/ros2_ws</code>) that holds your packages in <code>src/</code>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">colcon<small>tap to flip</small></div><div class="flip-back">The <b>build tool</b>. Run it from the workspace root, never inside <code>src/</code>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Executable<small>tap to flip</small></div><div class="flip-back">The name after <code>ros2 run pkg</code>, defined in <code>setup.py</code>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">source<small>tap to flip</small></div><div class="flip-back">Loads ROS 2 or a workspace into <b>this</b> terminal. Needed after every build.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">spin<small>tap to flip</small></div><div class="flip-back">Keeps the node alive and runs its callbacks until Ctrl+C.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">rclpy<small>tap to flip</small></div><div class="flip-back">The ROS 2 <b>Python client library</b>, built on rcl and DDS.</div></div></div></div>
 
-<h3>Where does your Python code sit? (Book §1.4)</h3>
+<h3>Where does your Python code sit?</h3>
 <p>You write Python and call the <strong>rclpy</strong> library. Under the hood, rclpy (Python) and rclcpp (C++) both use the same C library, <strong>rcl</strong>, which talks to <strong>DDS</strong>, the middleware that actually moves data between nodes. That is why a Python node and a C++ node can talk to each other.</p>
-<figure class="book-fig"><img src="images/book/fig1_4.png" alt="Fig. 1.4: client libraries (rclcpp, rclpy, …) are all built on rcl." loading="lazy"><figcaption>Fig. 1.4: client libraries (rclcpp, rclpy, …) are all built on rcl.</figcaption></figure>
+<figure class="figure-card"><img src="images/figures/fig1_4.png" alt="Client libraries (rclcpp, rclpy, …) are all built on rcl." loading="lazy"><figcaption>Client libraries (rclcpp, rclpy, …) are all built on rcl.</figcaption></figure>
 <div class="mermaid">
 flowchart TB
   A["Your node (Python)"] --> B["rclpy"]
@@ -154,14 +155,14 @@ flowchart TB
   <p class="lab-goal">Goal: have <code>~/ros2_ws</code> with one Python package inside it, built with colcon and loaded in every terminal.</p>
 
   <div class="step" id="l1-1">
-    <div class="step-h"><span class="step-n">1</span><span class="step-t">Turn on colcon's Tab-completion (Book §1.2.1)</span></div>
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Turn on colcon's Tab-completion</span></div>
     <p>colcon was installed in Lecture 1. This line makes <kbd>Tab</kbd> complete colcon commands in every terminal.</p>
     <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>echo 'source /usr/share/colcon_argcomplete/hook/colcon-argcomplete.bash' >> ~/.bashrc
 source ~/.bashrc</code></pre></div>
   </div>
 
   <div class="step" id="l1-2">
-    <div class="step-h"><span class="step-n">2</span><span class="step-t">Create the workspace and build it once (Book §1.2.2)</span></div>
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Create the workspace and build it once</span></div>
     <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>mkdir -p ~/ros2_ws/src
 cd ~/ros2_ws
 colcon build
@@ -183,7 +184,7 @@ source ~/ros2_ws/install/setup.bash</pre></div>
   </div>
 
   <div class="step" id="l1-4">
-    <div class="step-h"><span class="step-n">4</span><span class="step-t">Create a Python package (Book §1.2.3)</span></div>
+    <div class="step-h"><span class="step-n">4</span><span class="step-t">Create a Python package</span></div>
     <p>Packages are always created inside <code>src/</code>.</p>
     <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws/src
 ros2 pkg create my_py_pkg --build-type ament_python --dependencies rclpy</code></pre></div>
@@ -207,7 +208,7 @@ colcon build --packages-select my_py_pkg</code></pre></div>
 Finished &lt;&lt;&lt; my_py_pkg [1.1s]
 Summary: 1 package finished</pre></div>
     <div class="box tip"><div class="box-title">💡 A yellow "SetuptoolsDeprecationWarning"?</div>
-    <p>That is harmless on Humble, and your package still built. The book (§1.2.3) shows how to silence it: <code>pip3 install setuptools==58.2.0</code>.</p></div>
+    <p>That is harmless on Humble, and your package still built. If you want to silence it: <code>pip3 install setuptools==58.2.0</code>.</p></div>
   </div>
 </div>
 
@@ -218,7 +219,7 @@ Summary: 1 package finished</pre></div>
   <p class="lab-goal">Goal: run <code>ros2 run my_py_pkg py_node</code> and see your own message printed every half second.</p>
 
   <div class="step" id="l2-1">
-    <div class="step-h"><span class="step-n">1</span><span class="step-t">Create the file in the <em>inner</em> package folder (Book §1.2.6)</span></div>
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Create the file in the <em>inner</em> package folder</span></div>
     <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws/src/my_py_pkg/my_py_pkg
 touch my_first_node.py
 chmod +x my_first_node.py
@@ -265,16 +266,16 @@ source ~/.bashrc
 ros2 run my_py_pkg py_node</code></pre></div>
     <div class="out"><div class="out-h">✅ You should see</div><pre>[INFO] [1727700000.123456789] [py_test]: Hello ROS2</pre></div>
     <p>The program keeps running because of <code>spin</code>. Press <kbd>Ctrl</kbd>+<kbd>C</kbd> to stop it.</p>
-    <div class="box idea"><div class="box-title">🏷️ Three names, three different things (Book §1.2.6 note)</div>
+    <div class="box idea"><div class="box-title">🏷️ Three names, three different things</div>
     <ul><li><code>my_first_node.py</code> — the <strong>file</strong> name</li>
     <li><code>py_test</code> — the <strong>node</strong> name (what <code>ros2 node list</code> shows)</li>
     <li><code>py_node</code> — the <strong>executable</strong> name (what you type after <code>ros2 run</code>)</li></ul></div>
-    <div class="box tip"><div class="box-title">⚡ Why <code>--symlink-install</code>? (Book §1.5.3)</div>
+    <div class="box tip"><div class="box-title">⚡ Why <code>--symlink-install</code>?</div>
     <p>It links to your Python file instead of copying it. After this, <strong>editing</strong> the Python file needs no rebuild. You still rebuild when you <strong>add a new executable</strong> in <code>setup.py</code>.</p></div>
   </div>
 
   <div class="step" id="l2-5">
-    <div class="step-h"><span class="step-n">5</span><span class="step-t">Upgrade to the object-oriented (OOP) style with a timer (Book §1.2.7)</span></div>
+    <div class="step-h"><span class="step-n">5</span><span class="step-t">Upgrade to the object-oriented (OOP) style with a timer</span></div>
     <p>Real nodes are written as a <strong>class</strong>. Replace the whole file with this:</p>
     <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/my_first_node.py</div><pre><code>#!/usr/bin/env python3
 import rclpy
@@ -322,7 +323,7 @@ if __name__ == "__main__":
   </table></div>
 
   <div class="step" id="l2-6">
-    <div class="step-h"><span class="step-n">6</span><span class="step-t">Save the node template you will use all semester (Book §1.3)</span></div>
+    <div class="step-h"><span class="step-n">6</span><span class="step-t">Save the node template you will use all semester</span></div>
     <p>From now on, every node starts from this template. Save it as <code>~/ros2_ws/node_template.py</code> so you can copy it.</p>
     <div class="cmd file"><div class="cmd-h">📄 ~/ros2_ws/node_template.py</div><pre><code>#!/usr/bin/env python3
 import rclpy
@@ -349,7 +350,7 @@ if __name__ == "__main__":
 
 <h3>🔎 Explore the code: click each highlighted part</h3>
 <div class="cmd file" data-widget="explain"><div class="cmd-h">📄 my_py_pkg/my_first_node.py (OOP version)</div><pre><code><span class="ex" data-tip="The shebang: tells Linux to run this file with Python 3.">#!/usr/bin/env python3</span>
-<span class="ex" data-tip="rclpy is the ROS 2 client library for Python (Book §1.4). It talks to rcl, which talks to DDS.">import rclpy</span>
+<span class="ex" data-tip="rclpy is the ROS 2 client library for Python. It talks to rcl, which talks to DDS.">import rclpy</span>
 <span class="ex" data-tip="Node is the base class. Every node you write inherits from it and gets a logger, timers, publishers, subscribers…">from rclpy.node import Node</span>
 
 
@@ -357,7 +358,7 @@ if __name__ == "__main__":
 
     def __init__(self):
         <span class="ex" data-tip="Gives the node its name. This is what &lt;code&gt;ros2 node list&lt;/code&gt; shows: /py_test.">super().__init__("py_test")</span>
-        <span class="ex" data-tip="A member variable (the trailing _ is a naming habit from the book). It keeps its value between callbacks.">self.counter_ = 0</span>
+        <span class="ex" data-tip="A member variable (the trailing _ is a common naming habit). It keeps its value between callbacks.">self.counter_ = 0</span>
         <span class="ex" data-tip="Prints an INFO message with a timestamp and the node name.">self.get_logger().info("Hello ROS2")</span>
         <span class="ex" data-tip="Ask ROS 2 to call timer_callback every 0.5 s. Change 0.5 to 1.0 and the messages slow down.">self.create_timer(0.5, self.timer_callback)</span>
 
@@ -378,7 +379,7 @@ def main(args=None):
 
 <div class="game" data-widget="order"><div class="kc-head"><span class="sim-tag">🎮 Game</span><b>Put the steps from empty folder to a running node in order</b></div><ol><li><code>mkdir -p ~/ros2_ws/src</code></li><li><code>ros2 pkg create my_py_pkg --build-type ament_python --dependencies rclpy</code> (inside <code>src/</code>)</li><li>Write <code>my_first_node.py</code> in the inner <code>my_py_pkg/</code> folder</li><li>Add <code>"py_node = my_py_pkg.my_first_node:main"</code> to <code>setup.py</code></li><li><code>colcon build --packages-select my_py_pkg --symlink-install</code> (from <code>~/ros2_ws</code>)</li><li><code>source ~/.bashrc</code></li><li><code>ros2 run my_py_pkg py_node</code></li></ol></div>
 <details class="box">
-  <summary>➕ Going further (optional): the same node in C++ (Book §1.2.4, 1.2.9)</summary>
+  <summary>➕ Going further (optional): the same node in C++</summary>
   <div class="inner">
   <p>Python is our main language, but ROS 2 is multi-language. If you know C++, try this.</p>
   <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws/src
@@ -433,7 +434,7 @@ ros2 run my_cpp_pkg cpp_node</code></pre></div>
 <!-- ============================================================ -->
 <h2 id="lab3"><span class="num">L3</span>Lab 3 — Inspect &amp; rename nodes</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB 3 · 25 min</span><h3>Look inside a running system (Book §1.5.1–1.5.4)</h3></div>
+  <div class="lab-h"><span class="badge">LAB 3 · 25 min</span><h3>Look inside a running system</h3></div>
   <p class="lab-goal">Goal: use the command line to see which nodes are running, and start the same program several times under different names.</p>
 
   <div class="step" id="l3-1">
@@ -476,7 +477,7 @@ ros2 node info /py_test</code></pre></div>
 <!-- ============================================================ -->
 <h2 id="lab4"><span class="num">L4</span>Lab 4 — Discover turtlesim</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB 4 · 25 min</span><h3>A tiny robot simulator (Book §1.5.5–1.5.6)</h3></div>
+  <div class="lab-h"><span class="badge">LAB 4 · 25 min</span><h3>A tiny robot simulator</h3></div>
   <p class="lab-goal">Goal: drive a turtle, see its node graph, spawn a second turtle and drive both.</p>
 
   <div class="step" id="l4-1">
@@ -515,7 +516,7 @@ rqt_graph</code></pre></div>
 </div>
 
 <!-- ============================================================ -->
-<h3>📘 turtlesim in the book</h3><div class="fig-pair"><figure class="book-fig"><img src="images/book/fig1_5.png" alt="Fig. 1.5: calling /spawn from rqt's Service Caller." loading="lazy"><figcaption>Fig. 1.5: calling /spawn from rqt's Service Caller.</figcaption></figure><figure class="book-fig"><img src="images/book/fig1_6.png" alt="Fig. 1.6: two turtles, each driven by its own teleop." loading="lazy"><figcaption>Fig. 1.6: two turtles, each driven by its own teleop.</figcaption></figure></div>
+<h3>🖼️ turtlesim in pictures</h3><div class="fig-pair"><figure class="figure-card"><img src="images/figures/fig1_5.png" alt="Calling /spawn from rqt's Service Caller." loading="lazy"><figcaption>Calling /spawn from rqt's Service Caller.</figcaption></figure><figure class="figure-card"><img src="images/figures/fig1_6.png" alt="Two turtles, each driven by its own teleop." loading="lazy"><figcaption>Two turtles, each driven by its own teleop.</figcaption></figure></div>
 <h2 id="activity"><span class="num">2.2</span>Your turn</h2>
 
 <div class="activity">
@@ -578,7 +579,7 @@ ros2 run my_py_pkg hello_me --ros-args --remap __node:=student_b     # second te
 <h3>🏅 Level up: choose your challenge</h3>
 <div class="levels"><div class="lv bronze"><b>🥉 Bronze: everyone</b><span>Finish Activity 2.1: your own node, run twice under two names.</span></div><div class="lv silver"><b>🥈 Silver: confident</b><span>Activity 2.2: stop the timer after 10 messages; then change the node name <em>and</em> the rate without editing the class name.</span></div><div class="lv gold"><b>🥇 Gold: future expert</b><span>Write the same node in C++ (optional box above) and run the Python and C++ versions side by side.</span></div></div>
 
-<div class="kc" data-widget="kc"><div class="kc-head"><span class="sim-tag">✅ Knowledge check</span><b>Lecture 2 check: 5 questions</b></div><div class="kc-q" data-a="0"><p>Which folder do you edit by hand?</p><div class="kc-opts"><button><code>src/</code></button><button><code>build/</code></button><button><code>install/</code></button><button><code>log/</code></button></div><div class="kc-why">Only <code>src/</code>. The other three are generated by <code>colcon build</code> and can be deleted safely.</div></div><div class="kc-q" data-a="1"><p>You added a new executable to <code>setup.py</code>. What must you do before <code>ros2 run</code> finds it?</p><div class="kc-opts"><button>Nothing, <code>--symlink-install</code> handles it</button><button>Rebuild, then <code>source ~/.bashrc</code></button><button>Restart Ubuntu</button><button>Run <code>chmod +x setup.py</code></button></div><div class="kc-why"><code>--symlink-install</code> only saves rebuilds when you <em>edit</em> Python files. New executables need a build and a source.</div></div><div class="kc-q" data-a="1"><p>What does <code>rclpy.spin(node)</code> do?</p><div class="kc-opts"><button>Rotates the robot</button><button>Keeps the node alive and runs its callbacks</button><button>Builds the package</button><button>Creates a timer</button></div><div class="kc-why">Without spin the program ends immediately and timers or subscribers never run.</div></div><div class="kc-q" data-a="2"><p>Which name appears in <code>ros2 node list</code> for <code>super().__init__("py_test")</code>?</p><div class="kc-opts"><button><code>/my_first_node</code></button><button><code>/py_node</code></button><button><code>/py_test</code></button><button><code>/MyNode</code></button></div><div class="kc-why">The node name comes from <code>super().__init__()</code>. <code>py_node</code> is the executable and <code>MyNode</code> is only the class.</div></div><div class="kc-q" data-a="1"><p>How do you run the same executable twice without a name clash?</p><div class="kc-opts"><button>Copy the file</button><button><code>--ros-args --remap __node:=new_name</code></button><button>Build it twice</button><button>Use a second workspace</button></div><div class="kc-why">Renaming at runtime (Book §1.5.2) is how one program runs many times.</div></div></div>
+<div class="kc" data-widget="kc"><div class="kc-head"><span class="sim-tag">✅ Knowledge check</span><b>Lecture 2 check: 5 questions</b></div><div class="kc-q" data-a="0"><p>Which folder do you edit by hand?</p><div class="kc-opts"><button><code>src/</code></button><button><code>build/</code></button><button><code>install/</code></button><button><code>log/</code></button></div><div class="kc-why">Only <code>src/</code>. The other three are generated by <code>colcon build</code> and can be deleted safely.</div></div><div class="kc-q" data-a="1"><p>You added a new executable to <code>setup.py</code>. What must you do before <code>ros2 run</code> finds it?</p><div class="kc-opts"><button>Nothing, <code>--symlink-install</code> handles it</button><button>Rebuild, then <code>source ~/.bashrc</code></button><button>Restart Ubuntu</button><button>Run <code>chmod +x setup.py</code></button></div><div class="kc-why"><code>--symlink-install</code> only saves rebuilds when you <em>edit</em> Python files. New executables need a build and a source.</div></div><div class="kc-q" data-a="1"><p>What does <code>rclpy.spin(node)</code> do?</p><div class="kc-opts"><button>Rotates the robot</button><button>Keeps the node alive and runs its callbacks</button><button>Builds the package</button><button>Creates a timer</button></div><div class="kc-why">Without spin the program ends immediately and timers or subscribers never run.</div></div><div class="kc-q" data-a="2"><p>Which name appears in <code>ros2 node list</code> for <code>super().__init__("py_test")</code>?</p><div class="kc-opts"><button><code>/my_first_node</code></button><button><code>/py_node</code></button><button><code>/py_test</code></button><button><code>/MyNode</code></button></div><div class="kc-why">The node name comes from <code>super().__init__()</code>. <code>py_node</code> is the executable and <code>MyNode</code> is only the class.</div></div><div class="kc-q" data-a="1"><p>How do you run the same executable twice without a name clash?</p><div class="kc-opts"><button>Copy the file</button><button><code>--ros-args --remap __node:=new_name</code></button><button>Build it twice</button><button>Use a second workspace</button></div><div class="kc-why">Renaming at runtime is how one program runs many times.</div></div></div>
 <h2 id="errors"><span class="num">2.3</span>When things go wrong</h2>
 <div class="table-wrap"><table class="fix">
   <tr><th>You see…</th><th>Why</th><th>Fix</th></tr>
@@ -612,11 +613,11 @@ ros2 run my_py_pkg hello_me --ros-args --remap __node:=student_b     # second te
   <div><code>ros2 run turtlesim turtlesim_node</code><span>the turtle simulator</span></div>
 </div>
 
-<div class="box book">
+<div class="box note">
   <div class="box-title">🏠 Homework</div>
   <ol>
     <li>Finish Activities 2.1 and 2.2 and show them at the start of next lecture.</li>
-    <li>Read Book Chapter 1 (pp. 9–22) and Chapter 2 introduction (p. 23, "ROS2 – Topics").</li>
+    <li>Take this lecture's knowledge check again until you score 5 / 5, then preview the pub/sub playground in Lecture 3.</li>
     <li>On paper, draw the nodes for a delivery robot (camera, LiDAR, motors, battery, navigation). Group them into 3 packages. We'll use your drawing next week.</li>
   </ol>
 </div>
@@ -629,6 +630,7 @@ ros2 run my_py_pkg hello_me --ros-args --remap __node:=student_b     # second te
 </div>
 <script src="lab.js"></script>
 <script src="widgets.js"></script>
+<script src="enhance.js"></script>
 <script src="annotate.js" defer></script>
 </body>
 </html>

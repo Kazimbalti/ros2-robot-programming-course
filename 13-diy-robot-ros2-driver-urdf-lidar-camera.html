@@ -149,6 +149,7 @@
   @media (max-width:640px){ #theme-toggle{top:12px; left:12px; width:42px; height:42px; font-size:17px;} }
 </style>
 <link rel="stylesheet" href="widgets.css">
+<link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="projector.css">
 </head>
 <body>
@@ -172,6 +173,7 @@ html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
   <a href="schedule.html">Schedule</a>
   <a href="assignments.html">Assignments</a>
   <a href="index.html#lectures" class="active">Lectures</a>
+  <a href="projects.html">Projects</a>
 </div></nav>
 <button id="theme-toggle" aria-label="Toggle light/dark mode" title="Light/dark mode">
   <span id="theme-toggle-icon">🌙</span>
@@ -180,6 +182,7 @@ html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
 <div class="wrap" data-project="1">
 
   <div class="cover">
+    <div class="cover-art" aria-hidden="true">🔌</div>
     <div class="kicker">Projects · after Lecture 14 &nbsp;·&nbsp; Project 2 of 3 — Build Your Own Robot "Forge"</div>
     <h1>Project 2: Build Your Own Robot II — ROS 2 Driver, CAD, URDF, LiDAR &amp; Camera</h1>
     <div class="subtitle">Giving Forge a nervous system, a body it can describe, and senses it can trust</div>
@@ -2555,6 +2558,7 @@ start_x=1                   &lt;-- add this</code></pre>
 })();
 </script>
 <script src="widgets.js"></script>
+<script src="enhance.js"></script>
 <script src="annotate.js" defer></script>
 </body>
 </html>

@@ -64,12 +64,12 @@ h4{font-size:1.05em; font-weight:700; margin:20px 0 8px; color:var(--purple);}
 .box.idea{background:#eef0ff; border-color:#d6dafc;} .box.idea .box-title{color:var(--accent-ink);}
 .box.warn{background:#fdeeec; border-color:#f6d2cd;} .box.warn .box-title{color:var(--danger);}
 .box.tip{background:#eafaf3; border-color:#c9eeda;} .box.tip .box-title{color:var(--accent2);}
-.box.book{background:#fdf3e4; border-color:#f2ddb3;} .box.book .box-title{color:var(--gold);}
+.box.note{background:#fdf3e4; border-color:#f2ddb3;} .box.note .box-title{color:var(--gold);}
 .box.teacher{background:#f4effe; border-color:#e2d6fb;} .box.teacher .box-title{color:var(--purple);}
 html[data-theme="dark"] .box.idea{background:#1f2242; border-color:#383d6b;}
 html[data-theme="dark"] .box.warn{background:#3a2220; border-color:#5c332e;}
 html[data-theme="dark"] .box.tip{background:#16302a; border-color:#1f4a3d;}
-html[data-theme="dark"] .box.book{background:#3a2f18; border-color:#5c4826;}
+html[data-theme="dark"] .box.note{background:#3a2f18; border-color:#5c4826;}
 html[data-theme="dark"] .box.teacher{background:#2a2340; border-color:#453a63;}
 
 /* ---- outcomes & table of contents ---- */

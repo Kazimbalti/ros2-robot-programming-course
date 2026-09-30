@@ -336,29 +336,29 @@
     <img src="images/robot_use_cases.png" alt="Robot use cases across different industries and applications">
   </div>
 
-  <h2>📘 Introduction to ROS2</h2>
-  <p><strong>1.1.1 What is ROS2, when to use it, and Why?</strong></p>
+  <h2>🧩 Introduction to ROS 2</h2>
+  <p><strong>What is ROS 2, when to use it, and why?</strong></p>
 
   <p><strong>Code separation and communication tools</strong></p>
   <p>
     Let's say, for example, you are programming a mobile robot such as the <strong>LIMO robot</strong> — you can
     create a program called a <strong>node</strong> for a camera, a navigation algorithm, a hardware driver, a
-    LiDAR, a joystick, etc., as shown in Fig. 1.1. Each of those is an independent block that communicates with
+    LiDAR, a joystick, etc., as shown below. Each of those is an independent block that communicates with
     the others in a way that is powerful and scalable.
   </p>
   <div class="figure reveal">
     <img src="images/ros2_communication.png" alt="ROS 2 communication — independent nodes for camera, navigation, hardware driver, LiDAR, and joystick communicating with each other">
-    <figcaption>Fig. 1.1 — ROS 2 Communication</figcaption>
+    <figcaption>ROS 2 communication: independent nodes talking to each other</figcaption>
   </div>
 
   <p><strong>Tools and Plug and play libraries</strong></p>
   <p>
     There is a bundle of libraries available — you just need to clone and use that library. Secondly, you can
-    write programs in Python and C++ simultaneously, as shown in Fig. 1.2:
+    write programs in Python and C++ simultaneously, as shown below:
   </p>
   <div class="figure reveal">
     <img src="images/Tools_and_Libraries.png" alt="ROS 2 tools and plug-and-play libraries, with support for writing programs in Python and C++ simultaneously">
-    <figcaption>Fig. 1.2 — Tools and Libraries</figcaption>
+    <figcaption>Tools and libraries: reuse packages, mix Python and C++</figcaption>
   </div>
 
   <h2>🎬 Meet the LIMO Robot</h2>
@@ -387,7 +387,7 @@
   </p>
   <div class="box idea reveal">
     <div class="box-title">🧩 How the course is built</div>
-    <p style="margin-bottom:10px;"><strong>Part A: ROS 2 Bootcamp (Lectures 2–7)</strong> follows the <em>ROS2 Boot Camp</em> chapters of Dr. Kazim's book (pp. 9–104): nodes, topics, services, custom interfaces, parameters, launch files, bags and the "Catch Them All" turtlesim project. Every idea is practised on turtlesim first, where nothing can break.</p>
+    <p style="margin-bottom:10px;"><strong>Part A: ROS 2 Bootcamp (Lectures 2–7)</strong> covers the ROS&nbsp;2 core, step by step: nodes, topics, services, custom interfaces, parameters, launch files, bags and the "Catch Them All" turtlesim project. Every idea is practised on turtlesim first, where nothing can break.</p>
     <p style="margin-bottom:10px;"><strong>Part B: ROS 2 on the LIMO (Lectures 8–14)</strong> applies the same skills to the AgileX LIMO: driving with code, odometry, URDF/TF/RViz, LiDAR and IMU, camera and vision, SLAM and AMCL, Nav2 and actions, and finally the real robot and a final mission.</p>
     <p style="margin-bottom:10px;"><strong>Projects: Build Your Own Robot I–III</strong> come after Lecture 14: build "Forge", your own ROS 2 robot, from motors and power to a driver node, URDF, sensors, a Gazebo twin and a 3D-printed cover.</p>
     <p style="margin-bottom:0;"><strong>Every lecture uses the same learning format:</strong> learning outcomes → warm-up → the idea in 10 minutes → step-by-step labs with expected output → your-turn activities with hints and solutions → common errors → exit ticket → homework. About 80% of each session is hands-on.</p>
@@ -422,7 +422,7 @@
       <path d="M40 70 H 840 Q 880 70 880 120 Q 880 170 840 170 H 60 Q 20 170 20 220 Q 20 270 60 270 H 860" fill="none" stroke="url(#rmg)" stroke-width="10" stroke-linecap="round" opacity=".85"/>
       <g font-family="Inter, sans-serif" font-weight="800">
         <text x="40" y="40" font-size="12" fill="currentColor">🎯 Mission Zero →</text>
-        <text x="450" y="30" font-size="14" fill="#3d4bf5" text-anchor="middle">PART A · ROS 2 BOOTCAMP (book, turtlesim)</text>
+        <text x="450" y="30" font-size="14" fill="#3d4bf5" text-anchor="middle">PART A · ROS 2 BOOTCAMP (turtlesim)</text>
         <text x="450" y="138" font-size="14" fill="#8b5cf6" text-anchor="middle">PART B · ROS 2 ON THE LIMO</text>
         <text x="30" y="250" font-size="14" fill="#0e9e6e">PROJECTS · BUILD YOUR OWN ROBOT</text>
       </g>
@@ -439,7 +439,7 @@
   </div>
 
   <div id="lecture-groups">
-  <div class="part-header reveal" data-part="bootcamp"><span class="part-title">Part A — ROS 2 Bootcamp (from the book, with turtlesim)</span><span class="line"></span></div>
+  <div class="part-header reveal" data-part="bootcamp"><span class="part-title">Part A — ROS 2 Bootcamp (with turtlesim)</span><span class="line"></span></div>
   <div class="chapter-list" data-part="bootcamp">
     <div class="chapter-card reveal" data-lecture="1" data-part="bootcamp">
       <button class="chapter-check" data-check="1" title="Mark Lecture 1 complete" aria-label="Mark Lecture 1 complete">✓</button>
@@ -458,7 +458,7 @@
         <div class="chapter-num">2</div>
       <div class="chapter-info">
         <div class="chapter-title">Workspaces, Packages &amp; Your First Node</div>
-        <div class="chapter-desc">Book Ch. 1 · build ~/ros2_ws, write a Python node with a timer, inspect and rename nodes, explore turtlesim</div>
+        <div class="chapter-desc">build ~/ros2_ws, write a Python node with a timer, inspect and rename nodes, explore turtlesim</div>
       </div>
       <div class="chapter-arrow">→</div>
       </a>
@@ -469,7 +469,7 @@
         <div class="chapter-num">3</div>
       <div class="chapter-info">
         <div class="chapter-title">Topics — Publish &amp; Subscribe</div>
-        <div class="chapter-desc">Book §2.1 · pub/sub playground, publisher + subscriber, remapping, the number counter</div>
+        <div class="chapter-desc">pub/sub playground, publisher + subscriber, remapping, the number counter</div>
       </div>
       <div class="chapter-arrow">→</div>
       </a>
@@ -480,7 +480,7 @@
         <div class="chapter-num">4</div>
       <div class="chapter-info">
         <div class="chapter-title">Services — Request &amp; Response</div>
-        <div class="chapter-desc">Book §2.2 · async vs blocking simulator, server + client, the reset service</div>
+        <div class="chapter-desc">async vs blocking simulator, server + client, the reset service</div>
       </div>
       <div class="chapter-arrow">→</div>
       </a>
@@ -491,7 +491,7 @@
         <div class="chapter-num">5</div>
       <div class="chapter-info">
         <div class="chapter-title">Custom Messages &amp; Services</div>
-        <div class="chapter-desc">Book §3.1 · interface builder, your own .msg and .srv, battery + LED panel</div>
+        <div class="chapter-desc">interface builder, your own .msg and .srv, battery + LED panel</div>
       </div>
       <div class="chapter-arrow">→</div>
       </a>
@@ -502,7 +502,7 @@
         <div class="chapter-num">6</div>
       <div class="chapter-info">
         <div class="chapter-title">Parameters &amp; Launch Files</div>
-        <div class="chapter-desc">Book §3.2–3.4 · launch-file builder, YAML parameters, radio network, cylinder project</div>
+        <div class="chapter-desc">launch-file builder, YAML parameters, radio network, cylinder project</div>
       </div>
       <div class="chapter-arrow">→</div>
       </a>
@@ -513,7 +513,7 @@
         <div class="chapter-num">7</div>
       <div class="chapter-info">
         <div class="chapter-title">Project — Catch Them All 🐢</div>
-        <div class="chapter-desc">Book Ch. 4 · go-to-goal playground, six milestones, ros2 bag</div>
+        <div class="chapter-desc">go-to-goal playground, six milestones, ros2 bag</div>
       </div>
       <div class="chapter-arrow">→</div>
       </a>

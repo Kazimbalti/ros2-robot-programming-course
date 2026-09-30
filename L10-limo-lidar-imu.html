@@ -11,6 +11,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
 <link rel="stylesheet" href="lab.css">
 <link rel="stylesheet" href="widgets.css">
+<link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="projector.css">
 </head>
 <body>
@@ -24,6 +25,7 @@
 <div class="lesson-progress"><div class="lp-top"><span>Lecture 10 · your progress</span><span><b class="lp-count">0 / 0 steps</b> · <a href="#" class="lp-reset">reset</a></span></div><div class="lp-bar"><div class="lp-fill"></div></div></div>
 
 <div class="cover">
+    <div class="cover-art" aria-hidden="true">🛰️</div>
   <div class="kicker">Part B · ROS 2 on the LIMO · Lecture 10 of 14</div>
   <h1>LiDAR &amp; IMU — Reactive Robots</h1>
   <div class="subtitle">A robot that can't sense just follows a script. Today the LIMO starts reacting to the world: it measures distances with its LiDAR, avoids obstacles on its own, and uses its gyroscope to turn by an exact angle.</div>
@@ -436,7 +438,7 @@ ros2 run limo_lab imu_turn --ros-args -p use_sim_time:=true -p target_deg:=90.0<
   <div class="q"><p>Is the wanderer open-loop or closed-loop? Is it navigation?</p><details><summary>Answer</summary><div class="inner">Closed-loop (it reacts to the LiDAR), but reactive only: no map, no goal, so it's not navigation.</div></details></div>
   <div class="q"><p>Which sensor would you trust for "how far is the wall?" and which for "how much have I turned?"</p><details><summary>Answer</summary><div class="inner">LiDAR for distances; IMU gyro (short term) for rotation.</div></details></div>
 </div>
-<div class="box book">
+<div class="box note">
   <div class="box-title">🏠 Homework</div>
   <ol>
     <li>Finish Activity 10.1 and record a bag: <code>ros2 bag record /scan /imu /cmd_vel -o safe_square</code>.</li>
@@ -452,6 +454,7 @@ ros2 run limo_lab imu_turn --ros-args -p use_sim_time:=true -p target_deg:=90.0<
 </div>
 <script src="lab.js"></script>
 <script src="widgets.js"></script>
+<script src="enhance.js"></script>
 <script src="annotate.js" defer></script>
 </body>
 </html>

@@ -11,6 +11,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
 <link rel="stylesheet" href="lab.css">
 <link rel="stylesheet" href="widgets.css">
+<link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="projector.css">
 </head>
 <body>
@@ -24,13 +25,13 @@
 <div class="lesson-progress"><div class="lp-top"><span>Lecture 13 · your progress</span><span><b class="lp-count">0 / 0 steps</b> · <a href="#" class="lp-reset">reset</a></span></div><div class="lp-bar"><div class="lp-fill"></div></div></div>
 
 <div class="cover">
+    <div class="cover-art" aria-hidden="true">🧭</div>
   <div class="kicker">Part B · ROS 2 on the LIMO · Lecture 13 of 14</div>
   <h1>Autonomous Navigation — Nav2 + Actions</h1>
   <div class="subtitle">From "react to what's in front of me" to "go to the kitchen". Today you learn the last ROS 2 communication type, <strong>actions</strong>, and use it to command Nav2: the LIMO plans its own path on your map, avoids obstacles it has never seen, and runs a patrol you program in Python.</div>
   <div class="meta-row">
     <div class="chip">⏱ 3 h · 25 min teach · 2 h 35 min hands-on</div>
     <div class="chip">🧭 Nav2 · actions · nav2_simple_commander</div>
-    <div class="chip">📘 Book: NAV2 Boot Camp pp. 105–119</div>
     <div class="chip">Before this: Lecture 12 (map + limo_nav2.yaml)</div>
   </div>
   <div class="skill-path" aria-label="Course path"><a class="done" href="01-installation-vmware-ros2-limo-intro.html">L1 · Install</a><a class="done" href="L02-first-node.html">L2 · Nodes</a><a class="done" href="L03-topics.html">L3 · Topics</a><a class="done" href="L04-services.html">L4 · Services</a><a class="done" href="L05-custom-interfaces.html">L5 · Interfaces</a><a class="done" href="L06-parameters-launch.html">L6 · Launch</a><a class="done" href="L07-catch-them-all.html">L7 · Project</a><a class="done" href="L08-drive-limo.html">L8 · Drive</a><a class="done" href="L09-limo-urdf-tf-rviz.html">L9 · URDF/TF</a><a class="done" href="L10-limo-lidar-imu.html">L10 · LiDAR/IMU</a><a class="done" href="L11-limo-camera-vision.html">L11 · Vision</a><a class="done" href="L12-limo-slam-localization.html">L12 · SLAM</a><a class="now" href="L13-limo-nav2.html">L13 · Nav2</a><a class="" href="L14-real-limo-mission.html">L14 · Real LIMO</a><a href="projects.html">+ Projects</a></div>
@@ -75,7 +76,7 @@
   <div class="table-wrap"><table>
     <tr><th>Time</th><th>Activity</th><th>Type</th></tr>
     <tr><td>0:00–0:10</td><td>Warm-up</td><td><span class="tag check">Check</span></td></tr>
-    <tr><td>0:10–0:35</td><td>Actions; Nav2 blocks with the book's figures; costmap simulator on the projector</td><td><span class="tag teach">Teach</span></td></tr>
+    <tr><td>0:10–0:35</td><td>Actions; Nav2 blocks with the figures; costmap simulator on the projector</td><td><span class="tag teach">Teach</span></td></tr>
     <tr><td>0:35–0:55</td><td>Lab 1: actions with turtlesim</td><td><span class="tag do">Do</span></td></tr>
     <tr><td>0:55–1:40</td><td>Lab 2: Nav2 bringup, initial pose, goals</td><td><span class="tag do">Do</span></td></tr>
     <tr><td>1:40–1:50</td><td>Break</td><td></td></tr>
@@ -108,12 +109,12 @@
 <div class="analogy"><div class="emoji">📱</div><div>
   <p>It has a map, a "you are here" dot (AMCL, Lecture 12), a route planner, a driver who follows the route while dodging new obstacles, and "recalculating…" when stuck.</p>
 </div></div>
-<figure class="book-fig"><img src="images/book/fig5_1.png" alt="Robot moving from A to B around obstacles" loading="lazy"><figcaption>Fig. 5.1: the navigation problem: move from A to B safely around obstacles.</figcaption></figure>
+<figure class="figure-card"><img src="images/figures/fig5_1.png" alt="Robot moving from A to B around obstacles" loading="lazy"><figcaption>The navigation problem: move from A to B safely around obstacles.</figcaption></figure>
 <div class="fig-pair">
-  <figure class="book-fig"><img src="images/book/fig5_13.png" alt="Simple Nav2 architecture" loading="lazy"><figcaption>Fig. 5.13: the simple view: global costmap → planner, local costmap → controller, plus recovery behaviour.</figcaption></figure>
-  <figure class="book-fig"><img src="images/book/fig5_12.png" alt="Official Nav2 architecture" loading="lazy"><figcaption>Fig. 5.12: the official Nav2 architecture: BT navigator, planner, controller and recovery servers.</figcaption></figure>
+  <figure class="figure-card"><img src="images/figures/fig5_13.png" alt="Simple Nav2 architecture" loading="lazy"><figcaption>The simple view: global costmap → planner, local costmap → controller, plus recovery behaviour.</figcaption></figure>
+  <figure class="figure-card"><img src="images/figures/fig5_12.png" alt="Official Nav2 architecture" loading="lazy"><figcaption>The official Nav2 architecture: BT navigator, planner, controller and recovery servers.</figcaption></figure>
 </div>
-<figure class="book-fig"><img src="images/book/fig5_6.png" alt="Global and local planner costmaps" loading="lazy"><figcaption>Fig. 5.6: the costmaps around the robot: lethal (pink/blue) near obstacles, fading inflation (cyan).</figcaption></figure>
+<figure class="figure-card"><img src="images/figures/fig5_6.png" alt="Global and local planner costmaps" loading="lazy"><figcaption>The costmaps around the robot: lethal (pink/blue) near obstacles, fading inflation (cyan).</figcaption></figure>
 
 <div data-widget="planner"></div>
 
@@ -197,8 +198,8 @@ Goal finished with status: SUCCEEDED</pre></div>
       <li>the LIMO driving there by itself.</li>
     </ul>
     <div class="fig-pair">
-      <figure class="book-fig"><img src="images/book/fig5_5.png" alt="RViz Nav2 goal" loading="lazy"><figcaption>Fig. 5.5: setting a Nav2 goal in RViz.</figcaption></figure>
-      <figure class="book-fig"><img src="images/book/fig5_18.png" alt="Gazebo and RViz using Nav2" loading="lazy"><figcaption>Fig. 5.18: Gazebo and RViz side by side during navigation.</figcaption></figure>
+      <figure class="figure-card"><img src="images/figures/fig5_5.png" alt="RViz Nav2 goal" loading="lazy"><figcaption>Setting a Nav2 goal in RViz.</figcaption></figure>
+      <figure class="figure-card"><img src="images/figures/fig5_18.png" alt="Gazebo and RViz using Nav2" loading="lazy"><figcaption>Gazebo and RViz side by side during navigation.</figcaption></figure>
     </div>
     <div class="cmd"><div class="cmd-h">💻 Terminal 4: peek inside</div><pre><code>ros2 node list | grep -E "planner|controller|amcl|bt_navigator"
 ros2 action list
@@ -316,7 +317,7 @@ ros2 run limo_lab nav_mission --ros-args -p use_sim_time:=true</code></pre></div
   <div class="lvl">Challenge 13.3 · Stretch · tuning</div>
   <h3>Faster but safe</h3>
   <p>In <code>limo_nav2.yaml</code>, find <code>max_vel_x</code> in the controller section and <code>max_velocity</code> in <code>velocity_smoother</code>. Increase them carefully (for example 0.26 → 0.4), restart Nav2 and time your patrol. Then increase <code>inflation_radius</code> to 0.4. Where does the robot now refuse to go? Try the same change in the costmap simulator first.</p>
-  <figure class="book-fig"><img src="images/book/fig5_7.png" alt="Costmap parameters in rqt" loading="lazy"><figcaption>Fig. 5.7: costmap parameters (inflation radius, robot radius…) can also be changed live with rqt.</figcaption></figure>
+  <figure class="figure-card"><img src="images/figures/fig5_7.png" alt="Costmap parameters in rqt" loading="lazy"><figcaption>Costmap parameters (inflation radius, robot radius…) can also be changed live with rqt.</figcaption></figure>
 </div>
 
 <h3>🏅 Level up: choose your challenge</h3>
@@ -349,11 +350,11 @@ ros2 run limo_lab nav_mission --ros-args -p use_sim_time:=true</code></pre></div
   <div class="q"><p>Topic, service or action? (a) "go to the charging dock" (b) "what is 3 + 4?" (c) the camera image.</p><details><summary>Answer</summary><div class="inner">(a) action (long, needs feedback and cancel) (b) service (c) topic.</div></details></div>
   <div class="q"><p>What is a costmap's inflation layer for?</p><details><summary>Answer</summary><div class="inner">It makes cells near obstacles "expensive", so paths keep a safe distance from walls.</div></details></div>
 </div>
-<div class="box book">
+<div class="box note">
   <div class="box-title">🏠 Homework</div>
   <ol>
     <li>Finish Activity 13.1. Record a bag of the patrol: <code>ros2 bag record /odom /cmd_vel /plan -o patrol</code>.</li>
-    <li>Read the book's <em>NAV2 Architecture</em> and <em>Build Your Own World</em> sections (pp. 116–128).</li>
+    <li>Explain each part of Nav2 (planner, controller, costmaps, behaviour tree, recoveries) to a classmate in two minutes.</li>
     <li>Bring your <code>limo_lab</code> package on a USB stick or GitHub next week: <strong>it runs on the real LIMO</strong>.</li>
   </ol>
 </div>
@@ -366,6 +367,7 @@ ros2 run limo_lab nav_mission --ros-args -p use_sim_time:=true</code></pre></div
 </div>
 <script src="lab.js"></script>
 <script src="widgets.js"></script>
+<script src="enhance.js"></script>
 <script src="annotate.js" defer></script>
 </body>
 </html>

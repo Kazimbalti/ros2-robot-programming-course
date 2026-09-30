@@ -11,6 +11,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
 <link rel="stylesheet" href="lab.css">
 <link rel="stylesheet" href="widgets.css">
+<link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="projector.css">
 </head>
 <body>
@@ -24,12 +25,12 @@
 <div class="lesson-progress"><div class="lp-top"><span>Lecture 6 · your progress</span><span><b class="lp-count">0 / 0 steps</b> · <a href="#" class="lp-reset">reset</a></span></div><div class="lp-bar"><div class="lp-fill"></div></div></div>
 
 <div class="cover">
+    <div class="cover-art" aria-hidden="true">🚀</div>
   <div class="kicker">Part A · ROS 2 Bootcamp · Lecture 6 of 14</div>
   <h1>Parameters &amp; Launch Files</h1>
   <div class="subtitle">Stop hard-coding numbers, and stop opening ten terminals. Parameters let you change a node's settings without touching its code, and a launch file starts a whole application with one command. These are exactly the tools you'll use to start the LIMO.</div>
   <div class="meta-row">
     <div class="chip">⏱ 3 h · 25 min teach · 2 h 35 min hands-on</div>
-    <div class="chip">📘 Book: §3.2–3.4, pp. 64–84</div>
     <div class="chip">🐍 Python · ROS 2 Humble</div>
     <div class="chip">Before this: Lectures 3–5</div>
   </div>
@@ -90,11 +91,11 @@
 <div class="grid2">
   <div class="analogy"><div class="emoji">🎛️</div><div>
     <p><strong>Parameters are the knobs on a machine.</strong> A washing machine has one program (the code) but knobs for temperature and speed. You set them before you start, without opening the machine.</p>
-    <p>In ROS 2, a parameter belongs to <strong>one node</strong> and has a <strong>name</strong> and a <strong>type</strong> (Book §3.2.1).</p>
+    <p>In ROS 2, a parameter belongs to <strong>one node</strong> and has a <strong>name</strong> and a <strong>type</strong>.</p>
   </div></div>
   <div class="analogy"><div class="emoji">🚀</div><div>
     <p><strong>A launch file is the start button of the whole factory.</strong> It says which nodes to start, what to call them, how to wire their topics and which knob settings to use.</p>
-    <p>In ROS 2, launch files are written in <strong>Python</strong> (Book §3.3).</p>
+    <p>In ROS 2, launch files are written in <strong>Python</strong>.</p>
   </div></div>
 </div>
 <div class="mermaid">
@@ -105,13 +106,13 @@ flowchart LR
 </div>
 
 <!-- ============================================================ -->
-<h3>📘 Parameters and launch files in the book</h3><figure class="book-fig"><img src="images/book/fig3_7.png" alt="Fig. 3.7: one camera-driver program started twice, each with its own parameters (device, fps, simulation mode)." loading="lazy"><figcaption>Fig. 3.7: one camera-driver program started twice, each with its own parameters (device, fps, simulation mode).</figcaption></figure><div class="fig-pair"><figure class="book-fig"><img src="images/book/fig3_8.png" alt="Fig. 3.8: many nodes, each with parameters: too many terminals to start by hand…" loading="lazy"><figcaption>Fig. 3.8: many nodes, each with parameters: too many terminals to start by hand…</figcaption></figure><figure class="book-fig"><img src="images/book/fig3_9.png" alt="Fig. 3.9: …so one launch file starts and configures them all." loading="lazy"><figcaption>Fig. 3.9: …so one launch file starts and configures them all.</figcaption></figure></div>
+<h3>🖼️ Parameters and launch files in pictures</h3><figure class="figure-card"><img src="images/figures/fig3_7.png" alt="One camera-driver program started twice, each with its own parameters (device, fps, simulation mode)." loading="lazy"><figcaption>One camera-driver program started twice, each with its own parameters (device, fps, simulation mode).</figcaption></figure><div class="fig-pair"><figure class="figure-card"><img src="images/figures/fig3_8.png" alt="Many nodes, each with parameters: too many terminals to start by hand…" loading="lazy"><figcaption>Many nodes, each with parameters: too many terminals to start by hand…</figcaption></figure><figure class="figure-card"><img src="images/figures/fig3_9.png" alt="…so one launch file starts and configures them all." loading="lazy"><figcaption>…so one launch file starts and configures them all.</figcaption></figure></div>
 <h3>🃏 Key terms: tap a card to check yourself</h3>
 <div class="flip-grid" data-widget="flip"><div class="flip"><div class="flip-in"><div class="flip-front">Parameter<small>tap to flip</small></div><div class="flip-back">A named, typed <b>setting</b> of one node.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Default value<small>tap to flip</small></div><div class="flip-back">Also fixes the <b>type</b>: <code>2</code> int, <code>2.0</code> float.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">use_sim_time<small>tap to flip</small></div><div class="flip-back">Every node has it. True means "follow Gazebo's clock".</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">YAML file<small>tap to flip</small></div><div class="flip-back">Many parameters saved in one file; Nav2 uses hundreds.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Launch file<small>tap to flip</small></div><div class="flip-back">A Python script that starts and configures many nodes.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Node(…)<small>tap to flip</small></div><div class="flip-back">One launch entry = one <code>ros2 run</code>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">remappings<small>tap to flip</small></div><div class="flip-back"><code>[("old", "new")]</code> in a launch file.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">bringup package<small>tap to flip</small></div><div class="flip-back">The package that holds your launch files.</div></div></div></div>
 
 <h2 id="lab1"><span class="num">L1</span>Lab 1 — Add parameters to a node</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB 1 · 25 min</span><h3>number_publisher with two knobs (Book §3.2.1–3.2.2)</h3></div>
+  <div class="lab-h"><span class="badge">LAB 1 · 25 min</span><h3>number_publisher with two knobs</h3></div>
 
   <div class="step" id="p1-1">
     <div class="step-h"><span class="step-n">1</span><span class="step-t">Every node already has one parameter</span></div>
@@ -138,7 +139,7 @@ ros2 param list</code></pre></div>
 <span class="hl">        self.number_timer_ = self.create_timer(1.0 / self.publish_frequency_, self.publish_number)</span>
         self.get_logger().info("Number publisher has been started")</code></pre></div>
     <div class="box warn"><div class="box-title">⚠️ Always give a default value</div>
-    <p>The book (§3.2.1) first shows <code>declare_parameter("test123")</code> without a default. On ROS 2 Humble this creates a parameter with <em>no type</em>, which causes confusing errors. Always write <code>declare_parameter("name", default)</code>. The default also fixes the <strong>type</strong>: <code>2</code> is an integer, <code>1.0</code> is a float.</p></div>
+    <p>Some older tutorials write <code>declare_parameter("test123")</code> without a default. On ROS 2 Humble this creates a parameter with <em>no type</em>, which causes confusing errors. Always write <code>declare_parameter("name", default)</code>. The default also fixes the <strong>type</strong>: <code>2</code> is an integer, <code>1.0</code> is a float.</p></div>
   </div>
 
   <div class="step" id="p1-3">
@@ -155,7 +156,7 @@ average rate: 4.000</pre></div>
   </div>
 
   <div class="step" id="p1-4">
-    <div class="step-h"><span class="step-n">4</span><span class="step-t">Parameter activity: name your robot (Book §3.2.4 part 1)</span></div>
+    <div class="step-h"><span class="step-n">4</span><span class="step-t">Parameter activity: name your robot</span></div>
     <p>In <code>robot_news_station.py</code>, replace the fixed name with a parameter:</p>
     <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/my_py_pkg/robot_news_station.py (in __init__)</div><pre><code><span class="hl">        self.declare_parameter("robot_name", "LIMO")</span>
 <span class="hl">        self.robot_name_ = self.get_parameter("robot_name").value</span></code></pre></div>
@@ -197,7 +198,7 @@ ros2 run turtlesim turtlesim_node --ros-args --params-file ~/ros2_ws/params/turt
 
 <h2 id="lab3"><span class="num">L3</span>Lab 3 — Your first launch file</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB 3 · 25 min</span><h3>my_robot_bringup + number_app.launch.py (Book §3.3)</h3></div>
+  <div class="lab-h"><span class="badge">LAB 3 · 25 min</span><h3>my_robot_bringup + number_app.launch.py</h3></div>
 
   <div class="step" id="p3-1">
     <div class="step-h"><span class="step-n">1</span><span class="step-t">Create a bringup package</span></div>
@@ -265,7 +266,7 @@ ros2 topic echo /number_count</code></pre></div>
 <!-- ============================================================ -->
 <h2 id="lab4"><span class="num">L4</span>Lab 4 — Configure nodes in a launch file</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB 4 · 20 min</span><h3>Rename, remap, set parameters (Book §3.3.1)</h3></div>
+  <div class="lab-h"><span class="badge">LAB 4 · 20 min</span><h3>Rename, remap, set parameters</h3></div>
 
   <div class="step" id="p4-1">
     <div class="step-h"><span class="step-n">1</span><span class="step-t">Everything you did with <code>--ros-args</code>, now in Python</span></div>
@@ -327,9 +328,9 @@ average rate: 5.000</pre></div>
 <!-- ============================================================ -->
 <h2 id="activity"><span class="num">6.2</span>Your turn</h2>
 <div class="activity">
-  <div class="lvl">Activity 6.1 · Core · 40 min · from Book §3.3.2</div>
+  <div class="lvl">Activity 6.1 · Core · 40 min</div>
   <h3>The radio network</h3>
-<figure class="book-fig"><img src="images/book/fig3_10.png" alt="Fig. 3.10: the radio activity: 5 renamed stations and one smartphone on /robot_news." loading="lazy"><figcaption>Fig. 3.10: the radio activity: 5 renamed stations and one smartphone on /robot_news.</figcaption></figure>
+<figure class="figure-card"><img src="images/figures/fig3_10.png" alt="The radio activity: 5 renamed stations and one smartphone on /robot_news." loading="lazy"><figcaption>The radio activity: 5 renamed stations and one smartphone on /robot_news.</figcaption></figure>
   <p>Write <code>radio.launch.py</code> that starts <strong>5 robot_news_station nodes</strong> and <strong>1 smartphone</strong>. Robot names: <code>Giskard, BB8, Daneel, Jander, C3PO</code>. Each station has a different node name and publishes "Hi, this is &lt;name&gt; …". The smartphone receives all of them. You don't need to change any node, only write one launch file.</p>
   <div class="mermaid">
 flowchart LR
@@ -367,7 +368,7 @@ rqt_graph      # second terminal: compare with the diagram above</code></pre></d
 </div>
 
 <div class="activity">
-  <div class="lvl">Activity 6.2 · Parameters in the LED panel · 10 min · Book §3.2.4 part 2</div>
+  <div class="lvl">Activity 6.2 · Parameters in the LED panel · 10 min</div>
   <h3>Start the LED panel with any number of LEDs</h3>
   <p>Make <code>led_states</code> a parameter of <code>led_panel.py</code> with default <code>[0, 0, 0]</code>, then run <code>ros2 run my_py_pkg led_panel --ros-args -p led_states:="[0,1,0,1,1]"</code>.</p>
   <details class="solution"><summary>Solution</summary><div class="inner">
@@ -376,9 +377,9 @@ rqt_graph      # second terminal: compare with the diagram above</code></pre></d
 </div>
 
 <div class="activity">
-  <div class="lvl">Mini-project 6.3 · Homework · from Book §3.4</div>
+  <div class="lvl">Mini-project 6.3 · Homework</div>
   <h3>The cylinder calculator</h3>
-<figure class="book-fig"><img src="images/book/fig3_11.png" alt="Fig. 3.11: the cylinder project: radius and height in, volume and surface area out." loading="lazy"><figcaption>Fig. 3.11: the cylinder project: radius and height in, volume and surface area out.</figcaption></figure>
+<figure class="figure-card"><img src="images/figures/fig3_11.png" alt="The cylinder project: radius and height in, volume and surface area out." loading="lazy"><figcaption>The cylinder project: radius and height in, volume and surface area out.</figcaption></figure>
   <p>Build a 3-node system that calculates the <strong>volume</strong> and <strong>surface area</strong> of a cylinder:</p>
   <p style="text-align:center"><code>Volume = π · r² · h</code> &nbsp;&nbsp; <code>Surface area = 2 · π · r · (r + h)</code></p>
   <div class="mermaid">
@@ -482,11 +483,11 @@ if __name__ == "__main__":
   <div><code>Node(package, executable, name, remappings, parameters)</code><span>the launch building block</span></div>
 </div>
 
-<div class="box book">
+<div class="box note">
   <div class="box-title">🏠 Homework</div>
   <ol>
     <li>Finish Activity 6.1 and Mini-project 6.3 (cylinder).</li>
-    <li>Read Book Chapter 4 "Complete Project with Turtlesim" (pp. 85–95), since next lecture we build it.</li>
+    <li>Preview Lecture 7 (Catch Them All) and draw its node graph on paper before class.</li>
     <li>Make sure <code>Turtle.msg</code> and <code>TurtleArray.msg</code> (Lecture 5 homework) are built.</li>
   </ol>
 </div>
@@ -499,6 +500,7 @@ if __name__ == "__main__":
 </div>
 <script src="lab.js"></script>
 <script src="widgets.js"></script>
+<script src="enhance.js"></script>
 <script src="annotate.js" defer></script>
 </body>
 </html>

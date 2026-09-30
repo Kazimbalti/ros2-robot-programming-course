@@ -11,6 +11,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
 <link rel="stylesheet" href="lab.css">
 <link rel="stylesheet" href="widgets.css">
+<link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="projector.css">
 </head>
 <body>
@@ -24,6 +25,7 @@
 <div class="lesson-progress"><div class="lp-top"><span>Lecture 9 · your progress</span><span><b class="lp-count">0 / 0 steps</b> · <a href="#" class="lp-reset">reset</a></span></div><div class="lp-bar"><div class="lp-fill"></div></div></div>
 
 <div class="cover">
+    <div class="cover-art" aria-hidden="true">🦴</div>
   <div class="kicker">Part B · ROS 2 on the LIMO · Lecture 9 of 14</div>
   <h1>LIMO's Body — URDF, TF &amp; RViz</h1>
   <div class="subtitle">A robot must know its own shape: where the LiDAR sits, where the wheels are, which way the camera points. Today you describe a robot in URDF, read the LIMO's description, watch its coordinate frames move live, and see everything the robot "knows" in RViz.</div>
@@ -115,7 +117,7 @@ flowchart TB
 </table></div>
 
 <!-- ============================================================ -->
-<h3>📘 Frames in the book (NAV2 Boot Camp)</h3><figure class="book-fig"><img src="images/book/fig5_8.png" alt="Fig. 5.8: a transform is a rotation plus a translation between two coordinate frames." loading="lazy"><figcaption>Fig. 5.8: a transform is a rotation plus a translation between two coordinate frames.</figcaption></figure><div class="fig-pair"><figure class="book-fig"><img src="images/book/fig5_10.png" alt="Fig. 5.10: map, odom and base_footprint: how they relate in reality…" loading="lazy"><figcaption>Fig. 5.10: map, odom and base_footprint: how they relate in reality…</figcaption></figure><figure class="book-fig"><img src="images/book/fig5_11.png" alt="Fig. 5.11: …and as a ROS tree: map → odom → base_footprint." loading="lazy"><figcaption>Fig. 5.11: …and as a ROS tree: map → odom → base_footprint.</figcaption></figure></div>
+<h3>🖼️ Frames in pictures</h3><figure class="figure-card"><img src="images/figures/fig5_8.png" alt="A transform is a rotation plus a translation between two coordinate frames." loading="lazy"><figcaption>A transform is a rotation plus a translation between two coordinate frames.</figcaption></figure><div class="fig-pair"><figure class="figure-card"><img src="images/figures/fig5_10.png" alt="Map, odom and base_footprint: how they relate in reality…" loading="lazy"><figcaption>Map, odom and base_footprint: how they relate in reality…</figcaption></figure><figure class="figure-card"><img src="images/figures/fig5_11.png" alt="…and as a ROS tree: map → odom → base_footprint." loading="lazy"><figcaption>…and as a ROS tree: map → odom → base_footprint.</figcaption></figure></div>
 <h3>🃏 Key terms: tap a card to check yourself</h3>
 <div class="flip-grid" data-widget="flip"><div class="flip"><div class="flip-in"><div class="flip-front">Link<small>tap to flip</small></div><div class="flip-back">A rigid part of the robot with its own frame.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Joint<small>tap to flip</small></div><div class="flip-back">Connects parent → child: fixed, continuous or revolute.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Frame<small>tap to flip</small></div><div class="flip-back">A coordinate system: x forward, y left, z up.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Transform<small>tap to flip</small></div><div class="flip-back">Translation + rotation between two frames.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">TF tree<small>tap to flip</small></div><div class="flip-back">All frames; each has exactly <b>one</b> parent.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">robot_state_publisher<small>tap to flip</small></div><div class="flip-back">Reads the URDF and publishes the body's transforms.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Xacro<small>tap to flip</small></div><div class="flip-back">URDF with variables and macros; expands to URDF.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Fixed Frame (RViz)<small>tap to flip</small></div><div class="flip-back">The frame everything is drawn in, e.g. odom or map.</div></div></div></div>
 
@@ -412,7 +414,7 @@ ros2 run limo_lab where_am_i --ros-args -p use_sim_time:=true -p target_frame:=b
   <div class="q"><p>Which node turns the URDF into TF?</p><details><summary>Answer</summary><div class="inner"><code>robot_state_publisher</code></div></details></div>
   <div class="q"><p>In ROS, which directions are x, y and z for a robot?</p><details><summary>Answer</summary><div class="inner">x forward, y left, z up.</div></details></div>
 </div>
-<div class="box book">
+<div class="box note">
   <div class="box-title">🏠 Homework</div>
   <ol>
     <li>Finish Activity 9.1 and take a screenshot of your mini_bot in RViz with TF shown.</li>
@@ -429,6 +431,7 @@ ros2 run limo_lab where_am_i --ros-args -p use_sim_time:=true -p target_frame:=b
 </div>
 <script src="lab.js"></script>
 <script src="widgets.js"></script>
+<script src="enhance.js"></script>
 <script src="annotate.js" defer></script>
 </body>
 </html>

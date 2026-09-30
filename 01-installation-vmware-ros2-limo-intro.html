@@ -123,6 +123,7 @@
   @media (max-width:640px){ #theme-toggle{top:12px; left:12px; width:42px; height:42px; font-size:17px;} }
 </style>
 <link rel="stylesheet" href="widgets.css">
+<link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="projector.css">
 </head>
 <body>
@@ -146,6 +147,7 @@ html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
   <a href="schedule.html">Schedule</a>
   <a href="assignments.html">Assignments</a>
   <a href="index.html#lectures" class="active">Lectures</a>
+  <a href="projects.html">Projects</a>
 </div></nav>
 <button id="theme-toggle" aria-label="Toggle light/dark mode" title="Light/dark mode">
   <span id="theme-toggle-icon">🌙</span>
@@ -153,7 +155,8 @@ html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
 <div class="wrap" data-enriched="1">
 
   <div class="cover">
-    <div class="kicker">LIMO Robotics &amp; ROS 2 Lecture &nbsp;·&nbsp; Lecture 1 of 14 · Part A: ROS 2 Bootcamp</div>
+    <div class="cover-art" aria-hidden="true">💻</div>
+    <div class="kicker">Part A · ROS 2 Bootcamp · Lecture 1 of 14</div>
     <h1>Lecture 1: Getting Started — VMware, Ubuntu 22.04 &amp; ROS 2 Humble</h1>
     <div class="subtitle">Installing your Linux robotics workstation from zero, then meeting the AgileX LIMO.</div>
     <div class="meta-row">
@@ -183,7 +186,7 @@ html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
   <section id="sec0">
 
 <div class="ig"><div class="ig-title"><span class="sim-tag">Infographic</span>Lecture 1 at a glance: from a blank laptop to a driving robot</div><div class="ig-flow"><div class="ig-step"><div class="ic">💻</div><b>VMware</b><span>a virtual computer on your laptop</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🐧</div><b>Ubuntu 22.04</b><span>the operating system robots use</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🤖</div><b>ROS 2 Humble</b><span><code>source /opt/ros/humble/setup.bash</code></span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🧰</div><b>Tools</b><span>Terminator · VS Code · colcon</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">📦</div><b>LIMO workspace</b><span><code>~/limo_ws</code> built with colcon</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🚗</div><b>First drive</b><span>LIMO in Gazebo + teleop</span></div></div></div>
-<div class="fig-pair"><figure class="book-fig"><img src="images/book/fig1_1.png" alt="Fig. 1.1: why ROS 2: a robot program is split into nodes that talk to each other." loading="lazy"><figcaption>Fig. 1.1: why ROS 2: a robot program is split into nodes that talk to each other.</figcaption></figure><figure class="book-fig"><img src="images/book/fig1_2.png" alt="Fig. 1.2: reuse libraries and mix Python and C++." loading="lazy"><figcaption>Fig. 1.2: reuse libraries and mix Python and C++.</figcaption></figure></div>
+<div class="fig-pair"><figure class="figure-card"><img src="images/figures/fig1_1.png" alt="Why ROS 2: a robot program is split into nodes that talk to each other." loading="lazy"><figcaption>Why ROS 2: a robot program is split into nodes that talk to each other.</figcaption></figure><figure class="figure-card"><img src="images/figures/fig1_2.png" alt="Reuse libraries and mix Python and C++." loading="lazy"><figcaption>Reuse libraries and mix Python and C++.</figcaption></figure></div>
     <h2><span class="num">1.0</span>The Big Picture: How It All Connects</h2>
     <p>
       Before you install anything, it helps to have a mental model of <strong>how everything inside a robot is
@@ -1299,6 +1302,7 @@ flowchart LR
 })();
 </script>
 <script src="widgets.js"></script>
+<script src="enhance.js"></script>
 <script src="annotate.js" defer></script>
 </body>
 </html>

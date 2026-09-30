@@ -11,6 +11,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
 <link rel="stylesheet" href="lab.css">
 <link rel="stylesheet" href="widgets.css">
+<link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="projector.css">
 </head>
 <body>
@@ -24,12 +25,12 @@
 <div class="lesson-progress"><div class="lp-top"><span>Lecture 4 · your progress</span><span><b class="lp-count">0 / 0 steps</b> · <a href="#" class="lp-reset">reset</a></span></div><div class="lp-bar"><div class="lp-fill"></div></div></div>
 
 <div class="cover">
+    <div class="cover-art" aria-hidden="true">🛎️</div>
   <div class="kicker">Part A · ROS 2 Bootcamp · Lecture 4 of 14</div>
   <h1>Services — Request &amp; Response</h1>
   <div class="subtitle">Topics stream data one way. Services <em>ask a question and get an answer</em>. Today you clear, spawn and kill turtles with services, then write your own service server and client.</div>
   <div class="meta-row">
     <div class="chip">⏱ 3 h · 25 min teach · 2 h 35 min hands-on</div>
-    <div class="chip">📘 Book: §2.2, pp. 35–48</div>
     <div class="chip">🐍 Python · ROS 2 Humble</div>
     <div class="chip">Before this: Lecture 3 (number counter ready)</div>
   </div>
@@ -102,8 +103,8 @@ sequenceDiagram
   S-->>C: Response {sum: 7}
 </div>
 
-<div class="box book">
-  <div class="box-title">📘 Properties of a service (Book §2.2)</div>
+<div class="box note">
+  <div class="box-title">📌 Properties of a service</div>
   <ul>
     <li>A <strong>client/server</strong> system: one request, one response.</li>
     <li>It can be <strong>synchronous</strong> (wait for the answer) or <strong>asynchronous</strong> (carry on and get a callback when it arrives).</li>
@@ -121,7 +122,7 @@ sequenceDiagram
 </table></div>
 
 <!-- ============================================================ -->
-<h3>📘 Services in the book</h3><figure class="book-fig"><img src="images/book/fig2_8.png" alt="Fig. 2.8: one weather server, many clients. The server exists once and answers everyone." loading="lazy"><figcaption>Fig. 2.8: one weather server, many clients. The server exists once and answers everyone.</figcaption></figure><div class="fig-pair"><figure class="book-fig"><img src="images/book/fig2_9.png" alt="Fig. 2.9: the battery (client) asks the LED panel (server) to turn LED 3 on…" loading="lazy"><figcaption>Fig. 2.9: the battery (client) asks the LED panel (server) to turn LED 3 on…</figcaption></figure><figure class="book-fig"><img src="images/book/fig2_10.png" alt="Fig. 2.10: …and later to turn it off. You build this in Lecture 5." loading="lazy"><figcaption>Fig. 2.10: …and later to turn it off. You build this in Lecture 5.</figcaption></figure></div>
+<h3>🖼️ Services in pictures</h3><figure class="figure-card"><img src="images/figures/fig2_8.png" alt="One weather server, many clients. The server exists once and answers everyone." loading="lazy"><figcaption>One weather server, many clients. The server exists once and answers everyone.</figcaption></figure><div class="fig-pair"><figure class="figure-card"><img src="images/figures/fig2_9.png" alt="The battery (client) asks the LED panel (server) to turn LED 3 on…" loading="lazy"><figcaption>The battery (client) asks the LED panel (server) to turn LED 3 on…</figcaption></figure><figure class="figure-card"><img src="images/figures/fig2_10.png" alt="…and later to turn it off. You build this in Lecture 5." loading="lazy"><figcaption>…and later to turn it off. You build this in Lecture 5.</figcaption></figure></div>
 <div data-widget="service"></div>
 
 <h3>🃏 Key terms: tap a card to check yourself</h3>
@@ -131,7 +132,7 @@ sequenceDiagram
 
 <h2 id="lab1"><span class="num">L1</span>Lab 1 — Services with turtlesim</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB 1 · 25 min</span><h3>Clear, spawn, kill and change pen colour (Book §2.2.9)</h3></div>
+  <div class="lab-h"><span class="badge">LAB 1 · 25 min</span><h3>Clear, spawn, kill and change pen colour</h3></div>
   <p class="lab-goal">Goal: find a service, read its type, and call it from the terminal.</p>
 
   <div class="step" id="s1-1">
@@ -185,7 +186,7 @@ ros2 service call /kill turtlesim/srv/Kill "{name: 'my_turtle'}"</code></pre></d
 <!-- ============================================================ -->
 <h2 id="lab2"><span class="num">L2</span>Lab 2 — Your first service server</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB 2 · 25 min</span><h3>The adding machine (Book §2.2.1)</h3></div>
+  <div class="lab-h"><span class="badge">LAB 2 · 25 min</span><h3>The adding machine</h3></div>
   <p class="lab-goal">Goal: a node that offers <code>/add_two_ints</code>, receives a and b, and returns their sum.</p>
 
   <div class="step" id="s2-1">
@@ -247,7 +248,7 @@ example_interfaces.srv.AddTwoInts_Response(sum=7)</pre></div>
 <!-- ============================================================ -->
 <h2 id="lab3"><span class="num">L3</span>Lab 3 — Your first service client</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB 3 · 30 min</span><h3>Ask the adding machine from code (Book §2.2.2–2.2.3)</h3></div>
+  <div class="lab-h"><span class="badge">LAB 3 · 30 min</span><h3>Ask the adding machine from code</h3></div>
   <p class="lab-goal">Goal: first a simple client script, then the OOP client you will use inside real robot nodes.</p>
 
   <div class="step" id="s3-1">
@@ -346,7 +347,7 @@ ros2 run my_py_pkg add_two_ints_client</code></pre></div>
 </div>
 
 <details class="box">
-  <summary>➕ Going further (optional): the C++ server (Book §2.2.4)</summary>
+  <summary>➕ Going further (optional): the C++ server</summary>
   <div class="inner">
   <div class="cmd file"><div class="cmd-h">📄 my_cpp_pkg/src/add_two_ints_server.cpp</div><pre><code>#include "rclcpp/rclcpp.hpp"
 #include "example_interfaces/srv/add_two_ints.hpp"
@@ -388,7 +389,7 @@ int main(int argc, char **argv)
 <!-- ============================================================ -->
 <h2 id="lab4"><span class="num">L4</span>Lab 4 — Debug &amp; remap services</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB 4 · 10 min</span><h3>Service tools (Book §2.2.7–2.2.8)</h3></div>
+  <div class="lab-h"><span class="badge">LAB 4 · 10 min</span><h3>Service tools</h3></div>
   <div class="step" id="s4-1">
     <div class="step-h"><span class="step-n">1</span><span class="step-t">Inspect the server</span></div>
     <div class="cmd"><div class="cmd-h">💻 Terminal 2 (server running in Terminal 1)</div><pre><code>ros2 service type /add_two_ints
@@ -407,9 +408,9 @@ ros2 run my_py_pkg add_two_ints_client --ros-args -r add_two_ints:=calculator</c
 <!-- ============================================================ -->
 <h2 id="activity"><span class="num">4.2</span>Your turn</h2>
 <div class="activity">
-  <div class="lvl">Activity 4.1 · Core · 40 min · from Book §2.2.10</div>
+  <div class="lvl">Activity 4.1 · Core · 40 min</div>
   <h3>Reset the number counter</h3>
-<figure class="book-fig"><img src="images/book/fig2_11.png" alt="Fig. 2.11: the service activity: /reset_counter added to the number counter." loading="lazy"><figcaption>Fig. 2.11: the service activity: /reset_counter added to the number counter.</figcaption></figure>
+<figure class="figure-card"><img src="images/figures/fig2_11.png" alt="The service activity: /reset_counter added to the number counter." loading="lazy"><figcaption>The service activity: /reset_counter added to the number counter.</figcaption></figure>
   <div class="mermaid">
 flowchart LR
   A(["number_publisher"]) --> T1[["/number"]] --> B(["number_counter"]) --> T2[["/number_count"]]
@@ -551,12 +552,12 @@ if __name__ == "__main__":
   <div><code>rqt → Plugins → Services → Service Caller</code><span>call with a GUI</span></div>
 </div>
 
-<div class="box book">
+<div class="box note">
   <div class="box-title">🏠 Homework</div>
   <ol>
     <li>Finish Activity 4.1. Show that the counter resets while the publisher keeps running.</li>
     <li>Try Challenge 4.2 (turtle army).</li>
-    <li>Read Book §3.1 "Create Custom ROS2 Interfaces" (pp. 49–57).</li>
+    <li>Preview: run <code>ros2 interface show turtlesim/msg/Pose</code> and <code>ros2 interface show turtlesim/srv/Spawn</code>. Next week you design your own.</li>
   </ol>
 </div>
 
@@ -568,6 +569,7 @@ if __name__ == "__main__":
 </div>
 <script src="lab.js"></script>
 <script src="widgets.js"></script>
+<script src="enhance.js"></script>
 <script src="annotate.js" defer></script>
 </body>
 </html>

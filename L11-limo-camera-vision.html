@@ -11,6 +11,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
 <link rel="stylesheet" href="lab.css">
 <link rel="stylesheet" href="widgets.css">
+<link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="projector.css">
 </head>
 <body>
@@ -24,6 +25,7 @@
 <div class="lesson-progress"><div class="lp-top"><span>Lecture 11 · your progress</span><span><b class="lp-count">0 / 0 steps</b> · <a href="#" class="lp-reset">reset</a></span></div><div class="lp-bar"><div class="lp-fill"></div></div></div>
 
 <div class="cover">
+    <div class="cover-art" aria-hidden="true">📷</div>
   <div class="kicker">Part B · ROS 2 on the LIMO · Lecture 11 of 14</div>
   <h1>Camera &amp; Computer Vision</h1>
   <div class="subtitle">LiDAR tells the robot <em>where</em> things are; the camera tells it <em>what</em> they are. Today you bring camera images into Python with cv_bridge, process them with OpenCV, find a red object, measure how far away it is with the depth camera, and make the LIMO follow it.</div>
@@ -456,12 +458,12 @@ if __name__ == "__main__":
 <div class="quiz">
   <div class="q"><p>Name one thing the camera does better than the LiDAR, and one thing the LiDAR does better.</p><details><summary>Answer</summary><div class="inner">Camera: colour, texture, recognising what an object is. LiDAR: accurate distance all around, in any lighting.</div></details></div>
 </div>
-<div class="box book">
+<div class="box note">
   <div class="box-title">🏠 Homework</div>
   <ol>
     <li>Finish Activity 11.1 and record a 20 s screen video of the LIMO following the box.</li>
     <li>Install next week's packages: <code>sudo apt install ros-humble-slam-toolbox ros-humble-navigation2 ros-humble-nav2-bringup ros-humble-nav2-simple-commander</code></li>
-    <li>Read the <em>NAV2 Boot Camp</em> introduction in the book (pp. 105–108): generating a map with SLAM.</li>
+    <li>Preview Lecture 12: play with the particle-filter simulator and explain in one sentence what a particle is.</li>
   </ol>
 </div>
 
@@ -473,6 +475,7 @@ if __name__ == "__main__":
 </div>
 <script src="lab.js"></script>
 <script src="widgets.js"></script>
+<script src="enhance.js"></script>
 <script src="annotate.js" defer></script>
 </body>
 </html>

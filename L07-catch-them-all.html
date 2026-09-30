@@ -11,6 +11,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
 <link rel="stylesheet" href="lab.css">
 <link rel="stylesheet" href="widgets.css">
+<link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="projector.css">
 </head>
 <body>
@@ -24,12 +25,12 @@
 <div class="lesson-progress"><div class="lp-top"><span>Lecture 7 · your progress</span><span><b class="lp-count">0 / 0 steps</b> · <a href="#" class="lp-reset">reset</a></span></div><div class="lp-bar"><div class="lp-fill"></div></div></div>
 
 <div class="cover">
+    <div class="cover-art" aria-hidden="true">🐢</div>
   <div class="kicker">Part A · ROS 2 Bootcamp · Lecture 7 of 14 · Project</div>
   <h1>Project: Catch Them All 🐢</h1>
   <div class="subtitle">Everything from Part A in one game. A master turtle hunts down turtles that keep appearing at random places. You'll use topics, services, custom messages, parameters and a launch file together, and the go-to-goal controller you write today is the one you'll put on the LIMO next week.</div>
   <div class="meta-row">
     <div class="chip">⏱ 3 h in class + finish at home</div>
-    <div class="chip">📘 Book: Chapter 4, pp. 85–95</div>
     <div class="chip">🐍 Python · ROS 2 Humble</div>
     <div class="chip">Before this: Lectures 2–6</div>
   </div>
@@ -83,7 +84,7 @@
 <!-- ============================================================ -->
 <h2 id="design"><span class="num">7.1</span>Design the system first</h2>
 <p>Good robot engineers draw the graph <strong>before</strong> writing code. Take 5 minutes with a neighbour: which nodes do we need, and what does each one publish, subscribe, serve and call? Then compare with the design below.</p>
-<div class="box idea"><div class="box-title">🧩 The system design (Book Ch. 4)</div>
+<div class="box idea"><div class="box-title">🧩 The system design</div>
 <div class="mermaid">
 flowchart LR
   TS(["turtlesim_node"])
@@ -142,7 +143,7 @@ flowchart LR
 
 <h2 id="m1"><span class="num">M1</span>Milestone 1 — Controller: go to a fixed point</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">MILESTONE 1 · 25 min</span><h3>turtle_controller v1 (Book §4.0.1)</h3></div>
+  <div class="lab-h"><span class="badge">MILESTONE 1 · 25 min</span><h3>turtle_controller v1</h3></div>
 
   <div class="step" id="m1-1">
     <div class="step-h"><span class="step-n">1</span><span class="step-t">Create the project package and explore the interfaces</span></div>
@@ -227,7 +228,7 @@ ros2 run turtlesim_catch_them_all turtle_controller</code></pre></div>
 <!-- ============================================================ -->
 <h2 id="m2"><span class="num">M2</span>Milestone 2 — Spawner: new turtles every second</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">MILESTONE 2 · 20 min</span><h3>turtle_spawner v1 (Book §4.0.2)</h3></div>
+  <div class="lab-h"><span class="badge">MILESTONE 2 · 20 min</span><h3>turtle_spawner v1</h3></div>
   <div class="step" id="m2-1">
     <div class="step-h"><span class="step-n">1</span><span class="step-t">A node that calls <code>/spawn</code> from a timer</span></div>
     <div class="cmd file"><div class="cmd-h">📄 turtlesim_catch_them_all/turtlesim_catch_them_all/turtle_spawner.py</div><pre><code>#!/usr/bin/env python3
@@ -289,7 +290,7 @@ ros2 run turtlesim_catch_them_all turtle_spawner</code></pre></div>
 <!-- ============================================================ -->
 <h2 id="m3"><span class="num">M3</span>Milestone 3 — Chase the first alive turtle</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">MILESTONE 3 · 30 min</span><h3>Share the list of turtles with a custom message (Book §4.0.3)</h3></div>
+  <div class="lab-h"><span class="badge">MILESTONE 3 · 30 min</span><h3>Share the list of turtles with a custom message</h3></div>
 
   <div class="step" id="m3-1">
     <div class="step-h"><span class="step-n">1</span><span class="step-t">Two messages (you may have them from Lecture 5 homework)</span></div>
@@ -363,7 +364,7 @@ ros2 run turtlesim_catch_them_all turtle_spawner</code></pre></div>
 <!-- ============================================================ -->
 <h2 id="m4"><span class="num">M4</span>Milestone 4 — Catch (kill) it with a service</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">MILESTONE 4 · 35 min</span><h3>/catch_turtle (Book §4.0.4)</h3></div>
+  <div class="lab-h"><span class="badge">MILESTONE 4 · 35 min</span><h3>/catch_turtle</h3></div>
 
   <div class="step" id="m4-1">
     <div class="step-h"><span class="step-n">1</span><span class="step-t">The service definition</span></div>
@@ -445,7 +446,7 @@ bool success</code></pre></div>
 <!-- ============================================================ -->
 <h2 id="m5"><span class="num">M5</span>Milestone 5 — Chase the closest turtle</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">MILESTONE 5 · 15 min</span><h3>A smarter choice of target (Book §4.0.5)</h3></div>
+  <div class="lab-h"><span class="badge">MILESTONE 5 · 15 min</span><h3>A smarter choice of target</h3></div>
   <div class="step" id="m5-1">
     <div class="step-h"><span class="step-n">1</span><span class="step-t">Pick the nearest turtle instead of the first one</span></div>
     <div class="cmd file"><div class="cmd-h">📄 turtle_controller.py → callback_alive_turtles</div><pre><code>    def callback_alive_turtles(self, msg):
@@ -471,7 +472,7 @@ bool success</code></pre></div>
 <!-- ============================================================ -->
 <h2 id="m6"><span class="num">M6</span>Milestone 6 — Parameters + launch file</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">MILESTONE 6 · 20 min</span><h3>One command starts the game (Book §4.0.6)</h3></div>
+  <div class="lab-h"><span class="badge">MILESTONE 6 · 20 min</span><h3>One command starts the game</h3></div>
   <div class="step" id="m6-1">
     <div class="step-h"><span class="step-n">1</span><span class="step-t">Turn the fixed values into parameters</span></div>
     <div class="cmd file"><div class="cmd-h">📄 turtle_spawner.py → __init__</div><pre><code>        self.declare_parameter("spawn_frequency", 1.0)
@@ -713,7 +714,7 @@ if __name__ == "__main__":
 <!-- ============================================================ -->
 <h2 id="bags"><span class="num">Lab</span>Record &amp; replay with ros2 bag</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB · 20 min</span><h3>A flight recorder for your robot (Book §4.1)</h3></div>
+  <div class="lab-h"><span class="badge">LAB · 20 min</span><h3>A flight recorder for your robot</h3></div>
   <p class="lab-goal">A <strong>bag</strong> saves topic messages to disk, so you can replay them later: to debug, to test a node without the robot, or as evidence that your code worked.</p>
 
   <div class="step" id="b-1">
@@ -757,7 +758,7 @@ ros2 bag play ~/bags/catch_run --topics /turtle1/cmd_vel</code></pre></div>
   <div class="q"><p>Why is <code>/catch_turtle</code> a service and <code>/alive_turtles</code> a topic?</p><details><summary>Answer</summary><div class="inner">Catching is a one-off request that needs a confirmation. The alive list is state that must be shared with anyone who listens.</div></details></div>
 </div>
 
-<div class="box book">
+<div class="box note">
   <div class="box-title">📝 Suggested rubric (Catch Them All, 20 marks)</div>
   <div class="table-wrap"><table>
     <tr><th>Criterion</th><th>Marks</th></tr>
@@ -783,6 +784,7 @@ ros2 bag play ~/bags/catch_run --topics /turtle1/cmd_vel</code></pre></div>
 </div>
 <script src="lab.js"></script>
 <script src="widgets.js"></script>
+<script src="enhance.js"></script>
 <script src="annotate.js" defer></script>
 </body>
 </html>

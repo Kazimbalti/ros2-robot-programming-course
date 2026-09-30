@@ -38,7 +38,7 @@
   <div class="cover">
     <div class="kicker">Course Schedule &nbsp;·&nbsp; 14 Hands-On Lectures + Projects + Finals</div>
     <h1>Schedule</h1>
-    <div class="subtitle">Three sections, one weekly lecture. <strong>Section B</strong> meets <strong>Mondays</strong>; <strong>Sections A &amp; C</strong> meet <strong>Thursdays</strong>. Each session is ~3&nbsp;h: a short concept part (20–30 min) and the rest hands-on labs. <strong>Part A</strong> (Wk 5–10) is the ROS&nbsp;2 Bootcamp from the book on turtlesim; <strong>Part B</strong> (Wk 11–15) applies it to the AgileX LIMO.</div>
+    <div class="subtitle">Three sections, one weekly lecture. <strong>Section B</strong> meets <strong>Mondays</strong>; <strong>Sections A &amp; C</strong> meet <strong>Thursdays</strong>. Each session is ~3&nbsp;h: a short concept part (20–30 min) and the rest hands-on labs. <strong>Part A</strong> (Wk 5–10) is the ROS&nbsp;2 Bootcamp on turtlesim; <strong>Part B</strong> (Wk 11–15) applies it to the AgileX LIMO.</div>
     <div class="meta-row">
       <div class="chip">Term: 31 Aug – 11 Dec 2026</div>
       <div class="chip">Section B: Mondays · A &amp; C: Thursdays</div>
@@ -61,7 +61,6 @@
   <div class="box def">
     <div class="box-title">📖 Reading key</div>
     <p style="margin:0;">
-      <strong>Book</strong> = Dr. M. Kazim, <em>ROS2, NAV2 &amp; OpenRMF Boot Camp</em> (course book) &nbsp;·&nbsp;
       <strong>ROS2</strong> = official ROS 2 Humble tutorials (docs.ros.org) &nbsp;·&nbsp;
       <strong>LIMO</strong> = AgileX LIMO User Manual &nbsp;·&nbsp;
       <strong>Nav2</strong> = docs.nav2.org
@@ -84,42 +83,42 @@
     <tr>
       <td>5</td><td>28 Sep / 1 Oct</td>
       <td><a href="L02-first-node.html">L2 — Workspaces, Packages &amp; Your First Node</a>.</td>
-      <td>Book Ch. 1 (pp. 9–22)</td>
+      <td>ROS2: Using the CLI tools; Creating a workspace; Creating a package; Writing a simple publisher (Python)</td>
       <td><code>~/ros2_ws</code>, first Python node with a timer, <code>ros2 node</code>, remapping, turtlesim</td>
       <td>—</td>
     </tr>
     <tr>
       <td>6</td><td>5 Oct / 8 Oct</td>
       <td><a href="L03-topics.html">L3 — Topics: Publish &amp; Subscribe</a>.</td>
-      <td>Book §2.1 (pp. 23–35)</td>
+      <td>ROS2: Understanding topics; Writing a simple publisher and subscriber (Python)</td>
       <td>Drive turtlesim from the CLI, robot news station + smartphone, number counter</td>
       <td><span class="tag due">A2 issued</span></td>
     </tr>
     <tr>
       <td>7</td><td>12 Oct / 15 Oct</td>
       <td><a href="L04-services.html">L4 — Services: Request &amp; Response</a>.</td>
-      <td>Book §2.2 (pp. 35–48)</td>
+      <td>ROS2: Understanding services; Writing a simple service and client (Python)</td>
       <td>turtlesim services, AddTwoInts server + client, <code>/reset_counter</code></td>
       <td><span class="tag due">A2 due</span></td>
     </tr>
     <tr>
       <td>8</td><td>19 Oct / 22 Oct</td>
       <td><a href="L05-custom-interfaces.html">L5 — Custom Messages &amp; Services</a>.</td>
-      <td>Book §3.1 (pp. 49–63)</td>
+      <td>ROS2: Creating custom msg and srv files; Implementing custom interfaces</td>
       <td><code>my_robot_interfaces</code>, HardwareStatus.msg, battery + LED panel</td>
       <td><span class="tag exam">Midterm (20) — L1–L4</span> &nbsp; <span class="tag due">A3 issued</span></td>
     </tr>
     <tr>
       <td>9</td><td>26 Oct / 29 Oct</td>
       <td><a href="L06-parameters-launch.html">L6 — Parameters &amp; Launch Files</a>.</td>
-      <td>Book §3.2–3.4 (pp. 64–84)</td>
+      <td>ROS2: Understanding parameters; Using parameters in a class (Python); Creating a launch file</td>
       <td>Parameters + YAML, <code>my_robot_bringup</code>, radio launch (5 stations), cylinder mini-project</td>
       <td><span class="tag due">A3 due</span></td>
     </tr>
     <tr>
       <td>10</td><td>2 Nov / 5 Nov</td>
       <td><a href="L07-catch-them-all.html">L7 — Project: Catch Them All</a> + <code>ros2 bag</code>.</td>
-      <td>Book Ch. 4 (pp. 85–95)</td>
+      <td>ROS2: Recording and playing back data (ros2 bag)</td>
       <td>Go-to-goal controller, spawner, custom msg/srv, launch file, record &amp; replay</td>
       <td><span class="tag exam">Capstone Part 1 issued</span></td>
     </tr>
@@ -147,7 +146,7 @@
     <tr>
       <td>14</td><td>30 Nov / 3 Dec</td>
       <td><a href="L12-limo-slam-localization.html">L12 — Mapping &amp; Localisation: SLAM + AMCL</a> + <a href="L13-limo-nav2.html">L13 — Autonomous Navigation: Nav2 + Actions</a> <em>(double session)</em>.</td>
-      <td>Book NAV2 Boot Camp (pp. 105–119); Nav2 docs</td>
+      <td>Nav2 docs: Getting started; Navigating while mapping (SLAM); Navigation concepts</td>
       <td>Drift, <code>slam_toolbox</code> map, AMCL; actions, Nav2 goals, <code>nav_mission.py</code> patrol</td>
       <td><span class="tag due">A4 due</span></td>
     </tr>

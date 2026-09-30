@@ -11,6 +11,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
 <link rel="stylesheet" href="lab.css">
 <link rel="stylesheet" href="widgets.css">
+<link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="projector.css">
 </head>
 <body>
@@ -24,12 +25,12 @@
 <div class="lesson-progress"><div class="lp-top"><span>Lecture 3 · your progress</span><span><b class="lp-count">0 / 0 steps</b> · <a href="#" class="lp-reset">reset</a></span></div><div class="lp-bar"><div class="lp-fill"></div></div></div>
 
 <div class="cover">
+    <div class="cover-art" aria-hidden="true">📡</div>
   <div class="kicker">Part A · ROS 2 Bootcamp · Lecture 3 of 14</div>
   <h1>Topics — Publish &amp; Subscribe</h1>
   <div class="subtitle">Topics are how robot data flows: velocity commands, laser scans, camera images. Today you move a turtle by publishing on a topic, then write your own publisher and subscriber nodes.</div>
   <div class="meta-row">
     <div class="chip">⏱ 3 h · 30 min teach · 2 h 30 min hands-on</div>
-    <div class="chip">📘 Book: §2.1, pp. 23–35</div>
     <div class="chip">🐍 Python · ROS 2 Humble</div>
     <div class="chip">Before this: Lecture 2</div>
   </div>
@@ -101,8 +102,8 @@ flowchart LR
   D(["📡 another station<br/>(publisher)"]) -- "String" --> T
 </div>
 
-<div class="box book">
-  <div class="box-title">📘 The 4 properties of a topic (Book §2.1)</div>
+<div class="box note">
+  <div class="box-title">📌 The 4 properties of a topic</div>
   <ol>
     <li><strong>One-way data stream.</strong> Data goes from publisher to subscriber, and no reply comes back.</li>
     <li><strong>Anonymous.</strong> Publishers and subscribers don't know about each other.</li>
@@ -113,7 +114,7 @@ flowchart LR
 <p><strong>When to use a topic:</strong> for <em>continuous streams</em> of data such as sensor readings, robot position and velocity commands. (For "do this and tell me the result", we use services, next lecture.)</p>
 
 <!-- ============================================================ -->
-<h3>📘 Topics in the book</h3><figure class="book-fig"><img src="images/book/fig2_1.png" alt="Fig. 2.1: a topic is like a radio frequency. Publishers broadcast, subscribers tune in." loading="lazy"><figcaption>Fig. 2.1: a topic is like a radio frequency. Publishers broadcast, subscribers tune in.</figcaption></figure><div class="fig-pair"><figure class="book-fig"><img src="images/book/fig2_2.png" alt="Fig. 2.2: several publishers and subscribers on different topics." loading="lazy"><figcaption>Fig. 2.2: several publishers and subscribers on different topics.</figcaption></figure><figure class="book-fig"><img src="images/book/fig2_3.png" alt="Fig. 2.3: one node can publish and subscribe to many topics." loading="lazy"><figcaption>Fig. 2.3: one node can publish and subscribe to many topics.</figcaption></figure></div>
+<h3>🖼️ Topics in pictures</h3><figure class="figure-card"><img src="images/figures/fig2_1.png" alt="A topic is like a radio frequency. Publishers broadcast, subscribers tune in." loading="lazy"><figcaption>A topic is like a radio frequency. Publishers broadcast, subscribers tune in.</figcaption></figure><div class="fig-pair"><figure class="figure-card"><img src="images/figures/fig2_2.png" alt="Several publishers and subscribers on different topics." loading="lazy"><figcaption>Several publishers and subscribers on different topics.</figcaption></figure><figure class="figure-card"><img src="images/figures/fig2_3.png" alt="One node can publish and subscribe to many topics." loading="lazy"><figcaption>One node can publish and subscribe to many topics.</figcaption></figure></div>
 <div data-widget="pubsub"></div>
 
 <h3>🃏 Key terms: tap a card to check yourself</h3>
@@ -123,7 +124,7 @@ flowchart LR
 
 <h2 id="lab1"><span class="num">L1</span>Lab 1 — Topics from the command line</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB 1 · 25 min</span><h3>Move the turtle without the keyboard (Book §2.1.8)</h3></div>
+  <div class="lab-h"><span class="badge">LAB 1 · 25 min</span><h3>Move the turtle without the keyboard</h3></div>
   <p class="lab-goal">Goal: find the topic that moves the turtle, read its message type, and publish on it yourself.</p>
 
   <div class="step" id="t1-1">
@@ -191,7 +192,7 @@ ros2 topic hz /turtle1/pose</code></pre></div>
 <!-- ============================================================ -->
 <h2 id="lab2"><span class="num">L2</span>Lab 2 — Your first publisher</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB 2 · 20 min</span><h3>The robot news station (Book §2.1.1)</h3></div>
+  <div class="lab-h"><span class="badge">LAB 2 · 20 min</span><h3>The robot news station</h3></div>
   <p class="lab-goal">Goal: a node that publishes a text message on <code>/robot_news</code> twice per second.</p>
 
   <div class="step" id="t2-1">
@@ -273,7 +274,7 @@ data: Hi, this is LIMO from the robot news station.
 <!-- ============================================================ -->
 <h2 id="lab3"><span class="num">L3</span>Lab 3 — Your first subscriber</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB 3 · 20 min</span><h3>The smartphone (Book §2.1.2)</h3></div>
+  <div class="lab-h"><span class="badge">LAB 3 · 20 min</span><h3>The smartphone</h3></div>
   <p class="lab-goal">Goal: a second node that receives every news message and prints it.</p>
 
   <div class="step" id="t3-1">
@@ -325,7 +326,7 @@ ros2 run my_py_pkg robot_news_station</code></pre></div>
 </div>
 
 <details class="box">
-  <summary>➕ Going further (optional): the C++ publisher (Book §2.1.3)</summary>
+  <summary>➕ Going further (optional): the C++ publisher</summary>
   <div class="inner">
   <div class="cmd file"><div class="cmd-h">📄 my_cpp_pkg/src/robot_news_station.cpp</div><pre><code>#include "rclcpp/rclcpp.hpp"
 #include "example_interfaces/msg/string.hpp"
@@ -371,7 +372,7 @@ install(TARGETS robot_news_station DESTINATION lib/${PROJECT_NAME})</code></pre>
 <!-- ============================================================ -->
 <h2 id="lab4"><span class="num">L4</span>Lab 4 — Debug &amp; remap topics</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB 4 · 25 min</span><h3>The engineer's toolbox (Book §2.1.5–2.1.7)</h3></div>
+  <div class="lab-h"><span class="badge">LAB 4 · 25 min</span><h3>The engineer's toolbox</h3></div>
   <p class="lab-goal">Goal: measure a topic, inject messages from the terminal, and rename topics without changing code.</p>
 
   <div class="step" id="t4-1">
@@ -407,17 +408,17 @@ ros2 run my_py_pkg smartphone
 ros2 run my_py_pkg robot_news_station --ros-args -r __node:=station3 -r robot_news:=other_news
 ros2 run my_py_pkg smartphone --ros-args -r __node:=smartphone2 -r robot_news:=other_news
 rqt_graph</code></pre></div>
-    <p>You should see <strong>two separate groups</strong>, just like Book Fig. 2.4. Explain to your neighbour why <code>smartphone2</code> only hears <code>station3</code>.</p>
+    <p>You should see <strong>two separate groups</strong>, just like the rqt_graph picture below. Explain to your neighbour why <code>smartphone2</code> only hears <code>station3</code>.</p>
   </div>
 </div>
 
 <!-- ============================================================ -->
-<h3>📘 Remapping in the book</h3><div class="fig-pair"><figure class="book-fig"><img src="images/book/fig2_4.png" alt="Fig. 2.4: rqt_graph with renamed stations and a remapped topic, as in Lab 4 step 4." loading="lazy"><figcaption>Fig. 2.4: rqt_graph with renamed stations and a remapped topic, as in Lab 4 step 4.</figcaption></figure><figure class="book-fig"><img src="images/book/fig2_5.png" alt="Fig. 2.5: the rqt_graph of turtlesim + teleop." loading="lazy"><figcaption>Fig. 2.5: the rqt_graph of turtlesim + teleop.</figcaption></figure></div>
+<h3>🖼️ Remapping in pictures</h3><div class="fig-pair"><figure class="figure-card"><img src="images/figures/fig2_4.png" alt="Rqt_graph with renamed stations and a remapped topic, as in Lab 4 step 4." loading="lazy"><figcaption>Rqt_graph with renamed stations and a remapped topic, as in Lab 4 step 4.</figcaption></figure><figure class="figure-card"><img src="images/figures/fig2_5.png" alt="The rqt_graph of turtlesim + teleop." loading="lazy"><figcaption>The rqt_graph of turtlesim + teleop.</figcaption></figure></div>
 <h2 id="activity"><span class="num">3.2</span>Your turn</h2>
 <div class="activity">
-  <div class="lvl">Activity 3.1 · Core · 40 min · from Book §2.1.9</div>
+  <div class="lvl">Activity 3.1 · Core · 40 min</div>
   <h3>The number counter</h3>
-<figure class="book-fig"><img src="images/book/fig2_6.png" alt="Fig. 2.6: the number counter activity: blue boxes are nodes, green boxes are topics." loading="lazy"><figcaption>Fig. 2.6: the number counter activity: blue boxes are nodes, green boxes are topics.</figcaption></figure>
+<figure class="figure-card"><img src="images/figures/fig2_6.png" alt="The number counter activity: blue boxes are nodes, green boxes are topics." loading="lazy"><figcaption>The number counter activity: blue boxes are nodes, green boxes are topics.</figcaption></figure>
   <div class="mermaid">
 flowchart LR
   A(["number_publisher"]) -- "Int64" --> T1[["/number"]] --> B(["number_counter"]) -- "Int64" --> T2[["/number_count"]]
@@ -573,12 +574,12 @@ if __name__ == "__main__":
   <div><code>create_publisher(T, "name", 10)</code> · <code>create_subscription(T, "name", cb, 10)</code><span>in Python</span></div>
 </div>
 
-<div class="box book">
+<div class="box note">
   <div class="box-title">🏠 Homework</div>
   <ol>
     <li>Finish Activity 3.1 (number counter) and keep it: you'll need it next week.</li>
     <li>Try Challenge 3.2 (spiral).</li>
-    <li>Read Book §2.2 "ROS2 – Services" (pp. 35–40).</li>
+    <li>Preview: with turtlesim running, type <code>ros2 service list</code> and guess what each service does.</li>
   </ol>
 </div>
 
@@ -590,6 +591,7 @@ if __name__ == "__main__":
 </div>
 <script src="lab.js"></script>
 <script src="widgets.js"></script>
+<script src="enhance.js"></script>
 <script src="annotate.js" defer></script>
 </body>
 </html>
