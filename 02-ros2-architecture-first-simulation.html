@@ -122,6 +122,86 @@
   #theme-toggle:hover{transform:scale(1.08);}
   @media (max-width:640px){ #theme-toggle{top:12px; left:12px; width:42px; height:42px; font-size:17px;} }
 
+
+  /* =================== 2-hour session layer =================== */
+  html{scroll-behavior:smooth;}
+  .journey{position:sticky; top:0; z-index:890; background:rgba(255,254,251,.94); backdrop-filter:saturate(160%) blur(10px); border-bottom:1px solid var(--border);}
+  html[data-theme="dark"] .journey{background:rgba(27,30,42,.94);}
+  .j-in{max-width:1200px; margin:0 auto; display:flex; align-items:center; gap:10px; padding:6px 16px 6px 74px;}
+  .j-stops{display:flex; gap:4px; overflow-x:auto; scrollbar-width:none; flex:1; min-width:0;}
+  .j-stops::-webkit-scrollbar{display:none;}
+  .j-stop{display:inline-flex; align-items:center; gap:5px; padding:5px 9px; border-radius:999px; font-size:.7em; font-weight:700; color:var(--muted); text-decoration:none !important; white-space:nowrap; border:1px solid transparent; transition:.2s;}
+  .j-stop:hover{background:var(--panel2); color:var(--text);}
+  .j-stop .j-m{font-family:'JetBrains Mono',monospace; font-weight:600; opacity:.75; font-size:.9em;}
+  .j-stop.seen{color:var(--accent2);}
+  .j-stop.seen .j-e::after{content:"✓"; font-size:.7em; margin-inline-start:1px;}
+  .j-stop.here{background:var(--accent); color:#fff; box-shadow:0 4px 12px -4px rgba(61,75,245,.6);}
+  .j-side{display:flex; align-items:center; gap:6px; flex-shrink:0;}
+  .j-timer, .j-reset{font:inherit; font-size:.7em; font-weight:800; border-radius:999px; border:1px solid var(--border); background:var(--panel); color:var(--text); padding:5px 11px; cursor:pointer; font-family:'JetBrains Mono',monospace; white-space:nowrap;}
+  .j-timer.on{background:#181a2e; color:#7ee7c7; border-color:#181a2e;}
+  .j-timer.paused{color:#f5c26b;} .j-timer.behind{background:var(--danger); border-color:var(--danger); color:#fff;}
+  .j-reset[hidden]{display:none;}
+  .j-xp{font-size:.7em; font-weight:800; background:linear-gradient(90deg,#fdf3e4,#eef0ff); border:1px solid var(--border); color:var(--text); padding:5px 11px; border-radius:999px; white-space:nowrap; cursor:help;}
+  html[data-theme="dark"] .j-xp{background:linear-gradient(90deg,#3a2f18,#1f2242);}
+  .j-prog{height:3px; background:transparent;} .j-prog i{display:block; height:100%; width:0; background:linear-gradient(90deg,var(--accent2),var(--accent)); transition:width .2s;}
+  @media (max-width:1560px){ .j-stop .j-m{display:none;} }
+  @media (max-width:1380px){ .j-stop:not(.here):not(:hover) .j-l{display:none;} .j-stop{padding:5px 8px;} }
+  @media (max-width:900px){ .j-stop .j-l, .j-stop .j-m{display:none;} .j-in{padding-left:64px;} }
+  @media (max-width:560px){ .j-xp{display:none;} }
+  @media print{ .journey, .l2-toast{display:none !important;} }
+  .l2-toast{position:fixed; left:50%; bottom:24px; transform:translate(-50%,40px); opacity:0; background:#181a2e; color:#fff; font-weight:800; padding:10px 18px; border-radius:999px; z-index:990; pointer-events:none; transition:.3s; box-shadow:0 12px 30px -10px rgba(0,0,0,.5); font-size:.9em;}
+  .l2-toast.on{opacity:1; transform:translate(-50%,0);}
+
+  .tldr{display:flex; gap:12px; align-items:flex-start; margin:-6px 0 22px; padding:12px 16px; border-radius:14px; background:linear-gradient(90deg,#eef0ff,#fffefb); border:1px solid #d6dafc; font-weight:600; font-size:.98em;}
+  html[data-theme="dark"] .tldr{background:linear-gradient(90deg,#1f2242,#1b1e2a); border-color:#383d6b;}
+  .tldr-t{flex-shrink:0; background:var(--accent); color:#fff; font-family:'JetBrains Mono',monospace; font-weight:800; font-size:.78em; padding:3px 10px; border-radius:999px; margin-top:3px;}
+  .tldr-t.ref{background:var(--gold);}
+
+  .qc{margin:28px 0; border-radius:16px; padding:16px 20px; background:var(--panel); border:2px dashed var(--accent);}
+  .qc.done{border-style:solid; border-color:var(--border);}
+  .qc-q{font-weight:800; margin-bottom:10px;}
+  .qc-q span{color:var(--accent-ink);}
+  .qc-o{display:flex; flex-wrap:wrap; gap:8px;}
+  .qc-o button{font:inherit; font-size:.84em; font-weight:700; padding:8px 14px; border-radius:12px; border:1px solid var(--border); background:var(--panel2); color:var(--text); cursor:pointer; text-align:start;}
+  .qc-o button:hover:not(:disabled){border-color:var(--accent);}
+  .qc-o button:disabled{cursor:default; opacity:.6;}
+  .qc-o button.right{background:var(--accent2); border-color:var(--accent2); color:#fff; opacity:1;}
+  .qc-o button.wrong{background:var(--danger); border-color:var(--danger); color:#fff; opacity:1;}
+  .qc-fb{margin-top:10px; font-size:.88em; font-weight:600;}
+  .qc-fb.ok{color:var(--accent2);} .qc-fb.bad{color:var(--danger);}
+  .qc-retry{background:none; border:0; color:var(--muted); font:inherit; font-size:.75em; text-decoration:underline; cursor:pointer; margin-top:6px; padding:0;}
+
+  details.deeper{margin:26px 0; border:1px solid var(--border); border-radius:16px; background:var(--panel2);}
+  details.deeper > summary{cursor:pointer; list-style:none; padding:14px 18px; font-weight:800; display:flex; align-items:center; gap:10px; font-size:.95em;}
+  details.deeper > summary::-webkit-details-marker{display:none;}
+  details.deeper > summary::before{content:"🔎"; }
+  details.deeper > summary::after{content:"＋ open"; margin-inline-start:auto; font-size:.72em; color:var(--accent-ink); background:var(--panel); border:1px solid var(--border); border-radius:999px; padding:3px 10px; white-space:nowrap;}
+  details.deeper[open] > summary::after{content:"− close";}
+  details.deeper > summary em{font-style:normal; font-weight:600; color:var(--muted); font-size:.85em;}
+  .deeper-body{padding:0 18px 8px;}
+
+  .activity{border-radius:16px; padding:18px 22px; margin:24px 0; background:linear-gradient(135deg,#fdf3e4,#fdeee4); border:1px solid #f2ddb3; position:relative;}
+  html[data-theme="dark"] .activity{background:linear-gradient(135deg,#3a2f18,#3a2618); border-color:#5c4826;}
+  .activity .act-t{font-weight:800; color:var(--gold); margin-bottom:6px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+  .activity .act-t span{background:var(--gold); color:#fff; font-size:.72em; padding:2px 9px; border-radius:999px;}
+  .activity ol{margin:6px 0 0;}
+
+  .an-cards{display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px;}
+  .an-card{perspective:900px; height:178px; border:0; padding:0; background:none; cursor:pointer; font:inherit; color:inherit; text-align:center;}
+  .an-in{position:relative; display:block; width:100%; height:100%; transition:transform .5s; transform-style:preserve-3d;}
+  .an-card.flip .an-in{transform:rotateY(180deg);}
+  .an-f, .an-b{position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:16px; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:12px; gap:6px;}
+  .an-f{background:#181a2e; color:#fff; box-shadow:0 10px 24px -14px rgba(24,26,46,.7);}
+  .an-emo{font-size:2.2em; line-height:1;}
+  .an-term{font-weight:800; font-size:1.15em; letter-spacing:-.2px;}
+  .an-hint{font-size:.66em; color:#9aa0c8; font-weight:600;}
+  .an-b{background:var(--panel); border:2px solid var(--accent); transform:rotateY(180deg); font-size:.8em; line-height:1.45;}
+  .an-limo{font-family:'JetBrains Mono',monospace; font-size:.82em; color:var(--accent-ink); font-weight:700;}
+  .outcomes{display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:10px; margin:14px 0 0;}
+  .outcomes div{background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:10px 14px; font-size:.9em; font-weight:600; display:flex; gap:10px;}
+  .runsheet td:first-child{font-family:'JetBrains Mono',monospace; white-space:nowrap; font-weight:700;}
+  .toc-min{font-family:'JetBrains Mono',monospace; font-size:.72em; color:var(--muted); margin-inline-start:6px; font-weight:700;}
+
   /* =================== Interactive labs (driven by 02-interactive-labs.js) =================== */
   .lab{background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:20px 22px; margin:30px 0; box-shadow:0 1px 2px rgba(33,31,26,.03),0 18px 36px -24px rgba(33,31,26,.28);}
   .lab-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:6px;}
@@ -417,9 +497,9 @@ html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
   <div class="cover">
     <div class="kicker">LIMO Robotics &amp; ROS 2 Lecture &nbsp;·&nbsp; Session 2 of 14</div>
     <h1>Lecture 2: ROS 2 Architecture &amp; Your First LIMO Simulation</h1>
-    <div class="subtitle">From turtlesim to a real AgileX LIMO spinning up inside Gazebo</div>
+    <div class="subtitle">From turtlesim to a real AgileX LIMO spinning up inside Gazebo, in one 2-hour, hands-on session 🍕🐢🚗</div>
     <div class="meta-row">
-      <div class="chip">Duration: 3 hours</div>
+      <div class="chip">⏱ Duration: 2 hours, hands-on</div>
       <div class="chip">Prerequisite: Lecture 1 (install)</div>
       <div class="chip">Robot: AgileX LIMO in Gazebo</div>
       <div class="chip">🎮 14 interactive labs</div>
@@ -428,33 +508,69 @@ html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
 
   <div class="toc">
     <strong style="color:var(--text)">In this session</strong>
-    <a href="#big-picture"><span>2.1</span>The Big Picture: What ROS 2 Actually Is <em class="toc-lab">🎮 live graph</em></a>
-    <a href="#nodes"><span>2.2</span>Nodes — the Living Units of the Graph <em class="toc-lab">🧪 virtual turtlesim</em></a>
-    <a href="#topics"><span>2.3</span>Topics — Publish and Subscribe <em class="toc-lab">🎮 pub/sub playground</em></a>
-    <a href="#services"><span>2.4</span>Services — Request and Response <em class="toc-lab">🎮 blocking demo</em></a>
-    <a href="#actions"><span>2.5</span>Actions — Long-Running Goals <em class="toc-lab">🎮 goal / feedback / cancel</em></a>
-    <a href="#parameters"><span>2.6</span>Parameters — Tuning a Node Live <em class="toc-lab">🎮 colour mixer · sorting game</em></a>
-    <a href="#custom-messages"><span>2.7</span>Custom Messages in the Wild: LimoStatus <em class="toc-lab">🎮 .msg builder</em></a>
-    <a href="#limo-gazebo"><span>2.8</span>Meeting LIMO in Gazebo for Real <em class="toc-lab">🎮 Twist planner · LiDAR explorer</em></a>
-    <a href="#dds"><span>2.9</span>DDS and the Network Layer <em class="toc-lab">🎮 classroom discovery</em></a>
-    <a href="#troubleshooting"><span>2.10</span>Troubleshooting Clinic <em class="toc-lab">🩺 interactive</em></a>
-    <a href="#self-test"><span>2.11</span>Self-Test Quiz &amp; Lab Worksheet <em class="toc-lab">✅ 12 questions</em></a>
+    <a href="#big-picture"><span>2.1</span>The Big Picture: What ROS 2 Actually Is <b class="toc-min">10′</b><em class="toc-lab">🎮 live graph</em></a>
+    <a href="#nodes"><span>2.2</span>Nodes — the Living Units of the Graph <b class="toc-min">15′</b><em class="toc-lab">🧪 virtual turtlesim</em></a>
+    <a href="#topics"><span>2.3</span>Topics — Publish and Subscribe <b class="toc-min">20′</b><em class="toc-lab">🎮 pub/sub playground</em></a>
+    <a href="#services"><span>2.4</span>Services — Request and Response <b class="toc-min">10′</b><em class="toc-lab">🎮 blocking demo</em></a>
+    <a href="#actions"><span>2.5</span>Actions — Long-Running Goals <b class="toc-min">10′</b><em class="toc-lab">🎮 goal / feedback / cancel</em></a>
+    <a href="#parameters"><span>2.6</span>Parameters — Tuning a Node Live <b class="toc-min">10′</b><em class="toc-lab">🎮 colour mixer · sorting game</em></a>
+    <a href="#custom-messages"><span>2.7</span>Custom Messages in the Wild: LimoStatus <b class="toc-min">5′</b><em class="toc-lab">🎮 .msg builder</em></a>
+    <a href="#limo-gazebo"><span>2.8</span>Meeting LIMO in Gazebo for Real <b class="toc-min">25′</b><em class="toc-lab">🎮 Twist planner · LiDAR explorer</em></a>
+    <a href="#dds"><span>2.9</span>DDS and the Network Layer <b class="toc-min">7′</b><em class="toc-lab">🎮 classroom discovery</em></a>
+    <a href="#troubleshooting"><span>2.10</span>Troubleshooting Clinic <b class="toc-min">reference</b><em class="toc-lab">🩺 interactive</em></a>
+    <a href="#self-test"><span>2.11</span>Self-Test Quiz &amp; Lab Worksheet <b class="toc-min">8′</b><em class="toc-lab">✅ 12 questions</em></a>
     <a href="#summary"><span>2.12</span>Summary, Cheat Sheet, Checkpoint &amp; Glossary</a>
   </div>
   <style>.toc-lab{font-style:normal; font-size:.72em; font-weight:700; color:var(--accent2); margin-inline-start:6px; white-space:nowrap;}</style>
 
   <div class="box idea" style="margin-top:28px;">
-    <div class="box-title">🎮 How to use this page</div>
-    <p>
-      Every section has a hands-on widget. The main one is the <strong>virtual turtlesim lab</strong> in §2.2: a practice
-      copy of turtlesim and the <code>ros2</code> command line that runs in your browser. The terminal blocks in §2.2–2.6
-      have <strong>▶ chips</strong> that run their commands in that lab. On a wide screen, press <strong>📌 Dock to
-      side</strong> to keep the lab open while you read. It's for practice only: run every command again on your Ubuntu VM.
-    </p>
+    <div class="box-title">🎯 In the next 2 hours you will…</div>
+    <div class="outcomes">
+      <div>🧠 <span>explain what ROS 2 is, and why it has no "boss" program</span></div>
+      <div>🐢 <span>inspect a running robot with <code>ros2 node</code> / <code>topic</code> commands</span></div>
+      <div>📻📞🛵🎛️ <span>choose correctly between a Topic, Service, Action and Parameter</span></div>
+      <div>🚗 <span>launch LIMO in Gazebo and drive it from the command line</span></div>
+      <div>📡 <span>stop your classmates from driving your robot, using DDS settings</span></div>
+    </div>
   </div>
+
+  <div class="box real">
+    <div class="box-title">🎮 How this session works</div>
+    <p>
+      The <strong>bar at the top</strong> is your map of the 2 hours: 11 stops, each with a time budget, ticked off as you
+      scroll. Every stop starts with an <strong>"In short"</strong> sentence, ends with an <strong>⚡ Quick check</strong>, and
+      has something to click, drag or type. The main playground is the <strong>virtual turtlesim lab</strong> in §2.2, and
+      the <strong>▶ chips</strong> on the terminal blocks run their commands there. Quick checks, lab missions, the sorting
+      game and the quiz earn <strong>⭐ XP</strong>: go from 🐣 Rookie to 🏆 ROS Master. <strong>🔎 Go deeper</strong> panels
+      hold the extra detail. They are optional in class and make good homework. Afterwards, repeat every command on your Ubuntu VM.
+    </p>
+    <p style="margin-bottom:0;"><button class="btn l2-reset-all" type="button">↺ Reset my progress on this page</button></p>
+  </div>
+
+  <details class="deeper">
+    <summary>For the instructor: the 2-hour run sheet <em>(timings, what to demo, what to assign)</em></summary>
+    <div class="deeper-body">
+    <p>Press <strong>⏱ Start class</strong> in the top bar when you begin. The timer shows where the plan says you should be, and turns red if you fall more than 5 minutes behind.</p>
+    <table class="runsheet">
+      <tr><th>Time</th><th>Stop</th><th>Do in class</th><th>Move to homework if short on time</th></tr>
+      <tr><td>0:00</td><td>🧠 2.1 Big picture</td><td>Pizza-restaurant flip cards (whole class), break-the-graph demo</td><td>ROS 1 mode of the graph demo</td></tr>
+      <tr><td>0:10</td><td>🐢 2.2 Nodes</td><td>Everyone starts turtlesim (VM or virtual lab), <code>node list / info</code></td><td>—</td></tr>
+      <tr><td>0:25</td><td>📻 2.3 Topics</td><td>Teleop + <code>topic echo</code> live on the projector, pub/sub playground</td><td>QoS depth, Twist table details</td></tr>
+      <tr><td>0:45</td><td>📞 2.4 Services</td><td><code>/clear</code>, <code>/spawn</code>; blocking-call demo</td><td>🔎 call_async panel</td></tr>
+      <tr><td>0:55</td><td>🛵 2.5 Actions</td><td>Teleop rotate keys + <code>send_goal --feedback</code>, cancel demo</td><td>🔎 "under the hood" panel</td></tr>
+      <tr><td>1:05</td><td>🎛️ 2.6 Parameters</td><td>Colour mixer, then the sorting game in pairs</td><td>YAML / params-file</td></tr>
+      <tr><td>1:15</td><td>📦 2.7 Messages</td><td>Read LimoStatus together (5 min only)</td><td>🔎 .msg builder</td></tr>
+      <tr><td>1:20</td><td>🚗 2.8 LIMO</td><td>Launch Gazebo, drive it, predict an arc, LiDAR explorer</td><td>Exercise: hz comparison</td></tr>
+      <tr><td>1:45</td><td>📡 2.9 DDS</td><td>👥 Live "chaos" activity with the whole room</td><td>🔎 RMW vendors panel</td></tr>
+      <tr><td>1:52</td><td>✅ 2.11 Quiz</td><td>Quiz on phones or laptops, discuss the most-missed question</td><td>Lab worksheet = homework</td></tr>
+      <tr><td>1:58</td><td>🏁 Wrap-up</td><td>Exit ticket (3 questions)</td><td>2.10 Troubleshooting = reference</td></tr>
+    </table>
+    </div>
+  </details>
 
   <section id="big-picture">
     <h2><span class="num">2.1</span>The Big Picture: What ROS 2 Actually Is</h2>
+    <div class="tldr"><span class="tldr-t">⏱ 10 min</span><span><strong>In short:</strong> ROS 2 is <em>many small programs</em> (Nodes) that find each other automatically and share data. There is no boss program in the middle.</span></div>
     <p>
       In Lecture 1 you installed Ubuntu 22.04, ROS 2 Humble Hawksbill, and the LIMO simulation packages, and you probably
       ran one command just to prove the install worked. Today we stop treating ROS 2 as a magic word typed into a terminal
@@ -478,6 +594,12 @@ html[data-theme="dark"] .coursenav a:hover{background:#262a45;color:#aab1ff;}
         tools that let independent processes called Nodes discover one another and exchange Messages over a data
         distribution layer called <strong>DDS</strong>, without a central point of control.
       </p>
+    </div>
+
+    <div class="lab" id="analogy-lab">
+      <div class="lab-head"><span class="lab-tag gold">🍕 Warm-up</span><span class="lab-title">ROS 2 is a pizza restaurant</span><span class="lab-head-r"><button class="btn an-all" type="button">↻ Flip all</button></span></div>
+      <p class="lab-sub">Every idea in today's lecture has a twin in a busy pizza restaurant. Guess each one, then tap the card. The 🤖 line shows the real LIMO example you'll meet later.</p>
+      <div class="an-cards"></div>
     </div>
 
     <div class="box idea">
@@ -546,12 +668,22 @@ flowchart LR
       <li>Which interactions should be a Service, which should be an Action, and why?</li>
       <li>How do I change a Node's behavior at runtime without touching its code?</li>
     </ul>
+
+    <div class="activity">
+      <div class="act-t">👥 Pair up <span>2 min</span></div>
+      With your neighbour, sketch the graph of a <strong>campus delivery robot</strong>: name at least 5 Nodes (boxes) and the
+      Topics between them (arrows). Keep the sketch. By the end of the session you'll know which arrows should really be
+      Services or Actions.
+    </div>
+
+    <div class="qc" data-id="s21" data-ans="1" data-why="Nodes are independent processes. The publisher neither knows nor cares that a subscriber died."><div class="qc-q">⚡ Quick check: <span>The <code>/obstacle_avoider</code> Node crashes. Does <code>/lidar_driver</code> stop publishing <code>/scan</code>?</span></div><div class="qc-o"><button type="button">Yes, the whole graph goes down</button><button type="button">No, it keeps publishing</button></div><div class="qc-fb" aria-live="polite"></div><button class="qc-retry" type="button">try again</button></div>
   </section>
 
   <div class="divider"></div>
 
   <section id="nodes">
     <h2><span class="num">2.2</span>Nodes — the Living Units of the Graph</h2>
+    <div class="tldr"><span class="tldr-t">⏱ 15 min</span><span><strong>In short:</strong> A Node is one running program with one job. <code>ros2 node list</code> and <code>ros2 node info</code> show who is alive and what they do.</span></div>
     <p>
       A <strong>Node</strong> is a single running process that does one job. In a well-designed robot, a Node has one
       clear responsibility: read a sensor, run an algorithm, or drive an actuator. When you type <code>ros2 run
@@ -696,12 +828,15 @@ flowchart LR
         no central "master" keeping a permanent registry?
       </p>
     </div>
+
+    <div class="qc" data-id="s22" data-ans="1" data-why="node list only gives names. node info gives each Node's publishers, subscribers, services and actions."><div class="qc-q">⚡ Quick check: <span>Which command tells you what a Node publishes and subscribes to?</span></div><div class="qc-o"><button type="button">ros2 node list</button><button type="button">ros2 node info /name</button><button type="button">ros2 topic list</button></div><div class="qc-fb" aria-live="polite"></div><button class="qc-retry" type="button">try again</button></div>
   </section>
 
   <div class="divider"></div>
 
   <section id="topics">
     <h2><span class="num">2.3</span>Topics — Publish and Subscribe</h2>
+    <div class="tldr"><span class="tldr-t">⏱ 20 min</span><span><strong>In short:</strong> A Topic is a named 📻 radio channel. Publishers broadcast, any number of subscribers listen, and nobody waits for a reply.</span></div>
     <p>
       Nodes are useless in isolation — a Node that reads a LiDAR but tells no one is just wasted electricity. The most
       common way Nodes share data in ROS 2 is the <strong>Topic</strong>: a named, typed channel that any number of
@@ -758,6 +893,12 @@ angular_velocity: 0.0
 <span class="term-prompt">$</span> ros2 topic hz /turtle1/pose
 <span class="term-out">average rate: 62.484
 	min: 0.008s max: 0.020s std dev: 0.00312s window: 63</span></div>
+    </div>
+
+    <div class="activity">
+      <div class="act-t">🎤 Live demo <span>3 min</span></div>
+      One volunteer drives the turtle with teleop while the instructor runs <code>ros2 topic echo /turtle1/cmd_vel</code> on the
+      projector. Class: shout out what appears each time a key is pressed, and why the stream stops when the key is released.
     </div>
 
     <p>
@@ -849,12 +990,15 @@ angular_velocity: 0.0
         release the key?
       </p>
     </div>
+
+    <div class="qc" data-id="s23" data-ans="0" data-why="Publish once, and DDS delivers it to every subscriber. That is the power of pub/sub."><div class="qc-q">⚡ Quick check: <span>Five Nodes want LIMO's <code>/scan</code>. How many times must the LiDAR driver publish each scan?</span></div><div class="qc-o"><button type="button">Once: every subscriber receives it</button><button type="button">Five times, once per subscriber</button><button type="button">It must switch to a Service</button></div><div class="qc-fb" aria-live="polite"></div><button class="qc-retry" type="button">try again</button></div>
   </section>
 
   <div class="divider"></div>
 
   <section id="services">
     <h2><span class="num">2.4</span>Services — Request and Response</h2>
+    <div class="tldr"><span class="tldr-t">⏱ 10 min</span><span><strong>In short:</strong> A Service is a 📞 phone call: ask once, wait, get exactly one answer.</span></div>
     <p>
       Not everything a robot does is a continuous stream. Sometimes you want to ask a Node one specific question and
       wait for one specific answer, then move on. ROS 2 has a dedicated pattern for that: the <strong>Service</strong>.
@@ -935,7 +1079,9 @@ std_srvs.srv.Empty_Response()</span></div>
       <div class="mini-term log pp-log" style="margin-top:10px;"></div>
     </div>
 
-    <div class="box eng">
+<details class="deeper"><summary>Go deeper: blocking vs. call_async() in real code <em>(2 min read)</em></summary>
+<div class="deeper-body">
+        <div class="box eng">
       <div class="box-title">🔧 Engineering Perspective: "blocking" in real code</div>
       <p>
         <code>ros2 service call</code> and a plain synchronous <code>call()</code> block the caller exactly as shown above.
@@ -944,6 +1090,7 @@ std_srvs.srv.Empty_Response()</span></div>
         no progress updates. If you need progress, you need an Action.
       </p>
     </div>
+</div></details>
 
     <div class="exercise">
       <div class="level">Intermediate Exercise</div>
@@ -959,12 +1106,15 @@ std_srvs.srv.Empty_Response()</span></div>
         <button class="btn sm" data-lab-cmd="ros2 topic list">▶ topic list</button>
       </div>
     </div>
+
+    <div class="qc" data-id="s24" data-ans="1" data-why="&quot;waiting for service to become available...&quot; A Service call needs a server to answer."><div class="qc-q">⚡ Quick check: <span>Your code calls a Service, but the server is not running. What happens?</span></div><div class="qc-o"><button type="button">It gets an empty reply</button><button type="button">It waits for the server to appear</button><button type="button">ROS starts the server automatically</button></div><div class="qc-fb" aria-live="polite"></div><button class="qc-retry" type="button">try again</button></div>
   </section>
 
   <div class="divider"></div>
 
   <section id="actions">
     <h2><span class="num">2.5</span>Actions — Long-Running Goals</h2>
+    <div class="tldr"><span class="tldr-t">⏱ 10 min</span><span><strong>In short:</strong> An Action is a 🛵 delivery with live tracking: send a goal, get progress updates, then a result. You can cancel it at any time.</span></div>
     <p>
       A Service is a poor fit the moment a task takes a long time. Imagine calling a Service named
       "drive_to_kitchen" — your program would sit frozen, blocked, for however many minutes it takes the robot to
@@ -1069,7 +1219,9 @@ Goal finished with status: SUCCEEDED</span></div>
       <strong>Ctrl+C</strong> while a goal is running (in the virtual lab too) and the CLI cancels it. You can't do that with a Service.
     </p>
 
-    <div class="box def">
+<details class="deeper"><summary>Go deeper: what an Action is built from <em>(1 min read)</em></summary>
+<div class="deeper-body">
+        <div class="box def">
       <div class="box-title">📖 Under the hood: an Action is built from Services and Topics</div>
       <p>
         ROS 2 builds every Action from the two primitives you already know: three Services
@@ -1077,6 +1229,7 @@ Goal finished with status: SUCCEEDED</span></div>
         (<code>feedback</code> and <code>status</code>). The Action API bundles them into one easy interface.
       </p>
     </div>
+</div></details>
 
     <div class="lab pp-lab" id="pp-action" data-mode="action">
       <div class="lab-head"><span class="lab-tag">🎮 Interactive</span><span class="lab-title">Goal → Feedback → Result, and Cancel</span></div>
@@ -1099,12 +1252,15 @@ Goal finished with status: SUCCEEDED</span></div>
         concrete problem you'd hit if you picked the wrong one.
       </p>
     </div>
+
+    <div class="qc" data-id="s25" data-ans="2" data-why="An Action is Goal, then Feedback, then Result, plus Cancel. Subscription count belongs to Topics."><div class="qc-q">⚡ Quick check: <span>Which of these is <em>not</em> part of an Action?</span></div><div class="qc-o"><button type="button">Goal</button><button type="button">Feedback</button><button type="button">Subscription count</button><button type="button">Result</button></div><div class="qc-fb" aria-live="polite"></div><button class="qc-retry" type="button">try again</button></div>
   </section>
 
   <div class="divider"></div>
 
   <section id="parameters">
     <h2><span class="num">2.6</span>Parameters — Tuning a Node Live</h2>
+    <div class="tldr"><span class="tldr-t">⏱ 10 min</span><span><strong>In short:</strong> Parameters are a Node's 🎛️ settings dials. They change its behaviour without changing its code.</span></div>
     <p>
       Every Node can carry a set of named, typed settings called <strong>Parameters</strong> that change its behavior
       without touching or recompiling its code. This is how the same navigation software can drive a small warehouse
@@ -1198,12 +1354,15 @@ Goal finished with status: SUCCEEDED</span></div>
       <div class="cls-list"></div>
       <div class="cls-score"></div>
     </div>
+
+    <div class="qc" data-id="s26" data-ans="1" data-why="It is a stable setting that tunes a Node's behaviour, so it is a Parameter (the oven dial 🎛️)."><div class="qc-q">⚡ Quick check: <span>LIMO's maximum speed limit is best stored as a…</span></div><div class="qc-o"><button type="button">Topic</button><button type="button">Parameter</button><button type="button">Action</button></div><div class="qc-fb" aria-live="polite"></div><button class="qc-retry" type="button">try again</button></div>
   </section>
 
   <div class="divider"></div>
 
   <section id="custom-messages">
     <h2><span class="num">2.7</span>Custom Messages in the Wild: LimoStatus</h2>
+    <div class="tldr"><span class="tldr-t">⏱ 5 min</span><span><strong>In short:</strong> When no standard message fits, a package defines its own <code>.msg</code>. LIMO's <code>LimoStatus</code> is one.</span></div>
     <p>
       Every Message type you've seen so far — <code>Twist</code>, <code>LaserScan</code>, <code>Odometry</code> — ships
       with ROS 2 or a common interfaces package. But robots also need to report information that has no generic
@@ -1255,6 +1414,8 @@ uint8   motion_mode</code></pre>
     <p>Once a LIMO driver is running (real hardware or, on some setups, a bridged simulation), inspect the type from the command line exactly like any other message:</p>
     <pre><code>ros2 interface show limo_msgs/msg/LimoStatus</code></pre>
 
+<details class="deeper"><summary>Go deeper: .msg vs .srv vs .action, and build your own message <em>(homework, ~15 min)</em></summary>
+<div class="deeper-body">
     <div class="box eng">
       <div class="box-title">🔧 Engineering Perspective</div>
       <p>
@@ -1291,12 +1452,17 @@ uint8   motion_mode</code></pre>
       <div class="seg msg-tabs"><button data-t="msg" class="on">.msg file</button><button data-t="echo">topic echo</button><button data-t="py">Python</button><button data-t="build">CMake / package.xml</button></div>
       <div class="mini-term msg-out"></div>
     </div>
+
+</div></details>
+
+    <div class="qc" data-id="s27" data-ans="0" data-why="Define a custom .msg only when no standard type fits your data."><div class="qc-q">⚡ Quick check: <span>Why does LIMO define its own <code>LimoStatus</code> message?</span></div><div class="qc-o"><button type="button">Standard messages have no field for things like motion_mode</button><button type="button">Custom messages are faster</button><button type="button">ROS 2 forbids std_msgs on robots</button></div><div class="qc-fb" aria-live="polite"></div><button class="qc-retry" type="button">try again</button></div>
   </section>
 
   <div class="divider"></div>
 
   <section id="limo-gazebo">
     <h2><span class="num">2.8</span>Meeting LIMO in Gazebo for Real</h2>
+    <div class="tldr"><span class="tldr-t">⏱ 25 min</span><span><strong>In short:</strong> Everything you did to the turtle works unchanged on LIMO in Gazebo: <code>/cmd_vel</code> to drive, <code>/scan</code> to see.</span></div>
     <p>
       Time to leave the turtle behind. This course simulates LIMO in <strong>Gazebo 11</strong> (the classic Gazebo,
       driven through <code>gazebo_ros</code> and <code>gazebo_plugins</code> — not the newer gz-sim line) using the
@@ -1455,12 +1621,15 @@ ranges: [1.842, 1.839, 1.847, ..., inf, inf, 2.910]
         does that difference make sense?
       </p>
     </div>
+
+    <div class="qc" data-id="s28" data-ans="1" data-why="No forward speed means it spins on the spot. Positive angular.z is counter-clockwise, which is a left turn."><div class="qc-q">⚡ Quick check: <span>A Twist with <code>linear.x = 0</code> and <code>angular.z = 0.5</code> makes LIMO…</span></div><div class="qc-o"><button type="button">drive straight</button><button type="button">spin in place to the left</button><button type="button">spin in place to the right</button></div><div class="qc-fb" aria-live="polite"></div><button class="qc-retry" type="button">try again</button></div>
   </section>
 
   <div class="divider"></div>
 
   <section id="dds">
     <h2><span class="num">2.9</span>DDS and the Network Layer</h2>
+    <div class="tldr"><span class="tldr-t">⏱ 7 min</span><span><strong>In short:</strong> DDS lets Nodes discover each other over the network. That is great for robots, and chaos in a classroom unless you isolate yourself.</span></div>
     <p>
       We said in section 2.1 that ROS 2 has no master process, and that Nodes just "find" each other. The mechanism
       underneath that is <strong>DDS</strong> (Data Distribution Service), an industry-standard middleware that ROS 2 is
@@ -1492,22 +1661,9 @@ ranges: [1.842, 1.839, 1.847, ..., inf, inf, 2.910]
 export ROS_LOCALHOST_ONLY=1</code></pre>
     <p>
       With <code>ROS_LOCALHOST_ONLY=1</code> set, DDS discovery and traffic are restricted to your own machine, so your
-      Nodes only ever see your own Nodes. Some course setups also prefer swapping the default RMW implementation for
-      <code>rmw_cyclonedds_cpp</code>, another common DDS vendor, which can behave more predictably on flaky classroom
-      Wi-Fi:
+      Nodes only ever see your own Nodes.
     </p>
-    <pre><code># add to ~/.bashrc
-export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp</code></pre>
 
-    <div class="box eng">
-      <div class="box-title">🔧 Engineering Perspective</div>
-      <p>
-        The fact that "which DDS vendor" is a one-line environment variable, not a code change, is a direct payoff of
-        ROS 2's layered design: your Nodes are written against the ROS 2 client library API, which talks to an RMW
-        interface, which talks to whichever DDS implementation is installed. Swap the bottom layer, keep every line of
-        your Python or C++ untouched.
-      </p>
-    </div>
 
     <h3>ROS_DOMAIN_ID: separate "rooms" on the same network</h3>
     <p>
@@ -1519,6 +1675,17 @@ export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp</code></pre>
     </p>
     <pre><code># add to ~/.bashrc on BOTH your laptop and your LIMO
 export ROS_DOMAIN_ID=17</code></pre>
+
+    <div class="activity">
+      <div class="act-t">👥 Whole-class activity: "Who moved my turtle?" <span>5 min</span></div>
+      <ol>
+        <li>Everyone on the same Wi-Fi opens a <em>new</em> terminal with <strong>no</strong> DDS settings and runs <code>ros2 run turtlesim turtlesim_node</code>.</li>
+        <li>The instructor runs <code>ros2 run turtlesim turtle_teleop_key</code> and presses ↑. Watch the room. 😱</li>
+        <li>Everyone runs <code>ros2 node list</code>. How many <code>/turtlesim</code> nodes do you see?</li>
+        <li>Now <code>export ROS_DOMAIN_ID=</code><em>your seat number</em>, restart turtlesim, and try again. Whose turtle moves now?</li>
+      </ol>
+      <p style="margin:8px 0 0; font-size:.9em;">No Wi-Fi or VM? Do the same experiment in the simulation below.</p>
+    </div>
 
     <div class="lab" id="dds-lab">
       <div class="lab-head"><span class="lab-tag">🎮 Interactive</span><span class="lab-title">The classroom discovery problem</span><span class="lab-head-r"><button class="btn dds-chaos">↺ Everyone on defaults</button></span></div>
@@ -1533,16 +1700,25 @@ export ROS_DOMAIN_ID=17</code></pre>
       </div>
     </div>
 
-    <div class="box hw">
-      <div class="box-title">🔩 Version Note: Humble vs. Jazzy</div>
+
+
+<details class="deeper"><summary>Go deeper: swapping the DDS vendor (RMW), and the Jazzy name change <em>(homework, ~8 min)</em></summary>
+<div class="deeper-body">
+    <p>
+      Some course setups swap the default RMW implementation (Fast DDS in Humble) for <code>rmw_cyclonedds_cpp</code>,
+      another common DDS vendor, which can behave more predictably on flaky classroom Wi-Fi:
+    </p>
+    <pre><code># add to ~/.bashrc
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp</code></pre>
+    <div class="box eng">
+      <div class="box-title">🔧 Engineering Perspective</div>
       <p>
-        This course uses ROS 2 <strong>Humble</strong>, where <code>ROS_LOCALHOST_ONLY=1</code> is the standard switch. In newer
-        distributions (Jazzy and later) it's deprecated in favour of
-        <code>ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST</code>. If you follow a newer tutorial online and the variable seems to
-        do nothing, that's why.
+        The fact that "which DDS vendor" is a one-line environment variable, not a code change, is a direct payoff of
+        ROS 2's layered design: your Nodes are written against the ROS 2 client library API, which talks to an RMW
+        interface, which talks to whichever DDS implementation is installed. Swap the bottom layer, keep every line of
+        your Python or C++ untouched.
       </p>
     </div>
-
     <div class="lab" id="rmw-lab">
       <div class="lab-head"><span class="lab-tag purple">🧱 Layers</span><span class="lab-title">Swap the DDS vendor. Your code doesn't change.</span></div>
       <p class="lab-sub">Pick a different RMW implementation and see which layers change.</p>
@@ -1563,12 +1739,26 @@ export ROS_DOMAIN_ID=17</code></pre>
       <div class="mini-term rmw-env" style="margin-top:10px; min-height:0;"></div>
       <p class="lab-sub" style="margin-top:10px;">Keep every machine that must talk to each other (laptop + LIMO) on the <em>same</em> RMW. Mixing vendors is allowed in theory but is a common source of mysterious discovery problems.</p>
     </div>
+
+    <div class="box hw">
+      <div class="box-title">🔩 Version Note: Humble vs. Jazzy</div>
+      <p>
+        This course uses ROS 2 <strong>Humble</strong>, where <code>ROS_LOCALHOST_ONLY=1</code> is the standard switch. In newer
+        distributions (Jazzy and later) it's deprecated in favour of
+        <code>ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST</code>. If you follow a newer tutorial online and the variable seems to
+        do nothing, that's why.
+      </p>
+    </div>
+</div></details>
+
+    <div class="qc" data-id="s29" data-ans="1" data-why="DDS discovery crosses the Wi-Fi. Isolate yourself with localhost-only mode or a private domain."><div class="qc-q">⚡ Quick check: <span>A classmate's teleop is moving your turtle. What's the fix?</span></div><div class="qc-o"><button type="button">Reinstall ROS 2</button><button type="button">export ROS_LOCALHOST_ONLY=1 (or your own ROS_DOMAIN_ID)</button><button type="button">Restart the laptop</button></div><div class="qc-fb" aria-live="polite"></div><button class="qc-retry" type="button">try again</button></div>
   </section>
 
   <div class="divider"></div>
 
   <section id="troubleshooting">
     <h2><span class="num">2.10</span>Troubleshooting Clinic</h2>
+    <div class="tldr"><span class="tldr-t ref">⏱ reference</span><span><strong>In short:</strong> Not taught live. Come back here whenever something breaks, during the lab or at home.</span></div>
     <p>
       Almost every "ROS is broken" moment in the first weeks is one of the problems below. Pick the symptom and work through
       the checks in order. The first check fixes it most of the time. This is the same order experienced ROS developers use.
@@ -1594,6 +1784,7 @@ export ROS_DOMAIN_ID=17</code></pre>
 
   <section id="self-test">
     <h2><span class="num">2.11</span>Self-Test Quiz &amp; Lab Worksheet</h2>
+    <div class="tldr"><span class="tldr-t">⏱ 8 min</span><span><strong>In short:</strong> Do the 12-question quiz in class. The lab worksheet is your homework.</span></div>
     <p>Twelve questions covering every section. Each answer comes with an explanation. Aim for 10+ before Lecture 3.</p>
     <div class="lab" id="quiz-lab">
       <div class="lab-head"><span class="lab-tag green">✅ Quiz</span><span class="lab-title">Lecture 2 self-check</span><span class="lab-head-r"><button class="btn quiz-reset">↺ Start over</button></span></div>
@@ -1601,7 +1792,7 @@ export ROS_DOMAIN_ID=17</code></pre>
       <div class="quiz-res"></div>
     </div>
 
-    <h3>Lab Worksheet: hands-on missions</h3>
+    <h3>🏠 Homework: Lab Worksheet (hands-on missions)</h3>
     <p>
       Do these on your Ubuntu VM (missions 1–4 also work in the virtual lab). Click a mission to tick it off. Your progress
       is saved in this browser. <span class="badge-project">Submit</span> a short PDF with one screenshot per mission and your
@@ -1630,6 +1821,7 @@ export ROS_DOMAIN_ID=17</code></pre>
 
   <section id="summary">
     <h2><span class="num">2.12</span>Summary, Cheat Sheet, Checkpoint &amp; Glossary</h2>
+    <div class="tldr"><span class="tldr-t">⏱ 2 min</span><span><strong>In short:</strong> One page to keep: the cheat sheet, the checkpoint and the glossary.</span></div>
     <p>
       Today you replaced "type commands and hope" with a real mental model of ROS 2: a decentralized graph of Nodes
       that exchange data over Topics, request answers over Services, run long tasks over Actions, and expose their
@@ -1637,6 +1829,16 @@ export ROS_DOMAIN_ID=17</code></pre>
       of those ideas twice: once cheaply on turtlesim, and once for real by launching AgileX LIMO inside Gazebo,
       inspecting its live graph, and driving it two different ways from the command line.
     </p>
+
+    <div class="activity">
+      <div class="act-t">🎟️ Exit ticket <span>2 min</span></div>
+      Before you leave, write three lines (on paper, or post them on the course forum):
+      <ol>
+        <li>One thing you can now <em>do</em> in ROS 2 that you couldn't do 2 hours ago.</li>
+        <li>For your campus-delivery-robot sketch from §2.1: one arrow that should be a <strong>Service</strong> or an <strong>Action</strong>, and why.</li>
+        <li>One thing that is still confusing. It will be answered at the start of Lecture 3.</li>
+      </ol>
+    </div>
 
     <h3>Lecture 2 Command Cheat Sheet</h3>
     <div class="cs">

@@ -1548,7 +1548,7 @@
       ['Switch a gripper on and get a success/failure reply.', 'S', 'Quick request with a definite answer → Service.'],
       ['LIMO\'s live battery voltage from LimoStatus.', 'T', 'A reading that keeps changing → Topic.']
     ];
-    var NAMES = { T: 'Topic', S: 'Service', A: 'Action', P: 'Parameter' }, ans = {};
+    var NAMES = { T: 'Topic', S: 'Service', A: 'Action', P: 'Parameter' }, ans = store('cls') || {};
     var list = $('.cls-list', root), score = $('.cls-score', root);
     function render() {
       list.innerHTML = '';
@@ -1559,7 +1559,7 @@
         'TSAP'.split('').forEach(function (k) {
           var b = document.createElement('button'); b.textContent = NAMES[k]; b.className = 'cls-b b' + k;
           if (ans[i]) { b.disabled = true; if (k === q[1]) b.classList.add('right'); else if (k === ans[i]) b.classList.add('wrong'); }
-          b.addEventListener('click', function () { ans[i] = k; render(); });
+          b.addEventListener('click', function () { ans[i] = k; store('cls', ans); render(); });
           $('.cls-o', d).appendChild(b);
         });
         list.appendChild(d);
@@ -1567,7 +1567,7 @@
       var n = Object.keys(ans).length, ok = Object.keys(ans).filter(function (i) { return ans[i] === Q[i][1]; }).length;
       score.textContent = n ? ok + ' / ' + n + ' correct' + (n === Q.length ? (ok === Q.length ? ' — perfect! 🏆' : ' — read the ❌ explanations, then retry') : '') : 'Pick an answer for each scenario.';
     }
-    $('.cls-reset', root).addEventListener('click', function () { ans = {}; render(); });
+    $('.cls-reset', root).addEventListener('click', function () { ans = {}; store('cls', ans); render(); });
     render();
   }
 
@@ -2105,9 +2105,174 @@
     });
   }
 
+  /* =================================================================
+     14. SESSION LAYER — 2-hour journey bar, class timer, XP + ranks,
+         quick checks (.qc) and the analogy flip cards (#analogy-lab)
+     ================================================================= */
+  var CLS_KEY = 'TAPSTSAPTAST';
+  function sessionLayer() {
+    var STOPS = [
+      ['big-picture', '🧠', 'Big picture', 0, 10], ['nodes', '🐢', 'Nodes', 10, 15], ['topics', '📻', 'Topics', 25, 20],
+      ['services', '📞', 'Services', 45, 10], ['actions', '🛵', 'Actions', 55, 10], ['parameters', '🎛️', 'Params', 65, 10],
+      ['custom-messages', '📦', 'Messages', 75, 5], ['limo-gazebo', '🚗', 'LIMO', 80, 25], ['dds', '📡', 'DDS', 105, 7],
+      ['self-test', '✅', 'Quiz', 112, 6], ['summary', '🏁', 'Wrap-up', 118, 2]
+    ].filter(function (s) { return document.getElementById(s[0]); });
+    if (!STOPS.length) return;
+
+    /* toast */
+    var toast = document.createElement('div'); toast.className = 'l2-toast'; toast.setAttribute('role', 'status'); document.body.appendChild(toast);
+    var toastT = null;
+    function say(msg) { toast.textContent = msg; toast.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(function () { toast.classList.remove('on'); }, 3200); }
+
+    /* journey bar */
+    var nav = $('.coursenav');
+    var bar = document.createElement('div'); bar.className = 'journey'; bar.id = 'journey';
+    bar.innerHTML = '<div class="j-in"><div class="j-stops">' + STOPS.map(function (s) {
+      return '<a class="j-stop" href="#' + s[0] + '" data-id="' + s[0] + '" title="' + esc(s[2]) + ' · ' + s[4] + ' min (starts at ' + s[3] + '′)"><span class="j-e">' + s[1] + '</span><span class="j-l">' + esc(s[2]) + '</span><span class="j-m">' + s[4] + '′</span></a>';
+    }).join('') + '</div><div class="j-side"><button class="j-timer" type="button" title="Instructor: start a 2-hour class timer. Click again to pause.">⏱ Start class</button>' +
+      '<button class="j-reset" type="button" title="Reset the class timer" hidden>↺</button><span class="j-xp" tabindex="0"></span></div></div><div class="j-prog"><i></i></div>';
+    if (nav && nav.parentNode) nav.parentNode.insertBefore(bar, nav.nextSibling); else document.body.insertBefore(bar, document.body.firstChild);
+    function place() {
+      var h = nav ? nav.offsetHeight : 0;
+      bar.style.top = h + 'px';
+      document.documentElement.style.scrollPaddingTop = (h + bar.offsetHeight + 12) + 'px';
+    }
+    place(); window.addEventListener('resize', place);
+
+    var seen = store('seen') || {}, cur = null;
+    var stopEls = $$('.j-stop', bar), progI = $('.j-prog i', bar);
+    function onScroll() {
+      var line = window.innerHeight * 0.35, act = null;
+      STOPS.forEach(function (s) { var e = document.getElementById(s[0]); if (e.getBoundingClientRect().top <= line) act = s[0]; });
+      if (act && !seen[act]) { seen[act] = 1; store('seen', seen); }
+      if (act !== cur) {
+        cur = act;
+        stopEls.forEach(function (a) {
+          var id = a.getAttribute('data-id');
+          a.classList.toggle('here', id === act); a.classList.toggle('seen', !!seen[id] && id !== act);
+          if (id === act && a.scrollIntoView && bar.scrollWidth > bar.clientWidth) { var sc = $('.j-stops', bar); sc.scrollLeft = a.offsetLeft - sc.clientWidth / 2 + a.offsetWidth / 2; }
+        });
+      }
+      var first = document.getElementById(STOPS[0][0]), last = document.getElementById(STOPS[STOPS.length - 1][0]);
+      var top = first.getBoundingClientRect().top + window.scrollY, end = last.getBoundingClientRect().bottom + window.scrollY - window.innerHeight;
+      progI.style.width = clamp((window.scrollY - top) / Math.max(1, end - top), 0, 1) * 100 + '%';
+    }
+    var pend = false;
+    window.addEventListener('scroll', function () { if (!pend) { pend = true; setTimeout(function () { pend = false; onScroll(); }, 80); } }, { passive: true });
+    onScroll();
+
+    /* class timer (persists across reloads) */
+    var tBtn = $('.j-timer', bar), tReset = $('.j-reset', bar), T = store('timer') || null;
+    function elapsed() { if (!T) return 0; return ((T.paused || Date.now()) - T.start) / 1000; }
+    function fmt(s) { s = Math.floor(s); var h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, ss = s % 60; return (h ? h + ':' + (m < 10 ? '0' : '') : '') + m + ':' + (ss < 10 ? '0' : '') + ss; }
+    function planAt(min) { for (var i = STOPS.length - 1; i >= 0; i--) if (min >= STOPS[i][3]) return STOPS[i]; return STOPS[0]; }
+    function drawTimer() {
+      tReset.hidden = !T;
+      if (!T) { tBtn.textContent = '⏱ Start class'; tBtn.className = 'j-timer'; return; }
+      var e = elapsed(), min = e / 60, plan = planAt(min);
+      var idx = STOPS.map(function (s) { return s[0]; }), behind = cur && idx.indexOf(cur) >= 0 && idx.indexOf(cur) < idx.indexOf(plan[0]) && min - plan[3] > 5;
+      tBtn.textContent = (T.paused ? '⏸ ' : '⏱ ') + fmt(e) + (min >= 120 ? ' · overtime' : ' · plan: ' + plan[1] + ' ' + plan[2]);
+      tBtn.className = 'j-timer on' + (behind ? ' behind' : '') + (T.paused ? ' paused' : '');
+      tBtn.title = behind ? 'Behind the 2-hour plan: consider moving the current "Go deeper" parts to homework.' : 'Click to pause / resume.';
+    }
+    tBtn.addEventListener('click', function () {
+      if (!T) T = { start: Date.now(), paused: null };
+      else if (T.paused) { T.start += Date.now() - T.paused; T.paused = null; }
+      else T.paused = Date.now();
+      store('timer', T); drawTimer();
+    });
+    tReset.addEventListener('click', function () { T = null; store('timer', null); drawTimer(); });
+
+    /* XP + ranks */
+    var xpEl = $('.j-xp', bar), RANKS = [[0, '🐣 Rookie'], [40, '🎮 Operator'], [90, '🔧 Engineer'], [140, '🏆 ROS Master']], lastRank = null;
+    function xp() {
+      var parts = {}, qc = store('qc') || {}, cls = store('cls') || {};
+      parts.missions = Object.keys(store('ts-missions') || {}).length * 5;
+      parts.checks = Object.keys(qc).filter(function (k) { return qc[k] === 1; }).length * 5;
+      parts.sorting = Object.keys(cls).filter(function (i) { return cls[i] === CLS_KEY[i]; }).length * 2;
+      parts.quiz = (store('quiz-best') || 0) * 3;
+      parts.analogy = store('analogy') ? 5 : 0;
+      var total = 0; for (var k in parts) total += parts[k];
+      return { total: total, parts: parts };
+    }
+    function drawXp() {
+      var x = xp(), r = RANKS[0], next = null;
+      RANKS.forEach(function (k, i) { if (x.total >= k[0]) { r = k; next = RANKS[i + 1] || null; } });
+      xpEl.textContent = '⭐ ' + x.total + ' XP · ' + r[1];
+      xpEl.title = 'XP from: lab missions ' + x.parts.missions + ', quick checks ' + x.parts.checks + ', sorting game ' + x.parts.sorting + ', quiz ' + x.parts.quiz + ', analogy cards ' + x.parts.analogy +
+        (next ? '\nNext rank at ' + next[0] + ' XP: ' + next[1] : '\nTop rank reached!');
+      if (lastRank && lastRank !== r[1]) say('🎉 Rank up! You are now ' + r[1]);
+      lastRank = r[1];
+    }
+    setInterval(function () { drawXp(); drawTimer(); }, 1000);
+    drawXp(); drawTimer();
+
+    /* quick checks */
+    var qcs = store('qc') || {};
+    $$('.qc').forEach(function (q) {
+      var id = q.getAttribute('data-id'), ans = +q.getAttribute('data-ans'), why = q.getAttribute('data-why') || '';
+      var btns = $$('.qc-o button', q), fb = $('.qc-fb', q);
+      function show(pick) {
+        btns.forEach(function (b, i) { b.disabled = true; if (i === ans) b.classList.add('right'); else if (i === pick) b.classList.add('wrong'); });
+        fb.textContent = (pick === ans ? '✅ Correct! ' : '❌ Not quite. ') + why;
+        fb.className = 'qc-fb ' + (pick === ans ? 'ok' : 'bad');
+        q.classList.add('done');
+      }
+      btns.forEach(function (b, i) {
+        b.addEventListener('click', function () {
+          if (!(id in qcs)) { qcs[id] = i === ans ? 1 : 0; store('qc', qcs); if (i === ans) say('⚡ +5 XP'); }
+          show(i);
+        });
+      });
+      if (id in qcs) show(qcs[id] === 1 ? ans : (ans + 1) % btns.length);
+      var rb = $('.qc-retry', q);
+      if (rb) rb.addEventListener('click', function () { btns.forEach(function (b) { b.disabled = false; b.className = ''; }); fb.textContent = ''; q.classList.remove('done'); });
+    });
+
+    /* analogy flip cards */
+    var an = $('#analogy-lab');
+    if (an) {
+      var CARDS = [
+        ['🧑‍🍳', 'Node', 'A staff member with <b>one job</b>: the chef, the cashier, the delivery rider.', '/lidar_driver, /motor_driver'],
+        ['📺', 'Topic', 'The <b>order screen</b> on the kitchen wall. The cashier posts orders, every chef who cares reads them, and <b>nobody replies</b>.', '/scan, /cmd_vel, /odom'],
+        ['🧾', 'Message', 'One <b>order ticket</b>. Every ticket has the same boxes to fill in: pizza, size, table.', 'geometry_msgs/msg/Twist'],
+        ['📞', 'Service', '<b>Phoning the manager</b>: "Do we have mozzarella?" You wait on the line and get <b>one answer</b>.', 'save the map · /spawn a turtle'],
+        ['🛵', 'Action', '<b>Delivery with live tracking</b>: you order (goal), watch "rider 2 km away" (feedback), get "delivered!" (result), or <b>cancel</b>.', 'NavigateToPose · rotate_absolute'],
+        ['🎛️', 'Parameter', 'The <b>oven temperature dial</b>. Set it before service opens and change it rarely.', 'max speed · wheel radius'],
+        ['📣', 'DDS', 'No receptionist: staff <b>find each other by announcing themselves</b>. ROS 1 needed a receptionist, roscore, who could not go home.', 'ROS_DOMAIN_ID = which room you are in']
+      ];
+      var grid = $('.an-cards', an), flipped = {};
+      CARDS.forEach(function (c, i) {
+        var d = document.createElement('button'); d.type = 'button'; d.className = 'an-card';
+        d.setAttribute('aria-label', 'Flip card: ' + c[1]);
+        d.innerHTML = '<span class="an-in"><span class="an-f"><span class="an-emo">' + c[0] + '</span><span class="an-term">' + c[1] + '</span><span class="an-hint">tap to flip</span></span>' +
+          '<span class="an-b"><span class="an-txt">' + c[2] + '</span><span class="an-limo">🤖 ' + esc(c[3]) + '</span></span></span>';
+        d.addEventListener('click', function () {
+          d.classList.toggle('flip'); flipped[i] = 1;
+          if (Object.keys(flipped).length === CARDS.length && !store('analogy')) { store('analogy', 1); say('🍕 All 7 cards flipped: +5 XP'); drawXp(); }
+        });
+        grid.appendChild(d);
+      });
+      $('.an-all', an).addEventListener('click', function () {
+        var anyFront = $$('.an-card', an).some(function (c) { return !c.classList.contains('flip'); });
+        $$('.an-card', an).forEach(function (c, i) { c.classList.toggle('flip', anyFront); flipped[i] = 1; });
+        if (!store('analogy')) { store('analogy', 1); drawXp(); }
+      });
+    }
+
+    /* reset all progress */
+    $$('.l2-reset-all').forEach(function (b) {
+      b.addEventListener('click', function () {
+        if (!window.confirm('Reset all your Lecture 2 progress (XP, missions, quick checks, quiz, checklists) in this browser?')) return;
+        try { Object.keys(localStorage).forEach(function (k) { if (k.indexOf('l02:') === 0) localStorage.removeItem(k); }); } catch (e) { /* storage blocked */ }
+        location.reload();
+      });
+    });
+  }
+
   /* ---------------------------------------------------------- boot */
   function boot() {
-    [graphLab, turtleLab, pubsubLab, classifyLab, mixLab, msgLab, twistLab, scanLab, ddsLab, fixLab, quizLab, checklists].forEach(function (f) {
+    [graphLab, turtleLab, pubsubLab, classifyLab, mixLab, msgLab, twistLab, scanLab, ddsLab, fixLab, quizLab, checklists, sessionLayer].forEach(function (f) {
       try { f(); } catch (e) { if (window.console) console.error('Lecture 2 widget failed:', f.name, e); }
     });
     $$('.pp-lab').forEach(function (r) { try { patternLab(r); } catch (e) { if (window.console) console.error(e); } });
