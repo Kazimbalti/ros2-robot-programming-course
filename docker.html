@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){try{var t=localStorage.getItem('limo-book-theme');if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Docker Demo — ROS 2 in a Box</title>
+<meta name="description" content="Docker Demo: install Docker, pull a ready-made ROS 2 Humble desktop image, run it as a container, open the Ubuntu desktop in your browser at localhost:6080, then stop, start and manage containers at will.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<link rel="stylesheet" href="lab.css">
+<link rel="stylesheet" href="widgets.css">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="projector.css">
+</head>
+<body>
+<button id="theme-toggle" aria-label="Toggle light/dark mode">🌙</button>
+<nav class="coursenav"><div class="inner">
+  <span class="brand">ROS &amp; Robot Programming</span>
+  <a href="index.html">Home</a><a href="prerequisites.html">Mission Zero</a><a href="syllabus.html">Syllabus</a><a href="schedule.html">Schedule</a><a href="assignments.html">Assignments</a><a href="index.html#lectures">Lectures</a><a href="projects.html">Projects</a><a href="docker.html" class="active">🐳 Docker Demo</a>
+</div></nav>
+
+<div class="wrap" data-enriched="1">
+<div class="lesson-progress"><div class="lp-top"><span>Docker Demo · your progress</span><span><b class="lp-count">0 / 0 steps</b> · <a href="#" class="lp-reset">reset</a></span></div><div class="lp-bar"><div class="lp-fill"></div></div></div>
+
+<div class="cover">
+  <div class="cover-art" aria-hidden="true">🐳</div>
+  <div class="kicker">Docker Demo · ROS 2 in a Box · no Ubuntu install needed</div>
+  <h1>Docker Demo — ROS&nbsp;2 Humble in Your Browser</h1>
+  <div class="subtitle">Nobody likes install sessions. So today the install <em>is</em> the lesson: you install Docker, pull a ready-made ROS&nbsp;2 desktop, open it in your browser at <code>localhost:6080</code>, and then learn to shut it down and bring it back without losing your work. If you already know Docker, this takes 5 minutes. If you don't, you leave with a skill every robotics engineer uses.</div>
+  <div class="meta-row">
+    <div class="chip">⏱ ~45 min (most of it is the download)</div>
+    <div class="chip">🐧 Ubuntu 22.04 · ROS 2 Humble · noVNC desktop</div>
+    <div class="chip">💻 Windows · macOS · Linux</div>
+  </div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h3>🎯 By the end of this demo you can…</h3>
+    <ul class="outcomes">
+      <li>Explain the difference between an <strong>image</strong> and a <strong>container</strong>.</li>
+      <li>Install Docker and fix the "virtualization not detected" error on Windows.</li>
+      <li><strong>Pull</strong> an image and <strong>run</strong> it as a container with ports, a network and a name.</li>
+      <li>Open a full ROS&nbsp;2 Ubuntu desktop at <code>http://localhost:6080</code> and run a ROS&nbsp;2 demo.</li>
+      <li><strong>Stop</strong>, <strong>start</strong>, list and delete containers and images at will.</li>
+    </ul>
+  </div>
+  <div class="card toc">
+    <h3>🗺️ Today's route</h3>
+    <a href="#idea"><span>D.0</span>The idea: images vs containers</a>
+    <a href="#lab0"><span>Lab 0</span>Install Docker</a>
+    <a href="#lab1"><span>Lab 1</span>Pull &amp; run your first container</a>
+    <a href="#lab2"><span>Lab 2</span>Open ROS 2 in the browser</a>
+    <a href="#lab3"><span>Lab 3</span>Shut it down!</a>
+    <a href="#lab4"><span>Lab 4</span>Start &amp; stop at will</a>
+    <a href="#lab5"><span>Lab 5</span>Bonus demos</a>
+    <a href="#errors"><span>D.1</span>When things go wrong</a>
+    <a href="#exit"><span>D.2</span>Exit ticket &amp; cheat sheet</a>
+  </div>
+</div>
+
+<div class="ig"><div class="ig-title"><span class="sim-tag">Infographic</span>The whole demo at a glance</div><div class="ig-flow"><div class="ig-step"><div class="ic">🛠️</div><b>Install</b><span>Docker Desktop / Engine</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">⬇️</div><b>Pull</b><span><code>docker pull</code> the image</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🚀</div><b>Run</b><span><code>docker run</code> creates the container</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🌐</div><b>Browse</b><span><code>localhost:6080</code></span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🔁</div><b>Stop / Start</b><span><code>docker stop</code> · <code>docker start</code></span></div></div></div>
+
+<!-- ============================================================ -->
+<h2 id="idea"><span class="num">D.0</span>The idea in 5 minutes</h2>
+<div class="analogy"><div class="emoji">🍰</div><div>
+  <p><strong>An image is a recipe; a container is the cake.</strong> The image (<code>thinkautonomous/ros2-humble-ubuntu-desktop-vnc</code>) is a read-only snapshot of Ubuntu&nbsp;22.04 with ROS&nbsp;2 Humble and a desktop already installed. When you <em>run</em> it, Docker bakes a <strong>container</strong> from it: a live, isolated machine you can work in. You can bake many cakes from one recipe, and eating one cake doesn't change the recipe.</p>
+  <p>If you've written Python classes: an image is like a <strong>class</strong>, and a container is like an <strong>object</strong> made from it.</p>
+</div></div>
+
+<div class="mermaid">
+flowchart LR
+  HUB["☁️ Docker Hub<br/>(online image library)"] -- "docker pull" --> IMG["📦 Image<br/>(read-only recipe)"]
+  IMG -- "docker run<br/>(create + start, ONCE)" --> C1["🟢 Container<br/>running"]
+  C1 -- "docker stop" --> C2["⚪ Container<br/>stopped (kept on disk)"]
+  C2 -- "docker start<br/>(every other time)" --> C1
+  C2 -- "docker rm" --> GONE["🗑️ Deleted"]
+</div>
+
+<div class="table-wrap"><table>
+  <tr><th></th><th>Image 📦</th><th>Container 🟢</th></tr>
+  <tr><td>What it is</td><td>A read-only template (OS + software)</td><td>A running (or stopped) instance of an image</td></tr>
+  <tr><td>Where it comes from</td><td>Downloaded with <code>docker pull</code> (or built from a Dockerfile)</td><td>Created with <code>docker run</code></td></tr>
+  <tr><td>How many</td><td>One copy on your disk</td><td>As many as you like, each with a unique <code>--name</code></td></tr>
+  <tr><td>Your files &amp; installs</td><td>Never change</td><td>Kept inside the container, across stop/start, until you <code>docker rm</code> it</td></tr>
+  <tr><td>List them</td><td><code>docker images</code></td><td><code>docker ps</code> (running) · <code>docker ps -a</code> (all)</td></tr>
+</table></div>
+
+<div class="box note">
+  <div class="box-title">📌 Why roboticists love Docker</div>
+  <ul>
+    <li><strong>Same environment for everyone:</strong> Windows, Mac and Linux students all get the identical Ubuntu&nbsp;22.04 + ROS&nbsp;2 Humble.</li>
+    <li><strong>Nothing to break:</strong> mess it up? Delete the container and run a fresh one in seconds.</li>
+    <li><strong>Real-world skill:</strong> robots in industry ship their software as Docker images. The LIMO, Nav2 CI, and most ROS 2 research code all use them.</li>
+  </ul>
+</div>
+
+<h3>🃏 Key terms: tap a card to check yourself</h3>
+<div class="flip-grid" data-widget="flip"><div class="flip"><div class="flip-in"><div class="flip-front">Image<small>tap to flip</small></div><div class="flip-back">Read-only template: OS + software. The <b>recipe</b>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Container<small>tap to flip</small></div><div class="flip-back">A live instance of an image. The <b>cake</b>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Docker Hub<small>tap to flip</small></div><div class="flip-back">The online library you <code>pull</code> images from.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">docker run<small>tap to flip</small></div><div class="flip-back"><b>Creates</b> a new container (and pulls the image if needed). Use it <b>once</b>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">docker start<small>tap to flip</small></div><div class="flip-back">Restarts an <b>existing</b> container with its original settings.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">-p 6080:80<small>tap to flip</small></div><div class="flip-back">Port mapping: <b>your PC's</b> port 6080 → the container's port 80.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">noVNC<small>tap to flip</small></div><div class="flip-back">A remote desktop that runs <b>inside your web browser</b>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">--network<small>tap to flip</small></div><div class="flip-back">Puts containers on a shared virtual network so they can talk by name.</div></div></div></div>
+
+<div class="game" data-widget="sort" data-cats="📦 Image|🟢 Container"><div class="kc-head"><span class="sim-tag">🎮 Game</span><b>Image or container?</b></div><ul><li data-cat="0">What <code>docker pull</code> downloads</li><li data-cat="1">What <code>docker ps</code> lists</li><li data-cat="1">Remembers the ROS package you installed yesterday</li><li data-cat="0">Never changes when you work in it</li><li data-cat="1">Has a name like <code>ros2_container</code></li><li data-cat="0">What <code>docker rmi</code> deletes</li><li data-cat="1">What <code>docker stop</code> stops</li><li data-cat="0">What <code>docker images</code> lists</li></ul></div>
+
+<!-- ============================================================ -->
+<h2 id="lab0"><span class="num">L0</span>Lab 0 — Install Docker</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 0 · 10–20 min</span><h3>Get Docker running on your computer</h3></div>
+  <p class="lab-goal">Goal: <code>docker run hello-world</code> prints "Hello from Docker!".</p>
+
+  <div class="step" id="s0-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Install Docker for your OS</span></div>
+    <div class="table-wrap"><table>
+      <tr><th>OS</th><th>What to install</th></tr>
+      <tr><td>🪟 Windows 10/11</td><td><strong>Docker Desktop</strong> from <a href="https://www.docker.com/products/docker-desktop/" target="_blank" rel="noopener">docker.com</a>. During setup keep <em>"Use WSL 2 instead of Hyper-V"</em> ticked. Restart when asked.</td></tr>
+      <tr><td>🍎 macOS</td><td><strong>Docker Desktop</strong> from <a href="https://www.docker.com/products/docker-desktop/" target="_blank" rel="noopener">docker.com</a> (pick Apple Silicon or Intel).</td></tr>
+      <tr><td>🐧 Linux</td><td>Either <strong>Docker Desktop</strong> or Docker Engine (commands below).</td></tr>
+    </table></div>
+    <div class="cmd"><div class="cmd-h">🐧 Linux terminal (Docker Engine, Ubuntu)</div><pre><code>curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker $USER     # run docker without sudo (log out and back in)
+sudo systemctl start docker</code></pre></div>
+    <div class="box tip">
+      <div class="box-title">💡 Docker must be running before every session</div>
+      <p>Always <strong>open the Docker Desktop app</strong> first (Windows/Mac), or run <code>sudo systemctl start docker</code> (Linux). Otherwise every <code>docker</code> command fails with "Cannot connect to the Docker daemon".</p>
+    </div>
+  </div>
+
+  <div class="step" id="s0-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Check Docker works</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal (PowerShell / Command Prompt / bash)</div><pre><code>docker --version
+docker run hello-world</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>Docker version 2x.x.x, build ...
+...
+Hello from Docker!
+This message shows that your installation appears to be working correctly.</pre></div>
+    <p>Did it work? Skip to <a href="#lab1">Lab 1</a>. On Windows, if Docker Desktop says <strong>"Virtualization support not detected"</strong> or the engine won't start, do step 3.</p>
+  </div>
+
+  <div class="step" id="s0-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">🪟 Windows only: fix "virtualization not detected"</span></div>
+    <p>Docker Desktop on Windows needs <strong>hardware virtualization</strong>, plus <strong>WSL&nbsp;2</strong> (or Hyper-V). One of these layers is off. Check them in this order:</p>
+    <p><strong>3a. Is virtualization enabled in the firmware?</strong> Open <em>Task Manager → Performance → CPU</em> and look at <strong>Virtualization</strong> at the bottom right.</p>
+    <ul>
+      <li><strong>Disabled</strong> → reboot into BIOS/UEFI (usually <kbd>F2</kbd>, <kbd>F10</kbd>, <kbd>Del</kbd> or <kbd>Esc</kbd> at boot). Enable <em>Intel VT-x / Virtualization Technology</em>, or <em>SVM Mode</em> on AMD. Save and reboot.</li>
+      <li><strong>Enabled</strong> → go on to 3b.</li>
+    </ul>
+    <p><strong>3b. Enable the Windows features Docker needs.</strong> Open <strong>PowerShell as Administrator</strong>:</p>
+    <div class="cmd"><div class="cmd-h">🛡️ PowerShell (Administrator)</div><pre><code>dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
+dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
+wsl --install --no-distribution
+wsl --update
+wsl --set-default-version 2</code></pre></div>
+    <p>On Windows Pro/Enterprise you can also enable the Hyper-V backend (optional):</p>
+    <div class="cmd"><div class="cmd-h">🛡️ PowerShell (Administrator) · optional</div><pre><code>dism.exe /online /enable-feature /featurename:Microsoft-Hyper-V /all</code></pre></div>
+    <p><strong>3c. Make sure the hypervisor launches at boot.</strong> Other VM tools sometimes switch this off:</p>
+    <div class="cmd"><div class="cmd-h">🛡️ PowerShell (Administrator)</div><pre><code>bcdedit /set hypervisorlaunchtype auto</code></pre></div>
+    <div class="box warn">
+      <div class="box-title">⚠️ Restart the whole PC</div>
+      <p>After 3b and 3c you need a <strong>full Windows restart</strong>, not just a Docker restart.</p>
+    </div>
+    <p><strong>3d. Verify, then start Docker.</strong></p>
+    <div class="cmd"><div class="cmd-h">💻 PowerShell</div><pre><code>wsl --status
+systeminfo | findstr /i "hypervisor"</code></pre></div>
+    <div class="out"><div class="out-h">✅ The second command should report</div><pre>A hypervisor has been detected. Features required for Hyper-V will not be displayed.</pre></div>
+    <p>Now launch Docker Desktop. In <em>Settings → General</em>, make sure <strong>"Use the WSL 2 based engine"</strong> is ticked.</p>
+    <div class="box note">
+      <div class="box-title">📌 Common gotchas</div>
+      <ul>
+        <li><strong>Windows inside a VM</strong> (VMware, Proxmox, a cloud VM): <em>nested virtualization</em> must be enabled on the host. For a Hyper-V host: <code>Set-VMProcessor -VMName &lt;name&gt; -ExposeVirtualizationExtensions $true</code>.</li>
+        <li><strong>Old VirtualBox or VMware</strong> versions can conflict with Hyper-V/WSL&nbsp;2. Update them to current releases.</li>
+        <li><strong>University or managed lab machines</strong> may have virtualization locked in BIOS by IT. Ask IT, or use your own laptop.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab1"><span class="num">L1</span>Lab 1 — Pull &amp; run your first ROS 2 container</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 1 · 10 min + download</span><h3>From Docker Hub to a running ROS 2 desktop</h3></div>
+  <p class="lab-goal">Goal: a container called <code>ros2_container</code> is running and its log shows <code>novnc</code> and <code>vnc</code> in the RUNNING state.</p>
+
+  <div class="step" id="s1-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Pull the image (optional but clearer)</span></div>
+    <p><code>docker run</code> pulls the image automatically if it's missing, but pulling first separates "download" from "create", so you can see each step. The image is a few GB, so this is the slow part. Use a good connection.</p>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>docker pull thinkautonomous/ros2-humble-ubuntu-desktop-vnc
+docker images</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see (layer IDs will differ)</div><pre>latest: Pulling from thinkautonomous/ros2-humble-ubuntu-desktop-vnc
+4f4fb700ef54: Pull complete
+5b75391628c6: Pull complete
+...
+Digest: sha256:4606816540dc...
+Status: Downloaded newer image for thinkautonomous/ros2-humble-ubuntu-desktop-vnc:latest
+
+REPOSITORY                                       TAG      IMAGE ID   SIZE
+thinkautonomous/ros2-humble-ubuntu-desktop-vnc   latest   ...        ...GB</pre></div>
+    <p>Each line is a <strong>layer</strong>. An image is a stack of layers (Ubuntu, then ROS, then the desktop…). Layers that other images share are downloaded only once.</p>
+  </div>
+
+  <div class="step" id="s1-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Create the network (once, ever)</span></div>
+    <p>Our run command attaches the container to a network called <code>ros_network</code>. Docker doesn't create it for you, so if you skip this step you get <code>network ros_network not found</code>.</p>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>docker network create ros_network
+docker network ls</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>NETWORK ID     NAME          DRIVER    SCOPE
+...            bridge        bridge    local
+...            host          host      local
+...            ros_network   bridge    local</pre></div>
+    <p>The network stays across reboots. Any other container you put on <code>ros_network</code> (e.g. a second ROS 2 container, see <a href="#lab5">Lab 5</a>) can reach this one by its container name.</p>
+  </div>
+
+  <div class="step" id="s1-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Run it: the one important line</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>docker run -p 6080:80 --shm-size=512m --security-opt seccomp=unconfined --network ros_network --name ros2_container thinkautonomous/ros2-humble-ubuntu-desktop-vnc</code></pre></div>
+    <p>Let's break it down, piece by piece:</p>
+    <div class="table-wrap"><table>
+      <tr><th>Piece</th><th>What it does</th></tr>
+      <tr><td><code>docker run</code></td><td><strong>Creates</strong> a new container from an image and starts it. Pulls the image first if it isn't on your disk.</td></tr>
+      <tr><td><code>-p 6080:80</code></td><td>Port mapping <code>HOST:CONTAINER</code>. The desktop's web server listens on port <strong>80</strong> inside the container; you reach it on port <strong>6080</strong> of your PC.</td></tr>
+      <tr><td><code>--shm-size=512m</code></td><td>Gives the container 512&nbsp;MB of shared memory. The desktop, RViz and Gazebo need more than Docker's default 64&nbsp;MB, or they crash or show a blank screen.</td></tr>
+      <tr><td><code>--security-opt seccomp=unconfined</code></td><td>Relaxes a security filter. <strong>Required</strong> for Ubuntu&nbsp;22.04 (Jammy) desktop images like this one, as the container log itself reminds you.</td></tr>
+      <tr><td><code>--network ros_network</code></td><td>Joins the network you created in step 2.</td></tr>
+      <tr><td><code>--name ros2_container</code></td><td>A human-friendly name, so you can type <code>docker stop ros2_container</code> instead of a long ID.</td></tr>
+      <tr><td><code>thinkautonomous/ros2-humble-ubuntu-desktop-vnc</code></td><td>The <strong>image</strong>: <code>account/repository</code> on Docker Hub. No tag means <code>:latest</code>.</td></tr>
+    </table></div>
+    <div class="out"><div class="out-h">✅ The container log ends with</div><pre>* enable custom user: ubuntu
+useradd: warning: the home directory /home/ubuntu already exists.
+useradd: Not copying any file from skel directory into it.
+grep: /home/ubuntu/.bashrc: No such file or directory
+============================================================================
+NOTE: --security-opt seccomp=unconfined flag is required to launch Ubuntu Jammy based image.
+============================================================================
+... INFO supervisord started with pid 46
+... INFO spawned: 'novnc' with pid 47
+... INFO spawned: 'vnc' with pid 48
+... INFO success: novnc entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+... INFO success: vnc entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)</pre></div>
+    <div class="box tip">
+      <div class="box-title">💡 Read the log like an engineer</div>
+      <p>The <code>useradd</code> and <code>.bashrc</code> warnings at the top are <strong>normal</strong> for this image and can be ignored. The two lines that matter are the last ones: <code>novnc</code> and <code>vnc</code> <strong>entered RUNNING state</strong>. That means the desktop is up.</p>
+    </div>
+    <div class="box warn">
+      <div class="box-title">⚠️ Leave this terminal open</div>
+      <p>The container is attached to this window. Closing it or pressing <kbd>Ctrl</kbd>+<kbd>C</kbd> <strong>stops the container</strong>. To get your terminal back, add <code>-d</code> (detached) to the run command: <code>docker run -d -p 6080:80 ...</code>. Then watch the log with <code>docker logs -f ros2_container</code>.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab2"><span class="num">L2</span>Lab 2 — Open ROS 2 in your browser</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 2 · 5 min</span><h3>Ubuntu + ROS 2 in a browser tab</h3></div>
+  <p class="lab-goal">Goal: the talker and listener demo nodes are chatting inside the container's desktop.</p>
+
+  <div class="step" id="s2-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Open the desktop</span></div>
+    <p>In Chrome, Edge, Firefox or Safari, go to:</p>
+    <div class="cmd"><div class="cmd-h">🌐 Browser address bar</div><pre><code>http://localhost:6080</code></pre></div>
+    <ul>
+      <li>If you see a file list instead of a desktop, click <code>vnc.html</code> (or go straight to <code>http://localhost:6080/vnc.html</code>), then click <strong>Connect</strong>.</li>
+      <li>It's <strong><code>http</code></strong>, not <code>https</code>. With <code>https://</code> the page won't load.</li>
+      <li><code>localhost</code> and <code>127.0.0.1</code> mean the same thing: your own computer.</li>
+    </ul>
+    <div class="box note">
+      <div class="box-title">🔑 If it asks for a password</div>
+      <ul>
+        <li>The VNC password for this image is listed as <code>tarosbox</code> in the original course manual.</li>
+        <li>For <code>sudo</code> or a login prompt inside the desktop, the default user is <code>ubuntu</code> with password <code>ubuntu</code> (the default in the Tiryoh-based images this one builds on).</li>
+      </ul>
+    </div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>An Ubuntu (LXDE) desktop inside the browser tab, with a menu and a terminal icon.</pre></div>
+  </div>
+
+  <div class="step" id="s2-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Check ROS 2 is there</span></div>
+    <p>Open a terminal <strong>inside the browser desktop</strong> (menu → System Tools → Terminal, or the terminal icon).</p>
+    <div class="cmd"><div class="cmd-h">🖥️ Desktop terminal 1</div><pre><code>source /opt/ros/humble/setup.bash
+printenv ROS_DISTRO
+ros2 run demo_nodes_cpp talker</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>humble
+[INFO] [talker]: Publishing: 'Hello World: 1'
+[INFO] [talker]: Publishing: 'Hello World: 2'
+...</pre></div>
+  </div>
+
+  <div class="step" id="s2-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Listen, and see the graph</span></div>
+    <p>Open a <strong>second</strong> terminal in the desktop:</p>
+    <div class="cmd"><div class="cmd-h">🖥️ Desktop terminal 2</div><pre><code>source /opt/ros/humble/setup.bash
+ros2 run demo_nodes_py listener</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>[INFO] [listener]: I heard: [Hello World: 7]
+[INFO] [listener]: I heard: [Hello World: 8]</pre></div>
+    <p>Now open a third terminal and try <code>ros2 node list</code>, <code>ros2 topic list</code> and <code>rqt_graph</code>. Everything you learn in the lectures works here.</p>
+  </div>
+
+  <div class="step" id="s2-4">
+    <div class="step-h"><span class="step-n">4</span><span class="step-t">Bonus: a GUI demo</span></div>
+    <div class="cmd"><div class="cmd-h">🖥️ Desktop terminals</div><pre><code>ros2 run turtlesim turtlesim_node
+ros2 run turtlesim turtle_teleop_key</code></pre></div>
+    <p>A turtle window opens <em>inside the browser desktop</em>. Click the teleop terminal and drive with the arrow keys. If turtlesim isn't in the image, install it once: <code>sudo apt update &amp;&amp; sudo apt install -y ros-humble-turtlesim</code>. It stays installed in <em>this</em> container.</p>
+    <div class="box tip">
+      <div class="box-title">💡 Save typing</div>
+      <p>Run <code>echo "source /opt/ros/humble/setup.bash" &gt;&gt; ~/.bashrc</code> once. Every new desktop terminal then has ROS 2 ready.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab3"><span class="num">L3</span>Lab 3 — Shut it down!</h2>
+<div class="analogy"><div class="emoji">🛑</div><div>
+  <p><em>"But I just got there! I'm not going to shut it down!"</em> Well, you'll work a few hours in your box, and tonight you'll want to close it. Tomorrow you'll want it back <em>with all your work</em>. That isn't trivial if you don't know the commands, so let's practise now.</p>
+</div></div>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 3 · 5 min</span><h3>Stop the container without losing it</h3></div>
+  <p class="lab-goal">Goal: <code>docker ps</code> is empty, but <code>docker ps -a</code> still shows <code>ros2_container</code>.</p>
+
+  <div class="step" id="s3-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">List running containers</span></div>
+    <p>Open a <strong>new</strong> terminal on your own computer (not inside the browser desktop):</p>
+    <div class="cmd"><div class="cmd-h">💻 Host terminal</div><pre><code>docker ps</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>CONTAINER ID   IMAGE                                            ...   STATUS         PORTS                  NAMES
+8bd72ec838b1   thinkautonomous/ros2-humble-ubuntu-desktop-vnc   ...   Up 12 minutes  0.0.0.0:6080->80/tcp   ros2_container</pre></div>
+  </div>
+
+  <div class="step" id="s3-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Stop it</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Host terminal</div><pre><code>docker stop ros2_container      # or: docker stop 8bd72ec838b1  (the ID, or just its first few characters)
+docker ps</code></pre></div>
+    <p>The browser tab disconnects and <code>docker ps</code> is now empty. Don't worry: the container still exists, on your disk and in your heart. ❤️</p>
+  </div>
+
+  <div class="step" id="s3-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Prove it still exists</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Host terminal</div><pre><code>docker ps -a</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>CONTAINER ID   IMAGE                                            ...   STATUS                     NAMES
+8bd72ec838b1   thinkautonomous/ros2-humble-ubuntu-desktop-vnc   ...   Exited (0) 5 seconds ago   ros2_container</pre></div>
+    <p><code>-a</code> means <strong>all</strong>: running <em>and</em> stopped. Keep this in mind, because it explains the most common error in the next lab.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab4"><span class="num">L4</span>Lab 4 — Start &amp; stop containers at will</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 4 · 10 min</span><h3>run once, start forever</h3></div>
+  <p class="lab-goal">Goal: bring <code>ros2_container</code> back with one short command and find your work still there.</p>
+
+  <div class="step" id="s4-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Try the wrong way first (on purpose)</span></div>
+    <p>Run the exact same <code>docker run</code> line from Lab 1 again:</p>
+    <div class="cmd"><div class="cmd-h">💻 Host terminal</div><pre><code>docker run -p 6080:80 --shm-size=512m --security-opt seccomp=unconfined --network ros_network --name ros2_container thinkautonomous/ros2-humble-ubuntu-desktop-vnc</code></pre></div>
+    <div class="out"><div class="out-h">❌ You get</div><pre>docker: Error response from daemon: Conflict. The container name "/ros2_container" is already in use by container "8bd72ec838b1...". You have to remove (or rename) that container to be able to reuse that name.</pre></div>
+    <p>That's correct behaviour. <code>docker run</code> means <strong>create</strong>, and you asked Docker to create a container that already exists. You have two options.</p>
+  </div>
+
+  <div class="step" id="s4-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">✅ Option A (the one you want): start the existing container</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Host terminal</div><pre><code>docker ps -a                    # note the NAME or ID
+docker start ros2_container     # or: docker start 8bd72ec838b1</code></pre></div>
+    <p><code>docker start</code> brings the container back in <strong>exactly the configuration it was created with</strong> (same ports, network, shm size), so you don't need any parameters. It also keeps <strong>everything you installed or built inside it</strong>.</p>
+    <p>Refresh <code>http://localhost:6080</code>. Your desktop is back. ✨ <strong>So the magic command is <code>docker start</code>.</strong></p>
+    <div class="box tip">
+      <div class="box-title">💡 Detached by default</div>
+      <p><code>docker start</code> runs in the background and gives your terminal back straight away. To watch the log, use <code>docker logs -f ros2_container</code> (<kbd>Ctrl</kbd>+<kbd>C</kbd> only stops <em>watching</em> here, not the container). To attach to it instead, use <code>docker start -a ros2_container</code>.</p>
+    </div>
+  </div>
+
+  <div class="step" id="s4-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Option B: create a second, separate container</span></div>
+    <p>Same command, different <code>--name</code>, and a different host port, because <code>6080</code> is already taken while the first one runs:</p>
+    <div class="cmd"><div class="cmd-h">💻 Host terminal</div><pre><code>docker run -d -p 6081:80 --shm-size=512m --security-opt seccomp=unconfined --network ros_network --name ros2_container2 thinkautonomous/ros2-humble-ubuntu-desktop-vnc</code></pre></div>
+    <p>Open <code>http://localhost:6081</code>: a <strong>brand-new, clean</strong> desktop. Nothing from the first container is in it, and the image was not downloaded again. One recipe, two cakes. 🍰🍰</p>
+  </div>
+
+  <div class="step" id="s4-4">
+    <div class="step-h"><span class="step-n">4</span><span class="step-t">Clean up what you don't need</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Host terminal</div><pre><code>docker stop ros2_container2
+docker rm ros2_container2       # delete the container (its files are gone!)
+docker ps -a                    # only ros2_container left</code></pre></div>
+    <div class="box warn">
+      <div class="box-title">⚠️ docker rm is permanent</div>
+      <p><code>docker rm</code> deletes the container <em>and everything you did inside it</em>. <code>docker rmi</code> deletes the <em>image</em> (you'd have to download it again). Keep your real code in Git, or in a mounted folder (<a href="#lab5">Lab 5</a>).</p>
+    </div>
+  </div>
+
+  <div class="done-box"><label><input type="checkbox"> I can stop my container in the evening and <code>docker start</code> it the next morning with my work still there.</label></div>
+</div>
+
+<div class="box idea">
+  <div class="box-title">🧠 Daily routine (memorise this)</div>
+  <ol>
+    <li>Open Docker Desktop (or <code>sudo systemctl start docker</code>).</li>
+    <li><code>docker start ros2_container</code></li>
+    <li>Browse to <code>http://localhost:6080</code> and work.</li>
+    <li><code>docker stop ros2_container</code> when you're done.</li>
+  </ol>
+  <p>It really is a one-click solution: an experienced Docker user just runs the image and opens the browser. We took the long way so that you now have real Docker skills.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab5"><span class="num">L5</span>Lab 5 — Bonus demos 🐳</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 5 · optional · 20 min</span><h3>Things real robotics teams do with Docker</h3></div>
+  <p class="lab-goal">Goal: control the container from your own terminal, share files with it, and make two containers talk ROS 2.</p>
+
+  <div class="step" id="s5-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Get a shell inside the running container from your own terminal</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Host terminal</div><pre><code>docker exec -it ros2_container bash</code></pre></div>
+    <div class="cmd"><div class="cmd-h">🐳 Now you're inside the container</div><pre><code>source /opt/ros/humble/setup.bash
+ros2 topic list
+exit                            # leaves the shell; the container keeps running</code></pre></div>
+    <p><code>exec</code> runs a command in a container that is <em>already running</em>. <code>-it</code> = interactive + terminal. This is the fastest way to work if you don't need the desktop.</p>
+  </div>
+
+  <div class="step" id="s5-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Copy files in and out</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Host terminal</div><pre><code>docker cp my_node.py ros2_container:/home/ubuntu/        # host → container
+docker cp ros2_container:/home/ubuntu/map.yaml .          # container → host</code></pre></div>
+  </div>
+
+  <div class="step" id="s5-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Share a workspace folder (a volume mount)</span></div>
+    <p>A mounted folder lives on <strong>your</strong> disk, so your code survives even <code>docker rm</code>, and you can edit it in VS Code on your host. Mounts are set when a container is <em>created</em>, so this makes a new container:</p>
+    <div class="cmd"><div class="cmd-h">💻 Host terminal (Windows: use a path like C:\Users\you\ros2_ws)</div><pre><code>docker run -d -p 6082:80 --shm-size=512m --security-opt seccomp=unconfined --network ros_network -v ~/ros2_ws:/home/ubuntu/ros2_ws --name ros2_dev thinkautonomous/ros2-humble-ubuntu-desktop-vnc</code></pre></div>
+    <p><code>-v HOST_PATH:CONTAINER_PATH</code>. Open <code>http://localhost:6082</code>. Anything in <code>/home/ubuntu/ros2_ws</code> is the same folder as <code>~/ros2_ws</code> on your PC.</p>
+  </div>
+
+  <div class="step" id="s5-4">
+    <div class="step-h"><span class="step-n">4</span><span class="step-t">Two containers, one ROS 2 graph</span></div>
+    <p>This is why we created <code>ros_network</code>. Start a talker in a <strong>separate</strong> container (the official <code>osrf/ros:humble-desktop</code> image, a large download), and listen to it from your desktop container:</p>
+    <div class="cmd"><div class="cmd-h">💻 Host terminal</div><pre><code>docker run -it --rm --network ros_network --name ros2_talker osrf/ros:humble-desktop ros2 run demo_nodes_cpp talker</code></pre></div>
+    <div class="cmd"><div class="cmd-h">🖥️ Terminal in the browser desktop (ros2_container)</div><pre><code>source /opt/ros/humble/setup.bash
+ros2 run demo_nodes_py listener</code></pre></div>
+    <p>Two "computers", one ROS 2 graph. ROS 2 discovery finds nodes across containers on the same Docker network, just like across robots on the same Wi-Fi. <code>--rm</code> deletes the talker container automatically when you press <kbd>Ctrl</kbd>+<kbd>C</kbd>. If the listener hears nothing, check that both containers use the same <code>ROS_DOMAIN_ID</code> (default 0).</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="errors"><span class="num">D.1</span>When things go wrong</h2>
+<div class="table-wrap"><table class="fix">
+  <tr><th>You see…</th><th>Why</th><th>Fix</th></tr>
+  <tr><td><code>Virtualization support not detected</code> / Docker engine won't start (Windows)</td><td>Virtualization off in BIOS, WSL&nbsp;2 missing, or hypervisor disabled at boot.</td><td>Follow <a href="#s0-3">Lab 0, step 3</a>, then do a full restart.</td></tr>
+  <tr><td><code>Cannot connect to the Docker daemon</code> / <code>error during connect</code></td><td>Docker isn't running.</td><td>Open Docker Desktop, or run <code>sudo systemctl start docker</code>.</td></tr>
+  <tr><td><code>network ros_network not found</code></td><td>The network was never created.</td><td><code>docker network create ros_network</code> (once), then run again.</td></tr>
+  <tr><td><code>Conflict. The container name "/ros2_container" is already in use</code></td><td>The container already exists (maybe stopped, or left over from a failed run). <code>docker ps</code> doesn't show stopped ones.</td><td>Use <code>docker start ros2_container</code>. If it came from a failed attempt, <code>docker rm ros2_container</code>, then <code>docker run</code> again.</td></tr>
+  <tr><td><code>port is already allocated</code></td><td>Another container or app already uses host port 6080.</td><td>Stop the other container, or map another port: <code>-p 6081:80</code> → <code>http://localhost:6081</code>.</td></tr>
+  <tr><td>Browser: "This site can't be reached" / connection reset</td><td>Wrong URL (<code>https</code>), wrong port, or the container isn't running.</td><td>Use <strong><code>http://</code></strong><code>localhost:6080</code>. Check <code>docker ps</code> shows <code>0.0.0.0:6080-&gt;80/tcp</code>. On Docker Desktop, set the host port to <code>6080</code> → container <code>80</code> (not <code>8080:8080</code>).</td></tr>
+  <tr><td>Desktop is black/grey, or RViz/Gazebo crash</td><td>Too little shared memory.</td><td>Make sure the container was created with <code>--shm-size=512m</code> (or larger, e.g. <code>1g</code>). This needs a new container.</td></tr>
+  <tr><td>Container exits right away</td><td>Missing <code>--security-opt seccomp=unconfined</code> on a Jammy image.</td><td><code>docker logs ros2_container</code> to read why, then <code>docker rm</code> and re-run with the full command.</td></tr>
+  <tr><td>Desktop disappeared when I closed the terminal</td><td>The container was attached to that window; closing it or <kbd>Ctrl</kbd>+<kbd>C</kbd> stops it.</td><td><code>docker start ros2_container</code>. Next time use <code>-d</code> with <code>docker run</code>.</td></tr>
+  <tr><td>Want a desktop VNC app (Remmina, VNC Viewer) instead of the browser</td><td>The browser route uses port 80 only.</td><td>The browser is the supported route. For a native client you must also publish the VNC port when <em>creating</em> the container (e.g. <code>-p 5900:5900</code>) and connect to <code>127.0.0.1:5900</code>.</td></tr>
+  <tr><td>Running out of disk space</td><td>Old images and stopped containers pile up.</td><td><code>docker ps -a</code> → <code>docker rm</code>; <code>docker images</code> → <code>docker rmi</code>; or <code>docker system prune</code> (removes all stopped containers, so be careful!).</td></tr>
+</table></div>
+
+<!-- ============================================================ -->
+<h2 id="exit"><span class="num">D.2</span>Exit ticket (5 min)</h2>
+<div class="quiz">
+  <div class="q"><p>You stopped your container last night. What single command brings it back this morning?</p><details><summary>Answer</summary><div class="inner"><code>docker start ros2_container</code>, not <code>docker run</code>.</div></details></div>
+  <div class="q"><p>Why does running the same <code>docker run ... --name ros2_container ...</code> twice fail?</p><details><summary>Answer</summary><div class="inner"><code>docker run</code> <em>creates</em> a container, and a container with that name already exists (even if stopped) → name conflict.</div></details></div>
+  <div class="q"><p>In <code>-p 6080:80</code>, which number is on your PC and which is inside the container?</p><details><summary>Answer</summary><div class="inner"><code>6080</code> is the host (your PC, in the browser URL); <code>80</code> is inside the container. Format: <code>HOST:CONTAINER</code>.</div></details></div>
+  <div class="q"><p><code>docker ps</code> is empty, but you're sure you created a container. How do you see it?</p><details><summary>Answer</summary><div class="inner"><code>docker ps -a</code> lists stopped containers too.</div></details></div>
+  <div class="q"><p>What's the difference between <code>docker rm</code> and <code>docker rmi</code>?</p><details><summary>Answer</summary><div class="inner"><code>rm</code> deletes a <strong>container</strong> (and your work inside it); <code>rmi</code> deletes an <strong>image</strong> (you'd have to pull it again).</div></details></div>
+</div>
+
+<h3>📋 Docker cheat sheet</h3>
+<div class="cheat">
+  <div><code>docker pull IMAGE</code><span>download an image from Docker Hub</span></div>
+  <div><code>docker images</code><span>list images on your disk</span></div>
+  <div><code>docker run [opts] --name N IMAGE</code><span>create + start a container (once)</span></div>
+  <div><code>docker ps</code><span>running containers</span></div>
+  <div><code>docker ps -a</code><span>all containers, incl. stopped</span></div>
+  <div><code>docker start N</code><span>start an existing container</span></div>
+  <div><code>docker stop N</code><span>stop it (it's kept)</span></div>
+  <div><code>docker logs -f N</code><span>follow its output</span></div>
+  <div><code>docker exec -it N bash</code><span>shell inside a running container</span></div>
+  <div><code>docker cp SRC N:DEST</code><span>copy files in/out</span></div>
+  <div><code>docker rm N</code><span>delete a container</span></div>
+  <div><code>docker rmi IMAGE</code><span>delete an image</span></div>
+  <div><code>docker network create NET</code><span>make a shared network</span></div>
+  <div><code>docker network ls</code><span>list networks</span></div>
+  <div><code>http://localhost:6080</code><span>the ROS 2 desktop in your browser</span></div>
+</div>
+
+<p class="footer-note" style="font-size:.85em;color:var(--muted);margin-top:24px;">Docker image: <code>thinkautonomous/ros2-humble-ubuntu-desktop-vnc</code> (Think Autonomous, based on <a href="https://github.com/Tiryoh/docker-ros2-desktop-vnc" target="_blank" rel="noopener">Tiryoh/docker-ros2-desktop-vnc</a>). Lesson flow adapted from Jeremy Cohen's "Install a ROS Docker Container".</p>
+
+<div class="footer-nav">
+  <a href="prerequisites.html">← Mission Zero</a>
+  <a href="index.html">Home</a>
+  <a href="01-installation-vmware-ros2-limo-intro.html">Lecture 1: Installation →</a>
+</div>
+</div>
+<script src="lab.js"></script>
+<script src="widgets.js"></script>
+<script src="enhance.js"></script>
+<script src="annotate.js" defer></script>
+</body>
+</html>
