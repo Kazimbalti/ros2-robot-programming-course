@@ -261,12 +261,10 @@ NOTE: --security-opt seccomp=unconfined flag is required to launch Ubuntu Jammy 
       <li>It's <strong><code>http</code></strong>, not <code>https</code>. With <code>https://</code> the page won't load.</li>
       <li><code>localhost</code> and <code>127.0.0.1</code> mean the same thing: your own computer.</li>
     </ul>
-    <div class="box note">
-      <div class="box-title">🔑 If it asks for a password</div>
-      <ul>
-        <li>The VNC password for this image is listed as <code>tarosbox</code> in the original course manual.</li>
-        <li>For <code>sudo</code> or a login prompt inside the desktop, the default user is <code>ubuntu</code> with password <code>ubuntu</code> (the default in the Tiryoh-based images this one builds on).</li>
-      </ul>
+    <div class="box warn">
+      <div class="box-title">🔑 VNC password</div>
+      <p style="font-size:1.25em;margin:6px 0 10px;">When the browser asks for the password, type: <strong><code style="font-size:1em;">tarosbox</code></strong></p>
+      <p style="margin:0;">For <code>sudo</code> or a login prompt <em>inside</em> the desktop, the default user is <code>ubuntu</code> with password <code>ubuntu</code> (the default in the Tiryoh-based images this one builds on).</p>
     </div>
     <div class="out"><div class="out-h">✅ You should see</div><pre>An Ubuntu (LXDE) desktop inside the browser tab, with a menu and a terminal icon.</pre></div>
   </div>
@@ -390,7 +388,7 @@ docker ps -a                    # only ros2_container left</code></pre></div>
   <ol>
     <li>Open Docker Desktop (or <code>sudo systemctl start docker</code>).</li>
     <li><code>docker start ros2_container</code></li>
-    <li>Browse to <code>http://localhost:6080</code> and work.</li>
+    <li>Browse to <code>http://localhost:6080</code>, enter the VNC password <strong><code>tarosbox</code></strong>, and work.</li>
     <li><code>docker stop ros2_container</code> when you're done.</li>
   </ol>
   <p>It really is a one-click solution: an experienced Docker user just runs the image and opens the browser. We took the long way so that you now have real Docker skills.</p>
@@ -478,6 +476,7 @@ ros2 run demo_nodes_py listener</code></pre></div>
   <div><code>docker network create NET</code><span>make a shared network</span></div>
   <div><code>docker network ls</code><span>list networks</span></div>
   <div><code>http://localhost:6080</code><span>the ROS 2 desktop in your browser</span></div>
+  <div><code>tarosbox</code><span><strong>the VNC password</strong></span></div>
 </div>
 
 <p class="footer-note" style="font-size:.85em;color:var(--muted);margin-top:24px;">Docker image: <code>thinkautonomous/ros2-humble-ubuntu-desktop-vnc</code> (Think Autonomous, based on <a href="https://github.com/Tiryoh/docker-ros2-desktop-vnc" target="_blank" rel="noopener">Tiryoh/docker-ros2-desktop-vnc</a>). Lesson flow adapted from Jeremy Cohen's "Install a ROS Docker Container".</p>
