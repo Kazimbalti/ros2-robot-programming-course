@@ -26,6 +26,73 @@
   @media (max-width:760px){ .trio{grid-template-columns:1fr;} }
   .vs td:first-child{font-weight:700; white-space:nowrap;}
   .credit{font-size:.8em; color:var(--muted); margin-top:-6px;}
+
+  /* Lecture 4 only: pictorial "at a glance" infographic */
+  .l4ig-grid{display:grid; grid-template-columns:1fr; gap:14px; margin-top:6px;}
+  .l4ig-card{margin:0; background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:14px 18px 10px; position:relative; overflow:hidden;
+    display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); grid-template-rows:auto 1fr; column-gap:22px;}
+  .l4ig-card svg{grid-column:1; grid-row:1 / span 2;}
+  .l4ig-card figcaption{grid-column:2; grid-row:1; align-self:end; margin-top:10px;}
+  .l4ig-card ul{grid-column:2; grid-row:2; align-self:start; margin-top:10px !important;}
+  .l4ig-card::before{content:""; position:absolute; top:0; left:0; right:0; height:5px;}
+  .l4ig-card.t-topic::before{background:var(--accent);} .l4ig-card.t-srv::before{background:var(--gold);} .l4ig-card.t-act::before{background:var(--accent2);}
+  .l4ig-card figcaption{display:grid; grid-template-columns:auto 1fr; column-gap:8px; align-items:center;}
+  .l4ig-card figcaption .ic{font-size:1.6em; grid-row:span 2;}
+  .l4ig-card figcaption b{font-size:1.1em; color:var(--text);}
+  .l4ig-card figcaption span:last-child{font-size:.85em; font-style:italic; color:var(--muted); line-height:1.35;}
+  .l4ig-card svg{display:block; width:100%; height:auto; margin:6px 0 2px;}
+  .l4ig-card ul{font-size:.86em; padding-inline-start:18px; margin:0;}
+  .l4ig-card li{margin-bottom:2px;}
+  .l4ig-foot{font-size:.9em; color:var(--muted); margin:12px 0 0; text-align:center;}
+  @media (max-width:760px){
+    .l4ig-card{display:block; padding:12px 12px 8px;}
+    .l4ig-card ul{margin-top:4px !important;}
+  }
+
+  .l4ig svg text{font-family:Inter, sans-serif; font-weight:700; font-size:11px; fill:var(--text); text-anchor:middle;}
+  .l4ig .lbl{font-size:10.5px; fill:var(--muted);}
+  .l4ig .ln{stroke:var(--muted); stroke-width:1.6; fill:none; stroke-dasharray:5 5; opacity:.55;}
+  .l4ig .ln.solid{stroke-dasharray:none; opacity:.8;}
+  .l4ig .arrhead{fill:var(--muted);}
+  .l4ig .arm{stroke:var(--text); stroke-width:2.4; stroke-linecap:round;}
+  .l4ig .rotor{fill:var(--muted); opacity:.7; transform-box:fill-box; transform-origin:center; animation:l4-rotor .18s linear infinite alternate;}
+  .l4ig .drone-body{fill:var(--accent);} .l4ig .lens{fill:var(--text);}
+  .l4ig .robot-body{fill:var(--accent2);} .l4ig .robot-top{fill:var(--text);} .l4ig .wheel{fill:var(--text);}
+  .l4ig .lap{fill:var(--muted);} .l4ig .scr{fill:var(--panel2);}
+  .l4ig .pill{stroke-width:1.5;} .l4ig .pill-t{font-family:'JetBrains Mono', monospace; font-size:10.5px;}
+  .l4ig .p-topic{fill:var(--panel2); stroke:var(--accent);} .l4ig .p-srv{fill:var(--panel2); stroke:var(--gold);}
+  .l4ig .pk text{fill:#fff; font-size:10.5px;}
+  .l4ig .pk-topic rect{fill:var(--accent);} .l4ig .pk-req rect{fill:var(--gold);} .l4ig .pk-res rect{fill:var(--accent2);}
+  .l4ig .msgbox{fill:var(--panel2); stroke:var(--border);}
+  .l4ig .msg{text-anchor:start; opacity:0; animation:l4-msg 8s linear infinite;}
+  .l4ig .m1{animation-delay:-6.4s;} .l4ig .m2{animation-delay:-4.8s;} .l4ig .m3{animation-delay:-3.2s;} .l4ig .m4{animation-delay:-1.6s;}
+  .l4ig .bar-bg{fill:var(--border);} .l4ig .bar{fill:var(--accent2); transform-box:fill-box; transform-origin:left center; animation:l4-bar 8s linear infinite;}
+  .l4ig .pole{stroke:var(--text); stroke-width:2;} .l4ig .flag{fill:var(--danger);}
+  .l4ig .chip-x{fill:none; stroke:var(--danger); stroke-dasharray:4 3;} .l4ig .chip-xt{fill:var(--danger); font-family:Inter, sans-serif;}
+  .l4ig .fly{animation:l4-fly 8s ease-in-out infinite;}
+
+  .l4ig .tp1{animation:l4-tp1 1.2s linear infinite;}
+  .l4ig .tp2{animation:l4-tp2 1.2s linear infinite;} .l4ig .tp3{animation:l4-tp3 1.2s linear infinite;} .l4ig .tp4{animation:l4-tp4 1.2s linear infinite;}
+  .l4ig .lag{animation-delay:-.6s;}
+  .l4ig .sreq{animation:l4-req 4s ease-in-out infinite;} .l4ig .sres{animation:l4-res 4s ease-in-out infinite;}
+
+  @keyframes l4-rotor{from{transform:scaleX(1)} to{transform:scaleX(.35)}}
+  @keyframes l4-tp1{from{transform:translate(160px,58px)} to{transform:translate(160px,88px)}}
+  @keyframes l4-tp2{from{transform:translate(160px,112px)} to{transform:translate(55px,158px)}}
+  @keyframes l4-tp3{from{transform:translate(160px,112px)} to{transform:translate(160px,158px)}}
+  @keyframes l4-tp4{from{transform:translate(160px,112px)} to{transform:translate(265px,158px)}}
+  @keyframes l4-req{0%{transform:translate(110px,110px); opacity:1} 40%{transform:translate(205px,110px); opacity:1} 45%,100%{transform:translate(205px,110px); opacity:0}}
+  @keyframes l4-res{0%,45%{transform:translate(210px,140px); opacity:0} 50%{transform:translate(210px,140px); opacity:1} 88%{transform:translate(110px,140px); opacity:1} 93%,100%{transform:translate(110px,140px); opacity:0}}
+  @keyframes l4-msg{0%,18%{opacity:1} 20%,100%{opacity:0}}
+  @keyframes l4-bar{0%{transform:scaleX(0)} 80%,100%{transform:scaleX(1)}}
+  @keyframes l4-fly{0%{transform:translate(80px,150px)} 80%,100%{transform:translate(264px,64px)}}
+
+  @media (prefers-reduced-motion:reduce){
+    .l4ig *{animation:none !important;}
+    .l4ig .tp1,.l4ig .tp2,.l4ig .tp3,.l4ig .tp4,.l4ig .sres{display:none;}
+    .l4ig .sreq{transform:translate(160px,110px);}
+    .l4ig .m2{opacity:1;} .l4ig .bar{transform:scaleX(.5);} .l4ig .fly{transform:translate(172px,107px);}
+  }
 </style>
 </head>
 <body>
@@ -81,7 +148,92 @@
 </div>
 
 
-<div class="ig"><div class="ig-title"><span class="sim-tag">Infographic</span>Lecture 4 at a glance: the three ways ROS 2 nodes talk</div><div class="ig-flow"><div class="ig-step"><div class="ic">📻</div><b>Topic (Lecture 3)</b><span>a stream: "here is the scan, again and again"</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🛎️</div><b>Service (part 1)</b><span>a question: request → one response</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🎯</div><b>Action (part 2)</b><span>a job: goal → feedback… → result, cancellable</span></div></div></div>
+<div class="ig l4ig"><div class="ig-title"><span class="sim-tag">Infographic</span>Lecture 4 at a glance: one robot team, three ways to talk</div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="ig-drone" viewBox="-34 -20 68 34" overflow="visible">
+    <line style="stroke:var(--text);stroke-width:2.4;stroke-linecap:round" x1="-8" y1="-3" x2="-24" y2="-11"/><line style="stroke:var(--text);stroke-width:2.4;stroke-linecap:round" x1="8" y1="-3" x2="24" y2="-11"/>
+    <ellipse style="fill:var(--muted);opacity:.75;transform-box:fill-box;transform-origin:center;animation:l4-rotor .18s linear infinite alternate" cx="-24" cy="-13" rx="12" ry="2.6"/><ellipse style="fill:var(--muted);opacity:.75;transform-box:fill-box;transform-origin:center;animation:l4-rotor .18s linear infinite alternate" cx="24" cy="-13" rx="12" ry="2.6"/>
+    <rect style="fill:var(--accent)" x="-14" y="-8" width="28" height="14" rx="6"/>
+    <circle style="fill:var(--text)" cx="0" cy="9" r="3.4"/>
+  </symbol>
+  <symbol id="ig-robot" viewBox="-26 -26 52 42" overflow="visible">
+    <rect style="fill:var(--text)" x="-8" y="-23" width="16" height="8" rx="3"/>
+    <rect style="fill:var(--accent2)" x="-23" y="-16" width="46" height="21" rx="6"/>
+    <circle style="fill:var(--text)" cx="-13" cy="7" r="6.5"/><circle style="fill:var(--text)" cx="13" cy="7" r="6.5"/>
+  </symbol>
+  <symbol id="ig-laptop" viewBox="-26 -22 52 38" overflow="visible">
+    <rect style="fill:var(--muted)" x="-20" y="-20" width="40" height="27" rx="3"/><rect style="fill:var(--panel2)" x="-16.5" y="-16.5" width="33" height="20" rx="1.5"/>
+    <path style="fill:var(--muted)" d="M-25 8 H25 L21 13 H-21 Z"/>
+  </symbol>
+  <symbol id="ig-phone" viewBox="-12 -18 24 36" overflow="visible">
+    <rect style="fill:var(--muted)" x="-9" y="-16" width="18" height="32" rx="3.5"/><rect style="fill:var(--panel2)" x="-6.5" y="-12" width="13" height="22" rx="1"/>
+  </symbol>
+  <marker id="ig-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path style="fill:var(--muted)" d="M0 0 L10 5 L0 10 Z"/></marker>
+</defs></svg>
+<div class="l4ig-grid">
+  <figure class="l4ig-card t-topic">
+    <figcaption><span class="ic">📻</span><b>Topic</b><span>"Here's my camera image… and again… and again."</span></figcaption>
+    <svg viewBox="0 0 320 230" role="img" aria-label="A drone publishes camera images on the topic /camera/image. A laptop, a ground robot and a phone all subscribe and receive the stream. Nobody replies.">
+      <line class="ln" x1="160" y1="58" x2="160" y2="88"/>
+      <line class="ln" x1="160" y1="112" x2="55" y2="158"/><line class="ln" x1="160" y1="112" x2="160" y2="158"/><line class="ln" x1="160" y1="112" x2="265" y2="158"/>
+      <use href="#ig-drone" x="126" y="22" width="68" height="34"/>
+      <text class="lbl" x="206" y="44" style="text-anchor:start">publisher</text>
+      <rect class="pill p-topic" x="104" y="88" width="112" height="24" rx="12"/><text class="pill-t" x="160" y="104">/camera/image</text>
+      <g class="pk pk-topic tp1"><rect x="-7" y="-6" width="14" height="12" rx="3"/></g>
+      <g class="pk pk-topic tp2"><rect x="-7" y="-6" width="14" height="12" rx="3"/></g>
+      <g class="pk pk-topic tp2 lag"><rect x="-7" y="-6" width="14" height="12" rx="3"/></g>
+      <g class="pk pk-topic tp3"><rect x="-7" y="-6" width="14" height="12" rx="3"/></g>
+      <g class="pk pk-topic tp3 lag"><rect x="-7" y="-6" width="14" height="12" rx="3"/></g>
+      <g class="pk pk-topic tp4"><rect x="-7" y="-6" width="14" height="12" rx="3"/></g>
+      <g class="pk pk-topic tp4 lag"><rect x="-7" y="-6" width="14" height="12" rx="3"/></g>
+      <use href="#ig-laptop" x="29" y="160" width="52" height="38"/>
+      <use href="#ig-robot" x="134" y="160" width="52" height="42"/>
+      <use href="#ig-phone" x="253" y="160" width="24" height="36"/>
+      <text class="lbl" x="55" y="214">subscriber</text><text class="lbl" x="160" y="214">subscriber</text><text class="lbl" x="265" y="214">subscriber</text>
+    </svg>
+    <ul><li>One-way <strong>stream</strong>, nonstop</li><li>Anyone can listen; nobody replies</li><li>e.g. camera, <code>/scan</code>, <code>/odom</code></li></ul>
+  </figure>
+
+  <figure class="l4ig-card t-srv">
+    <figcaption><span class="ic">🛎️</span><b>Service</b><span>"What's your battery level?" → "87 %."</span></figcaption>
+    <svg viewBox="0 0 320 230" role="img" aria-label="A laptop (the client) sends the request 'battery?' to a ground robot (the server) on the service /get_battery. The robot answers once with '87 %'.">
+      <rect class="pill p-srv" x="100" y="52" width="120" height="24" rx="12"/><text class="pill-t" x="160" y="68">/get_battery</text>
+      <line class="ln solid" x1="88" y1="110" x2="232" y2="110" marker-end="url(#ig-arr)"/>
+      <line class="ln solid" x1="232" y1="140" x2="88" y2="140" marker-end="url(#ig-arr)"/>
+      <text class="lbl" x="160" y="100">request</text><text class="lbl" x="160" y="158">response</text>
+      <g class="pk pk-req sreq"><rect x="-30" y="-10" width="60" height="20" rx="6"/><text y="4">battery?</text></g>
+      <g class="pk pk-res sres"><rect x="-24" y="-10" width="48" height="20" rx="6"/><text y="4">87 %</text></g>
+      <use href="#ig-laptop" x="29" y="105" width="52" height="38"/>
+      <use href="#ig-robot" x="239" y="105" width="52" height="42"/>
+      <text class="lbl" x="55" y="178">client</text><text class="lbl" x="265" y="178">server</text>
+      <text class="lbl muted" x="160" y="205">one question → one answer, fast</text>
+    </svg>
+    <ul><li>Request → <strong>one</strong> response</li><li>Quick; one server, many clients</li><li>e.g. reset odometry, save the map</li></ul>
+  </figure>
+
+  <figure class="l4ig-card t-act">
+    <figcaption><span class="ic">🎯</span><b>Action</b><span>"Fly to waypoint A." → "180 m… 90 m… arrived!"</span></figcaption>
+    <svg viewBox="0 0 320 230" role="img" aria-label="A laptop sends the goal 'fly to waypoint A' to a drone. While it flies, the drone sends feedback with the distance left, then a final result: arrived. The goal could be cancelled at any time.">
+      <rect class="msgbox" x="8" y="10" width="200" height="50" rx="10"/>
+      <text class="msg m0" x="18" y="32">🎯 goal: fly to A · accepted</text>
+      <text class="msg m1" x="18" y="32">📡 feedback: 180 m to go</text>
+      <text class="msg m2" x="18" y="32">📡 feedback: 90 m to go</text>
+      <text class="msg m3" x="18" y="32">📡 feedback: 20 m to go</text>
+      <text class="msg m4" x="18" y="32">🏁 result: SUCCEEDED</text>
+      <rect class="bar-bg" x="18" y="44" width="180" height="6" rx="3"/><rect class="bar" x="18" y="44" width="180" height="6" rx="3"/>
+      <line class="ln" x1="80" y1="162" x2="270" y2="70"/>
+      <line class="pole" x1="286" y1="40" x2="286" y2="92"/><path class="flag" d="M286 40 L308 48 L286 56 Z"/>
+      <text class="lbl" x="286" y="106">waypoint A</text>
+      <g class="fly"><use href="#ig-drone" x="-34" y="-20" width="68" height="34"/></g>
+      <use href="#ig-laptop" x="24" y="172" width="52" height="38"/>
+      <text class="lbl" x="50" y="224">client</text>
+      <rect class="chip-x" x="190" y="186" width="118" height="24" rx="12"/><text class="pill-t chip-xt" x="249" y="202">✖ cancel anytime</text>
+    </svg>
+    <ul><li>Goal → <strong>feedback…</strong> → result</li><li>Long jobs; can be <strong>cancelled</strong></li><li>e.g. Nav2 "go to pose", dock, move an arm</li></ul>
+  </figure>
+</div>
+<p class="l4ig-foot">Part 1 of today is the <strong>service</strong>; part 2 (section 4.3) is the <strong>action</strong>. The topic you already know from Lecture 3.</p>
+</div>
 <details class="box teacher">
   <summary>🧑‍🏫 Instructor lesson plan (click to open)</summary>
   <div class="inner">
