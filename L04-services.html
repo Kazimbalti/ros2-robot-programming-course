@@ -27,6 +27,31 @@
   .vs td:first-child{font-weight:700; white-space:nowrap;}
   .credit{font-size:.8em; color:var(--muted); margin-top:-6px;}
 
+  /* Lecture 4 only: light cover so every word is readable on screens and projectors */
+  html body .cover{background:linear-gradient(135deg,#eaf3ff 0%,#dde9f8 55%,#e8edf4 100%) !important; border:1px solid #c9d8ee; box-shadow:0 24px 50px -36px rgba(30,60,120,.45) !important;}
+  html body .cover::before{background:none !important;}
+  .cover::after{background-image:linear-gradient(rgba(30,60,120,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(30,60,120,.05) 1px,transparent 1px);}
+  html body .cover h1{color:#14213d;}
+  html body .cover .subtitle{color:#2b3550 !important;}
+  html body .cover .subtitle strong{color:#0b1530;}
+  html body .cover .kicker{color:#1e3a8a; background:rgba(255,255,255,.75); border-color:#c3d3ea;}
+  html body .cover .chip{color:#1f2a44; background:rgba(255,255,255,.75); border-color:#c3d3ea;}
+  html body .cover .skill-path a{color:#1e3a8a; background:rgba(255,255,255,.65); border-color:#c3d3ea;}
+  html body .cover .skill-path a.done{color:#065f46; background:#d1fae5; border-color:#86e0bb;}
+  html body .cover .skill-path a.now{color:#fff; background:#2563eb; border-color:#2563eb;}
+  html body .cover .cover-art{filter:drop-shadow(0 14px 18px rgba(30,60,120,.25));}
+  html[data-theme="dark"] body .cover{background:linear-gradient(135deg,#2a3142 0%,#323a4f 100%) !important; border-color:#3d465d;}
+  html[data-theme="dark"] .cover::after{background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);}
+  html[data-theme="dark"] body .cover h1{color:#f3f5fb;}
+  html[data-theme="dark"] body .cover .subtitle{color:#d9deea !important;}
+  html[data-theme="dark"] body .cover .subtitle strong{color:#fff;}
+  html[data-theme="dark"] body .cover .kicker, html[data-theme="dark"] body .cover .chip, html[data-theme="dark"] body .cover .skill-path a{color:#e6e9f2; background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.18);}
+  html[data-theme="dark"] body .cover .skill-path a.done{color:#a7f3d0; background:rgba(52,211,153,.18); border-color:rgba(52,211,153,.45);}
+  html[data-theme="dark"] body .cover .skill-path a.now{color:#1e293b; background:#fff; border-color:#fff;}
+
+  /* route card on its own: two columns of links on wide screens */
+  @media (min-width:761px){ .toc.solo{columns:2; column-gap:32px;} .toc.solo h3{column-span:all;} .toc.solo a{break-inside:avoid;} }
+
   /* Lecture 4 only: pictorial "at a glance" infographic */
   .l4ig-grid{display:grid; grid-template-columns:1fr; gap:14px; margin-top:6px;}
   .l4ig-card{margin:0; background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:14px 18px 10px; position:relative; overflow:hidden;
@@ -118,19 +143,7 @@
   <div class="skill-path" aria-label="Course path"><a class="done" href="01-installation-vmware-ros2-limo-intro.html">L1 · Install</a><a class="done" href="L02-first-node.html">L2 · Nodes</a><a class="done" href="L03-topics.html">L3 · Topics</a><a class="now" href="L04-services.html">L4 · Services &amp; Actions</a><a class="" href="L05-custom-interfaces.html">L5 · Interfaces</a><a class="" href="L06-parameters-launch.html">L6 · Launch</a><a class="" href="L07-catch-them-all.html">L7 · Project</a><a class="" href="L08-drive-limo.html">L8 · Drive</a><a class="" href="L09-limo-urdf-tf-rviz.html">L9 · URDF/TF</a><a class="" href="L10-limo-lidar-imu.html">L10 · LiDAR/IMU</a><a class="" href="L11-limo-camera-vision.html">L11 · Vision</a><a class="" href="L12-limo-slam-localization.html">L12 · SLAM</a><a class="" href="L13-limo-nav2.html">L13 · Nav2</a><a class="" href="L14-real-limo-mission.html">L14 · Real LIMO</a><a href="projects.html">+ Projects</a></div>
 </div>
 
-<div class="grid2">
-  <div class="card">
-    <h3>🎯 By the end of today you can…</h3>
-    <ul class="outcomes">
-      <li>Choose between a <strong>topic</strong>, a <strong>service</strong> and an <strong>action</strong> for a robot job, and explain why.</li>
-      <li>Call any service from the terminal with <code>ros2 service call</code>.</li>
-      <li>Write a Python <strong>service server</strong> and a <strong>non-blocking service client</strong>.</li>
-      <li>Add a service to an existing node (reset the number counter).</li>
-      <li>Send an action goal with <code>ros2 action send_goal --feedback</code>, then cancel it.</li>
-      <li>Write a Python <strong>action client</strong> that handles feedback, the result and cancellation.</li>
-    </ul>
-  </div>
-  <div class="card toc">
+  <div class="card toc solo">
     <h3>🗺️ Today's route</h3>
     <a href="#warmup"><span>4.0</span>Warm-up</a>
     <a href="#idea"><span>4.1</span>The idea: the help desk</a>
@@ -145,10 +158,9 @@
     <a href="#errors"><span>4.4</span>When things go wrong</a>
     <a href="#exit"><span>4.5</span>Exit ticket &amp; homework</a>
   </div>
-</div>
 
 
-<div class="ig l4ig"><div class="ig-title"><span class="sim-tag">Infographic</span>Lecture 4 at a glance: one robot team, three ways to talk</div>
+<div class="ig l4ig"><div class="ig-title">Lecture 4 at a glance: one robot team, three ways to talk</div>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <symbol id="ig-drone" viewBox="-34 -20 68 34" overflow="visible">
     <line style="stroke:var(--text);stroke-width:2.4;stroke-linecap:round" x1="-8" y1="-3" x2="-24" y2="-11"/><line style="stroke:var(--text);stroke-width:2.4;stroke-linecap:round" x1="8" y1="-3" x2="24" y2="-11"/>
