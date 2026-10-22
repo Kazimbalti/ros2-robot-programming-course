@@ -255,33 +255,14 @@
   <div class="t-srv"><div class="big">🛎️</div><b>Services: quick questions</b><div class="say">one request, one answer</div><ul><li>"Reset the trip odometer" → "done"</li><li>"Switch the headlights on" → "on"</li><li>"Calibrate the camera" → "OK"</li><li>"Which driving mode?" → "auto"</li></ul></div>
   <div class="t-act"><div class="big">🎯</div><b>Actions: long jobs</b><div class="say">goal → feedback → result, cancellable</div><ul><li>"Drive to the university" → "4.2 km… 1.1 km… arrived"</li><li>"Park in bay 7" → "reversing… 0.5 m… parked"</li><li>Passenger presses <strong>stop</strong> → the goal is <em>cancelled</em></li></ul></div>
 </div>
-<details class="box teacher">
-  <summary>🧑‍🏫 Instructor lesson plan (click to open)</summary>
-  <div class="inner">
-  <div class="table-wrap"><table>
-    <tr><th>Time</th><th>Activity</th><th>Type</th></tr>
-    <tr><td>0:00–0:10</td><td>Warm-up + run everyone's number counter</td><td><span class="tag check">Check</span></td></tr>
-    <tr><td>0:10–0:25</td><td>Help-desk analogy, the service simulator, topic vs service</td><td><span class="tag teach">Teach</span></td></tr>
-    <tr><td>0:25–0:45</td><td>Lab 1: clear / spawn / kill / set_pen from the terminal</td><td><span class="tag do">Do</span></td></tr>
-    <tr><td>0:45–1:05</td><td>Lab 2: AddTwoInts server, called from the terminal</td><td><span class="tag do">Do</span></td></tr>
-    <tr><td>1:05–1:35</td><td>Lab 3: client (simple, then OOP with a callback) + Lab 4</td><td><span class="tag do">Do</span></td></tr>
-    <tr><td>1:35–1:45</td><td>Break</td><td></td></tr>
-    <tr><td>1:45–2:05</td><td>4.3: "drive to shelf 12" race (three ways), comparison table, decision chart</td><td><span class="tag teach">Teach</span></td></tr>
-    <tr><td>2:05–2:25</td><td>Lab 5: actions with turtlesim, hidden topics/services, cancel vs abort</td><td><span class="tag do">Do</span></td></tr>
-    <tr><td>2:25–2:50</td><td>Lab 6: Python action client with feedback, result and cancel</td><td><span class="tag do">Do</span></td></tr>
-    <tr><td>2:50–3:00</td><td>Exit ticket + homework (Activity 4.1 if not finished in class)</td><td><span class="tag check">Check</span></td></tr>
-  </table></div>
-  <p><strong>Teaching tip.</strong> The client is the hardest part today. Draw the timeline on the board: "send request → keep spinning → answer arrives → callback runs". Show that a "blocking wait inside a callback" freezes the node; this is the number-one bug students hit in Lecture 7.</p>
-  <p><strong>Teaching tip (actions).</strong> Open the three-way race simulator in 4.3 on the projector and ask the class to predict each lane before you press the button. Then tick the box: only the action finds out the robot is stuck. Actions come back in Lecture 13, where Nav2's <code>NavigateToPose</code> is exactly this pattern.</p>
-  </div>
-</details>
 
 <h2 id="warmup"><span class="num">4.0</span>Warm-up (5 min)</h2>
 <div class="quiz">
-  <div class="q"><p>Write the command to publish <code>{data: 5}</code> on <code>/number</code> once per second.</p><details><summary>Answer</summary><div class="inner"><code>ros2 topic pub -r 1 /number example_interfaces/msg/Int64 "{data: 5}"</code></div></details></div>
-  <div class="q"><p>In the number counter, where did we publish: in a timer or in a subscriber callback?</p><details><summary>Answer</summary><div class="inner">In the subscriber callback, so a new total is published every time a number arrives.</div></details></div>
-  <div class="q"><p>Your counter is at 1,000,000. How could another node ask it to go back to 0, <em>and know that it worked</em>?</p><details><summary>Answer</summary><div class="inner">A topic can't confirm anything. You need a <strong>request</strong> and a <strong>confirmation</strong>, which is a service: part 1 of today.</div></details></div>
-  <div class="q"><p>Now the job is "drive 10 m to shelf 12", which takes 30 s. What would you want to know while it runs?</p><details><summary>Answer</summary><div class="inner">How far it still has to go, whether it got stuck, and a way to say "stop, I changed my mind". That's an <strong>action</strong>: part 2 of today.</div></details></div>
+  <div class="q"><p>In the self-driving car picture, the LIDAR sends a new scan 10 times per second to anyone who needs it. Topic, service or action?</p><details><summary>Answer</summary><div class="inner">A <strong>topic</strong>: a nonstop one-way stream (e.g. <code>/lidar/points</code>). Nobody replies to it.</div></details></div>
+  <div class="q"><p>Name two other sensors of the car that would also publish on topics.</p><details><summary>Answer</summary><div class="inner">Any two of: camera (<code>/camera/image</code>), radar, GPS (<code>/gps/fix</code>), wheel encoder (<code>/wheel/odom</code>).</div></details></div>
+  <div class="q"><p>The driver presses "reset trip odometer" and wants to see "done". Topic, service or action? Why?</p><details><summary>Answer</summary><div class="inner">A <strong>service</strong>: one quick request and one confirmation. A topic could not confirm that it worked.</div></details></div>
+  <div class="q"><p>"Drive to the university" takes 20 minutes. What would the passenger want while it runs, and which communication type gives it?</p><details><summary>Answer</summary><div class="inner">Progress ("4.2 km to go") and a way to stop half-way. That is an <strong>action</strong>: feedback while it runs, a result at the end, and cancel.</div></details></div>
+  <div class="q"><p>In the overview, the drone flying to waypoint A ends with "result: SUCCEEDED". Guess one other way the goal could end.</p><details><summary>Answer</summary><div class="inner">CANCELED (the client said stop) or ABORTED (the drone gave up, e.g. blocked). You meet all of them in 4.3.</div></details></div>
 </div>
 
 <h2 id="idea"><span class="num">4.1</span>The idea in 10 minutes</h2>
