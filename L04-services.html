@@ -123,6 +123,57 @@
     .helpdesk .hd-req{transform:translate(275px,128px);} .helpdesk .hd-res{display:none;} .helpdesk .hd-done{opacity:0;}
   }
 
+  /* Lecture 4 only: animated action scene (actions, step 3); reuses the help-desk look */
+  .actscene svg{max-width:760px;}
+  .actscene .ac-top{font-size:12.5px; fill:var(--muted);} .actscene .ac-mono{font-family:'JetBrains Mono', monospace; fill:var(--text);}
+  .actscene .ac-lane rect{fill:var(--panel); stroke-width:2;}
+  .actscene .ac-lane.srv rect{stroke:var(--gold);} .actscene .ac-lane.top rect{stroke:var(--accent);}
+  .actscene .ac-lane.cxl rect{stroke:var(--danger); stroke-dasharray:6 5; fill:none;}
+  .actscene .ac-ln{text-anchor:start; font-family:'JetBrains Mono', monospace; font-size:12.5px;}
+  .actscene .ac-kind{text-anchor:end; font-size:10.5px; letter-spacing:.5px;}
+  .actscene .srv .ac-kind{fill:var(--gold);} .actscene .top .ac-kind{fill:var(--accent);} .actscene .cxl .ac-kind{fill:var(--danger);}
+  .actscene .ac-cxl-t{fill:var(--danger); font-size:12px; animation:ac-pulse 2.4s ease-in-out infinite;}
+  .actscene .ac-bar-bg{fill:var(--border);} .actscene .ac-bar{fill:var(--accent2); transform-box:fill-box; transform-origin:left center; animation:ac-bar 10s linear infinite;}
+  .actscene .ac-done{animation:ac-done 10s ease-in-out infinite;} .actscene .ac-done rect{fill:var(--accent2);} .actscene .ac-done text{fill:#fff;}
+  .actscene .ac-shell{fill:var(--accent2);} .actscene .ac-spot{fill:#fff; opacity:.28;}
+  .actscene .ac-leg{fill:#8fcf9f;} .actscene .ac-head{fill:#8fcf9f;}
+  .actscene .ac-turtle{animation:ac-turn 10s ease-in-out infinite;}
+  .actscene .ac-p text{font-size:11.5px;}
+  .actscene .p-goal rect,.actscene .p-ask rect{fill:var(--gold);}
+  .actscene .p-acc rect,.actscene .p-res rect,.actscene .p-suc rect{fill:var(--accent2);}
+  .actscene .p-f1 rect,.actscene .p-f2 rect,.actscene .p-f3 rect,.actscene .p-exe rect{fill:var(--accent);}
+  .actscene .p-goal{animation:ac-goal 10s linear infinite;} .actscene .p-acc{animation:ac-acc 10s linear infinite;}
+  .actscene .p-ask{animation:ac-ask 10s linear infinite;} .actscene .p-exe{animation:ac-exe 10s linear infinite;}
+  .actscene .p-f1{animation:ac-f1 10s linear infinite;} .actscene .p-f2{animation:ac-f2 10s linear infinite;} .actscene .p-f3{animation:ac-f3 10s linear infinite;}
+  .actscene .p-suc{animation:ac-suc 10s linear infinite;} .actscene .p-res{animation:ac-res 10s linear infinite;}
+  .actscene .ast1 rect{animation:ac-s1 10s infinite;} .actscene .ast2 rect{animation:ac-s2 10s infinite;} .actscene .ast3 rect{animation:ac-s3 10s infinite;} .actscene .ast4 rect{animation:ac-s4 10s infinite;}
+  .actscene .ast1 text{animation:ac-s1t 10s infinite;} .actscene .ast2 text{animation:ac-s2t 10s infinite;} .actscene .ast3 text{animation:ac-s3t 10s infinite;} .actscene .ast4 text{animation:ac-s4t 10s infinite;}
+  @keyframes ac-goal{0%{transform:translate(225px,78px); opacity:0} 1%{opacity:1} 10%{transform:translate(455px,78px); opacity:1} 11%,100%{transform:translate(455px,78px); opacity:0}}
+  @keyframes ac-acc{0%,10%{transform:translate(455px,78px); opacity:0} 11%{opacity:1; transform:translate(455px,78px)} 18%{transform:translate(225px,78px); opacity:1} 19%,100%{transform:translate(225px,78px); opacity:0}}
+  @keyframes ac-ask{0%,18%{transform:translate(225px,134px); opacity:0} 19%{opacity:1; transform:translate(225px,134px)} 26%{transform:translate(455px,134px); opacity:1} 27%,100%{transform:translate(455px,134px); opacity:0}}
+  @keyframes ac-exe{0%,19%{transform:translate(455px,246px); opacity:0} 20%{opacity:1; transform:translate(455px,246px)} 28%,79%{transform:translate(225px,246px); opacity:1} 80%,100%{transform:translate(225px,246px); opacity:0}}
+  @keyframes ac-f1{0%,27%{transform:translate(455px,190px); opacity:0} 28%{opacity:1; transform:translate(455px,190px)} 40%{transform:translate(225px,190px); opacity:1} 41%,100%{transform:translate(225px,190px); opacity:0}}
+  @keyframes ac-f2{0%,43%{transform:translate(455px,190px); opacity:0} 44%{opacity:1; transform:translate(455px,190px)} 56%{transform:translate(225px,190px); opacity:1} 57%,100%{transform:translate(225px,190px); opacity:0}}
+  @keyframes ac-f3{0%,59%{transform:translate(455px,190px); opacity:0} 60%{opacity:1; transform:translate(455px,190px)} 72%{transform:translate(225px,190px); opacity:1} 73%,100%{transform:translate(225px,190px); opacity:0}}
+  @keyframes ac-suc{0%,79%{transform:translate(455px,246px); opacity:0} 80%{opacity:1; transform:translate(455px,246px)} 88%,99%{transform:translate(225px,246px); opacity:1} 100%{transform:translate(225px,246px); opacity:0}}
+  @keyframes ac-res{0%,81%{transform:translate(455px,134px); opacity:0} 82%{opacity:1; transform:translate(455px,134px)} 92%{transform:translate(225px,134px); opacity:1} 93%,100%{transform:translate(225px,134px); opacity:0}}
+  @keyframes ac-turn{0%,28%{transform:rotate(0deg)} 78%,97%{transform:rotate(-90deg)} 100%{transform:rotate(0deg)}}
+  @keyframes ac-bar{0%,28%{transform:scaleX(0)} 78%,97%{transform:scaleX(1)} 100%{transform:scaleX(0)}}
+  @keyframes ac-done{0%,92%{opacity:0; transform:translateY(6px)} 94%,99%{opacity:1; transform:translateY(0)} 100%{opacity:0}}
+  @keyframes ac-pulse{0%,100%{opacity:.55} 50%{opacity:1}}
+  @keyframes ac-s1{0%,10%{fill:var(--gold); stroke:var(--gold)} 11%,100%{fill:var(--panel); stroke:var(--border)}}
+  @keyframes ac-s2{0%,10%{fill:var(--panel); stroke:var(--border)} 11%,27%{fill:var(--accent2); stroke:var(--accent2)} 28%,100%{fill:var(--panel); stroke:var(--border)}}
+  @keyframes ac-s3{0%,27%{fill:var(--panel); stroke:var(--border)} 28%,79%{fill:var(--accent); stroke:var(--accent)} 80%,100%{fill:var(--panel); stroke:var(--border)}}
+  @keyframes ac-s4{0%,79%{fill:var(--panel); stroke:var(--border)} 80%,100%{fill:var(--accent2); stroke:var(--accent2)}}
+  @keyframes ac-s1t{0%,10%{fill:#fff} 11%,100%{fill:var(--muted)}}
+  @keyframes ac-s2t{0%,10%{fill:var(--muted)} 11%,27%{fill:#fff} 28%,100%{fill:var(--muted)}}
+  @keyframes ac-s3t{0%,27%{fill:var(--muted)} 28%,79%{fill:#fff} 80%,100%{fill:var(--muted)}}
+  @keyframes ac-s4t{0%,79%{fill:var(--muted)} 80%,100%{fill:#fff}}
+  @media (prefers-reduced-motion:reduce){
+    .actscene *{animation:none !important;}
+    .actscene .ac-p{opacity:0;} .actscene .p-f2{opacity:1; transform:translate(340px,190px);} .actscene .p-exe{opacity:1; transform:translate(340px,246px);}
+    .actscene .ac-turtle{transform:rotate(-45deg);} .actscene .ac-bar{transform:scaleX(.5);} .actscene .ac-done{opacity:0;}
+  }
   /* step-by-step learning path inside 4.0, 4.1 and 4.3 */
   .lpath{display:flex; flex-wrap:wrap; gap:8px; margin:4px 0 8px;}
   .lpath a{display:inline-flex; align-items:center; gap:7px; padding:5px 13px 5px 5px; border-radius:99px; background:var(--panel); border:1px solid var(--border);
@@ -844,20 +895,63 @@ if __name__ == "__main__":
 
 <div class="lstep act" id="act3"><span class="n">3</span><h3>How it works: three services + two topics</h3></div>
 <p>An action is not new magic. ROS 2 builds every action from <strong>three services</strong> and <strong>two topics</strong>, hidden under the name <code>&lt;action&gt;/_action/…</code>. You will see them yourself in Lab 5.</p>
-<div class="mermaid">
-sequenceDiagram
-  participant C as Action client
-  participant S as Action server
-  C->>S: send_goal (service) · goal {theta: 1.57}
-  S-->>C: accepted ✔ (or rejected)
-  C->>S: get_result (service) · "tell me when you're done"
-  loop while working
-    S--)C: feedback (topic) · remaining: 0.9… 0.4…
-  end
-  S--)C: status (topic) · EXECUTING → SUCCEEDED
-  S-->>C: result {delta: -1.57}
-  Note over C,S: at any moment the client may call cancel_goal (service)
-</div>
+<figure class="helpdesk actscene">
+<svg viewBox="0 0 680 384" role="img" aria-label="Animated action. A client robot and a turtle (the action server) are joined by five channels: send_goal, get_result and cancel_goal services, and feedback and status topics. The goal goes over send_goal and 'accepted' comes back; the client asks get_result; feedback messages stream back while the turtle turns; status changes from EXECUTING to SUCCEEDED; the result comes back on get_result. cancel_goal can be called at any time.">
+  <text class="ac-top" x="340" y="22">all five hide under <tspan class="ac-mono">/turtle1/rotate_absolute/_action/…</tspan></text>
+
+  <!-- lanes -->
+  <g class="ac-lane srv"><rect x="170" y="66" width="340" height="24" rx="12"/><text class="ac-ln" x="174" y="56">send_goal</text><text class="ac-kind" x="506" y="56">SERVICE ⇄</text></g>
+  <g class="ac-lane srv"><rect x="170" y="122" width="340" height="24" rx="12"/><text class="ac-ln" x="174" y="112">get_result</text><text class="ac-kind" x="506" y="112">SERVICE ⇄</text></g>
+  <g class="ac-lane top"><rect x="170" y="178" width="340" height="24" rx="12"/><text class="ac-ln" x="174" y="168">feedback</text><text class="ac-kind" x="506" y="168">TOPIC ←</text></g>
+  <g class="ac-lane top"><rect x="170" y="234" width="340" height="24" rx="12"/><text class="ac-ln" x="174" y="224">status</text><text class="ac-kind" x="506" y="224">TOPIC ←</text></g>
+  <g class="ac-lane cxl"><rect x="170" y="290" width="340" height="24" rx="12"/><text class="ac-ln" x="174" y="280">cancel_goal</text><text class="ac-kind" x="506" y="280">SERVICE ⇄</text><text class="ac-cxl-t" x="340" y="306">✖ the client may call it anytime</text></g>
+
+  <!-- client robot -->
+  <line class="hd-line" x1="80" y1="122" x2="80" y2="138"/><circle class="hd-tip" cx="80" cy="119" r="5"/>
+  <rect class="hd-c-head" x="50" y="138" width="60" height="46" rx="14"/>
+  <circle class="hd-eye" cx="68" cy="160" r="6"/><circle class="hd-eye" cx="92" cy="160" r="6"/>
+  <circle class="hd-pupil" cx="69" cy="161" r="2.6"/><circle class="hd-pupil" cx="93" cy="161" r="2.6"/>
+  <path class="hd-smile" d="M70 173 Q80 179 90 173"/>
+  <rect class="hd-c-body" x="56" y="188" width="48" height="44" rx="10"/>
+  <rect class="hd-dark" x="60" y="232" width="14" height="12" rx="4"/><rect class="hd-dark" x="86" y="232" width="14" height="12" rx="4"/>
+  <rect class="ac-bar-bg" x="30" y="252" width="100" height="8" rx="4"/><rect class="ac-bar" x="30" y="252" width="100" height="8" rx="4"/>
+  <text class="hd-name" x="80" y="282">Action client</text>
+  <text class="hd-code" x="80" y="300">ActionClient(…)</text>
+  <g class="ac-done"><rect x="22" y="80" width="116" height="28" rx="14"/><text x="80" y="99">✓ turned!</text></g>
+
+  <!-- turtle = action server -->
+  <g transform="translate(600 182)">
+    <g class="ac-turtle">
+      <ellipse class="ac-leg" cx="-18" cy="-27" rx="9" ry="6"/><ellipse class="ac-leg" cx="18" cy="-27" rx="9" ry="6"/>
+      <ellipse class="ac-leg" cx="-18" cy="27" rx="9" ry="6"/><ellipse class="ac-leg" cx="18" cy="27" rx="9" ry="6"/>
+      <path class="ac-leg" d="M-34 0 L-46 -5 L-46 5 Z"/>
+      <circle class="ac-head" cx="44" cy="0" r="12"/><circle class="hd-pupil" cx="49" cy="-5" r="2.4"/><circle class="hd-pupil" cx="49" cy="5" r="2.4"/>
+      <ellipse class="ac-shell" cx="0" cy="0" rx="36" ry="29"/>
+      <circle class="ac-spot" cx="0" cy="0" r="9"/><circle class="ac-spot" cx="-19" cy="-9" r="6"/><circle class="ac-spot" cx="19" cy="-9" r="6"/>
+      <circle class="ac-spot" cx="-19" cy="10" r="6"/><circle class="ac-spot" cx="19" cy="10" r="6"/>
+    </g>
+  </g>
+  <text class="hd-name" x="600" y="282">Action server</text>
+  <text class="hd-code" x="600" y="300">turtlesim</text>
+
+  <!-- messages -->
+  <g class="hd-env ac-p p-goal"><rect x="-56" y="-11" width="112" height="22" rx="6"/><text y="4">goal θ = 1.57</text></g>
+  <g class="hd-env ac-p p-acc"><rect x="-48" y="-11" width="96" height="22" rx="6"/><text y="4">accepted ✔</text></g>
+  <g class="hd-env ac-p p-ask"><rect x="-40" y="-11" width="80" height="22" rx="6"/><text y="4">result?</text></g>
+  <g class="hd-env ac-p p-f1"><rect x="-52" y="-11" width="104" height="22" rx="6"/><text y="4">1.2 rad left</text></g>
+  <g class="hd-env ac-p p-f2"><rect x="-52" y="-11" width="104" height="22" rx="6"/><text y="4">0.7 rad left</text></g>
+  <g class="hd-env ac-p p-f3"><rect x="-52" y="-11" width="104" height="22" rx="6"/><text y="4">0.2 rad left</text></g>
+  <g class="hd-env ac-p p-exe"><rect x="-48" y="-11" width="96" height="22" rx="6"/><text y="4">EXECUTING</text></g>
+  <g class="hd-env ac-p p-suc"><rect x="-50" y="-11" width="100" height="22" rx="6"/><text y="4">SUCCEEDED</text></g>
+  <g class="hd-env ac-p p-res"><rect x="-56" y="-11" width="112" height="22" rx="6"/><text y="4">delta = -1.57</text></g>
+
+  <!-- stages -->
+  <g class="hd-stage ast1"><rect x="10" y="346" width="152" height="28" rx="14"/><text x="86" y="365">① send the goal</text></g>
+  <g class="hd-stage ast2"><rect x="178" y="346" width="152" height="28" rx="14"/><text x="254" y="365">② accepted</text></g>
+  <g class="hd-stage ast3"><rect x="346" y="346" width="152" height="28" rx="14"/><text x="422" y="365">③ feedback…</text></g>
+  <g class="hd-stage ast4"><rect x="514" y="346" width="156" height="28" rx="14"/><text x="592" y="365">④ result</text></g>
+</svg>
+</figure>
 <figure class="figure-card"><img src="images/ros2docs/Action-SingleActionClient.gif" alt="Animation: an action client sends a goal request, the server replies, then streams feedback on a topic and finally sends the result." loading="lazy"><figcaption>The goal and result travel as services; feedback streams back on a topic.</figcaption></figure>
 <p class="credit">Animation: <a href="https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Actions/Understanding-ROS2-Actions.html">ROS 2 Documentation, "Understanding actions"</a>, Open Robotics, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.</p>
 
