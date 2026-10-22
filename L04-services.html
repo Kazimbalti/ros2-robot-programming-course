@@ -592,48 +592,11 @@ example_interfaces.srv.AddTwoInts_Response(sum=7)</pre></div>
 <!-- ============================================================ -->
 <h2 id="lab3"><span class="num">L3</span>Lab 3 — Your first service client</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB 3 · 25 min</span><h3>Ask the adding machine from code</h3></div>
-  <p class="lab-goal">Goal: first a simple client script, then the OOP client you will use inside real robot nodes.</p>
+  <div class="lab-h"><span class="badge">LAB 3 · 20 min</span><h3>Ask the adding machine from code</h3></div>
+  <p class="lab-goal">Goal: an OOP client node, the same class style as every node so far, that asks the server without ever blocking.</p>
 
   <div class="step" id="s3-1">
-    <div class="step-h"><span class="step-n">1</span><span class="step-t">The simple client (no class)</span></div>
-    <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/add_two_ints_client_no_oop.py</div><pre><code>#!/usr/bin/env python3
-import rclpy
-from rclpy.node import Node
-from example_interfaces.srv import AddTwoInts
-
-
-def main(args=None):
-    rclpy.init(args=args)
-    node = Node("add_two_ints_no_oop")
-
-    client = node.create_client(AddTwoInts, "add_two_ints")          # 1. make a client
-    while not client.wait_for_service(1.0):                          # 2. wait for the server
-        node.get_logger().warn("Waiting for server add_two_ints...")
-
-    request = AddTwoInts.Request()                                   # 3. fill a request
-    request.a = 3
-    request.b = 8
-
-    future = client.call_async(request)                              # 4. send it
-    rclpy.spin_until_future_complete(node, future)                   # 5. wait for the answer
-
-    response = future.result()
-    node.get_logger().info(f"{request.a} + {request.b} = {response.sum}")
-    rclpy.shutdown()
-
-
-if __name__ == "__main__":
-    main()</code></pre></div>
-    <div class="cmd"><div class="cmd-h">💻 Register, build, run (server must be running in another terminal)</div><pre><code>#  setup.py:  "add_two_ints_client_no_oop = my_py_pkg.add_two_ints_client_no_oop:main",
-cd ~/ros2_ws &amp;&amp; colcon build --packages-select my_py_pkg --symlink-install &amp;&amp; source ~/.bashrc
-ros2 run my_py_pkg add_two_ints_client_no_oop</code></pre></div>
-    <div class="out"><div class="out-h">✅ You should see</div><pre>[INFO] [...] [add_two_ints_no_oop]: 3 + 8 = 11</pre></div>
-    <p>Try it the other way round: start the <strong>client first</strong>. It prints "Waiting for server…" until you start the server.</p>
-  </div>
-
-  <div class="step" id="s3-2">
-    <div class="step-h"><span class="step-n">2</span><span class="step-t">The OOP client: send, keep spinning, get a callback</span></div>
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">The OOP client: send, keep spinning, get a callback</span></div>
     <p>Inside a real node we must <strong>never block</strong>, because the node also has to handle its timers and subscribers. So we send the request and ask ROS 2 to call us back when the answer arrives.</p>
     <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/add_two_ints_client.py</div><pre><code>#!/usr/bin/env python3
 from functools import partial
@@ -678,12 +641,13 @@ def main(args=None):
 
 if __name__ == "__main__":
     main()</code></pre></div>
-    <div class="cmd"><div class="cmd-h">💻 Register, build, run</div><pre><code>#  setup.py:  "add_two_ints_client = my_py_pkg.add_two_ints_client:main",
+    <div class="cmd"><div class="cmd-h">💻 Register, build, run (server running in another terminal)</div><pre><code>#  setup.py:  "add_two_ints_client = my_py_pkg.add_two_ints_client:main",
 cd ~/ros2_ws &amp;&amp; colcon build --packages-select my_py_pkg --symlink-install &amp;&amp; source ~/.bashrc
 ros2 run my_py_pkg add_two_ints_client</code></pre></div>
     <div class="out"><div class="out-h">✅ You should see three answers</div><pre>[INFO] [...] [add_two_ints_client]: 6 + 6 = 12
 [INFO] [...] [add_two_ints_client]: 7 + 4 = 11
 [INFO] [...] [add_two_ints_client]: 5 + 4 = 9</pre></div>
+    <p>Try it the other way round: start the <strong>client first</strong>. It prints "Waiting for server add_two_ints..." until you start the server.</p>
   </div>
 
   <h3>🔍 Why <code>partial</code>?</h3>
