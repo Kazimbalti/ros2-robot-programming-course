@@ -246,6 +246,15 @@
 </div>
 <p class="l4ig-foot">Part 1 of today is the <strong>service</strong>; part 2 (section 4.3) is the <strong>action</strong>. The topic you already know from Lecture 3.</p>
 </div>
+
+<h3>🚗 One real robot uses all three: the self-driving car</h3>
+<p>A self-driving car is a robot on wheels. Every sensor in the picture is a node, and the onboard <strong>computer</strong> runs dozens more (perception, planning, control). They talk in exactly the three ways you learn today.</p>
+<figure class="figure-card"><img src="images/self-driving-car-sensors.jpg" alt="A self-driving car with its sensors labelled: LIDAR and GPS on the roof, a camera behind the windscreen, radar at the front bumper, a computer inside the car and a wheel encoder on the rear wheel." loading="lazy"><figcaption>The sensors of a self-driving car: LIDAR, camera, radar, GPS and wheel encoders, all feeding the onboard computer.</figcaption></figure>
+<div class="trio">
+  <div class="t-topic"><div class="big">📻</div><b>Topics: the sensors stream</b><div class="say">nonstop, many times per second</div><ul><li>LIDAR → <code>/lidar/points</code></li><li>Camera → <code>/camera/image</code></li><li>Radar → <code>/radar/objects</code></li><li>GPS → <code>/gps/fix</code></li><li>Wheel encoder → <code>/wheel/odom</code></li><li>Computer → <code>/cmd_vel</code> (steer, throttle)</li></ul></div>
+  <div class="t-srv"><div class="big">🛎️</div><b>Services: quick questions</b><div class="say">one request, one answer</div><ul><li>"Reset the trip odometer" → "done"</li><li>"Switch the headlights on" → "on"</li><li>"Calibrate the camera" → "OK"</li><li>"Which driving mode?" → "auto"</li></ul></div>
+  <div class="t-act"><div class="big">🎯</div><b>Actions: long jobs</b><div class="say">goal → feedback → result, cancellable</div><ul><li>"Drive to the university" → "4.2 km… 1.1 km… arrived"</li><li>"Park in bay 7" → "reversing… 0.5 m… parked"</li><li>Passenger presses <strong>stop</strong> → the goal is <em>cancelled</em></li></ul></div>
+</div>
 <details class="box teacher">
   <summary>🧑‍🏫 Instructor lesson plan (click to open)</summary>
   <div class="inner">
