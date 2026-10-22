@@ -957,117 +957,79 @@ ros2 topic list --include-hidden-topics | grep _action</code></pre></div>
 <!-- ============================================================ -->
 <h2 id="lab6"><span class="num">L6</span>Lab 6 — Your first action client</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB 6 · 25 min</span><h3>Point the turtle west from Python</h3></div>
-  <p class="lab-goal">Goal: a node that sends a <code>RotateAbsolute</code> goal, prints the feedback, reports how the goal ended, and then learns to cancel.</p>
+  <div class="lab-h"><span class="badge">LAB 6 · 20 min</span><h3>Turn the turtle to face west from code</h3></div>
+  <p class="lab-goal">Goal: an action client node that sends one goal to <code>turtle1/rotate_absolute</code>, prints the feedback while the turtle turns, and prints the result. Keep <code>turtlesim_node</code> running in another terminal.</p>
 
   <div class="step" id="s6-1">
-    <div class="step-h"><span class="step-n">1</span><span class="step-t">Add the dependencies</span></div>
-    <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/package.xml (add, if not there yet)</div><pre><code>  &lt;depend&gt;turtlesim&lt;/depend&gt;
-  &lt;depend&gt;action_msgs&lt;/depend&gt;</code></pre></div>
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Write the action client (click the highlighted parts)</span></div>
     <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws/src/my_py_pkg/my_py_pkg
 touch turtle_rotate_client.py &amp;&amp; chmod +x turtle_rotate_client.py</code></pre></div>
-  </div>
-
-  <div class="step" id="s6-2">
-    <div class="step-h"><span class="step-n">2</span><span class="step-t">Write the client (click the highlighted parts)</span></div>
-    <p>It is the same non-blocking idea as the service client, with three callbacks instead of one: <em>goal accepted?</em>, <em>feedback</em>, and <em>result</em>.</p>
+    <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/package.xml (add, if not there yet)</div><pre><code>  &lt;depend&gt;turtlesim&lt;/depend&gt;</code></pre></div>
     <div class="cmd file" data-widget="explain"><div class="cmd-h">📄 my_py_pkg/turtle_rotate_client.py</div><pre><code>#!/usr/bin/env python3
-import math
 import rclpy
 from rclpy.node import Node
-<span class="ex" data-tip="Actions live in <code>rclpy.action</code>, not on the Node like publishers and services.">from rclpy.action import ActionClient</span>
-<span class="ex" data-tip="The status codes: SUCCEEDED, CANCELED, ABORTED… are constants of <code>GoalStatus</code>.">from action_msgs.msg import GoalStatus</span>
-from turtlesim.action import RotateAbsolute
+<span class="ex" data-tip="Action clients come from <code>rclpy.action</code>; the action type comes from <code>turtlesim.action</code>.">from rclpy.action import ActionClient
+from turtlesim.action import RotateAbsolute</span>
 
 
 class TurtleRotateClientNode(Node):
     def __init__(self):
         super().__init__("turtle_rotate_client")
-<span class="ex" data-tip="Node, action type, action name. No leading <code>/</code>, so it can be remapped and namespaced like a topic.">        self.client_ = ActionClient(self, RotateAbsolute, "turtle1/rotate_absolute")</span>
-        self.goal_handle_ = None
+<span class="ex" data-tip="Create an action client: the node, the action <b>type</b> and the action <b>name</b>. Same idea as <code>create_client</code>.">        self.client_ = ActionClient(self, RotateAbsolute, "turtle1/rotate_absolute")</span>
+<span class="ex" data-tip="Check once a second until the action server (turtlesim) is up.">        while not self.client_.wait_for_server(1.0):
+            self.get_logger().warn("Waiting for action server...")</span>
+<span class="ex" data-tip="Send one goal: face west (3.14 rad = 180°).">        self.send_goal(3.14)</span>
 
     def send_goal(self, theta):
-        while not self.client_.wait_for_server(1.0):
-            self.get_logger().warn("Waiting for action server turtle1/rotate_absolute...")
-        goal = RotateAbsolute.Goal()
-        goal.theta = theta
-        self.get_logger().info(f"Sending goal: theta = {theta:.2f} rad")
-<span class="ex" data-tip="Like <code>call_async</code>: returns a future at once. The feedback callback will run for every feedback message.">        future = self.client_.send_goal_async(goal, feedback_callback=self.callback_feedback)</span>
-<span class="ex" data-tip="Callback 1 runs when the server says <b>accepted</b> or <b>rejected</b>, not when the job is done.">        future.add_done_callback(self.callback_goal_response)</span>
+<span class="ex" data-tip="An empty goal, then fill the fields above the first <code>---</code>.">        goal = RotateAbsolute.Goal()
+        goal.theta = theta</span>
+<span class="ex" data-tip="Send it, and say which method should receive the <b>feedback</b> while the turtle turns.">        future = self.client_.send_goal_async(goal, feedback_callback=self.callback_feedback)</span>
+<span class="ex" data-tip="When the server answers <b>accepted</b> or <b>rejected</b>, ROS 2 calls <code>callback_goal_response</code>.">        future.add_done_callback(self.callback_goal_response)</span>
 
-    def callback_goal_response(self, future):
-<span class="ex" data-tip="The goal handle: your order number. Keep it to ask for the result or to cancel.">        self.goal_handle_ = future.result()</span>
-        if not self.goal_handle_.accepted:
+<span class="ex" data-tip="The goal handle says whether the goal was accepted. If yes, ask for the result: <code>callback_result</code> runs when the turn is finished.">    def callback_goal_response(self, future):
+        goal_handle = future.result()
+        if not goal_handle.accepted:
             self.get_logger().warn("Goal rejected")
             return
         self.get_logger().info("Goal accepted")
-<span class="ex" data-tip="A second future: this one completes when the goal <b>ends</b>, however it ends.">        self.goal_handle_.get_result_async().add_done_callback(self.callback_result)</span>
+        goal_handle.get_result_async().add_done_callback(self.callback_result)</span>
 
-    def callback_feedback(self, feedback_msg):
-<span class="ex" data-tip="Feedback arrives wrapped: the fields are inside <code>.feedback</code>. turtlesim sends it ~60 times a second, so we log at most twice a second.">        remaining = feedback_msg.feedback.remaining
-        self.get_logger().info(f"Feedback: {math.degrees(remaining):.0f} deg to go",
-                               throttle_duration_sec=0.5)</span>
+<span class="ex" data-tip="Runs many times while the turtle turns. The fields are inside <code>.feedback</code>. <code>throttle_duration_sec</code> prints at most twice a second.">    def callback_feedback(self, feedback_msg):
+        remaining = feedback_msg.feedback.remaining
+        self.get_logger().info(f"Remaining: {remaining:.2f} rad", throttle_duration_sec=0.5)</span>
 
-    def callback_result(self, future):
-<span class="ex" data-tip="The answer holds both the <b>status</b> (how it ended) and the <b>result</b> message (what the .action file defines).">        status = future.result().status
-        result = future.result().result</span>
-        if status == GoalStatus.STATUS_SUCCEEDED:
-            self.get_logger().info(f"SUCCEEDED: turned {math.degrees(result.delta):.0f} deg")
-        elif status == GoalStatus.STATUS_CANCELED:
-            self.get_logger().warn("CANCELED")
-        elif status == GoalStatus.STATUS_ABORTED:
-            self.get_logger().error("ABORTED by the server")
+<span class="ex" data-tip="Runs once at the end. <code>future.result().result</code> holds the fields below the first <code>---</code>.">    def callback_result(self, future):
+        result = future.result().result
+        self.get_logger().info(f"Result: turned {result.delta:.2f} rad")</span>
 
 
 def main(args=None):
     rclpy.init(args=args)
     node = TurtleRotateClientNode()
-    node.send_goal(math.pi)   # face west
-<span class="ex" data-tip="Spin so all three callbacks can run. Nothing blocks: timers and subscribers in this node would keep working.">    rclpy.spin(node)</span>
+<span class="ex" data-tip="Spinning lets ROS 2 deliver the answer, the feedback and the result to your callbacks.">    rclpy.spin(node)</span>
     rclpy.shutdown()
 
 
 if __name__ == "__main__":
     main()</code></pre></div>
+    <p>It is the service client with one extra idea. You <strong>create</strong> the client and <strong>send</strong> the goal the same way, and get <strong>three answers</strong> instead of one: <em>goal accepted?</em> (<code>callback_goal_response</code>), <em>progress</em> (<code>callback_feedback</code>, many times) and <em>done</em> (<code>callback_result</code>, once).</p>
   </div>
 
-  <div class="step" id="s6-3">
-    <div class="step-h"><span class="step-n">3</span><span class="step-t">Register, build and run</span></div>
-    <div class="cmd"><div class="cmd-h">💻 Terminal (turtlesim running)</div><pre><code>#  setup.py:  "turtle_rotate_client = my_py_pkg.turtle_rotate_client:main",
+  <div class="step" id="s6-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Register, build and run</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Register, build, run (turtlesim running in another terminal)</div><pre><code>#  setup.py:  "turtle_rotate_client = my_py_pkg.turtle_rotate_client:main",
 cd ~/ros2_ws &amp;&amp; colcon build --packages-select my_py_pkg --symlink-install &amp;&amp; source ~/.bashrc
 ros2 run my_py_pkg turtle_rotate_client</code></pre></div>
-    <div class="out"><div class="out-h">✅ You should see (if the turtle starts facing east)</div><pre>[INFO] [...] [turtle_rotate_client]: Sending goal: theta = 3.14 rad
-[INFO] [...] [turtle_rotate_client]: Goal accepted
-[INFO] [...] [turtle_rotate_client]: Feedback: 179 deg to go
-[INFO] [...] [turtle_rotate_client]: Feedback: 150 deg to go
+    <div class="out"><div class="out-h">✅ You should see (if the turtle starts facing east)</div><pre>[INFO] [...] [turtle_rotate_client]: Goal accepted
+[INFO] [...] [turtle_rotate_client]: Remaining: 3.12 rad
+[INFO] [...] [turtle_rotate_client]: Remaining: 2.62 rad
+[INFO] [...] [turtle_rotate_client]: Remaining: 2.12 rad
 ...
-[INFO] [...] [turtle_rotate_client]: SUCCEEDED: turned -180 deg</pre></div>
-    <p>Run it again: the turtle already faces west, so it finishes immediately. Press an arrow key in teleop during a run to see the <code>ABORTED</code> branch.</p>
+[INFO] [...] [turtle_rotate_client]: Result: turned -3.14 rad</pre></div>
+    <p>The turtle turns half a circle while the remaining angle counts down. Run it again: the turtle already faces west, so it finishes at once. Now run it once more and press an <strong>arrow key</strong> in teleop while it turns: turtlesim <em>aborts</em> the goal, just like in Lab 5.</p>
   </div>
 
-  <div class="step" id="s6-4">
-    <div class="step-h"><span class="step-n">4</span><span class="step-t">Change your mind: cancel from code</span></div>
-    <p>Add a one-shot timer that cancels the goal 1 second after it is accepted. Turn the turtle east first (<code>ros2 action send_goal … "{theta: 0.0}"</code>) so there is a long turn to interrupt.</p>
-    <div class="cmd file"><div class="cmd-h">📄 turtle_rotate_client.py (changes)</div><pre><code>    def callback_goal_response(self, future):
-        self.goal_handle_ = future.result()
-        if not self.goal_handle_.accepted:
-            self.get_logger().warn("Goal rejected")
-            return
-        self.get_logger().info("Goal accepted")
-        self.goal_handle_.get_result_async().add_done_callback(self.callback_result)
-<span class="hl">        self.cancel_timer_ = self.create_timer(1.0, self.cancel_goal)</span>
-
-<span class="hl">    def cancel_goal(self):</span>
-<span class="hl">        self.cancel_timer_.cancel()          # run only once</span>
-<span class="hl">        self.get_logger().warn("Changed my mind: canceling the goal")</span>
-<span class="hl">        self.goal_handle_.cancel_goal_async()</span></code></pre></div>
-    <div class="out"><div class="out-h">✅ You should see</div><pre>[INFO] [...] Goal accepted
-[INFO] [...] Feedback: 179 deg to go
-[INFO] [...] Feedback: 151 deg to go
-[WARN] [...] Changed my mind: canceling the goal
-[WARN] [...] CANCELED</pre></div>
-    <p>The turtle stops about 57° into its turn (turtlesim rotates at 1 rad/s). Try that with a service!</p>
-  </div>
+  <div class="game" data-widget="order"><div class="kc-head"><span class="sim-tag">🎮 Game</span><b>Your action client, from start to result: put the steps in order</b></div><ol><li><code>self.client_ = ActionClient(self, RotateAbsolute, "turtle1/rotate_absolute")</code></li><li><code>while not self.client_.wait_for_server(1.0):</code> wait until turtlesim is up</li><li><code>self.send_goal(3.14)</code>: ask the turtle to face west</li><li><code>goal = RotateAbsolute.Goal()</code>, then <code>goal.theta = theta</code></li><li><code>future = self.client_.send_goal_async(goal, feedback_callback=self.callback_feedback)</code></li><li><code>future.add_done_callback(self.callback_goal_response)</code></li><li><code>callback_goal_response</code> logs "Goal accepted" and calls <code>get_result_async()</code></li><li><code>callback_feedback</code> logs "Remaining: … rad" while the turtle turns</li><li><code>callback_result</code> logs "Result: turned -3.14 rad"</li></ol></div>
 </div>
 
 <details class="box">
@@ -1213,7 +1175,7 @@ if __name__ == "__main__":
 </div>
 
 <h3>🏅 Level up: choose your challenge</h3>
-<div class="levels"><div class="lv bronze"><b>🥉 Bronze: everyone</b><span>Activity 4.1: reset the counter from the terminal while the publisher keeps running. Lab 6 step 4: cancel a goal from code.</span></div><div class="lv silver"><b>🥈 Silver: confident</b><span>Challenge 4.2: the turtle army, then kill them all again with <code>/kill</code> from code. Challenge 4.3: the compass dance.</span></div><div class="lv gold"><b>🥇 Gold: future expert</b><span>Write a <code>counter_supervisor</code> client that resets the counter automatically when it passes 50 (that's assignment A2). Then the Fibonacci action server, and call it from your own action client.</span></div></div>
+<div class="levels"><div class="lv bronze"><b>🥉 Bronze: everyone</b><span>Activity 4.1: reset the counter from the terminal while the publisher keeps running. Lab 6: turn the turtle from your own action client.</span></div><div class="lv silver"><b>🥈 Silver: confident</b><span>Challenge 4.2: the turtle army, then kill them all again with <code>/kill</code> from code. Challenge 4.3: the compass dance.</span></div><div class="lv gold"><b>🥇 Gold: future expert</b><span>Write a <code>counter_supervisor</code> client that resets the counter automatically when it passes 50 (that's assignment A2). Then the Fibonacci action server, and call it from your own action client.</span></div></div>
 
 <div class="kc" data-widget="kc"><div class="kc-head"><span class="sim-tag">✅ Knowledge check</span><b>Lecture 4 check: 8 questions</b></div><div class="kc-q" data-a="0"><p>How many servers can offer <code>/add_two_ints</code> at once?</p><div class="kc-opts"><button>One</button><button>Two</button><button>Unlimited</button><button>One per client</button></div><div class="kc-why">A service name has exactly one server; any number of clients can call it.</div></div><div class="kc-q" data-a="1"><p>What must the server callback end with?</p><div class="kc-opts"><button><code>rclpy.spin()</code></button><button><code>return response</code></button><button><code>publish(response)</code></button><button><code>time.sleep(1)</code></button></div><div class="kc-why">If the response is not returned, the client never gets an answer.</div></div><div class="kc-q" data-a="1"><p>Why use <code>call_async</code> + <code>add_done_callback</code> inside a node?</p><div class="kc-opts"><button>It is faster to type</button><button>So the node keeps running its timers and subscribers while it waits</button><button>It is required by C++</button><button>To call two servers</button></div><div class="kc-why">Blocking inside a callback freezes the whole node, as you saw in the simulator.</div></div><div class="kc-q" data-a="1"><p>The client prints "Waiting for server…" forever. Most likely cause?</p><div class="kc-opts"><button>Wrong message type in a topic</button><button>Server not running, or the name is remapped on one side only</button><button>Queue size too small</button><button>Missing <code>spin</code> in the server</button></div><div class="kc-why">Check <code>ros2 service list</code> for the exact name.</div></div><div class="kc-q" data-a="2"><p>What does an action have that a service doesn't?</p><div class="kc-opts"><button>A name</button><button>A type</button><button>Feedback while it runs, and cancellation</button><button>A response</button></div><div class="kc-why">Goal → feedback… → result, cancellable at any time.</div></div><div class="kc-q" data-a="3"><p>In a <code>.action</code> file, what is the order of the three parts?</p><div class="kc-opts"><button>feedback, goal, result</button><button>goal, feedback, result</button><button>result, goal, feedback</button><button>goal, result, feedback</button></div><div class="kc-why">Goal <code>---</code> result <code>---</code> feedback. In RotateAbsolute: <code>theta</code>, <code>delta</code>, <code>remaining</code>.</div></div><div class="kc-q" data-a="1"><p>You press an arrow key while turtlesim is rotating to a goal. How does the goal end?</p><div class="kc-opts"><button>SUCCEEDED</button><button>ABORTED: the server gave up by itself</button><button>CANCELED: the client asked to stop</button><button>REJECTED</button></div><div class="kc-why">Cancel comes from the client (the <kbd>F</kbd> key). A velocity command makes the server abort on its own.</div></div><div class="kc-q" data-a="0"><p>Under the hood, an action is built from…</p><div class="kc-opts"><button>3 services + 2 topics</button><button>1 service</button><button>2 publishers only</button><button>A special DDS feature, no services or topics</button></div><div class="kc-why"><code>send_goal</code>, <code>cancel_goal</code>, <code>get_result</code> services + <code>feedback</code>, <code>status</code> topics. You listed them in Lab 5.</div></div></div>
 <h2 id="errors"><span class="num">4.4</span>When things go wrong</h2>
@@ -1252,14 +1214,14 @@ if __name__ == "__main__":
   <div><code>ros2 action list -t</code> · <code>ros2 action info /a</code><span>find actions, servers and clients</span></div>
   <div><code>ros2 action send_goal /a TYPE "{...}" --feedback</code><span>send a goal, watch progress</span></div>
   <div><code>ActionClient(self, T, "name")</code> · <code>send_goal_async</code><span>action client</span></div>
-  <div><code>goal_handle.get_result_async()</code> · <code>cancel_goal_async()</code><span>result and cancel</span></div>
+  <div><code>goal_handle.get_result_async()</code><span>get the result when the goal ends</span></div>
 </div>
 
 <div class="box note">
   <div class="box-title">🏠 Homework</div>
   <ol>
     <li>Finish Activity 4.1. Show that the counter resets while the publisher keeps running.</li>
-    <li>Finish Lab 6 including the cancel step. Try Challenge 4.2 (turtle army) or 4.3 (compass dance).</li>
+    <li>Finish Lab 6, then change the goal to face north (1.57) and south (-1.57). Try Challenge 4.2 (turtle army) or 4.3 (compass dance).</li>
     <li>Preview: run <code>ros2 interface show turtlesim/msg/Pose</code>, <code>ros2 interface show turtlesim/srv/Spawn</code> and <code>ros2 interface show turtlesim/action/RotateAbsolute</code>. Next week you design your own <code>.msg</code> and <code>.srv</code> files.</li>
   </ol>
 </div>
