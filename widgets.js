@@ -505,6 +505,114 @@
     });
   };
 
+  /* ================================================== L4: topic vs service vs action */
+  W.commrace = function (root) {
+    var body = shell(root, 'Same job, three ways: "drive to shelf 12"');
+    var WD = 640, HT = 300, cv = mkCanvas(WD, HT), ctx = cv.ctx;
+    var X0 = 210, X1 = 590, BOX = 455, SPEED = 76, M = (X1 - X0) / 10, boxOn = false;
+    var lanes = [{ k: 'topic', name: '📻 Topic', y: 62 }, { k: 'service', name: '🛎️ Service', y: 152 }, { k: 'action', name: '🎯 Action', y: 242 }];
+    var logEl = h('div', { class: 'sim-log' });
+    function log(s) { logEl.insertBefore(h('div', { text: s }), logEl.firstChild); while (logEl.childNodes.length > 7) logEl.removeChild(logEl.lastChild); }
+    function say(L, s, col) { L.status = s; L.col = col || 'muted'; }
+    function dot(L, dir, txt, col, then) { L.dots.push({ dir: dir, t: 0, txt: txt, col: col, then: then }); }
+    function left(L) { return ((X1 - L.x) / M).toFixed(1); }
+    function reset() {
+      lanes.forEach(function (L) { L.x = X0; L.run = false; L.dots = []; L.wait = false; L.waitT = 0; L.stuck = 0; L.fbT = 0; L.ticks = 0; L.tickT = 0; L.live = false; say(L, 'idle'); });
+    }
+    function send() {
+      if (lanes.some(function (L) { return L.live; })) { log('(a mission is already running: cancel or reset first)'); return; }
+      reset();
+      lanes.forEach(function (L) { L.live = true; });
+      var T = lanes[0], S = lanes[1], A = lanes[2];
+      log('mission control: "drive to shelf 12" sent three ways');
+      say(T, '📤 published once… no reply will ever come');
+      dot(T, 1, 'goal', 'accent', function () { T.run = true; });
+      say(S, '⏳ waiting for the response… node blocked', 'gold'); S.wait = true;
+      dot(S, 1, 'request', 'gold', function () { S.run = true; });
+      say(A, '📨 goal sent…');
+      dot(A, 1, 'goal', 'accent', function () {
+        dot(A, -1, 'accepted', 'green', function () { say(A, '✅ goal accepted: driving', 'green'); });
+        A.run = true;
+      });
+    }
+    function cancel() {
+      var T = lanes[0], S = lanes[1], A = lanes[2];
+      if (T.run) {
+        dot(T, 1, 'stop', 'red', function () { T.run = false; T.live = false; });
+        say(T, '📤 published "stop"… did it hear? no way to know'); log('topic: published "stop" (no confirmation)');
+      }
+      if (S.wait) { say(S, '🚫 a service call cannot be cancelled: still waiting', 'red'); log('service: there is no cancel. The client just waits.'); }
+      if (A.run) {
+        dot(A, 1, 'cancel', 'red', function () {
+          A.run = false; A.live = false;
+          dot(A, -1, 'CANCELED', 'purple', function () { say(A, '⏹ result: CANCELED with ' + left(A) + ' m to go', 'purple'); });
+        });
+        log('action: cancel request sent');
+      }
+    }
+    body.appendChild(cv.c);
+    body.appendChild(row([
+      btn('🚀 Send "drive to shelf 12"', 'primary', send),
+      btn('✖ Cancel', 'ghost', cancel),
+      btn('↺ Reset', 'ghost', function () { reset(); log('reset'); }),
+      check('📦 a box blocks the aisle', boxOn, function (v) { boxOn = v; })
+    ]));
+    body.appendChild(logEl);
+    body.appendChild(h('p', { class: 'sim-hint', html: 'Each <strong>mission control</strong> node also runs a timer (the tick counter). Send the mission and watch: the topic gets no answer, the service client is <em>frozen</em> until the very end, and the action client gets <em>feedback</em> all the way. Then press <strong>Cancel</strong> half-way, and finally tick the box and send again: who finds out the robot is stuck?' }));
+    reset();
+    addLoop(root, function (dt) {
+      var c = C();
+      lanes.forEach(function (L) {
+        if (!(L.k === 'service' && L.wait)) { L.tickT += dt; while (L.tickT >= 0.5) { L.tickT -= 0.5; L.ticks++; } }
+        L.dots.forEach(function (d) { d.t += dt / 0.6; });
+        L.dots.filter(function (d) { return d.t >= 1; }).forEach(function (d) { if (d.then) d.then(); });
+        L.dots = L.dots.filter(function (d) { return d.t < 1; });
+        if (L.run) {
+          var lim = boxOn ? BOX - 24 : X1;
+          L.x = Math.min(lim, L.x + SPEED * dt);
+          if (L.x >= X1) {
+            L.run = false;
+            if (L.k === 'topic') { L.live = false; log('topic: the robot arrived. Mission control has no idea.'); }
+            if (L.k === 'service') dot(L, -1, 'response', 'green', function () { L.wait = false; L.live = false; say(L, '✅ response: arrived (after a long silence)', 'green'); log('service: response received, the node unfreezes'); });
+            if (L.k === 'action') dot(L, -1, 'SUCCEEDED', 'green', function () { L.live = false; say(L, '🏁 result: SUCCEEDED, at shelf 12', 'green'); log('action: result SUCCEEDED'); });
+          } else if (L.x >= lim) {
+            L.stuck += dt;
+            if (L.k === 'action' && L.stuck > 2) {
+              L.run = false;
+              dot(L, -1, 'ABORTED', 'red', function () { L.live = false; say(L, '⚠️ result: ABORTED, blocked ' + left(L) + ' m from the shelf', 'red'); log('action: the server gave up and reported ABORTED'); });
+            }
+            if (L.k === 'service') say(L, '⏳ still waiting… ' + L.stuck.toFixed(0) + ' s (it may wait forever)', 'red');
+          }
+          if (L.k === 'action' && L.run) {
+            L.fbT += dt;
+            if (L.fbT > 0.5) { L.fbT = 0; var r = left(L); dot(L, -1, r + ' m', 'gold'); say(L, '📡 feedback: ' + r + ' m to go', 'gold'); }
+          }
+        }
+      });
+      ctx.clearRect(0, 0, WD, HT); ctx.fillStyle = c.bg2; rr(ctx, 0, 0, WD, HT, 14); ctx.fill();
+      lanes.forEach(function (L, i) {
+        var y = L.y, frozen = L.k === 'service' && L.wait;
+        if (i) { ctx.strokeStyle = c.border; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(14, y - 46); ctx.lineTo(WD - 14, y - 46); ctx.stroke(); }
+        label(ctx, L.name, 18, y - 30, c.text, 13, 'left', true);
+        node(ctx, 95, y, 140, 36, 'mission control', c.bg, frozen ? c.red : c.accent, c.text);
+        label(ctx, frozen ? '⛔ BLOCKED · timer ' + L.ticks : '⏱ timer ' + L.ticks, 95, y + 30, frozen ? c.red : c.muted, 11, 'center', true);
+        ctx.strokeStyle = c.border; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(X0, y); ctx.lineTo(X1, y); ctx.stroke();
+        rr(ctx, X1 - 4, y - 20, 34, 40, 6); ctx.fillStyle = c.gold; ctx.fill();
+        label(ctx, '12', X1 + 13, y, '#fff', 12, 'center', true);
+        if (boxOn) { rr(ctx, BOX - 12, y - 14, 24, 28, 4); ctx.fillStyle = '#a0703c'; ctx.fill(); label(ctx, '📦', BOX, y, '#fff', 14); }
+        ctx.beginPath(); ctx.arc(L.x, y, 13, 0, 7); ctx.fillStyle = c.green; ctx.fill();
+        label(ctx, '🤖', L.x, y, '#fff', 14);
+        L.dots.forEach(function (d) {
+          var a = 165, b = L.x - 16, x = d.dir > 0 ? a + (b - a) * d.t : b - (b - a) * d.t;
+          var w = Math.max(44, d.txt.length * 7 + 14);
+          rr(ctx, x - w / 2, y - 34, w, 20, 6); ctx.fillStyle = c[d.col] || c.accent; ctx.fill();
+          label(ctx, d.txt, x, y - 24, '#fff', 11, 'center', true);
+        });
+        label(ctx, L.status, X0, y + 30, c[L.col] || c.muted, 12, 'left', true);
+      });
+    });
+  };
+
   /* ================================================== L5: interface builder */
   W.msgbuilder = function (root) {
     var body = shell(root, 'Interface builder: design a .msg or .srv');

@@ -28,13 +28,13 @@
     <div class="cover-art" aria-hidden="true">🧭</div>
   <div class="kicker">Part B · ROS 2 on the LIMO · Lecture 13 of 14</div>
   <h1>Autonomous Navigation — Nav2 + Actions</h1>
-  <div class="subtitle">From "react to what's in front of me" to "go to the kitchen". Today you learn the last ROS 2 communication type, <strong>actions</strong>, and use it to command Nav2: the LIMO plans its own path on your map, avoids obstacles it has never seen, and runs a patrol you program in Python.</div>
+  <div class="subtitle">From "react to what's in front of me" to "go to the kitchen". Today you put the third ROS 2 communication type, <strong>actions</strong> (first met in Lecture 4), to work commanding Nav2: the LIMO plans its own path on your map, avoids obstacles it has never seen, and runs a patrol you program in Python.</div>
   <div class="meta-row">
     <div class="chip">⏱ 3 h · 25 min teach · 2 h 35 min hands-on</div>
     <div class="chip">🧭 Nav2 · actions · nav2_simple_commander</div>
     <div class="chip">Before this: Lecture 12 (map + limo_nav2.yaml)</div>
   </div>
-  <div class="skill-path" aria-label="Course path"><a class="done" href="01-installation-vmware-ros2-limo-intro.html">L1 · Install</a><a class="done" href="L02-first-node.html">L2 · Nodes</a><a class="done" href="L03-topics.html">L3 · Topics</a><a class="done" href="L04-services.html">L4 · Services</a><a class="done" href="L05-custom-interfaces.html">L5 · Interfaces</a><a class="done" href="L06-parameters-launch.html">L6 · Launch</a><a class="done" href="L07-catch-them-all.html">L7 · Project</a><a class="done" href="L08-drive-limo.html">L8 · Drive</a><a class="done" href="L09-limo-urdf-tf-rviz.html">L9 · URDF/TF</a><a class="done" href="L10-limo-lidar-imu.html">L10 · LiDAR/IMU</a><a class="done" href="L11-limo-camera-vision.html">L11 · Vision</a><a class="done" href="L12-limo-slam-localization.html">L12 · SLAM</a><a class="now" href="L13-limo-nav2.html">L13 · Nav2</a><a class="" href="L14-real-limo-mission.html">L14 · Real LIMO</a><a href="projects.html">+ Projects</a></div>
+  <div class="skill-path" aria-label="Course path"><a class="done" href="01-installation-vmware-ros2-limo-intro.html">L1 · Install</a><a class="done" href="L02-first-node.html">L2 · Nodes</a><a class="done" href="L03-topics.html">L3 · Topics</a><a class="done" href="L04-services.html">L4 · Services &amp; Actions</a><a class="done" href="L05-custom-interfaces.html">L5 · Interfaces</a><a class="done" href="L06-parameters-launch.html">L6 · Launch</a><a class="done" href="L07-catch-them-all.html">L7 · Project</a><a class="done" href="L08-drive-limo.html">L8 · Drive</a><a class="done" href="L09-limo-urdf-tf-rviz.html">L9 · URDF/TF</a><a class="done" href="L10-limo-lidar-imu.html">L10 · LiDAR/IMU</a><a class="done" href="L11-limo-camera-vision.html">L11 · Vision</a><a class="done" href="L12-limo-slam-localization.html">L12 · SLAM</a><a class="now" href="L13-limo-nav2.html">L13 · Nav2</a><a class="" href="L14-real-limo-mission.html">L14 · Real LIMO</a><a href="projects.html">+ Projects</a></div>
 </div>
 
 <div class="grid2">
@@ -95,7 +95,7 @@
 </div>
 
 <h2 id="idea"><span class="num">13.1</span>The idea in 15 minutes</h2>
-<h3>Part 1: actions, the third way to communicate</h3>
+<h3>Part 1: actions, a quick recap from Lecture 4</h3>
 <div class="table-wrap"><table>
   <tr><th></th><th>Topic 📻</th><th>Service 🛎️</th><th>Action 🎯</th></tr>
   <tr><td>Pattern</td><td>stream</td><td>request → response</td><td>goal → feedback… → result</td></tr>

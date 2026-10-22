@@ -4,8 +4,8 @@
 <script>(function(){try{var t=localStorage.getItem('limo-book-theme');if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lecture 4 — Services: Request &amp; Response</title>
-<meta name="description" content="Hands-on Lecture 4: ROS 2 services. Call turtlesim services, write a Python service server and client, debug and remap services, and add a reset service to the number counter.">
+<title>Lecture 4 — Services &amp; Actions: Ask, Answer, Track</title>
+<meta name="description" content="Hands-on Lecture 4: ROS 2 services and actions. Call turtlesim services, write a Python service server and client, compare topics, services and actions, send action goals with feedback and cancel, and write a Python action client.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
@@ -13,6 +13,20 @@
 <link rel="stylesheet" href="widgets.css">
 <link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="projector.css">
+<style>
+  /* Lecture 4 only: the three-way comparison cards */
+  .trio{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:18px 0 22px;}
+  .trio > div{background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:16px 16px 12px; position:relative; overflow:hidden;}
+  .trio > div::before{content:""; position:absolute; top:0; left:0; right:0; height:5px;}
+  .trio .t-topic::before{background:var(--accent);} .trio .t-srv::before{background:var(--gold);} .trio .t-act::before{background:var(--accent2);}
+  .trio .big{font-size:2.1em; line-height:1.1;}
+  .trio b{display:block; font-size:1.08em; margin:6px 0 2px; color:var(--text);}
+  .trio .say{font-style:italic; color:var(--muted); font-size:.92em; margin-bottom:8px;}
+  .trio ul{font-size:.92em; padding-inline-start:18px; margin:0;}
+  @media (max-width:760px){ .trio{grid-template-columns:1fr;} }
+  .vs td:first-child{font-weight:700; white-space:nowrap;}
+  .credit{font-size:.8em; color:var(--muted); margin-top:-6px;}
+</style>
 </head>
 <body>
 <button id="theme-toggle" aria-label="Toggle light/dark mode">🌙</button>
@@ -27,25 +41,26 @@
 <div class="cover">
     <div class="cover-art" aria-hidden="true">🛎️</div>
   <div class="kicker">Part A · ROS 2 Bootcamp · Lecture 4 of 14</div>
-  <h1>Services — Request &amp; Response</h1>
-  <div class="subtitle">Topics stream data one way. Services <em>ask a question and get an answer</em>. Today you clear, spawn and kill turtles with services, then write your own service server and client.</div>
+  <h1>Services &amp; Actions — Ask, Answer, Track</h1>
+  <div class="subtitle">Topics stream data one way. But a robot also needs to <em>ask a question and get an answer</em> ("reset the counter", "spawn a turtle"), and sometimes to give a <em>long job it can track and cancel</em> ("drive to shelf 12"). The first is a <strong>service</strong>, the second an <strong>action</strong>. Today you use both, then write a service server, a service client and an action client in Python.</div>
   <div class="meta-row">
-    <div class="chip">⏱ 3 h · 25 min teach · 2 h 35 min hands-on</div>
+    <div class="chip">⏱ 3 h · 35 min teach · 2 h 25 min hands-on</div>
     <div class="chip">🐍 Python · ROS 2 Humble</div>
     <div class="chip">Before this: Lecture 3 (number counter ready)</div>
   </div>
-  <div class="skill-path" aria-label="Course path"><a class="done" href="01-installation-vmware-ros2-limo-intro.html">L1 · Install</a><a class="done" href="L02-first-node.html">L2 · Nodes</a><a class="done" href="L03-topics.html">L3 · Topics</a><a class="now" href="L04-services.html">L4 · Services</a><a class="" href="L05-custom-interfaces.html">L5 · Interfaces</a><a class="" href="L06-parameters-launch.html">L6 · Launch</a><a class="" href="L07-catch-them-all.html">L7 · Project</a><a class="" href="L08-drive-limo.html">L8 · Drive</a><a class="" href="L09-limo-urdf-tf-rviz.html">L9 · URDF/TF</a><a class="" href="L10-limo-lidar-imu.html">L10 · LiDAR/IMU</a><a class="" href="L11-limo-camera-vision.html">L11 · Vision</a><a class="" href="L12-limo-slam-localization.html">L12 · SLAM</a><a class="" href="L13-limo-nav2.html">L13 · Nav2</a><a class="" href="L14-real-limo-mission.html">L14 · Real LIMO</a><a href="projects.html">+ Projects</a></div>
+  <div class="skill-path" aria-label="Course path"><a class="done" href="01-installation-vmware-ros2-limo-intro.html">L1 · Install</a><a class="done" href="L02-first-node.html">L2 · Nodes</a><a class="done" href="L03-topics.html">L3 · Topics</a><a class="now" href="L04-services.html">L4 · Services &amp; Actions</a><a class="" href="L05-custom-interfaces.html">L5 · Interfaces</a><a class="" href="L06-parameters-launch.html">L6 · Launch</a><a class="" href="L07-catch-them-all.html">L7 · Project</a><a class="" href="L08-drive-limo.html">L8 · Drive</a><a class="" href="L09-limo-urdf-tf-rviz.html">L9 · URDF/TF</a><a class="" href="L10-limo-lidar-imu.html">L10 · LiDAR/IMU</a><a class="" href="L11-limo-camera-vision.html">L11 · Vision</a><a class="" href="L12-limo-slam-localization.html">L12 · SLAM</a><a class="" href="L13-limo-nav2.html">L13 · Nav2</a><a class="" href="L14-real-limo-mission.html">L14 · Real LIMO</a><a href="projects.html">+ Projects</a></div>
 </div>
 
 <div class="grid2">
   <div class="card">
     <h3>🎯 By the end of today you can…</h3>
     <ul class="outcomes">
-      <li>Say when to use a <strong>service</strong> and when to use a <strong>topic</strong>.</li>
+      <li>Choose between a <strong>topic</strong>, a <strong>service</strong> and an <strong>action</strong> for a robot job, and explain why.</li>
       <li>Call any service from the terminal with <code>ros2 service call</code>.</li>
-      <li>Write a Python <strong>service server</strong>.</li>
-      <li>Write a Python <strong>service client</strong> that doesn't block your node.</li>
+      <li>Write a Python <strong>service server</strong> and a <strong>non-blocking service client</strong>.</li>
       <li>Add a service to an existing node (reset the number counter).</li>
+      <li>Send an action goal with <code>ros2 action send_goal --feedback</code>, then cancel it.</li>
+      <li>Write a Python <strong>action client</strong> that handles feedback, the result and cancellation.</li>
     </ul>
   </div>
   <div class="card toc">
@@ -57,28 +72,34 @@
     <a href="#lab3"><span>Lab 3</span>Your first service client</a>
     <a href="#lab4"><span>Lab 4</span>Debug &amp; remap services</a>
     <a href="#activity"><span>4.2</span>Activity: reset the counter</a>
-    <a href="#errors"><span>4.3</span>When things go wrong</a>
-    <a href="#exit"><span>4.4</span>Exit ticket &amp; homework</a>
+    <a href="#actions"><span>4.3</span>Services vs actions</a>
+    <a href="#lab5"><span>Lab 5</span>Actions from the terminal</a>
+    <a href="#lab6"><span>Lab 6</span>Your first action client</a>
+    <a href="#errors"><span>4.4</span>When things go wrong</a>
+    <a href="#exit"><span>4.5</span>Exit ticket &amp; homework</a>
   </div>
 </div>
 
 
-<div class="ig"><div class="ig-title"><span class="sim-tag">Infographic</span>Lecture 4 at a glance: ask a question, get an answer</div><div class="ig-flow"><div class="ig-step"><div class="ic">🧑‍💻</div><b>Client</b><span><code>create_client(Type, "name")</code></span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">📨</div><b>Request</b><span>the fields above <code>---</code></span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">⚙️</div><b>Server</b><span>callback fills the response</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">📬</div><b>Response</b><span><code>return response</code></span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🔔</div><b>Done callback</b><span><code>call_async</code> + <code>add_done_callback</code></span></div></div></div>
+<div class="ig"><div class="ig-title"><span class="sim-tag">Infographic</span>Lecture 4 at a glance: the three ways ROS 2 nodes talk</div><div class="ig-flow"><div class="ig-step"><div class="ic">📻</div><b>Topic (Lecture 3)</b><span>a stream: "here is the scan, again and again"</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🛎️</div><b>Service (part 1)</b><span>a question: request → one response</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🎯</div><b>Action (part 2)</b><span>a job: goal → feedback… → result, cancellable</span></div></div></div>
 <details class="box teacher">
   <summary>🧑‍🏫 Instructor lesson plan (click to open)</summary>
   <div class="inner">
   <div class="table-wrap"><table>
     <tr><th>Time</th><th>Activity</th><th>Type</th></tr>
     <tr><td>0:00–0:10</td><td>Warm-up + run everyone's number counter</td><td><span class="tag check">Check</span></td></tr>
-    <tr><td>0:10–0:30</td><td>Help-desk analogy, topic vs service table</td><td><span class="tag teach">Teach</span></td></tr>
-    <tr><td>0:30–0:55</td><td>Lab 1 — clear / spawn / kill / set_pen from the terminal</td><td><span class="tag do">Do</span></td></tr>
-    <tr><td>0:55–1:20</td><td>Lab 2 — AddTwoInts server, called from the terminal</td><td><span class="tag do">Do</span></td></tr>
-    <tr><td>1:20–1:30</td><td>Break</td><td></td></tr>
-    <tr><td>1:30–2:10</td><td>Lab 3 — client (simple, then OOP with a callback) + Lab 4</td><td><span class="tag do">Do</span></td></tr>
-    <tr><td>2:10–2:50</td><td>Activity 4.1 — reset_counter service</td><td><span class="tag do">Do</span></td></tr>
-    <tr><td>2:50–3:00</td><td>Exit ticket + homework</td><td><span class="tag check">Check</span></td></tr>
+    <tr><td>0:10–0:25</td><td>Help-desk analogy, the service simulator, topic vs service</td><td><span class="tag teach">Teach</span></td></tr>
+    <tr><td>0:25–0:45</td><td>Lab 1: clear / spawn / kill / set_pen from the terminal</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>0:45–1:05</td><td>Lab 2: AddTwoInts server, called from the terminal</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>1:05–1:35</td><td>Lab 3: client (simple, then OOP with a callback) + Lab 4</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>1:35–1:45</td><td>Break</td><td></td></tr>
+    <tr><td>1:45–2:05</td><td>4.3: "drive to shelf 12" race (three ways), comparison table, decision chart</td><td><span class="tag teach">Teach</span></td></tr>
+    <tr><td>2:05–2:25</td><td>Lab 5: actions with turtlesim, hidden topics/services, cancel vs abort</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>2:25–2:50</td><td>Lab 6: Python action client with feedback, result and cancel</td><td><span class="tag do">Do</span></td></tr>
+    <tr><td>2:50–3:00</td><td>Exit ticket + homework (Activity 4.1 if not finished in class)</td><td><span class="tag check">Check</span></td></tr>
   </table></div>
   <p><strong>Teaching tip.</strong> The client is the hardest part today. Draw the timeline on the board: "send request → keep spinning → answer arrives → callback runs". Show that a "blocking wait inside a callback" freezes the node; this is the number-one bug students hit in Lecture 7.</p>
+  <p><strong>Teaching tip (actions).</strong> Open the three-way race simulator in 4.3 on the projector and ask the class to predict each lane before you press the button. Then tick the box: only the action finds out the robot is stuck. Actions come back in Lecture 13, where Nav2's <code>NavigateToPose</code> is exactly this pattern.</p>
   </div>
 </details>
 
@@ -86,7 +107,8 @@
 <div class="quiz">
   <div class="q"><p>Write the command to publish <code>{data: 5}</code> on <code>/number</code> once per second.</p><details><summary>Answer</summary><div class="inner"><code>ros2 topic pub -r 1 /number example_interfaces/msg/Int64 "{data: 5}"</code></div></details></div>
   <div class="q"><p>In the number counter, where did we publish: in a timer or in a subscriber callback?</p><details><summary>Answer</summary><div class="inner">In the subscriber callback, so a new total is published every time a number arrives.</div></details></div>
-  <div class="q"><p>Your counter is at 1,000,000. How could another node ask it to go back to 0?</p><details><summary>Answer</summary><div class="inner">That's today's lecture. It needs a <strong>request</strong> and a <strong>confirmation</strong>, which is a service.</div></details></div>
+  <div class="q"><p>Your counter is at 1,000,000. How could another node ask it to go back to 0, <em>and know that it worked</em>?</p><details><summary>Answer</summary><div class="inner">A topic can't confirm anything. You need a <strong>request</strong> and a <strong>confirmation</strong>, which is a service: part 1 of today.</div></details></div>
+  <div class="q"><p>Now the job is "drive 10 m to shelf 12", which takes 30 s. What would you want to know while it runs?</p><details><summary>Answer</summary><div class="inner">How far it still has to go, whether it got stuck, and a way to say "stop, I changed my mind". That's an <strong>action</strong>: part 2 of today.</div></details></div>
 </div>
 
 <h2 id="idea"><span class="num">4.1</span>The idea in 10 minutes</h2>
@@ -117,11 +139,14 @@ sequenceDiagram
   <tr><th></th><th>Topic 📻</th><th>Service 🛎️</th></tr>
   <tr><td>Direction</td><td>One-way</td><td>Request → Response</td></tr>
   <tr><td>How many</td><td>Many publishers, many subscribers</td><td>One server, many clients</td></tr>
-  <tr><td>Use for</td><td>Continuous data: sensors, pose, velocity</td><td>One-off actions and questions: reset, spawn, compute, switch mode</td></tr>
+  <tr><td>Use for</td><td>Continuous data: sensors, pose, velocity</td><td>Quick one-off jobs and questions: reset, spawn, compute, switch mode</td></tr>
   <tr><td>Robot example</td><td><code>/scan</code>, <code>/odom</code>, <code>/cmd_vel</code></td><td>"Save the map", "Reset odometry", "Turn the LED on"</td></tr>
 </table></div>
 
-<!-- ============================================================ -->
+<h3>🎬 Services in motion</h3>
+<div class="fig-pair"><figure class="figure-card"><img src="images/ros2docs/Service-SingleServiceClient.gif" alt="Animation: one client sends a request to a server node and gets a response back." loading="lazy"><figcaption>One client: request in, response out.</figcaption></figure><figure class="figure-card"><img src="images/ros2docs/Service-MultipleServiceClient.gif" alt="Animation: several client nodes each send requests to the same single server." loading="lazy"><figcaption>Many clients, still one server.</figcaption></figure></div>
+<p class="credit">Animations: <a href="https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Services/Understanding-ROS2-Services.html">ROS 2 Documentation, "Understanding services"</a>, Open Robotics, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.</p>
+
 <h3>🖼️ Services in pictures</h3><figure class="figure-card"><img src="images/figures/fig2_8.png" alt="One weather server, many clients. The server exists once and answers everyone." loading="lazy"><figcaption>One weather server, many clients. The server exists once and answers everyone.</figcaption></figure><div class="fig-pair"><figure class="figure-card"><img src="images/figures/fig2_9.png" alt="The battery (client) asks the LED panel (server) to turn LED 3 on…" loading="lazy"><figcaption>The battery (client) asks the LED panel (server) to turn LED 3 on…</figcaption></figure><figure class="figure-card"><img src="images/figures/fig2_10.png" alt="…and later to turn it off. You build this in Lecture 5." loading="lazy"><figcaption>…and later to turn it off. You build this in Lecture 5.</figcaption></figure></div>
 <div data-widget="service"></div>
 
@@ -132,7 +157,7 @@ sequenceDiagram
 
 <h2 id="lab1"><span class="num">L1</span>Lab 1 — Services with turtlesim</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB 1 · 25 min</span><h3>Clear, spawn, kill and change pen colour</h3></div>
+  <div class="lab-h"><span class="badge">LAB 1 · 20 min</span><h3>Clear, spawn, kill and change pen colour</h3></div>
   <p class="lab-goal">Goal: find a service, read its type, and call it from the terminal.</p>
 
   <div class="step" id="s1-1">
@@ -186,7 +211,7 @@ ros2 service call /kill turtlesim/srv/Kill "{name: 'my_turtle'}"</code></pre></d
 <!-- ============================================================ -->
 <h2 id="lab2"><span class="num">L2</span>Lab 2 — Your first service server</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB 2 · 25 min</span><h3>The adding machine</h3></div>
+  <div class="lab-h"><span class="badge">LAB 2 · 20 min</span><h3>The adding machine</h3></div>
   <p class="lab-goal">Goal: a node that offers <code>/add_two_ints</code>, receives a and b, and returns their sum.</p>
 
   <div class="step" id="s2-1">
@@ -199,32 +224,32 @@ int64 sum</pre></div>
   </div>
 
   <div class="step" id="s2-2">
-    <div class="step-h"><span class="step-n">2</span><span class="step-t">Write the server</span></div>
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Write the server (click the highlighted parts to see what they do)</span></div>
     <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws/src/my_py_pkg/my_py_pkg
 touch add_two_ints_server.py &amp;&amp; chmod +x add_two_ints_server.py</code></pre></div>
-    <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/add_two_ints_server.py</div><pre><code>#!/usr/bin/env python3
+    <div class="cmd file" data-widget="explain"><div class="cmd-h">📄 my_py_pkg/add_two_ints_server.py</div><pre><code>#!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
-from example_interfaces.srv import AddTwoInts
+<span class="ex" data-tip="Services have a type, just like topics. Its Request and Response classes are both inside <code>AddTwoInts</code>.">from example_interfaces.srv import AddTwoInts</span>
 
 
 class AddTwoIntsServerNode(Node):
     def __init__(self):
         super().__init__("add_two_ints_server")
-<span class="hl">        self.server_ = self.create_service(</span>
-<span class="hl">            AddTwoInts, "add_two_ints", self.callback_add_two_ints)</span>
+<span class="ex" data-tip="Creates the server: the <b>type</b>, the <b>service name</b> clients will call, and the <b>callback</b> that runs once per request.">        self.server_ = self.create_service(
+            AddTwoInts, "add_two_ints", self.callback_add_two_ints)</span>
         self.get_logger().info("Add two ints server has been started")
 
-<span class="hl">    def callback_add_two_ints(self, request, response):</span>
-<span class="hl">        response.sum = request.a + request.b</span>
+<span class="ex" data-tip="ROS 2 hands you the filled-in <code>request</code> and an empty <code>response</code> to fill.">    def callback_add_two_ints(self, request, response):</span>
+<span class="ex" data-tip="Read the request fields (above the <code>---</code>), write the response fields (below it).">        response.sum = request.a + request.b</span>
         self.get_logger().info(f"{request.a} + {request.b} = {response.sum}")
-<span class="hl">        return response</span>
+<span class="ex" data-tip="The most-forgotten line of the day. Without it the client never gets an answer.">        return response</span>
 
 
 def main(args=None):
     rclpy.init(args=args)
     node = AddTwoIntsServerNode()
-    rclpy.spin(node)
+<span class="ex" data-tip="A server does nothing on its own: <code>spin</code> keeps the node alive, waiting for requests.">    rclpy.spin(node)</span>
     rclpy.shutdown()
 
 
@@ -248,7 +273,7 @@ example_interfaces.srv.AddTwoInts_Response(sum=7)</pre></div>
 <!-- ============================================================ -->
 <h2 id="lab3"><span class="num">L3</span>Lab 3 — Your first service client</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB 3 · 30 min</span><h3>Ask the adding machine from code</h3></div>
+  <div class="lab-h"><span class="badge">LAB 3 · 25 min</span><h3>Ask the adding machine from code</h3></div>
   <p class="lab-goal">Goal: first a simple client script, then the OOP client you will use inside real robot nodes.</p>
 
   <div class="step" id="s3-1">
@@ -344,6 +369,8 @@ ros2 run my_py_pkg add_two_ints_client</code></pre></div>
 
   <h3>🔍 Why <code>partial</code>?</h3>
   <p><code>add_done_callback</code> always calls your function with just one argument, the <code>future</code>. But we also want to print <code>a</code> and <code>b</code>. <code>partial(f, a=a, b=b)</code> makes a new function with a and b already filled in. Remember this pattern: you will use it for every service call in Lecture 7.</p>
+
+  <div class="game" data-widget="order"><div class="kc-head"><span class="sim-tag">🎮 Game</span><b>The life of a non-blocking service call: put the steps in order</b></div><ol><li><code>create_client(AddTwoInts, "add_two_ints")</code></li><li><code>wait_for_service(1.0)</code> until the server is up</li><li>Fill <code>AddTwoInts.Request()</code></li><li><code>future = client.call_async(request)</code></li><li><code>future.add_done_callback(partial(...))</code></li><li>The node keeps spinning: timers and subscribers still run</li><li>The server's callback runs and <code>return response</code></li><li>Your done-callback runs: <code>future.result().sum</code></li></ol></div>
 </div>
 
 <details class="box">
@@ -393,9 +420,11 @@ int main(int argc, char **argv)
   <div class="step" id="s4-1">
     <div class="step-h"><span class="step-n">1</span><span class="step-t">Inspect the server</span></div>
     <div class="cmd"><div class="cmd-h">💻 Terminal 2 (server running in Terminal 1)</div><pre><code>ros2 service type /add_two_ints
+ros2 service list -t
+ros2 service find example_interfaces/srv/AddTwoInts
 ros2 node info /add_two_ints_server
 rqt</code></pre></div>
-    <p>In rqt: <strong>Plugins → Services → Service Caller</strong>, choose <code>/add_two_ints</code>, type values into the table and click Call.</p>
+    <p><code>-t</code> prints each service with its type, and <code>find</code> answers "who offers this type?". In rqt: <strong>Plugins → Services → Service Caller</strong>, choose <code>/add_two_ints</code>, type values into the table and click Call.</p>
   </div>
   <div class="step" id="s4-2">
     <div class="step-h"><span class="step-n">2</span><span class="step-t">Remap the service name</span></div>
@@ -406,9 +435,9 @@ ros2 run my_py_pkg add_two_ints_client --ros-args -r add_two_ints:=calculator</c
 </div>
 
 <!-- ============================================================ -->
-<h2 id="activity"><span class="num">4.2</span>Your turn</h2>
+<h2 id="activity"><span class="num">4.2</span>Your turn: services</h2>
 <div class="activity">
-  <div class="lvl">Activity 4.1 · Core · 40 min</div>
+  <div class="lvl">Activity 4.1 · Core · 40 min (finish as homework if needed)</div>
   <h3>Reset the number counter</h3>
 <figure class="figure-card"><img src="images/figures/fig2_11.png" alt="The service activity: /reset_counter added to the number counter." loading="lazy"><figcaption>The service activity: /reset_counter added to the number counter.</figcaption></figure>
   <div class="mermaid">
@@ -516,12 +545,422 @@ if __name__ == "__main__":
     main()</code></pre></div></div></details>
 </div>
 
+<!-- ============================================================ -->
+<h2 id="actions"><span class="num">4.3</span>When a question takes a long time: actions</h2>
+<p>Services are perfect for quick questions. But imagine mission control asking a warehouse robot to <strong>"drive to shelf 12"</strong>. It takes 30 seconds. With a service the client hears nothing for 30 s, can't tell whether the robot is stuck behind a box, and can't say "stop, I changed my mind". ROS 2 has a third way to talk for exactly this job: the <strong>action</strong>.</p>
+
+<div class="analogy"><div class="emoji">🍕</div><div>
+  <p><strong>An action is like ordering a pizza with live tracking.</strong> You place the order (the <em>goal</em>), the shop says "order accepted", the app keeps updating you ("in the oven", "on the way, 2 km") as <em>feedback</em>, and at the end you get the pizza (the <em>result</em>). If you change your mind you can <em>cancel</em> while it's still on the way. A service is phoning the shop to ask "are you open?": one question, one quick answer.</p>
+</div></div>
+
+<div class="trio">
+  <div class="t-topic"><div class="big">📻</div><b>Topic</b><div class="say">"Here's the latest scan. And again. And again."</div><ul><li>Continuous stream, one-way</li><li>No reply, no confirmation</li><li>Many publishers, many subscribers</li></ul></div>
+  <div class="t-srv"><div class="big">🛎️</div><b>Service</b><div class="say">"Reset the counter." → "Done."</div><ul><li>One request → one response</li><li>Should finish <strong>quickly</strong></li><li>No progress updates, no cancel</li></ul></div>
+  <div class="t-act"><div class="big">🎯</div><b>Action</b><div class="say">"Drive to shelf 12." → "6 m… 3 m… arrived."</div><ul><li>Goal → feedback… → result</li><li>For <strong>long</strong> jobs</li><li>Can be <strong>cancelled</strong>; reports success, cancel or abort</li></ul></div>
+</div>
+
+<div data-widget="commrace"></div>
+
+<h3>⚖️ The full comparison</h3>
+<div class="table-wrap"><table class="vs">
+  <tr><th></th><th>Topic 📻</th><th>Service 🛎️</th><th>Action 🎯</th></tr>
+  <tr><td>Pattern</td><td>Publish → subscribe</td><td>Request → response</td><td>Goal → feedback… → result</td></tr>
+  <tr><td>Who talks</td><td>Many publishers, many subscribers</td><td>One server, many clients</td><td>One server, many clients</td></tr>
+  <tr><td>How long</td><td>Forever (a stream)</td><td>Quick: milliseconds</td><td>Seconds to minutes</td></tr>
+  <tr><td>Reply?</td><td>None</td><td>Exactly one response</td><td>Many feedback messages + one result</td></tr>
+  <tr><td>Progress updates</td><td>–</td><td>❌</td><td>✅ feedback</td></tr>
+  <tr><td>Cancel half-way</td><td>–</td><td>❌</td><td>✅ cancel request</td></tr>
+  <tr><td>Can say "no"</td><td>–</td><td>Only inside the response fields</td><td>✅ accept or <strong>reject</strong> the goal, then SUCCEEDED / CANCELED / ABORTED</td></tr>
+  <tr><td>Interface file</td><td><code>.msg</code></td><td><code>.srv</code>: request <code>---</code> response</td><td><code>.action</code>: goal <code>---</code> result <code>---</code> feedback</td></tr>
+  <tr><td>Terminal</td><td><code>ros2 topic pub / echo</code></td><td><code>ros2 service call</code></td><td><code>ros2 action send_goal</code></td></tr>
+  <tr><td>Python</td><td><code>create_publisher</code> / <code>create_subscription</code></td><td><code>create_service</code> / <code>create_client</code></td><td><code>ActionServer</code> / <code>ActionClient</code></td></tr>
+  <tr><td>Robot examples</td><td><code>/scan</code>, <code>/odom</code>, <code>/cmd_vel</code>, camera images</td><td>reset odometry, save the map, switch mode, spawn</td><td>Nav2 <code>NavigateToPose</code>, rotate to a heading, dock to charger, move an arm</td></tr>
+</table></div>
+
+<h3>🧭 Which one do I use?</h3>
+<div class="mermaid">
+flowchart TD
+  Q1{"Is it a continuous<br/>stream of data?"} -- yes --> T["📻 Topic"]
+  Q1 -- no --> Q2{"Does it finish quickly<br/>(well under a second)?"}
+  Q2 -- yes --> S["🛎️ Service"]
+  Q2 -- no --> Q3{"Do you need progress<br/>or a way to cancel?"}
+  Q3 -- yes --> A["🎯 Action"]
+  Q3 -- "no, but it's slow" --> A2["🎯 Action anyway:<br/>a slow service blocks its clients"]
+</div>
+
+<h3>🔩 Under the hood: an action is services + topics</h3>
+<p>An action is not new magic. ROS 2 builds every action from <strong>three services</strong> and <strong>two topics</strong>, hidden under the name <code>&lt;action&gt;/_action/…</code>. You will see them yourself in Lab 5.</p>
+<div class="mermaid">
+sequenceDiagram
+  participant C as Action client
+  participant S as Action server
+  C->>S: send_goal (service) · goal {theta: 1.57}
+  S-->>C: accepted ✔ (or rejected)
+  C->>S: get_result (service) · "tell me when you're done"
+  loop while working
+    S--)C: feedback (topic) · remaining: 0.9… 0.4…
+  end
+  S--)C: status (topic) · EXECUTING → SUCCEEDED
+  S-->>C: result {delta: -1.57}
+  Note over C,S: at any moment the client may call cancel_goal (service)
+</div>
+<figure class="figure-card"><img src="images/ros2docs/Action-SingleActionClient.gif" alt="Animation: an action client sends a goal request, the server replies, then streams feedback on a topic and finally sends the result." loading="lazy"><figcaption>The goal and result travel as services; feedback streams back on a topic.</figcaption></figure>
+<p class="credit">Animation: <a href="https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Actions/Understanding-ROS2-Actions.html">ROS 2 Documentation, "Understanding actions"</a>, Open Robotics, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.</p>
+
+<div data-widget="action"></div>
+
+<div class="box tip">
+  <div class="box-title">💡 The four endings of a goal</div>
+  <ul>
+    <li><strong>REJECTED</strong>: the server said no before starting (e.g. "shelf 99 doesn't exist").</li>
+    <li><strong>SUCCEEDED</strong>: the job is done.</li>
+    <li><strong>CANCELED</strong>: the <em>client</em> asked to stop and the server agreed.</li>
+    <li><strong>ABORTED</strong>: the <em>server</em> gave up on its own (blocked, error, or a newer goal replaced it).</li>
+  </ul>
+</div>
+
+<h3>🃏 Action terms</h3>
+<div class="flip-grid" data-widget="flip"><div class="flip"><div class="flip-in"><div class="flip-front">Goal<small>tap to flip</small></div><div class="flip-back">What the client wants done: the part above the first <code>---</code>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Feedback<small>tap to flip</small></div><div class="flip-back">Progress updates the server publishes while it works.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Result<small>tap to flip</small></div><div class="flip-back">One final message when the goal ends.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Goal handle<small>tap to flip</small></div><div class="flip-back">Your "order number": use it to get the result or to cancel.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">.action<small>tap to flip</small></div><div class="flip-back">Goal <code>---</code> result <code>---</code> feedback. Order matters!</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Cancel vs abort<small>tap to flip</small></div><div class="flip-back">Cancel: the client asked to stop. Abort: the server gave up.</div></div></div></div>
+
+<div class="game" data-widget="sort" data-cats="📻 Topic|🛎️ Service|🎯 Action"><div class="kc-head"><span class="sim-tag">🎮 Game</span><b>Topic, service or action?</b></div><ul><li data-cat="0">The LiDAR scan, 10 times per second</li><li data-cat="2">Drive to the charging dock</li><li data-cat="1">"What is 3 + 4?"</li><li data-cat="2">Rotate the turtle to face north, with progress</li><li data-cat="1">Save the map to a file</li><li data-cat="0">The robot's battery level, every second</li><li data-cat="2">Pick up a box with the robot arm</li><li data-cat="1">Switch the robot from manual to auto mode</li><li data-cat="2">Follow a list of 5 waypoints</li><li data-cat="0">Camera images</li></ul></div>
+
+<h2 id="lab5"><span class="num">L5</span>Lab 5 — Actions from the terminal</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 5 · 20 min</span><h3>Turn the turtle, watch the feedback, cancel it, break it</h3></div>
+  <p class="lab-goal">Goal: find an action, read its three-part type, send a goal with feedback, and see all the possible endings.</p>
+
+  <div class="step" id="s5-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Find the action and read its type</span></div>
+    <p>Keep <code>turtlesim_node</code> and <code>turtle_teleop_key</code> running from Lab 1.</p>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 3</div><pre><code>ros2 action list -t
+ros2 action info /turtle1/rotate_absolute
+ros2 interface show turtlesim/action/RotateAbsolute</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>/turtle1/rotate_absolute [turtlesim/action/RotateAbsolute]
+
+Action: /turtle1/rotate_absolute
+Action clients: 1
+    /teleop_turtle
+Action servers: 1
+    /turtlesim
+
+# The desired heading in radians
+float32 theta
+---
+# The angular displacement in radians to the starting position
+float32 delta
+---
+# The remaining rotation in radians
+float32 remaining</pre></div>
+    <p>Three parts: the <strong>goal</strong> (<code>theta</code>), the <strong>result</strong> (<code>delta</code>) and the <strong>feedback</strong> (<code>remaining</code>). Teleop is an action client: the keys <kbd>G B V C D E R T</kbd> send rotation goals, and <kbd>F</kbd> cancels.</p>
+  </div>
+
+  <div class="step" id="s5-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Send a goal and watch the feedback</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 3</div><pre><code>ros2 action send_goal /turtle1/rotate_absolute turtlesim/action/RotateAbsolute "{theta: 1.57}" --feedback</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see (numbers will differ)</div><pre>Waiting for an action server to become available...
+Sending goal:
+     theta: 1.57
+
+Goal accepted with ID: 3a5b7c...
+
+Feedback:
+    remaining: 1.552
+Feedback:
+    remaining: 1.536
+...
+Result:
+    delta: -1.568
+
+Goal finished with status: SUCCEEDED</pre></div>
+    <p>The turtle turns to face up (1.57 rad = 90°). Without <code>--feedback</code> you only see the result.</p>
+  </div>
+
+  <div class="step" id="s5-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Cancel it, then make it abort</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 3</div><pre><code>ros2 action send_goal /turtle1/rotate_absolute turtlesim/action/RotateAbsolute "{theta: -3.0}" --feedback</code></pre></div>
+    <ul>
+      <li><strong>Cancel:</strong> while it turns, click the teleop window and press <kbd>F</kbd>. The goal ends with <code>CANCELED</code>. (Pressing <kbd>Ctrl</kbd>+<kbd>C</kbd> in Terminal 3 also sends a cancel request.)</li>
+      <li><strong>Abort:</strong> send the goal again, and this time press an <strong>arrow key</strong> while it turns. turtlesim prints "Velocity command received during rotation goal. Aborting goal" and the status is <code>ABORTED</code>: the server gave up by itself.</li>
+      <li><strong>Replace:</strong> send a goal, and while it runs send a second one from another terminal. The first is <code>ABORTED</code> and the second runs.</li>
+    </ul>
+  </div>
+
+  <div class="step" id="s5-4">
+    <div class="step-h"><span class="step-n">4</span><span class="step-t">Look under the hood</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 3</div><pre><code>ros2 service list --include-hidden-services | grep _action
+ros2 topic list --include-hidden-topics | grep _action</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>/turtle1/rotate_absolute/_action/cancel_goal
+/turtle1/rotate_absolute/_action/get_result
+/turtle1/rotate_absolute/_action/send_goal
+/turtle1/rotate_absolute/_action/feedback
+/turtle1/rotate_absolute/_action/status</pre></div>
+    <p>Exactly the three services and two topics from the diagram. Run the goal from step 2 again while <code>ros2 topic echo /turtle1/rotate_absolute/_action/feedback</code> runs in a fourth terminal: you are reading the feedback topic directly.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab6"><span class="num">L6</span>Lab 6 — Your first action client</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 6 · 25 min</span><h3>Point the turtle west from Python</h3></div>
+  <p class="lab-goal">Goal: a node that sends a <code>RotateAbsolute</code> goal, prints the feedback, reports how the goal ended, and then learns to cancel.</p>
+
+  <div class="step" id="s6-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Add the dependencies</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/package.xml (add, if not there yet)</div><pre><code>  &lt;depend&gt;turtlesim&lt;/depend&gt;
+  &lt;depend&gt;action_msgs&lt;/depend&gt;</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws/src/my_py_pkg/my_py_pkg
+touch turtle_rotate_client.py &amp;&amp; chmod +x turtle_rotate_client.py</code></pre></div>
+  </div>
+
+  <div class="step" id="s6-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Write the client (click the highlighted parts)</span></div>
+    <p>It is the same non-blocking idea as the service client, with three callbacks instead of one: <em>goal accepted?</em>, <em>feedback</em>, and <em>result</em>.</p>
+    <div class="cmd file" data-widget="explain"><div class="cmd-h">📄 my_py_pkg/turtle_rotate_client.py</div><pre><code>#!/usr/bin/env python3
+import math
+import rclpy
+from rclpy.node import Node
+<span class="ex" data-tip="Actions live in <code>rclpy.action</code>, not on the Node like publishers and services.">from rclpy.action import ActionClient</span>
+<span class="ex" data-tip="The status codes: SUCCEEDED, CANCELED, ABORTED… are constants of <code>GoalStatus</code>.">from action_msgs.msg import GoalStatus</span>
+from turtlesim.action import RotateAbsolute
+
+
+class TurtleRotateClientNode(Node):
+    def __init__(self):
+        super().__init__("turtle_rotate_client")
+<span class="ex" data-tip="Node, action type, action name. No leading <code>/</code>, so it can be remapped and namespaced like a topic.">        self.client_ = ActionClient(self, RotateAbsolute, "turtle1/rotate_absolute")</span>
+        self.goal_handle_ = None
+
+    def send_goal(self, theta):
+        while not self.client_.wait_for_server(1.0):
+            self.get_logger().warn("Waiting for action server turtle1/rotate_absolute...")
+        goal = RotateAbsolute.Goal()
+        goal.theta = theta
+        self.get_logger().info(f"Sending goal: theta = {theta:.2f} rad")
+<span class="ex" data-tip="Like <code>call_async</code>: returns a future at once. The feedback callback will run for every feedback message.">        future = self.client_.send_goal_async(goal, feedback_callback=self.callback_feedback)</span>
+<span class="ex" data-tip="Callback 1 runs when the server says <b>accepted</b> or <b>rejected</b>, not when the job is done.">        future.add_done_callback(self.callback_goal_response)</span>
+
+    def callback_goal_response(self, future):
+<span class="ex" data-tip="The goal handle: your order number. Keep it to ask for the result or to cancel.">        self.goal_handle_ = future.result()</span>
+        if not self.goal_handle_.accepted:
+            self.get_logger().warn("Goal rejected")
+            return
+        self.get_logger().info("Goal accepted")
+<span class="ex" data-tip="A second future: this one completes when the goal <b>ends</b>, however it ends.">        self.goal_handle_.get_result_async().add_done_callback(self.callback_result)</span>
+
+    def callback_feedback(self, feedback_msg):
+<span class="ex" data-tip="Feedback arrives wrapped: the fields are inside <code>.feedback</code>. turtlesim sends it ~60 times a second, so we log at most twice a second.">        remaining = feedback_msg.feedback.remaining
+        self.get_logger().info(f"Feedback: {math.degrees(remaining):.0f} deg to go",
+                               throttle_duration_sec=0.5)</span>
+
+    def callback_result(self, future):
+<span class="ex" data-tip="The answer holds both the <b>status</b> (how it ended) and the <b>result</b> message (what the .action file defines).">        status = future.result().status
+        result = future.result().result</span>
+        if status == GoalStatus.STATUS_SUCCEEDED:
+            self.get_logger().info(f"SUCCEEDED: turned {math.degrees(result.delta):.0f} deg")
+        elif status == GoalStatus.STATUS_CANCELED:
+            self.get_logger().warn("CANCELED")
+        elif status == GoalStatus.STATUS_ABORTED:
+            self.get_logger().error("ABORTED by the server")
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = TurtleRotateClientNode()
+    node.send_goal(math.pi)   # face west
+<span class="ex" data-tip="Spin so all three callbacks can run. Nothing blocks: timers and subscribers in this node would keep working.">    rclpy.spin(node)</span>
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+  </div>
+
+  <div class="step" id="s6-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Register, build and run</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal (turtlesim running)</div><pre><code>#  setup.py:  "turtle_rotate_client = my_py_pkg.turtle_rotate_client:main",
+cd ~/ros2_ws &amp;&amp; colcon build --packages-select my_py_pkg --symlink-install &amp;&amp; source ~/.bashrc
+ros2 run my_py_pkg turtle_rotate_client</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see (if the turtle starts facing east)</div><pre>[INFO] [...] [turtle_rotate_client]: Sending goal: theta = 3.14 rad
+[INFO] [...] [turtle_rotate_client]: Goal accepted
+[INFO] [...] [turtle_rotate_client]: Feedback: 179 deg to go
+[INFO] [...] [turtle_rotate_client]: Feedback: 150 deg to go
+...
+[INFO] [...] [turtle_rotate_client]: SUCCEEDED: turned -180 deg</pre></div>
+    <p>Run it again: the turtle already faces west, so it finishes immediately. Press an arrow key in teleop during a run to see the <code>ABORTED</code> branch.</p>
+  </div>
+
+  <div class="step" id="s6-4">
+    <div class="step-h"><span class="step-n">4</span><span class="step-t">Change your mind: cancel from code</span></div>
+    <p>Add a one-shot timer that cancels the goal 1 second after it is accepted. Turn the turtle east first (<code>ros2 action send_goal … "{theta: 0.0}"</code>) so there is a long turn to interrupt.</p>
+    <div class="cmd file"><div class="cmd-h">📄 turtle_rotate_client.py (changes)</div><pre><code>    def callback_goal_response(self, future):
+        self.goal_handle_ = future.result()
+        if not self.goal_handle_.accepted:
+            self.get_logger().warn("Goal rejected")
+            return
+        self.get_logger().info("Goal accepted")
+        self.goal_handle_.get_result_async().add_done_callback(self.callback_result)
+<span class="hl">        self.cancel_timer_ = self.create_timer(1.0, self.cancel_goal)</span>
+
+<span class="hl">    def cancel_goal(self):</span>
+<span class="hl">        self.cancel_timer_.cancel()          # run only once</span>
+<span class="hl">        self.get_logger().warn("Changed my mind: canceling the goal")</span>
+<span class="hl">        self.goal_handle_.cancel_goal_async()</span></code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>[INFO] [...] Goal accepted
+[INFO] [...] Feedback: 179 deg to go
+[INFO] [...] Feedback: 151 deg to go
+[WARN] [...] Changed my mind: canceling the goal
+[WARN] [...] CANCELED</pre></div>
+    <p>The turtle stops about 57° into its turn (turtlesim rotates at 1 rad/s). Try that with a service!</p>
+  </div>
+</div>
+
+<details class="box">
+  <summary>➕ Going further (optional): write your own action server</summary>
+  <div class="inner">
+  <p>You'll design your own <code>.action</code> files in Lecture 5. Until then, <code>example_interfaces</code> ships a ready-made one, <code>Fibonacci</code>: goal <code>int32 order</code>, result and feedback both <code>int32[] sequence</code>. This server computes one number per second, publishes the sequence so far as feedback, rejects silly goals, and honours cancel requests.</p>
+  <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/fibonacci_server.py</div><pre><code>#!/usr/bin/env python3
+import time
+import rclpy
+from rclpy.node import Node
+from rclpy.action import ActionServer, CancelResponse, GoalResponse
+from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.executors import MultiThreadedExecutor
+from example_interfaces.action import Fibonacci
+
+
+class FibonacciServerNode(Node):
+    def __init__(self):
+        super().__init__("fibonacci_server")
+        self.server_ = ActionServer(
+            self, Fibonacci, "fibonacci",
+            execute_callback=self.callback_execute,
+            goal_callback=self.callback_goal,
+            cancel_callback=self.callback_cancel,
+            callback_group=ReentrantCallbackGroup())
+        self.get_logger().info("Fibonacci action server has been started")
+
+    def callback_goal(self, goal_request):
+        if not 1 &lt;= goal_request.order &lt;= 40:              # say "no" before starting
+            self.get_logger().warn(f"Rejecting goal: order = {goal_request.order}")
+            return GoalResponse.REJECT
+        return GoalResponse.ACCEPT
+
+    def callback_cancel(self, goal_handle):
+        self.get_logger().info("Cancel request received")
+        return CancelResponse.ACCEPT                         # the default is REJECT!
+
+    def callback_execute(self, goal_handle):
+        feedback = Fibonacci.Feedback()
+        feedback.sequence = [0, 1]
+        for i in range(1, goal_handle.request.order):
+            if goal_handle.is_cancel_requested:
+                goal_handle.canceled()
+                self.get_logger().info("Goal canceled")
+                return Fibonacci.Result(sequence=feedback.sequence)
+            feedback.sequence.append(feedback.sequence[i] + feedback.sequence[i - 1])
+            goal_handle.publish_feedback(feedback)
+            self.get_logger().info(f"Feedback: {list(feedback.sequence)}")
+            time.sleep(1.0)                                  # pretend this is hard work
+        goal_handle.succeed()
+        return Fibonacci.Result(sequence=feedback.sequence)
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = FibonacciServerNode()
+    rclpy.spin(node, executor=MultiThreadedExecutor())
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+  <div class="cmd"><div class="cmd-h">💻 Terminals 1 &amp; 2</div><pre><code>#  setup.py:  "fibonacci_server = my_py_pkg.fibonacci_server:main",
+ros2 run my_py_pkg fibonacci_server
+ros2 action send_goal /fibonacci example_interfaces/action/Fibonacci "{order: 6}" --feedback</code></pre></div>
+  <div class="out"><div class="out-h">✅ Final lines in Terminal 2</div><pre>Result:
+    sequence:
+    - 0
+    - 1
+    - 1
+    - 2
+    - 3
+    - 5
+    - 8
+
+Goal finished with status: SUCCEEDED</pre></div>
+  <p>Now try <code>{order: 0}</code> (rejected) and <code>{order: 20}</code> stopped with <kbd>Ctrl</kbd>+<kbd>C</kbd> (canceled). <strong>Why the multi-threaded executor?</strong> <code>callback_execute</code> sleeps in a loop. With the default single-threaded executor nothing else can run meanwhile, so the cancel request would never be processed. The <code>ReentrantCallbackGroup</code> lets the cancel callback run in a second thread while the goal executes.</p>
+  </div>
+</details>
+
+<div class="activity">
+  <div class="lvl">Challenge 4.3 · Stretch · actions</div>
+  <h3>The compass dance</h3>
+  <p>Write <code>compass_dance.py</code>: an action client that makes turtle1 face <strong>north, west, south, east</strong> (π/2, π, −π/2, 0), one after the other, logging each result. Send the next goal only when the previous one has <strong>SUCCEEDED</strong>; if any goal is canceled or aborted, stop the dance and log why. Test it by pressing <kbd>F</kbd> in teleop half-way.</p>
+  <details class="hint"><summary>Hint</summary><div class="inner">Keep a list of headings and an index. In <code>callback_result</code>, on success, increase the index and call <code>send_goal</code> again. Do <em>not</em> send all four goals at once: turtlesim aborts the old goal when a new one arrives (you saw that in Lab 5).</div></details>
+  <details class="solution"><summary>Solution</summary><div class="inner">
+  <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/compass_dance.py</div><pre><code>#!/usr/bin/env python3
+import math
+import rclpy
+from rclpy.node import Node
+from rclpy.action import ActionClient
+from action_msgs.msg import GoalStatus
+from turtlesim.action import RotateAbsolute
+
+HEADINGS = [("north", math.pi / 2), ("west", math.pi), ("south", -math.pi / 2), ("east", 0.0)]
+
+
+class CompassDanceNode(Node):
+    def __init__(self):
+        super().__init__("compass_dance")
+        self.client_ = ActionClient(self, RotateAbsolute, "turtle1/rotate_absolute")
+        self.index_ = 0
+        self.client_.wait_for_server()
+        self.send_next()
+
+    def send_next(self):
+        name, theta = HEADINGS[self.index_]
+        self.get_logger().info(f"Turning {name}")
+        goal = RotateAbsolute.Goal()
+        goal.theta = theta
+        self.client_.send_goal_async(goal).add_done_callback(self.callback_goal_response)
+
+    def callback_goal_response(self, future):
+        goal_handle = future.result()
+        if not goal_handle.accepted:
+            self.get_logger().error("Goal rejected, the dance is over")
+            return
+        goal_handle.get_result_async().add_done_callback(self.callback_result)
+
+    def callback_result(self, future):
+        status = future.result().status
+        name = HEADINGS[self.index_][0]
+        if status != GoalStatus.STATUS_SUCCEEDED:
+            reason = "canceled" if status == GoalStatus.STATUS_CANCELED else "aborted"
+            self.get_logger().warn(f"Turn {name} was {reason}: stopping the dance")
+            return
+        self.get_logger().info(f"Facing {name} ✔")
+        self.index_ += 1
+        if self.index_ &lt; len(HEADINGS):
+            self.send_next()
+        else:
+            self.get_logger().info("Dance complete 🎉")
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    rclpy.spin(CompassDanceNode())
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div></div></details>
+</div>
 
 <h3>🏅 Level up: choose your challenge</h3>
-<div class="levels"><div class="lv bronze"><b>🥉 Bronze: everyone</b><span>Activity 4.1: reset the counter from the terminal while the publisher keeps running.</span></div><div class="lv silver"><b>🥈 Silver: confident</b><span>Challenge 4.2: the turtle army, then kill them all again with <code>/kill</code> from code.</span></div><div class="lv gold"><b>🥇 Gold: future expert</b><span>Write a <code>counter_supervisor</code> client that resets the counter automatically when it passes 50 (that's assignment A2).</span></div></div>
+<div class="levels"><div class="lv bronze"><b>🥉 Bronze: everyone</b><span>Activity 4.1: reset the counter from the terminal while the publisher keeps running. Lab 6 step 4: cancel a goal from code.</span></div><div class="lv silver"><b>🥈 Silver: confident</b><span>Challenge 4.2: the turtle army, then kill them all again with <code>/kill</code> from code. Challenge 4.3: the compass dance.</span></div><div class="lv gold"><b>🥇 Gold: future expert</b><span>Write a <code>counter_supervisor</code> client that resets the counter automatically when it passes 50 (that's assignment A2). Then the Fibonacci action server, and call it from your own action client.</span></div></div>
 
-<div class="kc" data-widget="kc"><div class="kc-head"><span class="sim-tag">✅ Knowledge check</span><b>Lecture 4 check: 5 questions</b></div><div class="kc-q" data-a="0"><p>How many servers can offer <code>/add_two_ints</code> at once?</p><div class="kc-opts"><button>One</button><button>Two</button><button>Unlimited</button><button>One per client</button></div><div class="kc-why">A service name has exactly one server; any number of clients can call it.</div></div><div class="kc-q" data-a="1"><p>What must the server callback end with?</p><div class="kc-opts"><button><code>rclpy.spin()</code></button><button><code>return response</code></button><button><code>publish(response)</code></button><button><code>time.sleep(1)</code></button></div><div class="kc-why">If the response is not returned, the client never gets an answer.</div></div><div class="kc-q" data-a="1"><p>Why use <code>call_async</code> + <code>add_done_callback</code> inside a node?</p><div class="kc-opts"><button>It is faster to type</button><button>So the node keeps running its timers and subscribers while it waits</button><button>It is required by C++</button><button>To call two servers</button></div><div class="kc-why">Blocking inside a callback freezes the whole node, as you saw in the simulator.</div></div><div class="kc-q" data-a="1"><p>In <code>turtlesim/srv/Spawn</code>, what is below the <code>---</code>?</p><div class="kc-opts"><button>x, y, theta</button><button>The response: <code>name</code></button><button>Nothing</button><button>The service name</button></div><div class="kc-why">Above the line is the request, below is the response.</div></div><div class="kc-q" data-a="1"><p>The client prints "Waiting for server…" forever. Most likely cause?</p><div class="kc-opts"><button>Wrong message type in a topic</button><button>Server not running, or the name is remapped on one side only</button><button>Queue size too small</button><button>Missing <code>spin</code> in the server</button></div><div class="kc-why">Check <code>ros2 service list</code> for the exact name.</div></div></div>
-<h2 id="errors"><span class="num">4.3</span>When things go wrong</h2>
+<div class="kc" data-widget="kc"><div class="kc-head"><span class="sim-tag">✅ Knowledge check</span><b>Lecture 4 check: 8 questions</b></div><div class="kc-q" data-a="0"><p>How many servers can offer <code>/add_two_ints</code> at once?</p><div class="kc-opts"><button>One</button><button>Two</button><button>Unlimited</button><button>One per client</button></div><div class="kc-why">A service name has exactly one server; any number of clients can call it.</div></div><div class="kc-q" data-a="1"><p>What must the server callback end with?</p><div class="kc-opts"><button><code>rclpy.spin()</code></button><button><code>return response</code></button><button><code>publish(response)</code></button><button><code>time.sleep(1)</code></button></div><div class="kc-why">If the response is not returned, the client never gets an answer.</div></div><div class="kc-q" data-a="1"><p>Why use <code>call_async</code> + <code>add_done_callback</code> inside a node?</p><div class="kc-opts"><button>It is faster to type</button><button>So the node keeps running its timers and subscribers while it waits</button><button>It is required by C++</button><button>To call two servers</button></div><div class="kc-why">Blocking inside a callback freezes the whole node, as you saw in the simulator.</div></div><div class="kc-q" data-a="1"><p>The client prints "Waiting for server…" forever. Most likely cause?</p><div class="kc-opts"><button>Wrong message type in a topic</button><button>Server not running, or the name is remapped on one side only</button><button>Queue size too small</button><button>Missing <code>spin</code> in the server</button></div><div class="kc-why">Check <code>ros2 service list</code> for the exact name.</div></div><div class="kc-q" data-a="2"><p>What does an action have that a service doesn't?</p><div class="kc-opts"><button>A name</button><button>A type</button><button>Feedback while it runs, and cancellation</button><button>A response</button></div><div class="kc-why">Goal → feedback… → result, cancellable at any time.</div></div><div class="kc-q" data-a="3"><p>In a <code>.action</code> file, what is the order of the three parts?</p><div class="kc-opts"><button>feedback, goal, result</button><button>goal, feedback, result</button><button>result, goal, feedback</button><button>goal, result, feedback</button></div><div class="kc-why">Goal <code>---</code> result <code>---</code> feedback. In RotateAbsolute: <code>theta</code>, <code>delta</code>, <code>remaining</code>.</div></div><div class="kc-q" data-a="1"><p>You press an arrow key while turtlesim is rotating to a goal. How does the goal end?</p><div class="kc-opts"><button>SUCCEEDED</button><button>ABORTED: the server gave up by itself</button><button>CANCELED: the client asked to stop</button><button>REJECTED</button></div><div class="kc-why">Cancel comes from the client (the <kbd>F</kbd> key). A velocity command makes the server abort on its own.</div></div><div class="kc-q" data-a="0"><p>Under the hood, an action is built from…</p><div class="kc-opts"><button>3 services + 2 topics</button><button>1 service</button><button>2 publishers only</button><button>A special DDS feature, no services or topics</button></div><div class="kc-why"><code>send_goal</code>, <code>cancel_goal</code>, <code>get_result</code> services + <code>feedback</code>, <code>status</code> topics. You listed them in Lab 5.</div></div></div>
+<h2 id="errors"><span class="num">4.4</span>When things go wrong</h2>
 <div class="table-wrap"><table class="fix">
   <tr><th>You see…</th><th>Why</th><th>Fix</th></tr>
   <tr><td>"Waiting for server…" forever</td><td>Server not running, wrong name, or remapped on one side only.</td><td><code>ros2 service list</code>: is the exact name there?</td></tr>
@@ -529,36 +968,54 @@ if __name__ == "__main__":
   <tr><td>Node freezes after a call</td><td>You used <code>spin_until_future_complete</code> inside a callback of a node that is already spinning.</td><td>Inside nodes use <code>call_async</code> + <code>add_done_callback</code>.</td></tr>
   <tr><td>TypeError: callback() missing argument</td><td><code>add_done_callback</code> passes only <code>future</code>.</td><td>Use <code>partial(self.cb, a=a, b=b)</code>.</td></tr>
   <tr><td>"Failed to populate field" on service call</td><td>A YAML typo, or a word such as <code>off</code> used as a key without quotes.</td><td><code>"{a: 3, b: 4}"</code>: a space after each colon; quote special keys.</td></tr>
+  <tr><td>send_goal: "Waiting for an action server to become available…" forever</td><td>Wrong action name or the server isn't running.</td><td><code>ros2 action list</code>; mind the namespace: <code>/turtle1/rotate_absolute</code>.</td></tr>
+  <tr><td>Your goal ends ABORTED straight away</td><td>Another goal (or teleop's arrow keys) replaced it.</td><td>Send the next goal only from the result callback of the previous one.</td></tr>
+  <tr><td><code>AttributeError: 'RotateAbsolute_FeedbackMessage' … no attribute 'remaining'</code></td><td>The feedback callback gets a wrapper message.</td><td>Read <code>feedback_msg.feedback.remaining</code>.</td></tr>
+  <tr><td>Your action server ignores cancel requests</td><td>No <code>cancel_callback</code> (the default rejects), or a single-threaded executor stuck in the execute loop.</td><td>Return <code>CancelResponse.ACCEPT</code>; use <code>MultiThreadedExecutor</code> + <code>ReentrantCallbackGroup</code>.</td></tr>
 </table></div>
 
-<h2 id="exit"><span class="num">4.4</span>Exit ticket (5 min)</h2>
+<h2 id="exit"><span class="num">4.5</span>Exit ticket (5 min)</h2>
 <div class="quiz">
-  <div class="q"><p>Topic or service? (a) LiDAR scans (b) "Save the map now" (c) Robot battery level every second.</p><details><summary>Answer</summary><div class="inner">(a) topic (b) service (c) topic</div></details></div>
-  <div class="q"><p>In a <code>.srv</code> type, what does the <code>---</code> separate?</p><details><summary>Answer</summary><div class="inner">The request fields (above) from the response fields (below).</div></details></div>
-  <div class="q"><p>What must the last line of a server callback be?</p><details><summary>Answer</summary><div class="inner"><code>return response</code></div></details></div>
-  <div class="q"><p>How many servers can offer <code>/add_two_ints</code> at the same time? How many clients?</p><details><summary>Answer</summary><div class="inner">One server; any number of clients.</div></details></div>
-  <div class="q"><p>Write the terminal command to spawn a turtle called <code>bob</code> at (3, 3).</p><details><summary>Answer</summary><div class="inner"><code>ros2 service call /spawn turtlesim/srv/Spawn "{x: 3.0, y: 3.0, theta: 0.0, name: 'bob'}"</code></div></details></div>
+  <div class="q"><p>Topic, service or action? (a) LiDAR scans (b) "Save the map now" (c) "Drive to the kitchen" (d) battery level every second.</p><details><summary>Answer</summary><div class="inner">(a) topic (b) service (c) action (d) topic</div></details></div>
+  <div class="q"><p>In a <code>.srv</code> type, what does the <code>---</code> separate? And in a <code>.action</code>?</p><details><summary>Answer</summary><div class="inner"><code>.srv</code>: request above, response below. <code>.action</code>: goal, then result, then feedback.</div></details></div>
+  <div class="q"><p>What must the last line of a service server callback be?</p><details><summary>Answer</summary><div class="inner"><code>return response</code></div></details></div>
+  <div class="q"><p>Name the two things an action client can do that a service client can't.</p><details><summary>Answer</summary><div class="inner">Receive feedback while the job runs, and cancel it half-way.</div></details></div>
+  <div class="q"><p>Write the terminal command to turn turtle1 to face down (−1.57 rad) and show the feedback.</p><details><summary>Answer</summary><div class="inner"><code>ros2 action send_goal /turtle1/rotate_absolute turtlesim/action/RotateAbsolute "{theta: -1.57}" --feedback</code></div></details></div>
 </div>
 
 <h3>📋 Today's commands</h3>
 <div class="cheat">
-  <div><code>ros2 service list</code><span>all services</span></div>
+  <div><code>ros2 service list -t</code><span>all services + types</span></div>
   <div><code>ros2 service type /s</code><span>its type</span></div>
-  <div><code>ros2 interface show TYPE</code><span>request --- response</span></div>
+  <div><code>ros2 interface show TYPE</code><span>request --- response (--- feedback)</span></div>
   <div><code>ros2 service call /s TYPE "{...}"</code><span>call from the terminal</span></div>
   <div><code>create_service(T, "name", cb)</code><span>server (callback returns response)</span></div>
   <div><code>create_client(T, "name")</code> · <code>call_async(req)</code><span>client</span></div>
   <div><code>future.add_done_callback(partial(...))</code><span>non-blocking answer</span></div>
   <div><code>rqt → Plugins → Services → Service Caller</code><span>call with a GUI</span></div>
+  <div><code>ros2 action list -t</code> · <code>ros2 action info /a</code><span>find actions, servers and clients</span></div>
+  <div><code>ros2 action send_goal /a TYPE "{...}" --feedback</code><span>send a goal, watch progress</span></div>
+  <div><code>ActionClient(self, T, "name")</code> · <code>send_goal_async</code><span>action client</span></div>
+  <div><code>goal_handle.get_result_async()</code> · <code>cancel_goal_async()</code><span>result and cancel</span></div>
 </div>
 
 <div class="box note">
   <div class="box-title">🏠 Homework</div>
   <ol>
     <li>Finish Activity 4.1. Show that the counter resets while the publisher keeps running.</li>
-    <li>Try Challenge 4.2 (turtle army).</li>
-    <li>Preview: run <code>ros2 interface show turtlesim/msg/Pose</code> and <code>ros2 interface show turtlesim/srv/Spawn</code>. Next week you design your own.</li>
+    <li>Finish Lab 6 including the cancel step. Try Challenge 4.2 (turtle army) or 4.3 (compass dance).</li>
+    <li>Preview: run <code>ros2 interface show turtlesim/msg/Pose</code>, <code>ros2 interface show turtlesim/srv/Spawn</code> and <code>ros2 interface show turtlesim/action/RotateAbsolute</code>. Next week you design your own <code>.msg</code> and <code>.srv</code> files.</li>
   </ol>
+</div>
+
+<div class="box">
+  <div class="box-title">📚 Read more</div>
+  <ul>
+    <li><a href="https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Services/Understanding-ROS2-Services.html">ROS 2 Humble docs: Understanding services</a></li>
+    <li><a href="https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Actions/Understanding-ROS2-Actions.html">ROS 2 Humble docs: Understanding actions</a></li>
+    <li><a href="https://docs.ros.org/en/humble/Tutorials/Intermediate/Writing-an-Action-Server-Client/Py.html">ROS 2 Humble docs: Writing an action server and client (Python)</a></li>
+    <li><a href="https://design.ros2.org/articles/actions.html">ROS 2 design article: Actions</a> (why actions are built from services and topics)</li>
+  </ul>
 </div>
 
 <div class="footer-nav">
