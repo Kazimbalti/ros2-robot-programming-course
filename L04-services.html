@@ -292,7 +292,7 @@
     <a href="#lab2"><span>Lab 2</span>Your first service server</a>
     <a href="#lab3"><span>Lab 3</span>Your first service client</a>
     <a href="#lab4"><span>Lab 4</span>Debug &amp; remap services</a>
-    <a href="#activity"><span>4.2</span>Activity: reset the counter</a>
+    <a href="#activity"><span>4.2</span>Your turn: services</a>
     <a href="#actions"><span>4.3</span>Actions, step by step</a>
     <a href="#lab5"><span>Lab 5</span>Actions from the terminal</a>
     <a href="#lab6"><span>Lab 6</span>Your first action client</a>
@@ -306,7 +306,7 @@
 <nav class="lpath " aria-label="Steps in this section"><a href="#big1"><b>1</b>See it</a><a href="#big2"><b>2</b>A real robot</a><a href="#big3"><b>3</b>Feel the difference</a><a href="#big4"><b>4</b>Compare</a><a href="#big5"><b>5</b>Choose</a><a href="#big6"><b>6</b>Check yourself</a></nav>
 
 <div class="lstep " id="big1"><span class="n">1</span><h3>See it: one robot team, three conversations</h3></div>
-<div class="ig l4ig"><div class="ig-title">Lecture 4 at a glance: one robot team, three ways to talk</div>
+<div class="ig l4ig">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <symbol id="ig-drone" viewBox="-34 -20 68 34" overflow="visible">
     <line style="stroke:var(--text);stroke-width:2.4;stroke-linecap:round" x1="-8" y1="-3" x2="-24" y2="-11"/><line style="stroke:var(--text);stroke-width:2.4;stroke-linecap:round" x1="8" y1="-3" x2="24" y2="-11"/>
@@ -642,6 +642,46 @@ example_interfaces.srv.AddTwoInts_Response(sum=7)</pre></div>
   </div>
 </div>
 
+<details class="box">
+  <summary>➕ Going further (optional): the C++ server</summary>
+  <div class="inner">
+  <div class="cmd file"><div class="cmd-h">📄 my_cpp_pkg/src/add_two_ints_server.cpp</div><pre><code>#include "rclcpp/rclcpp.hpp"
+#include "example_interfaces/srv/add_two_ints.hpp"
+
+using std::placeholders::_1;
+using std::placeholders::_2;
+
+class AddTwoIntsServerNode : public rclcpp::Node
+{
+public:
+    AddTwoIntsServerNode() : Node("add_two_ints_server")
+    {
+        server_ = this->create_service&lt;example_interfaces::srv::AddTwoInts&gt;(
+            "add_two_ints", std::bind(&amp;AddTwoIntsServerNode::callbackAddTwoInts, this, _1, _2));
+        RCLCPP_INFO(this->get_logger(), "Service server has been started.");
+    }
+
+private:
+    void callbackAddTwoInts(const example_interfaces::srv::AddTwoInts::Request::SharedPtr request,
+                            const example_interfaces::srv::AddTwoInts::Response::SharedPtr response)
+    {
+        response-&gt;sum = request-&gt;a + request-&gt;b;
+        RCLCPP_INFO(this->get_logger(), "%ld + %ld = %ld", request-&gt;a, request-&gt;b, response-&gt;sum);
+    }
+    rclcpp::Service&lt;example_interfaces::srv::AddTwoInts&gt;::SharedPtr server_;
+};
+
+int main(int argc, char **argv)
+{
+    rclcpp::init(argc, argv);
+    rclcpp::spin(std::make_shared&lt;AddTwoIntsServerNode&gt;());
+    rclcpp::shutdown();
+    return 0;
+}</code></pre></div>
+  <p>CMakeLists: <code>add_executable(add_two_ints_server src/add_two_ints_server.cpp)</code>, <code>ament_target_dependencies(add_two_ints_server rclcpp example_interfaces)</code> and add it to <code>install(TARGETS …)</code>. The Python client works with the C++ server.</p>
+  </div>
+</details>
+
 <!-- ============================================================ -->
 <h2 id="lab3"><span class="num">L3</span>Lab 3 — Your first service client</h2>
 <div class="lab">
@@ -708,45 +748,6 @@ ros2 run my_py_pkg add_two_ints_client</code></pre></div>
   <div class="game" data-widget="order"><div class="kc-head"><span class="sim-tag">🎮 Game</span><b>Your service client, from start to answer: put the steps in order</b></div><ol><li><code>self.client_ = self.create_client(AddTwoInts, "add_two_ints")</code></li><li><code>while not self.client_.wait_for_service(1.0):</code> wait until the server is up</li><li><code>self.send_request(3, 4)</code>: ask the first question</li><li><code>request = AddTwoInts.Request()</code>, then <code>request.a = a</code> and <code>request.b = b</code></li><li><code>future = self.client_.call_async(request)</code></li><li><code>future.add_done_callback(partial(self.callback_response, a=a, b=b))</code></li><li><code>rclpy.spin(node)</code>: the node keeps running while it waits</li><li>The server adds the numbers and <code>return response</code></li><li><code>callback_response(future, a, b)</code> logs <code>3 + 4 = 7</code></li></ol></div>
 </div>
 
-<details class="box">
-  <summary>➕ Going further (optional): the C++ server</summary>
-  <div class="inner">
-  <div class="cmd file"><div class="cmd-h">📄 my_cpp_pkg/src/add_two_ints_server.cpp</div><pre><code>#include "rclcpp/rclcpp.hpp"
-#include "example_interfaces/srv/add_two_ints.hpp"
-
-using std::placeholders::_1;
-using std::placeholders::_2;
-
-class AddTwoIntsServerNode : public rclcpp::Node
-{
-public:
-    AddTwoIntsServerNode() : Node("add_two_ints_server")
-    {
-        server_ = this->create_service&lt;example_interfaces::srv::AddTwoInts&gt;(
-            "add_two_ints", std::bind(&amp;AddTwoIntsServerNode::callbackAddTwoInts, this, _1, _2));
-        RCLCPP_INFO(this->get_logger(), "Service server has been started.");
-    }
-
-private:
-    void callbackAddTwoInts(const example_interfaces::srv::AddTwoInts::Request::SharedPtr request,
-                            const example_interfaces::srv::AddTwoInts::Response::SharedPtr response)
-    {
-        response-&gt;sum = request-&gt;a + request-&gt;b;
-        RCLCPP_INFO(this->get_logger(), "%ld + %ld = %ld", request-&gt;a, request-&gt;b, response-&gt;sum);
-    }
-    rclcpp::Service&lt;example_interfaces::srv::AddTwoInts&gt;::SharedPtr server_;
-};
-
-int main(int argc, char **argv)
-{
-    rclcpp::init(argc, argv);
-    rclcpp::spin(std::make_shared&lt;AddTwoIntsServerNode&gt;());
-    rclcpp::shutdown();
-    return 0;
-}</code></pre></div>
-  <p>CMakeLists: <code>add_executable(add_two_ints_server src/add_two_ints_server.cpp)</code>, <code>ament_target_dependencies(add_two_ints_server rclcpp example_interfaces)</code> and add it to <code>install(TARGETS …)</code>. The Python client works with the C++ server.</p>
-  </div>
-</details>
 
 <!-- ============================================================ -->
 <h2 id="lab4"><span class="num">L4</span>Lab 4 — Debug &amp; remap services</h2>
@@ -1044,7 +1045,7 @@ ros2 topic list --include-hidden-topics | grep _action</code></pre></div>
 /turtle1/rotate_absolute/_action/send_goal
 /turtle1/rotate_absolute/_action/feedback
 /turtle1/rotate_absolute/_action/status</pre></div>
-    <p>Exactly the three services and two topics from the diagram. Run the goal from step 2 again while <code>ros2 topic echo /turtle1/rotate_absolute/_action/feedback</code> runs in a fourth terminal: you are reading the feedback topic directly.</p>
+    <p>Exactly the three services and two topics from the animation in 4.3, step 3. Run the goal from step 2 again while <code>ros2 topic echo /turtle1/rotate_absolute/_action/feedback</code> runs in a fourth terminal: you are reading the feedback topic directly.</p>
   </div>
 </div>
 
@@ -1286,7 +1287,8 @@ if __name__ == "__main__":
   <tr><td>Your action server ignores cancel requests</td><td>No <code>cancel_callback</code> (the default rejects), or a single-threaded executor stuck in the execute loop.</td><td>Return <code>CancelResponse.ACCEPT</code>; use <code>MultiThreadedExecutor</code> + <code>ReentrantCallbackGroup</code>.</td></tr>
 </table></div>
 
-<h2 id="exit"><span class="num">4.5</span>Exit ticket (5 min)</h2>
+<h2 id="exit"><span class="num">4.5</span>Exit ticket &amp; homework</h2>
+<p>Five quick questions (5 min), then today's commands and homework.</p>
 <div class="quiz">
   <div class="q"><p>Topic, service or action? (a) LiDAR scans (b) "Save the map now" (c) "Drive to the kitchen" (d) battery level every second.</p><details><summary>Answer</summary><div class="inner">(a) topic (b) service (c) action (d) topic</div></details></div>
   <div class="q"><p>In a <code>.srv</code> type, what does the <code>---</code> separate? And in a <code>.action</code>?</p><details><summary>Answer</summary><div class="inner"><code>.srv</code>: request above, response below. <code>.action</code>: goal, then result, then feedback.</div></details></div>
