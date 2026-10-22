@@ -49,6 +49,22 @@
   html[data-theme="dark"] body .cover .skill-path a.done{color:#a7f3d0; background:rgba(52,211,153,.18); border-color:rgba(52,211,153,.45);}
   html[data-theme="dark"] body .cover .skill-path a.now{color:#1e293b; background:#fff; border-color:#fff;}
 
+  /* step-by-step learning path inside 4.0, 4.1 and 4.3 */
+  .lpath{display:flex; flex-wrap:wrap; gap:8px; margin:4px 0 8px;}
+  .lpath a{display:inline-flex; align-items:center; gap:7px; padding:5px 13px 5px 5px; border-radius:99px; background:var(--panel); border:1px solid var(--border);
+    color:var(--text); text-decoration:none; font-weight:700; font-size:.82em; transition:transform .15s, border-color .15s;}
+  .lpath a:hover{transform:translateY(-2px); border-color:var(--accent);}
+  .lpath a b, .lstep .n{display:inline-flex; align-items:center; justify-content:center; border-radius:50%; color:#fff; font-weight:800;
+    background:linear-gradient(135deg,var(--accent),var(--purple));}
+  .lpath a b{width:24px; height:24px; font-size:.85em;}
+  .lpath.srv a b, .lstep.srv .n{background:linear-gradient(135deg,#d99a2b,var(--gold));}
+  .lpath.act a b, .lstep.act .n{background:linear-gradient(135deg,var(--accent2),#12b886);}
+  .lstep{display:flex; align-items:center; gap:12px; margin:40px 0 14px; padding-top:18px; border-top:1px dashed var(--border); scroll-margin-top:90px;}
+  .lstep .n{width:38px; height:38px; flex-shrink:0; font-size:1.05em; box-shadow:0 8px 16px -8px rgba(61,75,245,.55);}
+  .lstep h3{margin:0;}
+  .lstep h3 small{font-size:.65em; font-weight:700; color:var(--muted); margin-left:6px;}
+  .nextup{margin:26px 0 0; padding:14px 18px; border-radius:14px; background:var(--panel); border:1px solid var(--border); border-left:5px solid var(--accent2);}
+
   /* route card on its own: two columns of links on wide screens */
   @media (min-width:761px){ .toc.solo{columns:2; column-gap:32px;} .toc.solo h3{column-span:all;} .toc.solo a{break-inside:avoid;} }
 
@@ -145,14 +161,14 @@
 
   <div class="card toc solo">
     <h3>🗺️ Today's route</h3>
-    <a href="#warmup"><span>4.0</span>Warm-up</a>
-    <a href="#idea"><span>4.1</span>The idea: the help desk</a>
+    <a href="#big"><span>4.0</span>The big picture</a>
+    <a href="#services"><span>4.1</span>Services, step by step</a>
     <a href="#lab1"><span>Lab 1</span>Services with turtlesim</a>
     <a href="#lab2"><span>Lab 2</span>Your first service server</a>
     <a href="#lab3"><span>Lab 3</span>Your first service client</a>
     <a href="#lab4"><span>Lab 4</span>Debug &amp; remap services</a>
     <a href="#activity"><span>4.2</span>Activity: reset the counter</a>
-    <a href="#actions"><span>4.3</span>Services vs actions</a>
+    <a href="#actions"><span>4.3</span>Actions, step by step</a>
     <a href="#lab5"><span>Lab 5</span>Actions from the terminal</a>
     <a href="#lab6"><span>Lab 6</span>Your first action client</a>
     <a href="#errors"><span>4.4</span>When things go wrong</a>
@@ -160,6 +176,11 @@
   </div>
 
 
+<h2 id="big"><span class="num">4.0</span>The big picture: three ways robots talk</h2>
+<p>Before any code, get the whole idea in six small steps. Topics you already know from Lecture 3; today adds <strong>services</strong> (4.1) and <strong>actions</strong> (4.3).</p>
+<nav class="lpath " aria-label="Steps in this section"><a href="#big1"><b>1</b>See it</a><a href="#big2"><b>2</b>A real robot</a><a href="#big3"><b>3</b>Feel the difference</a><a href="#big4"><b>4</b>Compare</a><a href="#big5"><b>5</b>Choose</a><a href="#big6"><b>6</b>Check yourself</a></nav>
+
+<div class="lstep " id="big1"><span class="n">1</span><h3>See it: one robot team, three conversations</h3></div>
 <div class="ig l4ig"><div class="ig-title">Lecture 4 at a glance: one robot team, three ways to talk</div>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <symbol id="ig-drone" viewBox="-34 -20 68 34" overflow="visible">
@@ -244,11 +265,10 @@
     <ul><li>Goal → <strong>feedback…</strong> → result</li><li>Long jobs; can be <strong>cancelled</strong></li><li>e.g. Nav2 "go to pose", dock, move an arm</li></ul>
   </figure>
 </div>
-<p class="l4ig-foot">Part 1 of today is the <strong>service</strong>; part 2 (section 4.3) is the <strong>action</strong>. The topic you already know from Lecture 3.</p>
 </div>
 
-<h3>🚗 One real robot uses all three: the self-driving car</h3>
-<p>A self-driving car is a robot on wheels. Every sensor in the picture is a node, and the onboard <strong>computer</strong> runs dozens more (perception, planning, control). They talk in exactly the three ways you learn today.</p>
+<div class="lstep " id="big2"><span class="n">2</span><h3>A real robot: the self-driving car</h3></div>
+<p>A self-driving car is a robot on wheels. Every sensor in the picture is a node, and the onboard <strong>computer</strong> runs dozens more (perception, planning, control). They talk in exactly these three ways.</p>
 <figure class="figure-card"><img src="images/self-driving-car-sensors.jpg" alt="A self-driving car with its sensors labelled: LIDAR and GPS on the roof, a camera behind the windscreen, radar at the front bumper, a computer inside the car and a wheel encoder on the rear wheel." loading="lazy"><figcaption>The sensors of a self-driving car: LIDAR, camera, radar, GPS and wheel encoders, all feeding the onboard computer.</figcaption></figure>
 <div class="trio">
   <div class="t-topic"><div class="big">📻</div><b>Topics: the sensors stream</b><div class="say">nonstop, many times per second</div><ul><li>LIDAR → <code>/lidar/points</code></li><li>Camera → <code>/camera/image</code></li><li>Radar → <code>/radar/objects</code></li><li>GPS → <code>/gps/fix</code></li><li>Wheel encoder → <code>/wheel/odom</code></li><li>Computer → <code>/cmd_vel</code> (steer, throttle)</li></ul></div>
@@ -256,7 +276,39 @@
   <div class="t-act"><div class="big">🎯</div><b>Actions: long jobs</b><div class="say">goal → feedback → result, cancellable</div><ul><li>"Drive to the university" → "4.2 km… 1.1 km… arrived"</li><li>"Park in bay 7" → "reversing… 0.5 m… parked"</li><li>Passenger presses <strong>stop</strong> → the goal is <em>cancelled</em></li></ul></div>
 </div>
 
-<h2 id="warmup"><span class="num">4.0</span>Warm-up (5 min)</h2>
+<div class="lstep " id="big3"><span class="n">3</span><h3>Feel the difference: the same job, three ways</h3></div>
+<p>Mission control sends one job, "drive to shelf 12", as a topic, a service and an action. Press the buttons and watch who gets an answer, who freezes, and who can stop the robot.</p>
+<div data-widget="commrace"></div>
+
+<div class="lstep " id="big4"><span class="n">4</span><h3>Compare: everything side by side</h3></div>
+<p>Keep this table in mind during the labs: every row is explained step by step in 4.1 and 4.3.</p>
+<div class="table-wrap"><table class="vs">
+  <tr><th></th><th>Topic 📻</th><th>Service 🛎️</th><th>Action 🎯</th></tr>
+  <tr><td>Pattern</td><td>Publish → subscribe</td><td>Request → response</td><td>Goal → feedback… → result</td></tr>
+  <tr><td>Who talks</td><td>Many publishers, many subscribers</td><td>One server, many clients</td><td>One server, many clients</td></tr>
+  <tr><td>How long</td><td>Forever (a stream)</td><td>Quick: milliseconds</td><td>Seconds to minutes</td></tr>
+  <tr><td>Reply?</td><td>None</td><td>Exactly one response</td><td>Many feedback messages + one result</td></tr>
+  <tr><td>Progress updates</td><td>–</td><td>❌</td><td>✅ feedback</td></tr>
+  <tr><td>Cancel half-way</td><td>–</td><td>❌</td><td>✅ cancel request</td></tr>
+  <tr><td>Can say "no"</td><td>–</td><td>Only inside the response fields</td><td>✅ accept or <strong>reject</strong> the goal, then SUCCEEDED / CANCELED / ABORTED</td></tr>
+  <tr><td>Interface file</td><td><code>.msg</code></td><td><code>.srv</code>: request <code>---</code> response</td><td><code>.action</code>: goal <code>---</code> result <code>---</code> feedback</td></tr>
+  <tr><td>Terminal</td><td><code>ros2 topic pub / echo</code></td><td><code>ros2 service call</code></td><td><code>ros2 action send_goal</code></td></tr>
+  <tr><td>Python</td><td><code>create_publisher</code> / <code>create_subscription</code></td><td><code>create_service</code> / <code>create_client</code></td><td><code>ActionServer</code> / <code>ActionClient</code></td></tr>
+  <tr><td>Robot examples</td><td><code>/scan</code>, <code>/odom</code>, <code>/cmd_vel</code>, camera images</td><td>reset odometry, save the map, switch mode, spawn</td><td>Nav2 <code>NavigateToPose</code>, rotate to a heading, dock to charger, move an arm</td></tr>
+</table></div>
+
+<div class="lstep " id="big5"><span class="n">5</span><h3>Choose: which one do I use?</h3></div>
+<div class="mermaid">
+flowchart TD
+  Q1{"Is it a continuous<br/>stream of data?"} -- yes --> T["📻 Topic"]
+  Q1 -- no --> Q2{"Does it finish quickly<br/>(well under a second)?"}
+  Q2 -- yes --> S["🛎️ Service"]
+  Q2 -- no --> Q3{"Do you need progress<br/>or a way to cancel?"}
+  Q3 -- yes --> A["🎯 Action"]
+  Q3 -- "no, but it's slow" --> A2["🎯 Action anyway:<br/>a slow service blocks its clients"]
+</div>
+
+<div class="lstep " id="big6"><span class="n">6</span><h3>Check yourself <small>5 min</small></h3></div>
 <div class="quiz">
   <div class="q"><p>In the self-driving car picture, the LIDAR sends a new scan 10 times per second to anyone who needs it. Topic, service or action?</p><details><summary>Answer</summary><div class="inner">A <strong>topic</strong>: a nonstop one-way stream (e.g. <code>/lidar/points</code>). Nobody replies to it.</div></details></div>
   <div class="q"><p>Name two other sensors of the car that would also publish on topics.</p><details><summary>Answer</summary><div class="inner">Any two of: camera (<code>/camera/image</code>), radar, GPS (<code>/gps/fix</code>), wheel encoder (<code>/wheel/odom</code>).</div></details></div>
@@ -265,7 +317,12 @@
   <div class="q"><p>In the overview, the drone flying to waypoint A ends with "result: SUCCEEDED". Guess one other way the goal could end.</p><details><summary>Answer</summary><div class="inner">CANCELED (the client said stop) or ABORTED (the drone gave up, e.g. blocked). You meet all of them in 4.3.</div></details></div>
 </div>
 
-<h2 id="idea"><span class="num">4.1</span>The idea in 10 minutes</h2>
+<div class="game" data-widget="sort" data-cats="📻 Topic|🛎️ Service|🎯 Action"><div class="kc-head"><span class="sim-tag">🎮 Game</span><b>Topic, service or action?</b></div><ul><li data-cat="0">The LiDAR scan, 10 times per second</li><li data-cat="2">Drive to the charging dock</li><li data-cat="1">"What is 3 + 4?"</li><li data-cat="2">Rotate the turtle to face north, with progress</li><li data-cat="1">Save the map to a file</li><li data-cat="0">The robot's battery level, every second</li><li data-cat="2">Pick up a box with the robot arm</li><li data-cat="1">Switch the robot from manual to auto mode</li><li data-cat="2">Follow a list of 5 waypoints</li><li data-cat="0">Camera images</li></ul></div>
+
+<h2 id="services"><span class="num">4.1</span>Services, step by step</h2>
+<nav class="lpath srv" aria-label="Steps in this section"><a href="#srv1"><b>1</b>Picture it</a><a href="#srv2"><b>2</b>The rules</a><a href="#srv3"><b>3</b>Watch it</a><a href="#srv4"><b>4</b>Try it</a><a href="#srv5"><b>5</b>Remember it</a></nav>
+
+<div class="lstep srv" id="srv1"><span class="n">1</span><h3>Picture it: the help desk</h3></div>
 <div class="analogy"><div class="emoji">🛎️</div><div>
   <p><strong>A service is like a help desk.</strong> You walk up (you are the <em>client</em>), ask one question (the <em>request</em>), and the person behind the desk (the <em>server</em>) gives you one answer (the <em>response</em>). There is one desk, but many people can come and ask.</p>
 </div></div>
@@ -279,6 +336,7 @@ sequenceDiagram
   S-->>C: Response {sum: 7}
 </div>
 
+<div class="lstep srv" id="srv2"><span class="n">2</span><h3>The rules of a service</h3></div>
 <div class="box note">
   <div class="box-title">📌 Properties of a service</div>
   <ul>
@@ -289,25 +347,19 @@ sequenceDiagram
   </ul>
 </div>
 
-<div class="table-wrap"><table>
-  <tr><th></th><th>Topic 📻</th><th>Service 🛎️</th></tr>
-  <tr><td>Direction</td><td>One-way</td><td>Request → Response</td></tr>
-  <tr><td>How many</td><td>Many publishers, many subscribers</td><td>One server, many clients</td></tr>
-  <tr><td>Use for</td><td>Continuous data: sensors, pose, velocity</td><td>Quick one-off jobs and questions: reset, spawn, compute, switch mode</td></tr>
-  <tr><td>Robot example</td><td><code>/scan</code>, <code>/odom</code>, <code>/cmd_vel</code></td><td>"Save the map", "Reset odometry", "Turn the LED on"</td></tr>
-</table></div>
-
-<h3>🎬 Services in motion</h3>
+<div class="lstep srv" id="srv3"><span class="n">3</span><h3>Watch it</h3></div>
 <div class="fig-pair"><figure class="figure-card"><img src="images/ros2docs/Service-SingleServiceClient.gif" alt="Animation: one client sends a request to a server node and gets a response back." loading="lazy"><figcaption>One client: request in, response out.</figcaption></figure><figure class="figure-card"><img src="images/ros2docs/Service-MultipleServiceClient.gif" alt="Animation: several client nodes each send requests to the same single server." loading="lazy"><figcaption>Many clients, still one server.</figcaption></figure></div>
 <p class="credit">Animations: <a href="https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Services/Understanding-ROS2-Services.html">ROS 2 Documentation, "Understanding services"</a>, Open Robotics, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.</p>
+<figure class="figure-card"><img src="images/figures/fig2_8.png" alt="One weather server, many clients. The server exists once and answers everyone." loading="lazy"><figcaption>One weather server, many clients. The server exists once and answers everyone.</figcaption></figure><div class="fig-pair"><figure class="figure-card"><img src="images/figures/fig2_9.png" alt="The battery (client) asks the LED panel (server) to turn LED 3 on…" loading="lazy"><figcaption>The battery (client) asks the LED panel (server) to turn LED 3 on…</figcaption></figure><figure class="figure-card"><img src="images/figures/fig2_10.png" alt="…and later to turn it off. You build this in Lecture 5." loading="lazy"><figcaption>…and later to turn it off. You build this in Lecture 5.</figcaption></figure></div>
 
-<h3>🖼️ Services in pictures</h3><figure class="figure-card"><img src="images/figures/fig2_8.png" alt="One weather server, many clients. The server exists once and answers everyone." loading="lazy"><figcaption>One weather server, many clients. The server exists once and answers everyone.</figcaption></figure><div class="fig-pair"><figure class="figure-card"><img src="images/figures/fig2_9.png" alt="The battery (client) asks the LED panel (server) to turn LED 3 on…" loading="lazy"><figcaption>The battery (client) asks the LED panel (server) to turn LED 3 on…</figcaption></figure><figure class="figure-card"><img src="images/figures/fig2_10.png" alt="…and later to turn it off. You build this in Lecture 5." loading="lazy"><figcaption>…and later to turn it off. You build this in Lecture 5.</figcaption></figure></div>
+<div class="lstep srv" id="srv4"><span class="n">4</span><h3>Try it: never block while you wait</h3></div>
+<p>Call the adding machine below, then tick "blocking call" and call again: the client's timer stops. This is why every client you write today uses <code>call_async</code>.</p>
 <div data-widget="service"></div>
 
-<h3>🃏 Key terms: tap a card to check yourself</h3>
+<div class="lstep srv" id="srv5"><span class="n">5</span><h3>Remember it: tap a card to check yourself</h3></div>
 <div class="flip-grid" data-widget="flip"><div class="flip"><div class="flip-in"><div class="flip-front">Service<small>tap to flip</small></div><div class="flip-back">Request → response between a client and a server.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Server<small>tap to flip</small></div><div class="flip-back">Exists <b>once</b>. Its callback fills and returns the response.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Client<small>tap to flip</small></div><div class="flip-back">Sends a request. Many clients may use one server.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">.srv<small>tap to flip</small></div><div class="flip-back">Request fields, then <code>---</code>, then response fields.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">call_async<small>tap to flip</small></div><div class="flip-back">Sends the request and returns a <b>future</b> immediately.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Future<small>tap to flip</small></div><div class="flip-back">A "ticket" that will hold the response later.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">add_done_callback<small>tap to flip</small></div><div class="flip-back">Run a function when the answer arrives: never block!</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">partial<small>tap to flip</small></div><div class="flip-back">Pre-fills extra arguments for a callback: <code>partial(f, a=a)</code>.</div></div></div></div>
 
-<div class="game" data-widget="sort" data-cats="📻 Topic|🛎️ Service"><div class="kc-head"><span class="sim-tag">🎮 Game</span><b>Topic or service?</b></div><ul><li data-cat="0">Stream the LiDAR scan</li><li data-cat="1">Spawn a turtle at (3, 3)</li><li data-cat="0">Publish the robot pose</li><li data-cat="1">Reset the odometry</li><li data-cat="1">Clear the drawing</li><li data-cat="0">Send velocity commands</li><li data-cat="1">Switch the LED panel on</li><li data-cat="0">Camera images</li></ul></div>
+<p class="nextup">✅ You have the idea. Now build it, one lab at a time: <strong>Lab 1</strong> uses services, <strong>Lab 2</strong> writes a server, <strong>Lab 3</strong> writes a client, <strong>Lab 4</strong> debugs them.</p>
 
 <h2 id="lab1"><span class="num">L1</span>Lab 1 — Services with turtlesim</h2>
 <div class="lab">
@@ -700,49 +752,19 @@ if __name__ == "__main__":
 </div>
 
 <!-- ============================================================ -->
-<h2 id="actions"><span class="num">4.3</span>When a question takes a long time: actions</h2>
-<p>Services are perfect for quick questions. But imagine mission control asking a warehouse robot to <strong>"drive to shelf 12"</strong>. It takes 30 seconds. With a service the client hears nothing for 30 s, can't tell whether the robot is stuck behind a box, and can't say "stop, I changed my mind". ROS 2 has a third way to talk for exactly this job: the <strong>action</strong>.</p>
+<h2 id="actions"><span class="num">4.3</span>Actions, step by step</h2>
+<nav class="lpath act" aria-label="Steps in this section"><a href="#act1"><b>1</b>Why</a><a href="#act2"><b>2</b>Picture it</a><a href="#act3"><b>3</b>How it works</a><a href="#act4"><b>4</b>Try it</a><a href="#act5"><b>5</b>How a goal ends</a><a href="#act6"><b>6</b>Remember it</a></nav>
 
+<div class="lstep act" id="act1"><span class="n">1</span><h3>Why services aren't enough</h3></div>
+<p>Services are perfect for quick questions. But imagine mission control asking a warehouse robot to <strong>"drive to shelf 12"</strong>. It takes 30 seconds. With a service the client hears nothing for 30 s, can't tell whether the robot is stuck behind a box, and can't say "stop, I changed my mind". ROS 2 has a third way to talk for exactly this job: the <strong>action</strong>.</p>
+<p>You saw it in the race in 4.0: only the action lane gets progress, can be cancelled, and reports when the robot is stuck.</p>
+
+<div class="lstep act" id="act2"><span class="n">2</span><h3>Picture it: pizza with live tracking</h3></div>
 <div class="analogy"><div class="emoji">🍕</div><div>
   <p><strong>An action is like ordering a pizza with live tracking.</strong> You place the order (the <em>goal</em>), the shop says "order accepted", the app keeps updating you ("in the oven", "on the way, 2 km") as <em>feedback</em>, and at the end you get the pizza (the <em>result</em>). If you change your mind you can <em>cancel</em> while it's still on the way. A service is phoning the shop to ask "are you open?": one question, one quick answer.</p>
 </div></div>
 
-<div class="trio">
-  <div class="t-topic"><div class="big">📻</div><b>Topic</b><div class="say">"Here's the latest scan. And again. And again."</div><ul><li>Continuous stream, one-way</li><li>No reply, no confirmation</li><li>Many publishers, many subscribers</li></ul></div>
-  <div class="t-srv"><div class="big">🛎️</div><b>Service</b><div class="say">"Reset the counter." → "Done."</div><ul><li>One request → one response</li><li>Should finish <strong>quickly</strong></li><li>No progress updates, no cancel</li></ul></div>
-  <div class="t-act"><div class="big">🎯</div><b>Action</b><div class="say">"Drive to shelf 12." → "6 m… 3 m… arrived."</div><ul><li>Goal → feedback… → result</li><li>For <strong>long</strong> jobs</li><li>Can be <strong>cancelled</strong>; reports success, cancel or abort</li></ul></div>
-</div>
-
-<div data-widget="commrace"></div>
-
-<h3>⚖️ The full comparison</h3>
-<div class="table-wrap"><table class="vs">
-  <tr><th></th><th>Topic 📻</th><th>Service 🛎️</th><th>Action 🎯</th></tr>
-  <tr><td>Pattern</td><td>Publish → subscribe</td><td>Request → response</td><td>Goal → feedback… → result</td></tr>
-  <tr><td>Who talks</td><td>Many publishers, many subscribers</td><td>One server, many clients</td><td>One server, many clients</td></tr>
-  <tr><td>How long</td><td>Forever (a stream)</td><td>Quick: milliseconds</td><td>Seconds to minutes</td></tr>
-  <tr><td>Reply?</td><td>None</td><td>Exactly one response</td><td>Many feedback messages + one result</td></tr>
-  <tr><td>Progress updates</td><td>–</td><td>❌</td><td>✅ feedback</td></tr>
-  <tr><td>Cancel half-way</td><td>–</td><td>❌</td><td>✅ cancel request</td></tr>
-  <tr><td>Can say "no"</td><td>–</td><td>Only inside the response fields</td><td>✅ accept or <strong>reject</strong> the goal, then SUCCEEDED / CANCELED / ABORTED</td></tr>
-  <tr><td>Interface file</td><td><code>.msg</code></td><td><code>.srv</code>: request <code>---</code> response</td><td><code>.action</code>: goal <code>---</code> result <code>---</code> feedback</td></tr>
-  <tr><td>Terminal</td><td><code>ros2 topic pub / echo</code></td><td><code>ros2 service call</code></td><td><code>ros2 action send_goal</code></td></tr>
-  <tr><td>Python</td><td><code>create_publisher</code> / <code>create_subscription</code></td><td><code>create_service</code> / <code>create_client</code></td><td><code>ActionServer</code> / <code>ActionClient</code></td></tr>
-  <tr><td>Robot examples</td><td><code>/scan</code>, <code>/odom</code>, <code>/cmd_vel</code>, camera images</td><td>reset odometry, save the map, switch mode, spawn</td><td>Nav2 <code>NavigateToPose</code>, rotate to a heading, dock to charger, move an arm</td></tr>
-</table></div>
-
-<h3>🧭 Which one do I use?</h3>
-<div class="mermaid">
-flowchart TD
-  Q1{"Is it a continuous<br/>stream of data?"} -- yes --> T["📻 Topic"]
-  Q1 -- no --> Q2{"Does it finish quickly<br/>(well under a second)?"}
-  Q2 -- yes --> S["🛎️ Service"]
-  Q2 -- no --> Q3{"Do you need progress<br/>or a way to cancel?"}
-  Q3 -- yes --> A["🎯 Action"]
-  Q3 -- "no, but it's slow" --> A2["🎯 Action anyway:<br/>a slow service blocks its clients"]
-</div>
-
-<h3>🔩 Under the hood: an action is services + topics</h3>
+<div class="lstep act" id="act3"><span class="n">3</span><h3>How it works: three services + two topics</h3></div>
 <p>An action is not new magic. ROS 2 builds every action from <strong>three services</strong> and <strong>two topics</strong>, hidden under the name <code>&lt;action&gt;/_action/…</code>. You will see them yourself in Lab 5.</p>
 <div class="mermaid">
 sequenceDiagram
@@ -761,8 +783,10 @@ sequenceDiagram
 <figure class="figure-card"><img src="images/ros2docs/Action-SingleActionClient.gif" alt="Animation: an action client sends a goal request, the server replies, then streams feedback on a topic and finally sends the result." loading="lazy"><figcaption>The goal and result travel as services; feedback streams back on a topic.</figcaption></figure>
 <p class="credit">Animation: <a href="https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Actions/Understanding-ROS2-Actions.html">ROS 2 Documentation, "Understanding actions"</a>, Open Robotics, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.</p>
 
+<div class="lstep act" id="act4"><span class="n">4</span><h3>Try it: turn the turtle, then cancel</h3></div>
 <div data-widget="action"></div>
 
+<div class="lstep act" id="act5"><span class="n">5</span><h3>How a goal ends</h3></div>
 <div class="box tip">
   <div class="box-title">💡 The four endings of a goal</div>
   <ul>
@@ -773,10 +797,10 @@ sequenceDiagram
   </ul>
 </div>
 
-<h3>🃏 Action terms</h3>
+<div class="lstep act" id="act6"><span class="n">6</span><h3>Remember it</h3></div>
 <div class="flip-grid" data-widget="flip"><div class="flip"><div class="flip-in"><div class="flip-front">Goal<small>tap to flip</small></div><div class="flip-back">What the client wants done: the part above the first <code>---</code>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Feedback<small>tap to flip</small></div><div class="flip-back">Progress updates the server publishes while it works.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Result<small>tap to flip</small></div><div class="flip-back">One final message when the goal ends.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Goal handle<small>tap to flip</small></div><div class="flip-back">Your "order number": use it to get the result or to cancel.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">.action<small>tap to flip</small></div><div class="flip-back">Goal <code>---</code> result <code>---</code> feedback. Order matters!</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Cancel vs abort<small>tap to flip</small></div><div class="flip-back">Cancel: the client asked to stop. Abort: the server gave up.</div></div></div></div>
 
-<div class="game" data-widget="sort" data-cats="📻 Topic|🛎️ Service|🎯 Action"><div class="kc-head"><span class="sim-tag">🎮 Game</span><b>Topic, service or action?</b></div><ul><li data-cat="0">The LiDAR scan, 10 times per second</li><li data-cat="2">Drive to the charging dock</li><li data-cat="1">"What is 3 + 4?"</li><li data-cat="2">Rotate the turtle to face north, with progress</li><li data-cat="1">Save the map to a file</li><li data-cat="0">The robot's battery level, every second</li><li data-cat="2">Pick up a box with the robot arm</li><li data-cat="1">Switch the robot from manual to auto mode</li><li data-cat="2">Follow a list of 5 waypoints</li><li data-cat="0">Camera images</li></ul></div>
+<p class="nextup">✅ Now use it: <strong>Lab 5</strong> drives actions from the terminal, <strong>Lab 6</strong> writes an action client in Python.</p>
 
 <h2 id="lab5"><span class="num">L5</span>Lab 5 — Actions from the terminal</h2>
 <div class="lab">
