@@ -58,6 +58,7 @@
   html body .copy-btn:hover{background:#eaf1fb;}
   html body .cm{color:#64748b;} html body .kw{color:#7c3aed;} html body .st{color:#15803d;}
   html body .hl{background:rgba(250,204,21,.28);}
+  .hl-i{background:rgba(250,204,21,.4); border-radius:3px; padding:0 1px;}
   html body .sim-log{background:#f1f4f8; color:#1f2937; border:1px solid #d3dce8;}
   html[data-theme="dark"] body .cmd{border-color:#3d465d;}
   html[data-theme="dark"] body .cmd-h{background:linear-gradient(90deg,#323a4f,#384157) !important; color:#dbe4ff; border-bottom-color:#3d465d;}
@@ -66,6 +67,7 @@
   html[data-theme="dark"] body .copy-btn{background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.2); color:#e6e9f2;}
   html[data-theme="dark"] body .cm{color:#9aa4bf;} html[data-theme="dark"] body .kw{color:#c4b5fd;} html[data-theme="dark"] body .st{color:#86efac;}
   html[data-theme="dark"] body .hl{background:rgba(250,204,21,.18);}
+  html[data-theme="dark"] .hl-i{background:rgba(250,204,21,.3);}
   html[data-theme="dark"] body .sim-log{background:#2a3142; color:#e6e9f2; border-color:#3d465d;}
 
   /* Lecture 4 only: animated help-desk picture (services, step 1) */
@@ -592,14 +594,56 @@ example_interfaces.srv.AddTwoInts_Response(sum=7)</pre></div>
 <!-- ============================================================ -->
 <h2 id="lab3"><span class="num">L3</span>Lab 3 — Your first service client</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB 3 · 20 min</span><h3>Ask the adding machine from code</h3></div>
-  <p class="lab-goal">Goal: an OOP client node, the same class style as every node so far, that asks the server without ever blocking.</p>
+  <div class="lab-h"><span class="badge">LAB 3 · 25 min</span><h3>Ask the adding machine "3 + 4?" from code</h3></div>
+  <p class="lab-goal">Goal: a service client node that sends one request to <code>/add_two_ints</code> and prints the answer, built in small steps. Keep the server from Lab 2 running in another terminal.</p>
 
   <div class="step" id="s3-1">
-    <div class="step-h"><span class="step-n">1</span><span class="step-t">The OOP client: send, keep spinning, get a callback</span></div>
-    <p>Inside a real node we must <strong>never block</strong>, because the node also has to handle its timers and subscribers. So we send the request and ask ROS 2 to call us back when the answer arrives.</p>
-    <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/add_two_ints_client.py</div><pre><code>#!/usr/bin/env python3
-from functools import partial
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Create the client and wait for the server</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws/src/my_py_pkg/my_py_pkg
+touch add_two_ints_client.py &amp;&amp; chmod +x add_two_ints_client.py</code></pre></div>
+    <p>Start with the same node class as always, plus two new lines: <strong>make a client</strong> for the service, then <strong>wait</strong> until the server is there.</p>
+    <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/add_two_ints_client.py (step 1)</div><pre><code>#!/usr/bin/env python3
+import rclpy
+from rclpy.node import Node
+<span class="hl">from example_interfaces.srv import AddTwoInts</span>
+
+
+class AddTwoIntsClientNode(Node):
+    def __init__(self):
+        super().__init__("add_two_ints_client")
+<span class="hl">        self.client_ = self.create_client(AddTwoInts, "add_two_ints")</span>
+<span class="hl">        while not self.client_.wait_for_service(1.0):</span>
+<span class="hl">            self.get_logger().warn("Waiting for server add_two_ints...")</span></code></pre></div>
+    <p><code>create_client</code> takes the same two things as the server: the service <strong>type</strong> and the service <strong>name</strong>. They must match the server exactly.</p>
+  </div>
+
+  <div class="step" id="s3-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Send the request</span></div>
+    <p>Fill in the request (the fields <em>above</em> the <code>---</code>) and send it with <code>call_async</code>. It returns a <strong>future</strong> at once: a ticket for the answer that will come later.</p>
+    <div class="cmd file"><div class="cmd-h">📄 add_two_ints_client.py (add to the class)</div><pre><code>        # at the end of __init__: ask the question
+<span class="hl">        self.send_request(3, 4)</span>
+
+<span class="hl">    def send_request(self, a, b):</span>
+<span class="hl">        request = AddTwoInts.Request()</span>
+<span class="hl">        request.a = a</span>
+<span class="hl">        request.b = b</span>
+<span class="hl">        future = self.client_.call_async(request)</span>
+<span class="hl">        future.add_done_callback(self.callback_response)</span></code></pre></div>
+    <p>The last line says: "when the answer arrives, run <code>callback_response</code>". The node does <strong>not</strong> stop and wait, so its timers and subscribers keep working.</p>
+  </div>
+
+  <div class="step" id="s3-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Get the answer</span></div>
+    <p>ROS 2 calls this method with the future. <code>future.result()</code> is the response (the fields <em>below</em> the <code>---</code>).</p>
+    <div class="cmd file"><div class="cmd-h">📄 add_two_ints_client.py (add to the class)</div><pre><code><span class="hl">    def callback_response(self, future):</span>
+<span class="hl">        response = future.result()</span>
+<span class="hl">        self.get_logger().info(f"Sum = {response.sum}")</span></code></pre></div>
+  </div>
+
+  <div class="step" id="s3-4">
+    <div class="step-h"><span class="step-n">4</span><span class="step-t">The whole file: run it</span></div>
+    <p>Here is everything together, with the usual <code>main</code>. Click the highlighted parts to recap what each one does.</p>
+    <div class="cmd file" data-widget="explain"><div class="cmd-h">📄 my_py_pkg/add_two_ints_client.py</div><pre><code>#!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
 from example_interfaces.srv import AddTwoInts
@@ -608,34 +652,27 @@ from example_interfaces.srv import AddTwoInts
 class AddTwoIntsClientNode(Node):
     def __init__(self):
         super().__init__("add_two_ints_client")
-        self.client_ = self.create_client(AddTwoInts, "add_two_ints")
-        self.call_add_two_ints_server(6, 6)
-        self.call_add_two_ints_server(7, 4)
-        self.call_add_two_ints_server(5, 4)
+<span class="ex" data-tip="Step 1: a client for the service. Same <b>type</b> and <b>name</b> as the server.">        self.client_ = self.create_client(AddTwoInts, "add_two_ints")</span>
+<span class="ex" data-tip="Step 1: check once a second until the server is up, so the request is never lost.">        while not self.client_.wait_for_service(1.0):
+            self.get_logger().warn("Waiting for server add_two_ints...")</span>
+        self.send_request(3, 4)
 
-    def call_add_two_ints_server(self, a, b):
-        while not self.client_.wait_for_service(1.0):
-            self.get_logger().warn("Waiting for server add_two_ints...")
-
-        request = AddTwoInts.Request()
+    def send_request(self, a, b):
+<span class="ex" data-tip="Step 2: an empty request, then fill the fields above the <code>---</code>.">        request = AddTwoInts.Request()
         request.a = a
-        request.b = b
+        request.b = b</span>
+<span class="ex" data-tip="Step 2: send it. You get a <b>future</b> straight away: a ticket for the answer.">        future = self.client_.call_async(request)</span>
+<span class="ex" data-tip="Step 2: when the answer arrives, ROS 2 calls <code>callback_response</code>. No waiting, no freezing.">        future.add_done_callback(self.callback_response)</span>
 
-        future = self.client_.call_async(request)
-<span class="hl">        future.add_done_callback(partial(self.callback_call_add_two_ints, a=a, b=b))</span>
-
-    def callback_call_add_two_ints(self, future, a, b):
-        try:
-            response = future.result()
-            self.get_logger().info(f"{a} + {b} = {response.sum}")
-        except Exception as e:
-            self.get_logger().error(f"Service call failed {e!r}")
+<span class="ex" data-tip="Step 3: <code>future.result()</code> is the response: the fields below the <code>---</code>.">    def callback_response(self, future):
+        response = future.result()
+        self.get_logger().info(f"Sum = {response.sum}")</span>
 
 
 def main(args=None):
     rclpy.init(args=args)
     node = AddTwoIntsClientNode()
-    rclpy.spin(node)
+<span class="ex" data-tip="Spinning is what lets ROS 2 deliver the answer and run your callback.">    rclpy.spin(node)</span>
     rclpy.shutdown()
 
 
@@ -644,16 +681,28 @@ if __name__ == "__main__":
     <div class="cmd"><div class="cmd-h">💻 Register, build, run (server running in another terminal)</div><pre><code>#  setup.py:  "add_two_ints_client = my_py_pkg.add_two_ints_client:main",
 cd ~/ros2_ws &amp;&amp; colcon build --packages-select my_py_pkg --symlink-install &amp;&amp; source ~/.bashrc
 ros2 run my_py_pkg add_two_ints_client</code></pre></div>
-    <div class="out"><div class="out-h">✅ You should see three answers</div><pre>[INFO] [...] [add_two_ints_client]: 6 + 6 = 12
-[INFO] [...] [add_two_ints_client]: 7 + 4 = 11
-[INFO] [...] [add_two_ints_client]: 5 + 4 = 9</pre></div>
-    <p>Try it the other way round: start the <strong>client first</strong>. It prints "Waiting for server add_two_ints..." until you start the server.</p>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>[INFO] [...] [add_two_ints_client]: Sum = 7</pre></div>
+    <p>The server terminal prints <code>3 + 4 = 7</code> at the same moment. Now try it the other way round: stop the server, start the <strong>client first</strong>. It prints "Waiting for server add_two_ints..." until you start the server again.</p>
   </div>
 
-  <h3>🔍 Why <code>partial</code>?</h3>
-  <p><code>add_done_callback</code> always calls your function with just one argument, the <code>future</code>. But we also want to print <code>a</code> and <code>b</code>. <code>partial(f, a=a, b=b)</code> makes a new function with a and b already filled in. Remember this pattern: you will use it for every service call in Lecture 7.</p>
+  <div class="step" id="s3-5">
+    <div class="step-h"><span class="step-n">5</span><span class="step-t">Bonus: ask several questions</span></div>
+    <p>Change <code>self.send_request(3, 4)</code> to three calls: <code>(6, 6)</code>, <code>(7, 4)</code>, <code>(5, 4)</code>. You get three sums, but which question was each one? The callback only receives the <code>future</code>. <code>partial</code> lets you hand it <code>a</code> and <code>b</code> as well:</p>
+    <div class="cmd file"><div class="cmd-h">📄 add_two_ints_client.py (changes)</div><pre><code><span class="hl">from functools import partial</span>
+...
+        future.add_done_callback(
+            <span class="hl-i">partial(</span>self.callback_response<span class="hl-i">, a=a, b=b)</span>)
 
-  <div class="game" data-widget="order"><div class="kc-head"><span class="sim-tag">🎮 Game</span><b>The life of a non-blocking service call: put the steps in order</b></div><ol><li><code>create_client(AddTwoInts, "add_two_ints")</code></li><li><code>wait_for_service(1.0)</code> until the server is up</li><li>Fill <code>AddTwoInts.Request()</code></li><li><code>future = client.call_async(request)</code></li><li><code>future.add_done_callback(partial(...))</code></li><li>The node keeps spinning: timers and subscribers still run</li><li>The server's callback runs and <code>return response</code></li><li>Your done-callback runs: <code>future.result().sum</code></li></ol></div>
+    def callback_response(self, future<span class="hl-i">, a, b</span>):
+        response = future.result()
+        self.get_logger().info(f"<span class="hl-i">{a} + {b} = </span>{response.sum}")</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>[INFO] [...] [add_two_ints_client]: 6 + 6 = 12
+[INFO] [...] [add_two_ints_client]: 7 + 4 = 11
+[INFO] [...] [add_two_ints_client]: 5 + 4 = 9</pre></div>
+    <p>You will use this pattern in the turtle army challenge and in Lecture 7.</p>
+  </div>
+
+  <div class="game" data-widget="order"><div class="kc-head"><span class="sim-tag">🎮 Game</span><b>The life of a service call: put the steps in order</b></div><ol><li><code>create_client(AddTwoInts, "add_two_ints")</code></li><li><code>wait_for_service(1.0)</code> until the server is up</li><li>Fill <code>AddTwoInts.Request()</code></li><li><code>future = self.client_.call_async(request)</code></li><li><code>future.add_done_callback(self.callback_response)</code></li><li>The node keeps spinning: timers and subscribers still run</li><li>The server's callback runs and <code>return response</code></li><li><code>callback_response</code> runs: <code>future.result().sum</code></li></ol></div>
 </div>
 
 <details class="box">
@@ -1246,7 +1295,7 @@ if __name__ == "__main__":
   <div><code>ros2 service call /s TYPE "{...}"</code><span>call from the terminal</span></div>
   <div><code>create_service(T, "name", cb)</code><span>server (callback returns response)</span></div>
   <div><code>create_client(T, "name")</code> · <code>call_async(req)</code><span>client</span></div>
-  <div><code>future.add_done_callback(partial(...))</code><span>non-blocking answer</span></div>
+  <div><code>future.add_done_callback(self.cb)</code><span>non-blocking answer</span></div>
   <div><code>rqt → Plugins → Services → Service Caller</code><span>call with a GUI</span></div>
   <div><code>ros2 action list -t</code> · <code>ros2 action info /a</code><span>find actions, servers and clients</span></div>
   <div><code>ros2 action send_goal /a TYPE "{...}" --feedback</code><span>send a goal, watch progress</span></div>
