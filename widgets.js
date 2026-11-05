@@ -17,6 +17,8 @@
      formmatch  String vs custom msg, type mismatch    (L5)
      carparams  parameters on an adaptive cruise car   (L5)
      launchbuilder  launch-file generator             (L6)
+     launchsim  car bringup: args, namespace, respawn (L6)
+     qos       QoS reliability / durability over Wi-Fi (L6)
      gotogoal  turtle go-to-goal + catch them all     (L7)
      twist     Twist → path, open-loop drift          (L8)
      quat      quaternion ↔ yaw                       (L8)
@@ -710,6 +712,11 @@
       'radio (5 stations)': ['Giskard', 'BB8', 'Daneel', 'Jander', 'C3PO'].map(function (n) {
         return { pkg: 'my_py_pkg', exe: 'robot_news_station', name: 'robot_news_station_' + n.toLowerCase(), remaps: '', params: 'robot_name=' + n };
       }).concat([{ pkg: 'my_py_pkg', exe: 'smartphone', name: '', remaps: '', params: '' }]),
+      'two robots (namespaces)': ['robot1', 'robot2'].reduce(function (acc, r) {
+        return acc.concat([
+          { pkg: 'my_py_pkg', exe: 'number_publisher', ns: r, name: '', remaps: '', params: 'number_to_publish=' + (r === 'robot1' ? 1 : 2) },
+          { pkg: 'my_py_pkg', exe: 'number_counter', ns: r, name: '', remaps: '', params: '' }]);
+      }, []),
       'catch them all': [
         { pkg: 'turtlesim', exe: 'turtlesim_node', name: '', remaps: '', params: '' },
         { pkg: 'turtlesim_catch_them_all', exe: 'turtle_spawner', name: '', remaps: '', params: 'spawn_frequency=1.5, turtle_name_prefix=my_turtle' },
@@ -718,8 +725,9 @@
     var nodes = JSON.parse(JSON.stringify(PRESETS.number_app));
     var sel = h('select', { class: 'wsel' }, Object.keys(PRESETS).map(function (k) { return h('option', { value: k, text: k }); }));
     sel.addEventListener('change', function () { nodes = JSON.parse(JSON.stringify(PRESETS[sel.value])); render(); });
+    function fix(n) { if (n.ns == null) n.ns = ''; return n; }
     var ed = h('div', { class: 'lb-ed' }), out = h('div', { class: 'mb-out' });
-    body.appendChild(row([h('span', { class: 'wlbl', text: 'Preset:' }), sel, btn('+ Node', '', function () { nodes.push({ pkg: 'my_py_pkg', exe: 'smartphone', name: '', remaps: '', params: '' }); render(); })]));
+    body.appendChild(row([h('span', { class: 'wlbl', text: 'Preset:' }), sel, btn('+ Node', '', function () { nodes.push({ pkg: 'my_py_pkg', exe: 'smartphone', ns: '', name: '', remaps: '', params: '' }); render(); })]));
     body.appendChild(ed); body.appendChild(out);
     function val(v) {
       v = v.trim();
@@ -732,10 +740,11 @@
     function pairs(s, sep) { return s.split(',').map(function (x) { return x.trim(); }).filter(Boolean).map(function (x) { return x.split(sep); }).filter(function (p) { return p.length === 2 && p[0].trim() && p[1].trim(); }); }
     function render() {
       ed.innerHTML = '';
-      ed.appendChild(h('div', { class: 'lb-row lb-head' }, ['package', 'executable', 'name (optional)', 'remaps  a:=b, …', 'parameters  k=v, …', ''].map(function (t) { return h('span', { text: t }); })));
+      nodes.forEach(fix);
+      ed.appendChild(h('div', { class: 'lb-row lb-head' }, ['package', 'executable', 'namespace', 'name (optional)', 'remaps  a:=b, …', 'parameters  k=v, …', ''].map(function (t) { return h('span', { text: t }); })));
       nodes.forEach(function (n, i) {
         var r = h('div', { class: 'lb-row' });
-        ['pkg', 'exe', 'name', 'remaps', 'params'].forEach(function (k) {
+        ['pkg', 'exe', 'ns', 'name', 'remaps', 'params'].forEach(function (k) {
           var inp = h('input', { class: 'wtxt', value: n[k], spellcheck: 'false' });
           inp.addEventListener('input', function () { n[k] = inp.value; gen(); });
           r.appendChild(inp);
@@ -753,6 +762,8 @@
         L.push('    ' + v + ' = Node(');
         L.push('        package="' + n.pkg.trim() + '",');
         L.push('        executable="' + n.exe.trim() + '",');
+        var ns = (n.ns || '').trim().replace(/^\/+|\/+$/g, '');
+        if (ns) L.push('        namespace="' + ns + '",');
         if (n.name.trim()) L.push('        name="' + n.name.trim() + '",');
         var rm = pairs(n.remaps, ':=');
         if (rm.length) L.push('        remappings=[' + rm.map(function (p) { return '("' + p[0].trim() + '", "' + p[1].trim() + '")'; }).join(', ') + '],');
@@ -760,6 +771,7 @@
         if (pr.length) L.push('        parameters=[{' + pr.map(function (p) { return '"' + p[0].trim() + '": ' + val(p[1]); }).join(', ') + '}],');
         L.push('    )'); L.push('    ld.add_action(' + v + ')'); L.push('');
         var args = [];
+        if (ns) args.push('-r __ns:=/' + ns);
         if (n.name.trim()) args.push('-r __node:=' + n.name.trim());
         rm.forEach(function (p) { args.push('-r ' + p[0].trim() + ':=' + p[1].trim()); });
         pr.forEach(function (p) { args.push('-p ' + p[0].trim() + ':=' + p[1].trim()); });
@@ -1520,6 +1532,254 @@
       label(ctx, Math.round(ego.v * 3.6) + ' km/h', X0 + 10, ROADY + ROADH + 22, c.accent, 18, 'center', true);
       rd.set('ev', Math.round(ego.v * 3.6) + ' km/h'); rd.set('lv', Math.round(lead.v * 3.6) + ' km/h');
       rd.set('gap', gap.toFixed(1) + ' m'); rd.set('use', used.max_speed + ' km/h · ' + used.safe_distance + ' m · ' + used.driving_mode);
+    });
+  };
+
+  /* ================================================== L6: car bringup launch simulator */
+  W.launchsim = function (root) {
+    var body = shell(root, 'Bring up the self-driving car with one launch file');
+    var WD = 640, HT = 250, cv = mkCanvas(WD, HT), ctx = cv.ctx;
+    var args = { use_sim: true, rviz: true, ns: 'car1', respawn: false, delay: false };
+    var procs = [], running = false, t = 0, pid = 4100, timers = [], idx = 0, warnT = 0;
+    var COLX = [88, 248, 408, 562];
+    var logEl = h('div', { class: 'sim-log' });
+    function log(s) { logEl.insertBefore(h('div', { text: s }), logEl.firstChild); while (logEl.childNodes.length > 9) logEl.removeChild(logEl.lastChild); }
+    var cmdPre = h('pre', {}), listPre = h('pre', {});
+    function nsName() { return args.ns.trim().replace(/^\/+|\/+$/g, ''); }
+    function defs() {
+      var L = [];
+      if (args.use_sim) L.push({ id: 'gazebo', col: 0, ns: false, desc: 'simulated LiDAR + camera' });
+      else { L.push({ id: 'lidar_driver', col: 0, ns: true }); L.push({ id: 'camera_driver', col: 0, ns: true }); }
+      L.push({ id: 'perception', col: 1, ns: true, respawn: args.respawn });
+      L.push({ id: 'planner', col: 2, ns: true, delayed: args.delay });
+      L.push({ id: 'controller', col: 3, ns: true });
+      if (args.rviz) L.push({ id: 'rviz2', col: 3, ns: false });
+      return L;
+    }
+    function full(p) { var n = nsName(); return (p.ns && n ? '/' + n : '') + '/' + p.id; }
+    function cmdText() {
+      return '$ ros2 launch car_bringup car.launch.py use_sim:=' + args.use_sim + ' rviz:=' + args.rviz + ' namespace:=' + (nsName() || '""');
+    }
+    function showText() {
+      cmdPre.textContent = cmdText();
+      var live = procs.filter(function (p) { return p.state === 'run'; }).map(full).sort();
+      listPre.textContent = '$ ros2 node list\n' + (live.length ? live.join('\n') : '(no nodes running)');
+    }
+    function later(dt, fn) { timers.push({ at: t + dt, fn: fn }); }
+    function start(p) {
+      p.state = 'start'; p.pid = ++pid;
+      later(0.35, function () {
+        if (p.state !== 'start') return;
+        p.state = 'run';
+        log('[INFO] [' + p.tag + ']: process started with pid [' + p.pid + ']');
+        showText();
+      });
+    }
+    function launch() {
+      if (running) { log('already running: press Ctrl+C first (launch arguments are read only at start)'); return; }
+      running = true; idx = 0; timers = []; warnT = 0;
+      procs = defs().map(function (d) { idx++; d.tag = d.id + '-' + idx; d.state = 'off'; return d; });
+      log(cmdText().slice(2));
+      log('[INFO] [launch]: All log files can be found below /home/student/.ros/log/2026-11-05-10-14-03-512345-limo-' + (pid + 1));
+      procs.forEach(function (p, i) {
+        if (p.delayed) {
+          p.state = 'wait';
+          later(2.0, function () { if (!running) return; log('[INFO] [launch]: TimerAction: 2.0 s passed, starting planner'); start(p); });
+        } else later(0.25 * i, function () { if (running) start(p); });
+      });
+      showText();
+    }
+    function crash() {
+      var p = procs.filter(function (q) { return q.id === 'perception'; })[0];
+      if (!running || !p || p.state !== 'run') { log('perception is not running: launch first'); return; }
+      p.state = 'dead';
+      log("[ERROR] [" + p.tag + "]: process has died [pid " + p.pid + ", exit code -11, cmd '/home/student/ros2_ws/install/car_stack/lib/car_stack/perception --ros-args -r __node:=perception" + (nsName() ? ' -r __ns:=/' + nsName() : '') + "']");
+      if (p.respawn) {
+        later(2.0, function () { if (running && p.state === 'dead') { log('[INFO] [launch]: respawning perception (respawn=True, respawn_delay=2.0)'); start(p); } });
+      }
+      showText();
+    }
+    function stop() {
+      if (!running) { log('nothing to stop'); return; }
+      log('[WARNING] [launch]: user interrupted with ctrl-c (SIGINT)');
+      procs.forEach(function (p) { if (p.state === 'run') log('[INFO] [' + p.tag + ']: process has finished cleanly [pid ' + p.pid + ']'); p.state = 'off'; });
+      running = false; timers = []; showText();
+    }
+    function argChanged(msg) { log(msg + (running ? '   (no effect until you press Ctrl+C and launch again)' : '')); showText(); }
+    var nsInp = h('input', { class: 'wtxt', value: args.ns, spellcheck: 'false', style: 'width:110px' });
+    nsInp.addEventListener('input', function () { args.ns = nsInp.value; if (!running) showText(); else cmdPre.textContent = cmdText(); });
+    body.appendChild(cv.c);
+    body.appendChild(h('div', { class: 'sim-split' }, [
+      h('div', { class: 'sim-side' }, [
+        h('span', { class: 'wlbl', text: 'Launch arguments (DeclareLaunchArgument):' }),
+        row([check('use_sim:=true  (Gazebo instead of real drivers)', args.use_sim, function (v) { args.use_sim = v; argChanged('use_sim:=' + v + ' → IfCondition / UnlessCondition picks the sensor nodes'); })]),
+        row([check('rviz:=true  (IfCondition)', args.rviz, function (v) { args.rviz = v; argChanged('rviz:=' + v); })]),
+        row([h('span', { class: 'wlbl', text: 'namespace:=' }), nsInp]),
+        h('span', { class: 'wlbl', text: 'Inside the launch file:' }),
+        row([check('respawn=True on perception', args.respawn, function (v) { args.respawn = v; procs.forEach(function (p) { if (p.id === 'perception') p.respawn = v; }); log(v ? 'Node(..., executable="perception", respawn=True, respawn_delay=2.0)' : 'respawn=False (the default)'); })]),
+        row([check('TimerAction: start the planner 2 s later', args.delay, function (v) { args.delay = v; argChanged(v ? 'TimerAction(period=2.0, actions=[planner_node])' : 'planner starts with the others'); })]),
+        row([btn('▶ ros2 launch', '', launch), btn('💥 crash perception', 'ghost', crash), btn('⏹ Ctrl+C', 'ghost', stop)])
+      ]),
+      h('div', { class: 'sim-side' }, [cmdPre, listPre])
+    ]));
+    body.appendChild(logEl);
+    body.appendChild(h('p', { class: 'sim-hint', html: 'Press <b>▶ ros2 launch</b>: one command starts every process, each with its own pid. Untick <b>use_sim</b> and launch again: the real drivers replace Gazebo. Change the <b>namespace</b> and read <code>ros2 node list</code>. Crash perception with and without <b>respawn</b>. <b>Ctrl+C</b> stops everything at once.' }));
+    showText();
+    addLoop(root, function (dt) {
+      t += dt;
+      var due = timers.filter(function (x) { return x.at <= t; });
+      timers = timers.filter(function (x) { return x.at > t; });
+      due.forEach(function (x) { x.fn(); });
+      var per = procs.filter(function (p) { return p.id === 'perception'; })[0];
+      if (running && per && per.state === 'dead') {
+        warnT += dt;
+        if (warnT > 1.5) { warnT = 0; log('[' + procs.filter(function (p) { return p.id === 'planner'; })[0].tag + '] [WARN] [' + (nsName() ? nsName() + '.' : '') + 'planner]: no detections for 1.5 s: braking'); }
+      } else warnT = 0;
+
+      var c = C();
+      ctx.clearRect(0, 0, WD, HT); ctx.fillStyle = c.bg2; rr(ctx, 0, 0, WD, HT, 14); ctx.fill();
+      var list = running ? procs : defs().map(function (d) { d.state = 'off'; return d; });
+      // namespace box
+      var n = nsName();
+      rr(ctx, 12, 26, WD - 24, 150, 12); ctx.save(); ctx.setLineDash([6, 5]); ctx.strokeStyle = n ? c.accent : c.border; ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore();
+      label(ctx, n ? 'namespace /' + n : 'no namespace: names start at /', 24, 16, n ? c.accent : c.muted, 11, 'left', true);
+      label(ctx, 'global (namespace="" on purpose)', 24, 190, c.muted, 11, 'left', true);
+      var pos = {};
+      [0, 1, 2, 3].forEach(function (col) {
+        var inNs = list.filter(function (p) { return p.col === col && p.ns; });
+        inNs.forEach(function (p, i) { pos[p.id] = { x: COLX[col], y: 101 + (i - (inNs.length - 1) / 2) * 48 }; });
+        list.filter(function (p) { return p.col === col && !p.ns; }).forEach(function (p) { pos[p.id] = { x: COLX[col], y: 222 }; });
+      });
+      function edge(a, b) {
+        if (!pos[a] || !pos[b]) return;
+        var A = pos[a], B = pos[b];
+        if (A.y > 180) arrowLine(ctx, A.x + 40, A.y - 18, B.x - 50, B.y + 10, c.border);
+        else arrowLine(ctx, A.x + 66, A.y, B.x - 68, B.y, c.border);
+      }
+      edge('gazebo', 'perception'); edge('lidar_driver', 'perception'); edge('camera_driver', 'perception');
+      edge('perception', 'planner'); edge('planner', 'controller');
+      list.forEach(function (p) {
+        var P = pos[p.id]; if (!P) return;
+        var st = p.state, stroke = st === 'run' ? c.green : st === 'start' ? c.gold : st === 'dead' ? c.red : c.border;
+        rr(ctx, P.x - 66, P.y - 17, 132, 34, 11); ctx.fillStyle = c.bg; ctx.fill();
+        ctx.save(); if (st === 'wait' || st === 'off') ctx.setLineDash([4, 4]); ctx.lineWidth = st === 'run' ? 2.5 : 2; ctx.strokeStyle = stroke; ctx.stroke(); ctx.restore();
+        var txtCol = st === 'off' || st === 'wait' ? c.muted : st === 'dead' ? c.red : c.text;
+        label(ctx, (st === 'dead' ? '💥 ' : st === 'wait' ? '⏱ ' : '') + p.id, P.x, P.y - (p.pid && st !== 'off' && st !== 'wait' ? 5 : 0), txtCol, 12, 'center', true);
+        if (p.pid && st !== 'off' && st !== 'wait') label(ctx, 'pid ' + p.pid, P.x, P.y + 9, c.muted, 9.5);
+        if (st === 'run') { ctx.beginPath(); ctx.arc(P.x + 56, P.y - 8, 4, 0, 7); ctx.fillStyle = c.green; ctx.fill(); }
+      });
+      label(ctx, running ? '● running: ' + procs.filter(function (p) { return p.state === 'run'; }).length + ' processes from 1 command' : '○ stopped', WD - 18, 16, running ? c.green : c.muted, 11, 'right', true);
+    });
+  };
+
+  /* ================================================== L6: QoS compatibility */
+  W.qos = function (root) {
+    var body = shell(root, 'QoS: will these two nodes talk over Wi-Fi?');
+    var WD = 640, HT = 210, cv = mkCanvas(WD, HT), ctx = cv.ctx;
+    var q = { pr: 'best_effort', pd: 'volatile', sr: 'best_effort', sd: 'volatile' }, loss = 0.15, mode = 'scan';
+    var pk = [], acc = 0, clock = 0, late = null, st = { sent: 0, got: 0, lost: 0, resent: 0 }, lastWarn = -9, mapSent = false;
+    var logEl = h('div', { class: 'sim-log' });
+    function log(s) { logEl.insertBefore(h('div', { text: s }), logEl.firstChild); while (logEl.childNodes.length > 7) logEl.removeChild(logEl.lastChild); }
+    var rd = readouts([['ok', 'connection'], ['sent', 'sent'], ['got', 'received'], ['lost', 'lost for good'], ['re', 're-sent']]);
+    function mk(val, opts, onCh) {
+      var s = h('select', { class: 'wsel' }, opts.map(function (o) { return h('option', { value: o, text: o }); }));
+      s.value = val; s.addEventListener('change', function () { onCh(s.value); }); return s;
+    }
+    var sel = {};
+    function mkPair(who) {
+      sel[who + 'r'] = mk(q[who + 'r'], ['reliable', 'best_effort'], function (v) { q[who + 'r'] = v; changed(); });
+      sel[who + 'd'] = mk(q[who + 'd'], ['volatile', 'transient_local'], function (v) { q[who + 'd'] = v; changed(); });
+    }
+    mkPair('p'); mkPair('s');
+    function compat() {
+      if (q.pr === 'best_effort' && q.sr === 'reliable') return 'RELIABILITY';
+      if (q.pd === 'volatile' && q.sd === 'transient_local') return 'DURABILITY';
+      return '';
+    }
+    function reset() { pk = []; st = { sent: 0, got: 0, lost: 0, resent: 0 }; late = null; mapSent = false; clock = 0; acc = 0; }
+    function changed() {
+      reset();
+      var bad = compat();
+      log('pub: ' + q.pr + ' + ' + q.pd + '   sub: ' + q.sr + ' + ' + q.sd);
+      if (bad) log("[WARN] [obstacle_detector]: New publisher discovered on topic '/" + mode + "', offering incompatible QoS. No messages will be received from it. Last incompatible policy: " + bad);
+    }
+    function preset(m) {
+      mode = m;
+      if (m === 'scan') { q = { pr: 'best_effort', pd: 'volatile', sr: 'best_effort', sd: 'volatile' }; log('/scan preset: qos_profile_sensor_data (best effort, volatile, depth 5)'); }
+      else { q = { pr: 'reliable', pd: 'transient_local', sr: 'reliable', sd: 'transient_local' }; log('/map preset: map_server publishes ONCE (reliable, transient_local)'); }
+      ['pr', 'pd', 'sr', 'sd'].forEach(function (k) { sel[k].value = q[k]; });
+      reset();
+    }
+    var lossS = slider('Wi-Fi packet loss', 0, 50, 5, 15, function (v) { loss = v / 100; }, function (v) { return v + ' %'; });
+    body.appendChild(cv.c);
+    body.appendChild(h('div', { class: 'sim-split' }, [
+      h('div', { class: 'sim-side' }, [
+        row([h('span', { class: 'wlbl', text: 'Topic:' }), btn('/scan (LiDAR, 10 Hz)', 'ghost', function () { preset('scan'); }), btn('/map (sent once)', 'ghost', function () { preset('map'); })]),
+        row([h('span', { class: 'wlbl', text: 'publisher:' }), sel.pr, sel.pd]),
+        row([h('span', { class: 'wlbl', text: 'subscriber:' }), sel.sr, sel.sd]),
+        row([lossS.el]),
+        row([btn('➕ a late subscriber joins', 'ghost', function () {
+          if (late) return;
+          late = { at: clock, got: 0 };
+          var bad = compat();
+          if (bad) { log('map_viewer joined: incompatible QoS, receives nothing'); return; }
+          var tl = q.pd === 'transient_local' && q.sd === 'transient_local';
+          if (tl && st.got > 0) {
+            late.got = 1; log('map_viewer joined ' + clock.toFixed(1) + ' s late and immediately got the last message (transient_local keeps it)');
+          } else if (tl) log('map_viewer joined: nothing delivered yet, it gets the next message like everyone else');
+          else log('map_viewer joined ' + clock.toFixed(1) + ' s late: it only gets messages published from now on (volatile)');
+        })])
+      ]),
+      h('div', { class: 'sim-side' }, [rd.el])
+    ]));
+    body.appendChild(logEl);
+    body.appendChild(h('p', { class: 'sim-hint', html: 'Set the subscriber to <b>reliable</b> while the LiDAR publishes <b>best_effort</b>: no connection, only a warning. Make both reliable and raise the packet loss: lost messages are re-sent, late. Then pick <b>/map</b>, wait a few seconds and add a late subscriber, once with <b>transient_local</b> and once with <b>volatile</b>.' }));
+    reset();
+    addLoop(root, function (dt) {
+      clock += dt; acc += dt;
+      var bad = compat(), rel = q.pr === 'reliable' && q.sr === 'reliable';
+      var period = mode === 'scan' ? 0.4 : 1e9;
+      if ((mode === 'scan' && acc >= period) || (mode === 'map' && !mapSent && clock > 0.6)) {
+        acc = 0; mapSent = true; st.sent++;
+        pk.push({ t: 0, lost: Math.random() < loss, retry: 0, born: clock });
+      }
+      pk.forEach(function (p) {
+        p.t += dt / 1.4;
+        if (bad && p.t >= 0.5 && !p.done) { p.done = true; p.stopAt = clock; if (clock - lastWarn > 4) { lastWarn = clock; log('…still no messages: incompatible ' + bad); } }
+        if (!bad && p.lost && p.t >= 0.55 && !p.done) {
+          if (rel && p.retry < 4) { p.retry++; st.resent++; p.t = 0; p.lost = Math.random() < loss; p.resend = true; }
+          else { p.done = true; p.stopAt = clock; st.lost++; }
+        }
+        if (!bad && !p.lost && p.t >= 1 && !p.done) { p.done = true; st.got++; if (late && (p.born >= late.at || (q.pd === 'transient_local' && q.sd === 'transient_local'))) late.got++; }
+      });
+      pk = pk.filter(function (p) { return !p.done || (p.stopAt && clock - p.stopAt < 0.8); });
+      rd.set('ok', bad ? '✖ incompatible (' + bad + ')' : '✔ compatible' + (q.pr === 'reliable' && q.sr === 'best_effort' ? ' (works as best effort)' : ''));
+      rd.set('sent', st.sent); rd.set('got', st.got); rd.set('lost', st.lost); rd.set('re', rel ? st.resent : '– (best effort never re-sends)');
+
+      var c = C();
+      ctx.clearRect(0, 0, WD, HT); ctx.fillStyle = c.bg2; rr(ctx, 0, 0, WD, HT, 14); ctx.fill();
+      node(ctx, 90, 86, 140, 50, mode === 'scan' ? 'lidar_driver' : 'map_server', c.bg, c.accent, c.text);
+      label(ctx, q.pr + ' · ' + q.pd, 90, 124, c.muted, 10.5);
+      node(ctx, 550, 86, 150, 50, 'obstacle_detector', c.bg, bad ? c.red : c.green, bad ? c.red : c.text);
+      label(ctx, q.sr + ' · ' + q.sd, 550, 124, c.muted, 10.5);
+      if (late) {
+        node(ctx, 550, 172, 150, 40, 'map_viewer (late)', c.bg, bad ? c.red : c.purple, c.text);
+        label(ctx, 'got ' + late.got, 550, 199, c.muted, 10);
+      }
+      // wifi
+      label(ctx, '📶', 320, 20, c.text, 18);
+      label(ctx, '/' + mode + '  ·  Wi-Fi loss ' + Math.round(loss * 100) + ' %', 320, 42, c.muted, 11, 'center', true);
+      arrowLine(ctx, 162, 86, 472, 86, bad ? c.red : c.border, bad);
+      if (bad) label(ctx, '✖ incompatible QoS: no messages, only a warning', 320, 150, c.red, 12, 'center', true);
+      else if (mode === 'map' && st.sent) label(ctx, 'the map was published once at t = 0.6 s', 320, 150, c.muted, 11);
+      pk.forEach(function (p) {
+        var lim = bad ? 0.5 : p.lost ? 0.55 : 1, x = 162 + 310 * Math.min(p.t, lim), y = 86;
+        ctx.save();
+        if (p.stopAt) ctx.globalAlpha = Math.max(0, 1 - (clock - p.stopAt) / 0.8);
+        rr(ctx, x - 9, y - 7, 18, 14, 3); ctx.fillStyle = p.resend ? c.gold : c.accent; ctx.fill();
+        if (p.stopAt) label(ctx, '✖', x, y - 18, c.red, 15, 'center', true);
+        ctx.restore();
+      });
     });
   };
 

@@ -51,7 +51,7 @@
 html[data-theme="dark"] .mb-err{background:#3a2220;}
 html[data-theme="dark"] .mb-ok{background:#16302a;}
 .lb-ed{overflow-x:auto; margin-top:8px;}
-.lb-row{display:grid; grid-template-columns:1.1fr 1.2fr 1.2fr 1.4fr 1.6fr auto; gap:6px; margin-bottom:6px; min-width:720px;}
+.lb-row{display:grid; grid-template-columns:1.1fr 1.2fr .9fr 1.2fr 1.4fr 1.6fr auto; gap:6px; margin-bottom:6px; min-width:820px;}
 .lb-head span{font-size:.72em; font-weight:800; color:var(--muted); text-transform:uppercase;}
 .hsv-imgs{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
 .hsv-imgs .cap{font-size:.78em; color:var(--muted); text-align:center;}
@@ -146,3 +146,11 @@ html[data-theme="dark"] .ord-row.bad, html[data-theme="dark"] .sort-row.bad{back
 .skill-path a:hover{background:rgba(255,255,255,.2);}
 .skill-path a.now{background:#fff; color:#2732b8; border-color:#fff;}
 .skill-path a.done{background:rgba(52,211,153,.22); color:#a7f3d0; border-color:rgba(52,211,153,.45);}
+/* simulators with long text (launch commands, logs) must not widen the page on phones */
+.sim-split > *, .sim-split2 > *, .sim-b{min-width:0;}
+.sim-side pre{overflow-x:auto; max-width:100%; white-space:pre-wrap; overflow-wrap:anywhere;}
+.sim-log div{overflow-wrap:anywhere;}
+.wcheck{min-width:0;} .wcheck span{overflow-wrap:anywhere;}
+/* long file names in code headers and games must wrap so the Copy button stays visible on phones */
+.cmd-h{overflow-wrap:anywhere;} .cmd-h .copy-btn{flex-shrink:0;}
+.ord-t,.sort-t{overflow-wrap:anywhere;}
