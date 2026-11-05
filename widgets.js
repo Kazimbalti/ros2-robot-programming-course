@@ -14,6 +14,8 @@
      service   service call: async vs blocking        (L4)
      action    action goal / feedback / result        (L13)
      msgbuilder  .msg / .srv designer                 (L5)
+     formmatch  String vs custom msg, type mismatch    (L5)
+     carparams  parameters on an adaptive cruise car   (L5)
      launchbuilder  launch-file generator             (L6)
      gotogoal  turtle go-to-goal + catch them all     (L7)
      twist     Twist → path, open-loop drift          (L8)
@@ -616,13 +618,16 @@
   /* ================================================== L5: interface builder */
   W.msgbuilder = function (root) {
     var body = shell(root, 'Interface builder: design a .msg or .srv');
-    var TYPES = ['bool', 'int64', 'float64', 'string', 'int64[]', 'float64[]', 'string[]', 'geometry_msgs/Point', 'Turtle', 'Turtle[]'];
+    var TYPES = ['bool', 'uint8', 'int64', 'float32', 'float64', 'string', 'int64[]', 'float64[]', 'string[]', 'std_msgs/Header', 'geometry_msgs/Point', 'DetectedObject[]', 'Turtle', 'Turtle[]'];
     var PRESETS = {
       'HardwareStatus.msg': { kind: 'msg', name: 'HardwareStatus', req: [['int64', 'temperature'], ['bool', 'are_motors_ready'], ['string', 'debug_message']], res: [] },
       'LedStateArray.msg': { kind: 'msg', name: 'LedStateArray', req: [['int64[]', 'led_states']], res: [] },
       'TurtleArray.msg': { kind: 'msg', name: 'TurtleArray', req: [['Turtle[]', 'turtles']], res: [] },
       'ComputeRectangleArea.srv': { kind: 'srv', name: 'ComputeRectangleArea', req: [['float64', 'length'], ['float64', 'width']], res: [['float64', 'area']] },
-      'SetLed.srv': { kind: 'srv', name: 'SetLed', req: [['int64', 'led_number'], ['int64', 'state']], res: [['bool', 'success']] }
+      'SetLed.srv': { kind: 'srv', name: 'SetLed', req: [['int64', 'led_number'], ['int64', 'state']], res: [['bool', 'success']] },
+      'VehicleStatus.msg (car)': { kind: 'msg', name: 'VehicleStatus', req: [['float64', 'speed_kmh'], ['uint8', 'gear'], ['float32', 'battery_pct'], ['bool', 'autopilot_on']], res: [] },
+      'DetectedObject.msg (car)': { kind: 'msg', name: 'DetectedObject', req: [['std_msgs/Header', 'header'], ['string', 'label'], ['float32', 'confidence'], ['geometry_msgs/Point', 'position'], ['float64', 'distance_m']], res: [] },
+      'SetDrivingMode.srv (car)': { kind: 'srv', name: 'SetDrivingMode', req: [['string', 'mode']], res: [['bool', 'success'], ['string', 'message']] }
     };
     var st = JSON.parse(JSON.stringify(PRESETS['HardwareStatus.msg']));
     var editor = h('div', { class: 'mb-ed' }), out = h('div', { class: 'mb-out' });
@@ -655,7 +660,8 @@
       gen();
     }
     function pyDefault(t) {
-      if (t === 'bool') return 'True'; if (t === 'int64') return '0'; if (t === 'float64') return '0.0';
+      if (t === 'bool') return 'True'; if (t === 'int64' || t === 'uint8') return '0'; if (t === 'float64' || t === 'float32') return '0.0';
+      if (t === 'std_msgs/Header') return 'Header(stamp=self.get_clock().now().to_msg(), frame_id="lidar_top")'; if (t === 'DetectedObject[]') return '[DetectedObject(), DetectedObject()]';
       if (t === 'string') return '"text"'; if (t === 'int64[]') return '[0, 1, 0]'; if (t === 'float64[]') return '[0.0, 1.5]';
       if (t === 'string[]') return '["a", "b"]'; if (t === 'geometry_msgs/Point') return 'Point(x=1.0, y=2.0, z=0.0)';
       if (t === 'Turtle') return 'Turtle()'; if (t === 'Turtle[]') return '[Turtle(), Turtle()]'; return '...';
@@ -681,11 +687,12 @@
           st.req.map(function (f) { return '    x = request.' + f[1]; }).slice(0, 2).join('\n') + '\n' +
           st.res.map(function (f) { return '    response.' + f[1] + ' = ' + pyDefault(f[0]); }).join('\n') + '\n    return response\n\n# client\nrequest = ' + name + '.Request()';
       }
-      var needs = all.some(function (f) { return f[0].indexOf('geometry_msgs') === 0; });
+      var deps = []; ['std_msgs', 'geometry_msgs'].forEach(function (d) { if (all.some(function (f) { return f[0].indexOf(d) === 0; })) deps.push(d); });
+      var needs = deps.length > 0;
       out.innerHTML =
         '<div class="mb-file">📄 my_robot_interfaces/' + ext + '/' + esc(name) + '.' + ext + '</div><pre>' + esc(file || '(empty)') + '</pre>' +
         '<div class="mb-file">📄 CMakeLists.txt → rosidl_generate_interfaces(…)</div><pre>"' + ext + '/' + esc(name) + '.' + ext + '"' +
-        (needs ? '\n# + DEPENDENCIES geometry_msgs, and &lt;depend&gt;geometry_msgs&lt;/depend&gt;' : '') + '</pre>' +
+        (needs ? '\n  DEPENDENCIES ' + deps.join(' ') + '\n# also: find_package(…) in CMakeLists.txt and &lt;depend&gt; in package.xml for ' + deps.join(', ') : '') + '</pre>' +
         '<div class="mb-file">🐍 Using it in Python</div><pre>' + esc(py) + '</pre>' +
         '<div class="mb-file">💻 Check it after building</div><pre>ros2 interface show my_robot_interfaces/' + ext + '/' + esc(name) + '</pre>' +
         (errs.length ? '<div class="mb-err">⚠️ ' + errs.map(esc).join('<br>⚠️ ') + '</div>' : '<div class="mb-ok">✅ Valid names: this will build.</div>');
@@ -1309,6 +1316,211 @@
     }
     themeCbs.push(show);
     plan();
+  };
+
+  /* ================================================== L5: same form on both sides */
+  W.formmatch = function (root) {
+    var body = shell(root, 'Same form on both sides? /detected_objects');
+    var WD = 640, HT = 220, cv = mkCanvas(WD, HT), ctx = cv.ctx;
+    var SHORT = { str: 'String', obj: 'DetectedObject' };
+    var FULL = { str: 'std_msgs/msg/String', obj: 'my_robot_interfaces/msg/DetectedObject' };
+    var pubT = 'str', subT = 'str', swapped = false, acc = 0.8, packets = [], crashed = false, understood = '', lastMis = -9, clock = 0;
+    var logEl = h('div', { class: 'sim-log' });
+    function log(s) { logEl.insertBefore(h('div', { text: s }), logEl.firstChild); while (logEl.childNodes.length > 7) logEl.removeChild(logEl.lastChild); }
+    function sel(val, onCh) {
+      var s = h('select', { class: 'wsel' }, [
+        h('option', { value: 'str', text: 'String  "car,0.92,12.5"' }),
+        h('option', { value: 'obj', text: 'DetectedObject (your own .msg)' })]);
+      s.value = val; s.addEventListener('change', function () { onCh(s.value); }); return s;
+    }
+    function reset() { packets = []; crashed = false; understood = ''; }
+    body.appendChild(cv.c);
+    body.appendChild(row([
+      h('span', { class: 'wlbl', text: 'perception publishes:' }),
+      sel(pubT, function (v) { pubT = v; reset(); log('perception: create_publisher(' + SHORT[v] + ', "detected_objects", 10)'); }),
+      h('span', { class: 'wlbl', text: 'planner subscribes with:' }),
+      sel(subT, function (v) { subT = v; reset(); log('planner: create_subscription(' + SHORT[v] + ', "detected_objects", ...)'); })
+    ]));
+    body.appendChild(row([
+      check('a teammate updates perception: it now sends the distance first', swapped, function (v) {
+        swapped = v; crashed = false;
+        log(v ? 'perception v2 released: String is now "12.5,car,0.92"' : 'perception v1 again: String is "car,0.92,12.5"');
+      }),
+      btn('🔄 restart planner', 'ghost', function () { crashed = false; understood = ''; log('ros2 run my_car planner'); })
+    ]));
+    body.appendChild(logEl);
+    body.appendChild(h('p', { class: 'sim-hint', html: 'Start with <b>String</b> on both sides: it works, until you tick the "teammate" box. Then switch <b>both</b> sides to <b>DetectedObject</b> and tick it again. Finally pick a <em>different</em> type on each side: nothing arrives at all.' }));
+    addLoop(root, function (dt) {
+      clock += dt; acc += dt;
+      if (acc >= 1.3) { acc = 0; packets.push({ t: 0, type: pubT, sw: swapped, done: false }); }
+      var match = pubT === subT;
+      packets.forEach(function (p) {
+        p.t += dt / 1.6;
+        if (!match && p.t >= 0.5 && !p.done) {
+          p.done = true; p.stopT = clock;
+          if (clock - lastMis > 3) { lastMis = clock; log('no connection: ' + FULL[pubT] + ' ≠ ' + FULL[subT] + ' (ros2 topic info shows 2 types)'); }
+        }
+        if (match && p.t >= 1 && !p.done) {
+          p.done = true;
+          if (crashed) return;
+          if (p.type === 'obj') {
+            understood = 'distance_m = 12.5 ✔';
+            log('planner: msg.label="car"  msg.confidence=0.92  msg.distance_m=12.5' + (p.sw ? '  (still correct: fields have names)' : ''));
+          } else if (!p.sw) {
+            understood = 'distance = 12.5 ✔';
+            log('planner: parts = msg.data.split(",") -> distance = float(parts[2]) = 12.5');
+          } else {
+            crashed = true; understood = '';
+            log("planner: ValueError: could not convert string to float: 'car'  💥 node crashed");
+          }
+        }
+      });
+      packets = packets.filter(function (p) { return match ? p.t < 1.05 : clock - (p.stopT || clock) < 0.9; });
+
+      var c = C();
+      ctx.clearRect(0, 0, WD, HT); ctx.fillStyle = c.bg2; rr(ctx, 0, 0, WD, HT, 14); ctx.fill();
+      node(ctx, 100, 96, 150, 56, 'perception', c.bg, c.accent, c.text);
+      label(ctx, 'publisher: ' + SHORT[pubT], 100, 140, c.muted, 11);
+      node(ctx, 540, 96, 150, 56, crashed ? '💥 planner crashed' : 'planner', c.bg, crashed ? c.red : c.green, crashed ? c.red : c.text);
+      label(ctx, 'subscriber: ' + SHORT[subT], 540, 140, c.muted, 11);
+      if (understood && !crashed) label(ctx, understood, 540, 160, c.green, 12, 'center', true);
+      rr(ctx, 250, 30, 140, 24, 12); ctx.fillStyle = c.bg; ctx.fill(); ctx.strokeStyle = match ? c.accent : c.red; ctx.lineWidth = 2; ctx.stroke();
+      label(ctx, '/detected_objects', 320, 42, c.text, 11, 'center', true);
+      arrowLine(ctx, 178, 96, 462, 96, c.border, !match);
+      if (!match) {
+        label(ctx, '✖ types differ: no connection, and no error message', 320, 190, c.red, 12, 'center', true);
+      } else {
+        label(ctx, 'both sides agree on ' + FULL[pubT], 320, 190, c.muted, 11);
+      }
+      packets.forEach(function (p) {
+        var x = 178 + 284 * Math.min(p.t, match ? 1 : 0.5), y = 96;
+        var alpha = match ? 1 : Math.max(0, 1 - (clock - (p.stopT || clock)) / 0.9);
+        ctx.save(); ctx.globalAlpha = alpha;
+        if (p.type === 'obj') {
+          rr(ctx, x - 50, y - 26, 100, 52, 7); ctx.fillStyle = c.purple; ctx.fill();
+          label(ctx, 'label: car', x, y - 13, '#fff', 10, 'center', true);
+          label(ctx, 'confidence: 0.92', x, y, '#fff', 10, 'center', true);
+          label(ctx, 'distance_m: 12.5', x, y + 13, '#fff', 10, 'center', true);
+        } else {
+          rr(ctx, x - 48, y - 12, 96, 24, 5); ctx.fillStyle = c.gold; ctx.fill();
+          label(ctx, p.sw ? '"12.5,car,0.92"' : '"car,0.92,12.5"', x, y, '#fff', 11, 'center', true);
+        }
+        if (!match && p.done) label(ctx, '✖', x, y - 34, c.red, 18, 'center', true);
+        ctx.restore();
+      });
+    });
+  };
+
+  /* ================================================== L5: parameters, adaptive cruise */
+  W.carparams = function (root) {
+    var body = shell(root, 'Parameters: tune the adaptive cruise control');
+    var WD = 640, HT = 190, cv = mkCanvas(WD, HT), ctx = cv.ctx;
+    var ACC = { eco: 1.0, normal: 2.0, sport: 3.5 };
+    var PRESETS = {
+      'city.yaml': { max_speed: 50, safe_distance: 12, driving_mode: 'eco' },
+      'motorway.yaml': { max_speed: 110, safe_distance: 40, driving_mode: 'normal' },
+      'track.yaml': { max_speed: 140, safe_distance: 20, driving_mode: 'sport' }
+    };
+    var stored = { max_speed: 50, safe_distance: 15, driving_mode: 'normal' };   // values held by the node
+    var used = { max_speed: 50, safe_distance: 15, driving_mode: 'normal' };     // values the code is using
+    var hasCb = false, lastCmd = 'ros2 run my_car adaptive_cruise';
+    var ego = { x: 0, v: 50 / 3.6 }, lead = { x: 35, v: 60 / 3.6 }, tt = 0;
+    var logEl = h('div', { class: 'sim-log' });
+    function log(s) { logEl.insertBefore(h('div', { text: s }), logEl.firstChild); while (logEl.childNodes.length > 7) logEl.removeChild(logEl.lastChild); }
+    var yamlPre = h('pre', {}), cmdPre = h('pre', {});
+    var rd = readouts([['ev', 'your car (ego) speed'], ['lv', 'car in front'], ['gap', 'gap'], ['use', 'node is using']]);
+    function copy(o) { return { max_speed: o.max_speed, safe_distance: o.safe_distance, driving_mode: o.driving_mode }; }
+    function fmt(name, v) { return name === 'driving_mode' ? '"' + v + '"' : (Math.round(v * 10) / 10).toFixed(1); }
+    function showText() {
+      yamlPre.textContent = '# params/adaptive_cruise.yaml\nadaptive_cruise:\n  ros__parameters:\n' +
+        '    max_speed: ' + fmt('max_speed', stored.max_speed) + '      # km/h\n' +
+        '    safe_distance: ' + fmt('safe_distance', stored.safe_distance) + '   # m\n' +
+        '    driving_mode: ' + fmt('driving_mode', stored.driving_mode);
+      cmdPre.textContent = '$ ' + lastCmd;
+    }
+    var sMax = slider('max_speed', 20, 150, 5, stored.max_speed, function (v) { setParam('max_speed', v); }, function (v) { return v + ' km/h'; });
+    var sGap = slider('safe_distance', 5, 60, 1, stored.safe_distance, function (v) { setParam('safe_distance', v); }, function (v) { return v + ' m'; });
+    var mSel = h('select', { class: 'wsel' }, ['eco', 'normal', 'sport'].map(function (m) { return h('option', { value: m, text: 'driving_mode: ' + m }); }));
+    mSel.value = stored.driving_mode;
+    mSel.addEventListener('change', function () { setParam('driving_mode', mSel.value); });
+    function syncControls() { sMax.set(stored.max_speed); sGap.set(stored.safe_distance); mSel.value = stored.driving_mode; }
+    function setParam(name, v) {
+      lastCmd = 'ros2 param set /adaptive_cruise ' + name + ' ' + (name === 'driving_mode' ? v : fmt(name, v));
+      if (hasCb) {
+        if (name === 'max_speed' && v > 130) {
+          log('Setting parameter failed: max_speed must be <= 130 km/h');
+          syncControls(); showText(); return;
+        }
+        stored[name] = v; used[name] = v;
+        log('Set parameter successful  ·  callback: ' + name + ' -> ' + v + ' (used now)');
+      } else {
+        stored[name] = v;
+        log('Set parameter successful  ·  but the node read its parameters only in __init__');
+      }
+      showText();
+    }
+    function restart(cmd) {
+      lastCmd = cmd; used = copy(stored);
+      log(cmd); log('adaptive_cruise started: max_speed=' + used.max_speed + ', safe_distance=' + used.safe_distance + ', driving_mode=' + used.driving_mode);
+      showText();
+    }
+    body.appendChild(cv.c);
+    body.appendChild(h('div', { class: 'sim-split' }, [
+      h('div', { class: 'sim-side' }, [
+        row([sMax.el]), row([sGap.el]), row([mSel]),
+        row([check('the node has a parameter callback (Lab 7)', hasCb, function (v) { hasCb = v; log(v ? 'self.add_on_set_parameters_callback(self.callback_parameters)' : 'no parameter callback: values are read once in __init__'); }),
+          btn('🔄 restart node', 'ghost', function () { restart('ros2 run my_car adaptive_cruise --ros-args --params-file params/adaptive_cruise.yaml'); })]),
+        row([h('span', { class: 'wlbl', text: 'Start from a file:' })].concat(Object.keys(PRESETS).map(function (k) {
+          return btn(k, 'ghost', function () { stored = copy(PRESETS[k]); syncControls(); restart('ros2 run my_car adaptive_cruise --ros-args --params-file ' + k); });
+        })))
+      ]),
+      h('div', { class: 'sim-side' }, [rd.el, yamlPre, cmdPre])
+    ]));
+    body.appendChild(logEl);
+    body.appendChild(h('p', { class: 'sim-hint', html: 'Move a slider: that is <code>ros2 param set</code> on a running node. Without a parameter callback the value is <em>stored</em> but the car ignores it until you restart the node. Tick the callback box and try again, then try <b>max_speed = 150</b>: the callback refuses it. The three files are the same code with different settings.' }));
+    showText();
+    function leadTarget(t) { var p = t % 28; return p < 8 ? 60 : p < 15 ? 100 : p < 20 ? 30 : 80; }
+    addLoop(root, function (dt) {
+      tt += dt;
+      var lt = leadTarget(tt) / 3.6;
+      lead.v += clamp(lt - lead.v, -3 * dt, 2.5 * dt); lead.x += lead.v * dt;
+      var gap = lead.x - ego.x - 4.5;
+      var desired = Math.max(0, Math.min(used.max_speed / 3.6, lead.v + 0.5 * (gap - used.safe_distance)));
+      var a = clamp((desired - ego.v) * 1.5, -7, ACC[used.driving_mode]);
+      ego.v = Math.max(0, ego.v + a * dt); ego.x += ego.v * dt;
+      gap = lead.x - ego.x - 4.5;
+      if (gap < 1) { ego.x = lead.x - 5.5; ego.v = Math.min(ego.v, lead.v); gap = 1; }
+
+      var c = C(), PX = 5.2, X0 = 60, ROADY = 56, ROADH = 92;
+      ctx.clearRect(0, 0, WD, HT); ctx.fillStyle = c.bg2; rr(ctx, 0, 0, WD, HT, 14); ctx.fill();
+      ctx.fillStyle = c.muted; ctx.globalAlpha = 0.18; ctx.fillRect(0, ROADY, WD, ROADH); ctx.globalAlpha = 1;
+      ctx.strokeStyle = c.muted; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, ROADY); ctx.lineTo(WD, ROADY); ctx.moveTo(0, ROADY + ROADH); ctx.lineTo(WD, ROADY + ROADH); ctx.stroke();
+      ctx.setLineDash([18, 16]); ctx.lineDashOffset = (ego.x * PX) % 34; ctx.beginPath(); ctx.moveTo(0, ROADY + ROADH / 2); ctx.lineTo(WD, ROADY + ROADH / 2); ctx.stroke(); ctx.setLineDash([]); ctx.lineDashOffset = 0;
+      var laneY = ROADY + ROADH * 0.72;
+      var leadX = X0 + (lead.x - ego.x) * PX;
+      var shown = Math.min(leadX, WD - 30);
+      if (shown < X0 + 52) shown = X0 + 52;
+      // safe-distance zone behind the lead car
+      var zx = shown - 26 - used.safe_distance * PX;
+      ctx.fillStyle = c.gold; ctx.globalAlpha = 0.22; ctx.fillRect(Math.max(0, zx), laneY - 16, Math.max(0, shown - 26 - Math.max(0, zx)), 32); ctx.globalAlpha = 1;
+      label(ctx, 'safe_distance = ' + used.safe_distance + ' m', Math.max(70, Math.min(WD - 80, zx + used.safe_distance * PX / 2)), laneY + 26, c.gold, 11, 'center', true);
+      function car(x, y, col, txt) {
+        rr(ctx, x - 26, y - 12, 52, 24, 7); ctx.fillStyle = col; ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.fillRect(x + 10, y - 9, 8, 18);
+        label(ctx, txt, x - 5, y, '#fff', 11, 'center', true);
+      }
+      car(shown, laneY, c.muted, 'lead');
+      if (leadX > WD - 30) label(ctx, Math.round(gap) + ' m ahead →', WD - 70, laneY - 24, c.muted, 11, 'center', true);
+      car(X0, laneY, gap < used.safe_distance * 0.6 ? c.red : c.accent, 'you');
+      // dashboard
+      label(ctx, 'speed limit set by max_speed: ' + used.max_speed + ' km/h', 16, 22, c.text, 12, 'left', true);
+      label(ctx, 'mode: ' + used.driving_mode + ' (max accel ' + ACC[used.driving_mode] + ' m/s²)', 16, 42, c.muted, 11, 'left');
+      var stale = stored.max_speed !== used.max_speed || stored.safe_distance !== used.safe_distance || stored.driving_mode !== used.driving_mode;
+      if (stale) label(ctx, '⚠ stored values ≠ used values: restart the node or add a callback', WD - 16, 22, c.red, 11, 'right', true);
+      label(ctx, Math.round(ego.v * 3.6) + ' km/h', X0 + 10, ROADY + ROADH + 22, c.accent, 18, 'center', true);
+      rd.set('ev', Math.round(ego.v * 3.6) + ' km/h'); rd.set('lv', Math.round(lead.v * 3.6) + ' km/h');
+      rd.set('gap', gap.toFixed(1) + ' m'); rd.set('use', used.max_speed + ' km/h · ' + used.safe_distance + ' m · ' + used.driving_mode);
+    });
   };
 
   /* ---------------------------------------------------------- boot */

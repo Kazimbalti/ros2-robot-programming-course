@@ -4,8 +4,8 @@
 <script>(function(){try{var t=localStorage.getItem('limo-book-theme');if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lecture 5 — Custom Messages &amp; Services</title>
-<meta name="description" content="Hands-on Lecture 5: create your own ROS 2 interfaces. Build a .msg and a .srv, use them in Python nodes, and complete the battery and LED panel activity.">
+<title>Lecture 5 — Custom Interfaces &amp; Parameters: Your Own Messages, Your Own Knobs</title>
+<meta name="description" content="Hands-on Lecture 5: design your own ROS 2 interfaces (.msg, .srv, .action) in a dedicated interfaces package, use them from Python, and make nodes configurable with parameters: declare, set at startup, YAML files, ros2 param tools and live parameter callbacks. Self-driving car and robot examples throughout.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
@@ -13,6 +13,256 @@
 <link rel="stylesheet" href="widgets.css">
 <link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="projector.css">
+<style>
+  /* Lecture 4 style: the three-way comparison cards */
+  .trio{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:18px 0 22px;}
+  .trio > div{background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:16px 16px 12px; position:relative; overflow:hidden;}
+  .trio > div::before{content:""; position:absolute; top:0; left:0; right:0; height:5px;}
+  .trio .t-topic::before{background:var(--accent);} .trio .t-srv::before{background:var(--gold);} .trio .t-act::before{background:var(--accent2);}
+  .trio .big{font-size:2.1em; line-height:1.1;}
+  .trio b{display:block; font-size:1.08em; margin:6px 0 2px; color:var(--text);}
+  .trio .say{font-style:italic; color:var(--muted); font-size:.92em; margin-bottom:8px;}
+  .trio ul{font-size:.92em; padding-inline-start:18px; margin:0;}
+  @media (max-width:760px){ .trio{grid-template-columns:1fr;} }
+  .vs td:first-child{font-weight:700; white-space:nowrap;}
+  .credit{font-size:.8em; color:var(--muted); margin-top:-6px;}
+
+  /* Lecture 4 style: light cover so every word is readable on screens and projectors */
+  html body .cover{background:linear-gradient(135deg,#eaf3ff 0%,#dde9f8 55%,#e8edf4 100%) !important; border:1px solid #c9d8ee; box-shadow:0 24px 50px -36px rgba(30,60,120,.45) !important;}
+  html body .cover::before{background:none !important;}
+  .cover::after{background-image:linear-gradient(rgba(30,60,120,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(30,60,120,.05) 1px,transparent 1px);}
+  html body .cover h1{color:#14213d;}
+  html body .cover .subtitle{color:#2b3550 !important;}
+  html body .cover .subtitle strong{color:#0b1530;}
+  html body .cover .kicker{color:#1e3a8a; background:rgba(255,255,255,.75); border-color:#c3d3ea;}
+  html body .cover .chip{color:#1f2a44; background:rgba(255,255,255,.75); border-color:#c3d3ea;}
+  html body .cover .skill-path a{color:#1e3a8a; background:rgba(255,255,255,.65); border-color:#c3d3ea;}
+  html body .cover .skill-path a.done{color:#065f46; background:#d1fae5; border-color:#86e0bb;}
+  html body .cover .skill-path a.now{color:#fff; background:#2563eb; border-color:#2563eb;}
+  html body .cover .cover-art{filter:drop-shadow(0 14px 18px rgba(30,60,120,.25));}
+  html[data-theme="dark"] body .cover{background:linear-gradient(135deg,#2a3142 0%,#323a4f 100%) !important; border-color:#3d465d;}
+  html[data-theme="dark"] .cover::after{background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);}
+  html[data-theme="dark"] body .cover h1{color:#f3f5fb;}
+  html[data-theme="dark"] body .cover .subtitle{color:#d9deea !important;}
+  html[data-theme="dark"] body .cover .subtitle strong{color:#fff;}
+  html[data-theme="dark"] body .cover .kicker, html[data-theme="dark"] body .cover .chip, html[data-theme="dark"] body .cover .skill-path a{color:#e6e9f2; background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.18);}
+  html[data-theme="dark"] body .cover .skill-path a.done{color:#a7f3d0; background:rgba(52,211,153,.18); border-color:rgba(52,211,153,.45);}
+  html[data-theme="dark"] body .cover .skill-path a.now{color:#1e293b; background:#fff; border-color:#fff;}
+
+  /* Lecture 4 style: light grey code windows and logs, matching the cover */
+  html body .cmd{border:1px solid #d3dce8; box-shadow:0 14px 30px -26px rgba(30,60,120,.45) !important;}
+  html body .cmd-h{background:linear-gradient(90deg,#dfe8f4,#e7edf5) !important; color:#1e3a8a; border-bottom:1px solid #d3dce8;}
+  html body .cmd.file .cmd-h{background:linear-gradient(90deg,#e6e2f3,#ece9f5) !important; color:#4c1d95;}
+  html body pre{background:#f1f4f8; color:#1f2937;}
+  html body .copy-btn{background:#fff; border-color:#c3d0e2; color:#1e3a8a;}
+  html body .copy-btn:hover{background:#eaf1fb;}
+  html body .cm{color:#64748b;} html body .kw{color:#7c3aed;} html body .st{color:#15803d;}
+  html body .hl{background:rgba(250,204,21,.28);}
+  .hl-i{background:rgba(250,204,21,.4); border-radius:3px; padding:0 1px;}
+  html body .sim-log{background:#f1f4f8; color:#1f2937; border:1px solid #d3dce8;}
+  html[data-theme="dark"] body .cmd{border-color:#3d465d;}
+  html[data-theme="dark"] body .cmd-h{background:linear-gradient(90deg,#323a4f,#384157) !important; color:#dbe4ff; border-bottom-color:#3d465d;}
+  html[data-theme="dark"] body .cmd.file .cmd-h{background:linear-gradient(90deg,#3a3552,#413b5c) !important; color:#e4d8ff;}
+  html[data-theme="dark"] body pre{background:#2a3142; color:#e6e9f2;}
+  html[data-theme="dark"] body .copy-btn{background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.2); color:#e6e9f2;}
+  html[data-theme="dark"] body .cm{color:#9aa4bf;} html[data-theme="dark"] body .kw{color:#c4b5fd;} html[data-theme="dark"] body .st{color:#86efac;}
+  html[data-theme="dark"] body .hl{background:rgba(250,204,21,.18);}
+  html[data-theme="dark"] .hl-i{background:rgba(250,204,21,.3);}
+  html[data-theme="dark"] body .sim-log{background:#2a3142; color:#e6e9f2; border-color:#3d465d;}
+
+  /* Lecture 4 style: animated help-desk picture (services, step 1) */
+  .helpdesk{margin:18px 0 6px; background:linear-gradient(180deg,#eef4fc,#f6f8fb); border:1px solid #d3dce8; border-radius:20px; padding:14px 10px 6px;}
+  html[data-theme="dark"] .helpdesk{background:linear-gradient(180deg,#2a3142,#262c3b); border-color:#3d465d;}
+  .helpdesk svg{display:block; width:100%; height:auto; max-width:720px; margin:0 auto;}
+  .helpdesk text{font-family:Inter, sans-serif; font-weight:700; text-anchor:middle; fill:var(--text); font-size:13px;}
+  .helpdesk .hd-floor{fill:var(--border);}
+  .helpdesk .hd-line{stroke:var(--text); stroke-width:2.5; stroke-linecap:round;}
+  .helpdesk .hd-tip{fill:var(--gold);} .helpdesk .hd-tip.s{fill:var(--danger);}
+  .helpdesk .hd-c-head,.helpdesk .hd-c-body{fill:var(--accent);} .helpdesk .hd-c-body{opacity:.85;}
+  .helpdesk .hd-s-head,.helpdesk .hd-s-body{fill:var(--accent2);}
+  .helpdesk .hd-eye{fill:#fff;} .helpdesk .hd-pupil{fill:#1f2937;}
+  .helpdesk .hd-smile{fill:none; stroke:#fff; stroke-width:2.4; stroke-linecap:round;}
+  .helpdesk .hd-screen{fill:#fff; opacity:.9;} .helpdesk .hd-mono{font-family:'JetBrains Mono', monospace; font-size:13px; fill:var(--accent);}
+  .helpdesk .hd-dark{fill:var(--text);}
+  .helpdesk .hd-name{font-size:14px; font-weight:800;}
+  .helpdesk .hd-code{font-family:'JetBrains Mono', monospace; font-size:11.5px; font-weight:600; fill:var(--muted);}
+  .helpdesk .hd-sign{fill:var(--gold);} .helpdesk .hd-sign-t{fill:#fff; font-family:'JetBrains Mono', monospace; font-size:14px;}
+  .helpdesk .hd-desk-top{fill:#a0703c;} .helpdesk .hd-desk{fill:#c8935a;} .helpdesk .hd-desk-t{fill:#fff; font-size:12px; letter-spacing:2px;}
+  .helpdesk .hd-bell{fill:var(--gold);}
+  .helpdesk .hd-path{stroke:var(--muted); stroke-width:2; stroke-dasharray:6 6; opacity:.5;}
+  .helpdesk .hd-env rect{stroke:#fff; stroke-width:1.5;} .helpdesk .hd-env path{fill:none; stroke:#fff; stroke-width:1.5; opacity:.8;}
+  .helpdesk .hd-env text{fill:#fff; font-size:12px;}
+  .helpdesk .hd-req rect{fill:var(--gold);} .helpdesk .hd-res rect{fill:var(--accent2);}
+  .helpdesk .hd-think rect{fill:var(--panel); stroke:var(--accent2); stroke-width:2;} .helpdesk .hd-think text{fill:var(--accent2);}
+  .helpdesk .hd-done rect{fill:var(--accent2);} .helpdesk .hd-done text{fill:#fff;}
+  .helpdesk .hd-stage rect{fill:var(--panel); stroke:var(--border); stroke-width:1.5;} .helpdesk .hd-stage text{font-size:12.5px; fill:var(--muted);}
+  .helpdesk .hd-gear{font-size:22px; transform-box:fill-box; transform-origin:center;}
+  /* step-by-step learning path inside 4.0, 4.1 and 4.3 */
+  .lpath{display:flex; flex-wrap:wrap; gap:8px; margin:4px 0 8px;}
+  .lpath a{display:inline-flex; align-items:center; gap:7px; padding:5px 13px 5px 5px; border-radius:99px; background:var(--panel); border:1px solid var(--border);
+    color:var(--text); text-decoration:none; font-weight:700; font-size:.82em; transition:transform .15s, border-color .15s;}
+  .lpath a:hover{transform:translateY(-2px); border-color:var(--accent);}
+  .lpath a b, .lstep .n{display:inline-flex; align-items:center; justify-content:center; border-radius:50%; color:#fff; font-weight:800;
+    background:linear-gradient(135deg,var(--accent),var(--purple));}
+  .lpath a b{width:24px; height:24px; font-size:.85em;}
+  .lpath.srv a b, .lstep.srv .n{background:linear-gradient(135deg,#d99a2b,var(--gold));}
+  .lpath.act a b, .lstep.act .n{background:linear-gradient(135deg,var(--accent2),#12b886);}
+  .lstep{display:flex; align-items:center; gap:12px; margin:40px 0 14px; padding-top:18px; border-top:1px dashed var(--border); scroll-margin-top:90px;}
+  .lstep .n{width:38px; height:38px; flex-shrink:0; font-size:1.05em; box-shadow:0 8px 16px -8px rgba(61,75,245,.55);}
+  .lstep h3{margin:0;}
+  .lstep h3 small{font-size:.65em; font-weight:700; color:var(--muted); margin-left:6px;}
+  .nextup{margin:26px 0 0; padding:14px 18px; border-radius:14px; background:var(--panel); border:1px solid var(--border); border-left:5px solid var(--accent2);}
+
+  /* route card on its own: two columns of links on wide screens */
+  @media (min-width:761px){ .toc.solo{columns:2; column-gap:32px;} .toc.solo h3{column-span:all;} .toc.solo a{break-inside:avoid;} }
+
+  /* Lecture 4 style: pictorial "at a glance" infographic */
+  .l4ig-grid{display:grid; grid-template-columns:1fr; gap:14px; margin-top:6px;}
+  .l4ig-card{margin:0; background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:14px 18px 10px; position:relative; overflow:hidden;
+    display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); grid-template-rows:auto 1fr; column-gap:22px;}
+  .l4ig-card svg{grid-column:1; grid-row:1 / span 2;}
+  .l4ig-card figcaption{grid-column:2; grid-row:1; align-self:end; margin-top:10px;}
+  .l4ig-card ul{grid-column:2; grid-row:2; align-self:start; margin-top:10px !important;}
+  .l4ig-card::before{content:""; position:absolute; top:0; left:0; right:0; height:5px;}
+  .l4ig-card.t-topic::before{background:var(--accent);} .l4ig-card.t-srv::before{background:var(--gold);} .l4ig-card.t-act::before{background:var(--accent2);}
+  .l4ig-card figcaption{display:grid; grid-template-columns:auto 1fr; column-gap:8px; align-items:center;}
+  .l4ig-card figcaption .ic{font-size:1.6em; grid-row:span 2;}
+  .l4ig-card figcaption b{font-size:1.1em; color:var(--text);}
+  .l4ig-card figcaption span:last-child{font-size:.85em; font-style:italic; color:var(--muted); line-height:1.35;}
+  .l4ig-card svg{display:block; width:100%; height:auto; margin:6px 0 2px;}
+  .l4ig-card ul{font-size:.86em; padding-inline-start:18px; margin:0;}
+  .l4ig-card li{margin-bottom:2px;}
+  .l4ig-foot{font-size:.9em; color:var(--muted); margin:12px 0 0; text-align:center;}
+  @media (max-width:760px){
+    .l4ig-card{display:block; padding:12px 12px 8px;}
+    .l4ig-card ul{margin-top:4px !important;}
+  }
+
+  .l4ig svg text{font-family:Inter, sans-serif; font-weight:700; font-size:11px; fill:var(--text); text-anchor:middle;}
+  .l4ig .lbl{font-size:10.5px; fill:var(--muted);}
+  .l4ig .ln{stroke:var(--muted); stroke-width:1.6; fill:none; stroke-dasharray:5 5; opacity:.55;}
+  .l4ig .ln.solid{stroke-dasharray:none; opacity:.8;}
+  .l4ig .arrhead{fill:var(--muted);}
+  .l4ig .arm{stroke:var(--text); stroke-width:2.4; stroke-linecap:round;}
+  .l4ig .rotor{fill:var(--muted); opacity:.7; transform-box:fill-box; transform-origin:center; animation:l4-rotor .18s linear infinite alternate;}
+  .l4ig .drone-body{fill:var(--accent);} .l4ig .lens{fill:var(--text);}
+  .l4ig .robot-body{fill:var(--accent2);} .l4ig .robot-top{fill:var(--text);} .l4ig .wheel{fill:var(--text);}
+  .l4ig .lap{fill:var(--muted);} .l4ig .scr{fill:var(--panel2);}
+  .l4ig .pill{stroke-width:1.5;} .l4ig .pill-t{font-family:'JetBrains Mono', monospace; font-size:10.5px;}
+  .l4ig .p-topic{fill:var(--panel2); stroke:var(--accent);} .l4ig .p-srv{fill:var(--panel2); stroke:var(--gold);}
+  .l4ig .pk text{fill:#fff; font-size:10.5px;}
+  .l4ig .pk-topic rect{fill:var(--accent);} .l4ig .pk-req rect{fill:var(--gold);} .l4ig .pk-res rect{fill:var(--accent2);}
+  .l4ig .msgbox{fill:var(--panel2); stroke:var(--border);}
+
+  /* ---------- Lecture 5 only ---------- */
+  .lpath.ifc a b, .lstep.ifc .n{background:linear-gradient(135deg,#a78bfa,var(--purple));}
+  .lpath.prm a b, .lstep.prm .n{background:linear-gradient(135deg,#d99a2b,var(--gold));}
+  .trio .t-std::before, .l4ig-card.t-std::before{background:var(--accent);}
+  .trio .t-ifc::before, .l4ig-card.t-ifc::before{background:var(--purple);}
+  .trio .t-prm::before, .l4ig-card.t-prm::before{background:var(--gold);}
+  .trio code{font-size:.9em;}
+
+  /* big-picture cards */
+  .l4ig .p-ifc{fill:var(--panel2); stroke:var(--purple);} .l4ig .p-prm{fill:var(--panel2); stroke:var(--gold);}
+  .l4ig .mono{font-family:'JetBrains Mono', monospace; font-size:10.5px;}
+  .l4ig .ray{fill:none; stroke:var(--accent); stroke-width:2; transform-box:fill-box; transform-origin:center; animation:l5-ray 1.6s linear infinite;}
+  .l4ig .ray.lag2{animation-delay:-.8s;}
+  .l4ig .l5-scan{animation:l5-scan 1.4s linear infinite;} .l4ig .l5-scan.lag{animation-delay:-.7s;}
+  .l4ig .form{fill:var(--panel2); stroke:var(--purple); stroke-width:1.5;}
+  .l4ig .form-h{fill:var(--purple);} .l4ig .form-t{fill:#fff; font-size:11.5px;}
+  .l4ig .ft{text-anchor:start; font-family:'JetBrains Mono', monospace; font-size:10.5px; font-weight:600; fill:var(--text);}
+  .l4ig .ft .ty{fill:var(--purple);}
+  .l4ig .fv{fill:var(--panel); stroke:var(--border);}
+  .l4ig .fvt{font-family:'JetBrains Mono', monospace; font-size:10.5px; fill:var(--accent2);}
+  .l4ig .v1{animation:l5-v1 5s steps(1) infinite;} .l4ig .v2{animation:l5-v2 5s steps(1) infinite;}
+  .l4ig .l5-env{animation:l5-env 2.5s ease-in-out infinite;} .l4ig .l5-env rect{fill:var(--purple);}
+  .l4ig .cfg rect{fill:var(--panel2); stroke:var(--border); stroke-width:1.5;}
+  .l4ig .cfg.c1 rect{animation:l5-c1 7s infinite;} .l4ig .cfg.c2 rect{animation:l5-c2 7s infinite;}
+  .l4ig .nodebox{fill:var(--panel2); stroke:var(--gold); stroke-width:2;}
+  .l4ig .gauge{fill:none; stroke:var(--border); stroke-width:10; stroke-linecap:round;}
+  .l4ig .gauge-hi{fill:none; stroke:var(--gold); stroke-width:10; stroke-linecap:round; opacity:.55;}
+  .l4ig .needle{stroke:var(--danger); stroke-width:3.5; stroke-linecap:round;}
+  .l4ig .needle-g{animation:l5-needle 7s ease-in-out infinite;}
+  .l4ig .hub{fill:var(--text);}
+  .l4ig .spd1{animation:l5-v1 7s steps(1) infinite;} .l4ig .spd2{animation:l5-v2 7s steps(1) infinite;}
+  @keyframes l5-ray{0%{transform:scale(.4); opacity:.9} 100%{transform:scale(2.6); opacity:0}}
+  @keyframes l5-scan{from{transform:translate(104px,128px)} to{transform:translate(232px,156px)}}
+  @keyframes l5-v1{0%{opacity:1} 50%{opacity:0}} @keyframes l5-v2{0%{opacity:0} 50%{opacity:1}}
+  @keyframes l5-env{0%{transform:translate(214px,104px); opacity:0} 10%{opacity:1} 80%{transform:translate(250px,104px); opacity:1} 90%,100%{transform:translate(250px,104px); opacity:0}}
+  @keyframes l5-c1{0%,45%{stroke:var(--gold); stroke-width:3} 50%,95%{stroke:var(--border); stroke-width:1.5} 100%{stroke:var(--gold); stroke-width:3}}
+  @keyframes l5-c2{0%,45%{stroke:var(--border); stroke-width:1.5} 50%,95%{stroke:var(--gold); stroke-width:3} 100%{stroke:var(--border); stroke-width:1.5}}
+  @keyframes l5-needle{0%,40%{transform:rotate(-30deg)} 50%,90%{transform:rotate(42deg)} 100%{transform:rotate(-30deg)}}
+  @media (prefers-reduced-motion:reduce){
+    .l4ig *{animation:none !important;}
+    .l4ig .l5-scan,.l4ig .ray.lag2,.l4ig .v2,.l4ig .spd2{display:none;} .l4ig .l5-env{transform:translate(232px,104px);}
+    .l4ig .needle-g{transform:rotate(-30deg);}
+  }
+
+  /* note vs form picture (5.1 step 1) */
+  .notefig{margin:18px 0 6px; background:linear-gradient(180deg,#f3effd,#f8f7fc); border:1px solid #ddd3f3; border-radius:20px; padding:12px 10px 6px;}
+  html[data-theme="dark"] .notefig{background:linear-gradient(180deg,#2d2a40,#272536); border-color:#443d63;}
+  .notefig svg{display:block; width:100%; height:auto; max-width:720px; margin:0 auto;}
+  .notefig text{font-family:Inter, sans-serif; font-weight:700; text-anchor:middle; fill:var(--text); font-size:13px;}
+  .notefig .sticky{fill:#fde68a; stroke:#e2c35c;} html[data-theme="dark"] .notefig .sticky{fill:#e9cf6b;}
+  .notefig .scrawl{font-family:'Comic Sans MS','Segoe Print','Bradley Hand',cursive; font-size:24px; fill:#3b3200;}
+  .notefig .q{fill:var(--panel); stroke:var(--danger); stroke-width:1.5;} .notefig .qt{fill:var(--danger); font-size:12px;}
+  .notefig .q-g{animation:nf-q 6s ease-in-out infinite;} .notefig .q2{animation-delay:-4s;} .notefig .q3{animation-delay:-2s;}
+  .notefig .sheet{fill:var(--panel); stroke:var(--purple); stroke-width:2;} .notefig .sheet-h{fill:var(--purple);} .notefig .sheet-t{fill:#fff; font-size:13px;}
+  .notefig .lbl-l{text-anchor:start; font-size:12px; fill:var(--muted);} .notefig .ty{font-family:'JetBrains Mono', monospace; font-size:11px; fill:var(--purple); text-anchor:start;}
+  .notefig .box{fill:var(--panel2); stroke:var(--border);} .notefig .val{font-family:'JetBrains Mono', monospace; font-size:13px; fill:var(--accent2);}
+  .notefig .ok{fill:var(--accent2); font-size:16px;} .notefig .bad{fill:var(--danger); font-size:16px;}
+  .notefig .vs{font-size:20px; fill:var(--muted);}
+  .notefig .cap{font-size:12.5px; fill:var(--muted);}
+  @keyframes nf-q{0%,100%{opacity:.35; transform:translateY(0)} 40%,60%{opacity:1; transform:translateY(-3px)}}
+  @media (prefers-reduced-motion:reduce){ .notefig *{animation:none !important;} }
+
+  /* build pipeline animation (5.1 step 3); reuses the help-desk look */
+  .pipe svg{max-width:760px;}
+  .pipe .pf{fill:var(--panel); stroke:var(--purple); stroke-width:2;}
+  .pipe .pf-h{fill:var(--purple);} .pipe .pf-ht{fill:#fff; font-size:12.5px;}
+  .pipe .pl{text-anchor:start; font-family:'JetBrains Mono', monospace; font-size:11.5px; font-weight:600;}
+  .pipe .pl .ty{fill:var(--purple);}
+  .pipe .fac{fill:var(--panel); stroke:var(--accent); stroke-width:2;} .pipe .fac-roof{fill:var(--accent);}
+  .pipe .fac-t{font-size:13px;} .pipe .fac-s{font-size:11px; fill:var(--muted); font-weight:600;}
+  .pipe .gear{font-size:30px; transform-box:fill-box; transform-origin:center; animation:pp-gear 9s linear infinite;}
+  .pipe .out rect{fill:var(--panel); stroke:var(--border); stroke-width:2;}
+  .pipe .out .oh{font-size:12.5px;} .pipe .out .oc{font-family:'JetBrains Mono', monospace; font-size:10.5px; font-weight:600; fill:var(--muted);}
+  .pipe .o1 rect{animation:pp-o 9s infinite;} .pipe .o2 rect{animation:pp-o 9s infinite;} .pipe .o3 rect{animation:pp-o 9s infinite;}
+  .pipe .tok rect{fill:var(--purple);} .pipe .tok text{fill:#fff; font-size:11px;}
+  .pipe .tk0{animation:pp-t0 9s ease-in-out infinite;} .pipe .tk1{animation:pp-t1 9s ease-in-out infinite;}
+  .pipe .tk2{animation:pp-t2 9s ease-in-out infinite;} .pipe .tk3{animation:pp-t3 9s ease-in-out infinite;}
+  .pipe .tk1 rect{fill:#3776ab;} .pipe .tk2 rect{fill:#00599c;} .pipe .tk3 rect{fill:var(--accent2);}
+  .pipe .pst1 rect{animation:pp-s1 9s infinite;} .pipe .pst2 rect{animation:pp-s2 9s infinite;} .pipe .pst3 rect{animation:pp-s3 9s infinite;}
+  .pipe .pst1 text{animation:pp-s1t 9s infinite;} .pipe .pst2 text{animation:pp-s2t 9s infinite;} .pipe .pst3 text{animation:pp-s3t 9s infinite;}
+  @keyframes pp-gear{0%,25%{transform:rotate(0)} 55%,100%{transform:rotate(360deg)}}
+  @keyframes pp-t0{0%,4%{transform:translate(200px,120px); opacity:0} 6%{opacity:1} 24%{transform:translate(262px,120px); opacity:1} 26%,100%{transform:translate(262px,120px); opacity:0}}
+  @keyframes pp-t1{0%,55%{transform:translate(410px,120px); opacity:0} 57%{opacity:1} 74%{transform:translate(474px,60px); opacity:1} 76%,100%{transform:translate(474px,60px); opacity:0}}
+  @keyframes pp-t2{0%,57%{transform:translate(410px,120px); opacity:0} 59%{opacity:1} 76%{transform:translate(474px,140px); opacity:1} 78%,100%{transform:translate(474px,140px); opacity:0}}
+  @keyframes pp-t3{0%,59%{transform:translate(410px,120px); opacity:0} 61%{opacity:1} 78%{transform:translate(474px,220px); opacity:1} 80%,100%{transform:translate(474px,220px); opacity:0}}
+  @keyframes pp-o{0%,76%{stroke:var(--border)} 78%,98%{stroke:var(--accent2)} 100%{stroke:var(--border)}}
+  @keyframes pp-s1{0%,25%{fill:var(--purple); stroke:var(--purple)} 26%,100%{fill:var(--panel); stroke:var(--border)}}
+  @keyframes pp-s2{0%,25%{fill:var(--panel); stroke:var(--border)} 26%,55%{fill:var(--accent); stroke:var(--accent)} 56%,100%{fill:var(--panel); stroke:var(--border)}}
+  @keyframes pp-s3{0%,55%{fill:var(--panel); stroke:var(--border)} 56%,100%{fill:var(--accent2); stroke:var(--accent2)}}
+  @keyframes pp-s1t{0%,25%{fill:#fff} 26%,100%{fill:var(--muted)}}
+  @keyframes pp-s2t{0%,25%{fill:var(--muted)} 26%,55%{fill:#fff} 56%,100%{fill:var(--muted)}}
+  @keyframes pp-s3t{0%,55%{fill:var(--muted)} 56%,100%{fill:#fff}}
+  @media (prefers-reduced-motion:reduce){
+    .pipe *{animation:none !important;}
+    .pipe .tok{opacity:0;}
+  }
+
+  /* where a parameter value comes from (5.3 step 2) */
+  .pflow{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:16px 0 8px; counter-reset:pf;}
+  .pflow > div{background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:14px 16px 12px; position:relative;}
+  .pflow > div::after{content:"→"; position:absolute; right:-14px; top:42%; font-weight:800; color:var(--muted); font-size:1.2em;}
+  .pflow > div:last-child::after{content:none;}
+  .pflow .when{font-size:.75em; font-weight:800; letter-spacing:.5px; text-transform:uppercase; color:var(--gold);}
+  .pflow b{display:block; margin:4px 0 6px;}
+  .pflow code{font-size:.82em; word-break:break-word;}
+  .pflow .val{display:inline-block; margin-top:8px; padding:2px 10px; border-radius:99px; background:var(--panel2); border:1px solid var(--border); font-family:'JetBrains Mono', monospace; font-size:.85em; font-weight:700; color:var(--accent2);}
+  p code, li code, td code, .cheat code, .pflow code{overflow-wrap:anywhere;}
+  @media (max-width:760px){ .pflow{grid-template-columns:1fr;} .pflow > div::after{content:"↓"; right:auto; left:50%; top:auto; bottom:-18px;} }
+</style>
 </head>
 <body>
 <button id="theme-toggle" aria-label="Toggle light/dark mode">🌙</button>
@@ -25,145 +275,320 @@
 <div class="lesson-progress"><div class="lp-top"><span>Lecture 5 · your progress</span><span><b class="lp-count">0 / 0 steps</b> · <a href="#" class="lp-reset">reset</a></span></div><div class="lp-bar"><div class="lp-fill"></div></div></div>
 
 <div class="cover">
-    <div class="cover-art" aria-hidden="true">📝</div>
+    <div class="cover-art" aria-hidden="true">🧩</div>
   <div class="kicker">Part A · ROS 2 Bootcamp · Lecture 5 of 14</div>
-  <h1>Custom Messages &amp; Services</h1>
-  <div class="subtitle">So far we used messages that other people made. Real robots need their own: a hardware status report, a list of LEDs, a list of turtles to catch. Today you design, build and use your own interfaces.</div>
+  <h1>Custom Interfaces &amp; Parameters — Your Own Messages, Your Own Knobs</h1>
+  <div class="subtitle">In Lecture 4 every request, response, goal and feedback used a type that <em>someone else</em> wrote: <code>AddTwoInts</code>, <code>SetBool</code>, <code>RotateAbsolute</code>. A real robot needs its own: a car's <strong>vehicle status</strong>, a list of <strong>detected pedestrians</strong>, a <strong>"set driving mode"</strong> service. Those are <strong>custom interfaces</strong>. And the same code must run in the city and on the motorway with different settings, without being edited. Those settings are <strong>parameters</strong>. Today you build both.</div>
   <div class="meta-row">
-    <div class="chip">⏱ 3 h · 25 min teach · 2 h 35 min hands-on</div>
+    <div class="chip">⏱ 3 h · 35 min teach · 2 h 25 min hands-on</div>
     <div class="chip">🐍 Python · ROS 2 Humble</div>
-    <div class="chip">Before this: Lecture 4</div>
+    <div class="chip">Before this: Lecture 4 (number counter with <code>/reset_counter</code>)</div>
   </div>
-  <div class="skill-path" aria-label="Course path"><a class="done" href="01-installation-vmware-ros2-limo-intro.html">L1 · Install</a><a class="done" href="L02-first-node.html">L2 · Nodes</a><a class="done" href="L03-topics.html">L3 · Topics</a><a class="done" href="L04-services.html">L4 · Services &amp; Actions</a><a class="now" href="L05-custom-interfaces.html">L5 · Interfaces</a><a class="" href="L06-parameters-launch.html">L6 · Launch</a><a class="" href="L07-catch-them-all.html">L7 · Project</a><a class="" href="L08-drive-limo.html">L8 · Drive</a><a class="" href="L09-limo-urdf-tf-rviz.html">L9 · URDF/TF</a><a class="" href="L10-limo-lidar-imu.html">L10 · LiDAR/IMU</a><a class="" href="L11-limo-camera-vision.html">L11 · Vision</a><a class="" href="L12-limo-slam-localization.html">L12 · SLAM</a><a class="" href="L13-limo-nav2.html">L13 · Nav2</a><a class="" href="L14-real-limo-mission.html">L14 · Real LIMO</a><a href="projects.html">+ Projects</a></div>
+  <div class="skill-path" aria-label="Course path"><a class="done" href="01-installation-vmware-ros2-limo-intro.html">L1 · Install</a><a class="done" href="L02-first-node.html">L2 · Nodes</a><a class="done" href="L03-topics.html">L3 · Topics</a><a class="done" href="L04-services.html">L4 · Services &amp; Actions</a><a class="now" href="L05-custom-interfaces.html">L5 · Interfaces &amp; Params</a><a class="" href="L06-parameters-launch.html">L6 · Launch</a><a class="" href="L07-catch-them-all.html">L7 · Project</a><a class="" href="L08-drive-limo.html">L8 · Drive</a><a class="" href="L09-limo-urdf-tf-rviz.html">L9 · URDF/TF</a><a class="" href="L10-limo-lidar-imu.html">L10 · LiDAR/IMU</a><a class="" href="L11-limo-camera-vision.html">L11 · Vision</a><a class="" href="L12-limo-slam-localization.html">L12 · SLAM</a><a class="" href="L13-limo-nav2.html">L13 · Nav2</a><a class="" href="L14-real-limo-mission.html">L14 · Real LIMO</a><a href="projects.html">+ Projects</a></div>
 </div>
 
-<div class="grid2">
-  <div class="card">
-    <h3>🎯 By the end of today you can…</h3>
-    <ul class="outcomes">
-      <li>Explain what an <strong>interface</strong> is and how <code>colcon</code> turns it into Python code.</li>
-      <li>Create a dedicated interfaces package, <code>my_robot_interfaces</code>.</li>
-      <li>Write a <code>.msg</code> and a <code>.srv</code> file using basic types and arrays.</li>
-      <li>Publish your own message and serve your own service from Python.</li>
-      <li>Build a two-node system (battery + LED panel) with a custom msg and srv.</li>
-    </ul>
-  </div>
-  <div class="card toc">
+  <div class="card toc solo">
     <h3>🗺️ Today's route</h3>
-    <a href="#warmup"><span>5.0</span>Warm-up</a>
-    <a href="#idea"><span>5.1</span>The idea: forms and languages</a>
-    <a href="#lab1"><span>Lab 1</span>Create an interfaces package + a .msg</a>
+    <a href="#big"><span>5.0</span>The big picture</a>
+    <a href="#ifaces"><span>5.1</span>Custom interfaces, step by step</a>
+    <a href="#lab1"><span>Lab 1</span>Your interfaces package + a .msg</a>
     <a href="#lab2"><span>Lab 2</span>Publish your own message</a>
-    <a href="#lab3"><span>Lab 3</span>Create and serve a .srv</a>
-    <a href="#activity"><span>5.2</span>Activity: battery + LED panel</a>
-    <a href="#errors"><span>5.3</span>When things go wrong</a>
-    <a href="#exit"><span>5.4</span>Exit ticket &amp; homework</a>
+    <a href="#lab3"><span>Lab 3</span>Richer messages: a self-driving car</a>
+    <a href="#lab4"><span>Lab 4</span>Your own .srv and .action</a>
+    <a href="#activity"><span>5.2</span>Your turn: battery + LED panel</a>
+    <a href="#params"><span>5.3</span>Parameters, step by step</a>
+    <a href="#lab5"><span>Lab 5</span>Add parameters to a node</a>
+    <a href="#lab6"><span>Lab 6</span>Parameter tools &amp; YAML files</a>
+    <a href="#lab7"><span>Lab 7</span>Change parameters while running</a>
+    <a href="#activity2"><span>5.4</span>Your turn: parameters</a>
+    <a href="#errors"><span>5.5</span>When things go wrong</a>
+    <a href="#exit"><span>5.6</span>Exit ticket &amp; homework</a>
   </div>
+
+
+<h2 id="big"><span class="num">5.0</span>The big picture: what robots say, and how they are tuned</h2>
+<p>Lectures 3 and 4 gave you the <strong>ways</strong> nodes talk: topics, services and actions. Today is about <strong>what</strong> they say, and about the <strong>settings</strong> each node runs with. Six small steps first, no code.</p>
+<nav class="lpath " aria-label="Steps in this section"><a href="#big1"><b>1</b>See it</a><a href="#big2"><b>2</b>A real robot</a><a href="#big3"><b>3</b>Feel the difference</a><a href="#big4"><b>4</b>Compare</a><a href="#big5"><b>5</b>Choose</a><a href="#big6"><b>6</b>Check yourself</a></nav>
+
+<div class="lstep " id="big1"><span class="n">1</span><h3>See it: borrow a form, design a form, turn a knob</h3></div>
+<div class="ig l4ig">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="ig5-car" viewBox="-40 -26 80 40" overflow="visible">
+    <rect style="fill:var(--text)" x="-5" y="-26" width="10" height="5" rx="1.5"/>
+    <path style="fill:var(--accent)" d="M-37 6 L-37 -5 Q-36 -10 -28 -11 L-17 -20 Q-14 -22 -8 -22 L10 -22 Q16 -22 20 -18 L28 -11 Q37 -10 38 -4 L38 6 Z"/>
+    <path style="fill:var(--panel2)" d="M-14 -18.5 Q-12 -20 -8 -20 L-1 -20 L-1 -12 L-21 -12 Z"/>
+    <path style="fill:var(--panel2)" d="M2 -20 L9 -20 Q14 -20 17 -16.5 L21 -12 L2 -12 Z"/>
+    <rect style="fill:var(--gold)" x="33" y="-6" width="5" height="4" rx="1"/>
+    <circle style="fill:var(--text)" cx="-22" cy="6" r="7.5"/><circle style="fill:var(--muted)" cx="-22" cy="6" r="3"/>
+    <circle style="fill:var(--text)" cx="23" cy="6" r="7.5"/><circle style="fill:var(--muted)" cx="23" cy="6" r="3"/>
+  </symbol>
+  <symbol id="ig-laptop" viewBox="-26 -22 52 38" overflow="visible">
+    <rect style="fill:var(--muted)" x="-20" y="-20" width="40" height="27" rx="3"/><rect style="fill:var(--panel2)" x="-16.5" y="-16.5" width="33" height="20" rx="1.5"/>
+    <path style="fill:var(--muted)" d="M-25 8 H25 L21 13 H-21 Z"/>
+  </symbol>
+  <marker id="ig-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path style="fill:var(--muted)" d="M0 0 L10 5 L0 10 Z"/></marker>
+</defs></svg>
+<div class="l4ig-grid">
+  <figure class="l4ig-card t-std">
+    <figcaption><span class="ic">📦</span><b>Standard interface</b><span>"Someone already designed this form. Reuse it."</span></figcaption>
+    <svg viewBox="0 0 320 230" role="img" aria-label="A car with a LiDAR on its roof publishes laser scans on the topic /lidar/scan using the standard type sensor_msgs/msg/LaserScan. A planner laptop receives them.">
+      <rect class="pill p-topic" x="92" y="14" width="136" height="24" rx="12"/><text class="pill-t" x="160" y="30">/lidar/scan</text>
+      <text class="lbl" x="160" y="56">type: sensor_msgs/msg/LaserScan</text>
+      <line class="ln" x1="100" y1="128" x2="236" y2="156"/>
+      <circle class="ray" cx="64" cy="107" r="12"/><circle class="ray lag2" cx="64" cy="107" r="12"/>
+      <use href="#ig5-car" x="14" y="104" width="100" height="50"/>
+      <g class="pk pk-topic l5-scan"><rect x="-7" y="-6" width="14" height="12" rx="3"/></g>
+      <g class="pk pk-topic l5-scan lag"><rect x="-7" y="-6" width="14" height="12" rx="3"/></g>
+      <use href="#ig-laptop" x="236" y="146" width="52" height="38"/>
+      <text class="lbl" x="64" y="174">LiDAR driver</text><text class="lbl" x="262" y="200">planner</text>
+    </svg>
+    <ul><li>Already exists: <code>LaserScan</code>, <code>Image</code>, <code>Twist</code>, <code>Odometry</code></li><li>Everyone's tools understand it (RViz, Nav2)</li><li><strong>Always check here first</strong></li></ul>
+  </figure>
+
+  <figure class="l4ig-card t-ifc">
+    <figcaption><span class="ic">🧩</span><b>Custom interface</b><span>"No form fits, so I design my own."</span></figcaption>
+    <svg viewBox="0 0 320 230" role="img" aria-label="A form called VehicleStatus.msg with four labelled boxes: speed_kmh, gear, battery_pct and autopilot_on, each with a type. Its values change over time and it is sent to a dashboard laptop.">
+      <rect class="form" x="8" y="14" width="210" height="168" rx="12"/>
+      <rect class="form-h" x="8" y="14" width="210" height="30" rx="12"/><rect class="form-h" x="8" y="32" width="210" height="12"/>
+      <text class="form-t" x="113" y="34">📄 VehicleStatus.msg</text>
+      <text class="ft" x="18" y="70"><tspan class="ty">float64</tspan> speed_kmh</text>
+      <rect class="fv" x="160" y="56" width="50" height="20" rx="5"/><text class="fvt v1" x="185" y="70">48.5</text><text class="fvt v2" x="185" y="70">52.0</text>
+      <text class="ft" x="18" y="102"><tspan class="ty">uint8</tspan> gear</text>
+      <rect class="fv" x="160" y="88" width="50" height="20" rx="5"/><text class="fvt v1" x="185" y="102">3</text><text class="fvt v2" x="185" y="102">4</text>
+      <text class="ft" x="18" y="134"><tspan class="ty">float32</tspan> battery_pct</text>
+      <rect class="fv" x="160" y="120" width="50" height="20" rx="5"/><text class="fvt v1" x="185" y="134">76.0</text><text class="fvt v2" x="185" y="134">75.8</text>
+      <text class="ft" x="18" y="166"><tspan class="ty">bool</tspan> autopilot_on</text>
+      <rect class="fv" x="160" y="152" width="50" height="20" rx="5"/><text class="fvt" x="185" y="166">true</text>
+      <line class="ln solid" x1="222" y1="104" x2="246" y2="104" marker-end="url(#ig-arr)"/>
+      <g class="pk l5-env"><rect x="-8" y="-6" width="16" height="12" rx="2"/></g>
+      <use href="#ig-laptop" x="252" y="86" width="56" height="40"/>
+      <text class="lbl" x="280" y="144">dashboard</text>
+      <text class="lbl" x="160" y="210">every box has a name and a type</text>
+    </svg>
+    <ul><li>Your own <code>.msg</code>, <code>.srv</code> or <code>.action</code> file</li><li>Lives in its own <strong>interfaces package</strong></li><li><code>colcon build</code> turns it into Python and C++</li></ul>
+  </figure>
+
+  <figure class="l4ig-card t-prm">
+    <figcaption><span class="ic">🎛️</span><b>Parameter</b><span>"Same code. City today, motorway tomorrow."</span></figcaption>
+    <svg viewBox="0 0 320 230" role="img" aria-label="One node, adaptive_cruise, is started with two different settings files: city.yaml with max_speed 50 and motorway.yaml with max_speed 110. A speed gauge swings between the two values.">
+      <g class="cfg c1"><rect x="8" y="12" width="136" height="48" rx="10"/><text x="76" y="32">🏙 city.yaml</text><text class="mono" x="76" y="50">max_speed: 50</text></g>
+      <g class="cfg c2"><rect x="176" y="12" width="136" height="48" rx="10"/><text x="244" y="32">🛣 motorway.yaml</text><text class="mono" x="244" y="50">max_speed: 110</text></g>
+      <line class="ln" x1="76" y1="60" x2="134" y2="92"/><line class="ln" x1="244" y1="60" x2="186" y2="92"/>
+      <rect class="nodebox" x="88" y="92" width="144" height="36" rx="12"/><text class="pill-t" x="160" y="115">adaptive_cruise</text>
+      <text class="lbl" x="160" y="148">same code, different knobs</text>
+      <path class="gauge" d="M114 212 A46 46 0 0 1 206 212"/>
+      <g transform="translate(160 212)"><g class="needle-g"><line class="needle" x1="0" y1="0" x2="0" y2="-38"/></g></g>
+      <circle class="hub" cx="160" cy="212" r="5"/>
+      <text class="lbl" x="104" y="226">0</text><text class="lbl" x="218" y="226">150</text>
+      <text class="lbl spd1" x="262" y="200">50 km/h</text><text class="lbl spd2" x="262" y="200">110 km/h</text>
+    </svg>
+    <ul><li>A named, typed <strong>setting</strong> of one node</li><li>Set at startup (<code>-p</code>, YAML) or while running</li><li>e.g. max speed, camera fps, robot name</li></ul>
+  </figure>
+</div>
 </div>
 
+<div class="lstep " id="big2"><span class="n">2</span><h3>A real robot: the self-driving car again</h3></div>
+<p>Remember the car from Lecture 4: every sensor is a node, and the onboard computer runs dozens more. Look at it again and ask two new questions: <em>what type is each message?</em> and <em>which numbers must be adjustable?</em></p>
+<figure class="figure-card"><img src="images/self-driving-car-sensors.jpg" alt="A self-driving car with its sensors labelled: LIDAR and GPS on the roof, a camera behind the windscreen, radar at the front bumper, a computer inside the car and a wheel encoder on the rear wheel." loading="lazy"><figcaption>The same car as Lecture 4. Today: what the sensors and the computer <em>say</em>, and how each node is <em>configured</em>.</figcaption></figure>
+<div class="trio">
+  <div class="t-std"><div class="big">📦</div><b>Standard interfaces</b><div class="say">the sensors: someone already wrote the form</div><ul><li>LIDAR → <code>sensor_msgs/PointCloud2</code></li><li>Camera → <code>sensor_msgs/Image</code></li><li>GPS → <code>sensor_msgs/NavSatFix</code></li><li>Wheels → <code>nav_msgs/Odometry</code></li><li>Steering → <code>geometry_msgs/Twist</code></li></ul></div>
+  <div class="t-ifc"><div class="big">🧩</div><b>Custom interfaces</b><div class="say">things only <em>this</em> car needs</div><ul><li><code>VehicleStatus.msg</code>: speed, gear, battery</li><li><code>DetectedObject.msg</code>: "pedestrian, 8 m ahead"</li><li><code>SetDrivingMode.srv</code>: "sport" → "OK"</li><li><code>ParkCar.action</code>: "bay 7" → "0.5 m left" → "parked"</li></ul></div>
+  <div class="t-prm"><div class="big">🎛️</div><b>Parameters</b><div class="say">numbers you tune, not code you edit</div><ul><li>Planner: <code>max_speed</code>, <code>safe_distance</code></li><li>Camera: <code>fps</code>, <code>exposure</code></li><li>LIDAR: <code>frame_id</code>, <code>min_range</code></li><li>Every node: <code>use_sim_time</code></li></ul></div>
+</div>
+<div class="box idea"><div class="box-title">💡 The professionals do exactly this</div>
+<p><strong>Autoware</strong>, the open-source self-driving software, keeps its own interface packages (for example <code>autoware_perception_msgs</code>, <code>autoware_vehicle_msgs</code>) and configures every node from YAML parameter files. <strong>Nav2</strong> ships <code>nav2_msgs</code> and a parameter file with hundreds of settings. Your LIMO robot has one too: <code>limo_msgs/msg/LimoStatus</code> (battery voltage, control mode, error code). Today you learn the same two skills on a small scale.</p></div>
 
-<div class="ig"><div class="ig-title"><span class="sim-tag">Infographic</span>Lecture 5 at a glance: your own message, from text file to Python class</div><div class="ig-flow"><div class="ig-step"><div class="ic">✏️</div><b>Write</b><span><code>msg/HardwareStatus.msg</code></span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">⚙️</div><b>Configure</b><span><code>CMakeLists.txt</code> + <code>package.xml</code></span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🔨</div><b>Build</b><span><code>colcon build</code></span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🧬</div><b>Generate</b><span>Python + C++ code created for you</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🐍</div><b>Use</b><span><code>from my_robot_interfaces.msg import …</code></span></div></div></div>
-<details class="box teacher">
-  <summary>🧑‍🏫 Instructor lesson plan (click to open)</summary>
-  <div class="inner">
-  <div class="table-wrap"><table>
-    <tr><th>Time</th><th>Activity</th><th>Type</th></tr>
-    <tr><td>0:00–0:10</td><td>Warm-up + demo of reset_counter</td><td><span class="tag check">Check</span></td></tr>
-    <tr><td>0:10–0:30</td><td>What is an interface, the build pipeline, the types table</td><td><span class="tag teach">Teach</span></td></tr>
-    <tr><td>0:30–1:00</td><td>Lab 1 — my_robot_interfaces + HardwareStatus.msg (go slowly: 2 config files)</td><td><span class="tag do">Do</span></td></tr>
-    <tr><td>1:00–1:25</td><td>Lab 2 — hw_status_publisher</td><td><span class="tag do">Do</span></td></tr>
-    <tr><td>1:25–1:35</td><td>Break</td><td></td></tr>
-    <tr><td>1:35–2:00</td><td>Lab 3 — ComputeRectangleArea.srv + server</td><td><span class="tag do">Do</span></td></tr>
-    <tr><td>2:00–2:50</td><td>Activity 5.1 — battery + LED panel (in pairs: one writes each node)</td><td><span class="tag do">Do</span></td></tr>
-    <tr><td>2:50–3:00</td><td>Exit ticket + homework</td><td><span class="tag check">Check</span></td></tr>
-  </table></div>
-  <p><strong>Teaching tip.</strong> Most build errors today come from the <code>CMakeLists.txt</code> / <code>package.xml</code> edits. Project a correct copy and have students compare line by line before building. Remind them to rebuild <em>both</em> packages (interfaces first) and to <code>source</code>.</p>
-  </div>
-</details>
+<div class="lstep " id="big3"><span class="n">3</span><h3>Feel the difference: a scribbled note vs a proper form</h3></div>
+<p>The perception node tells the planner what it sees. Many beginners pack everything into one <code>String</code> like <code>"car,0.92,12.5"</code>. Try it, then let a teammate change the order. Finally give the two nodes <em>different</em> types and watch what ROS 2 does.</p>
+<div data-widget="formmatch"></div>
 
-<h2 id="warmup"><span class="num">5.0</span>Warm-up (5 min)</h2>
+<div class="lstep " id="big4"><span class="n">4</span><h3>Compare: three interface files and one parameter</h3></div>
+<p>Every row is explained step by step in 5.1 (interfaces) and 5.3 (parameters).</p>
+<div class="table-wrap"><table class="vs">
+  <tr><th></th><th>.msg 📨</th><th>.srv 🛎️</th><th>.action 🎯</th><th>Parameter 🎛️</th></tr>
+  <tr><td>What it is</td><td>The content of a topic</td><td>Request + response</td><td>Goal + result + feedback</td><td>A setting of <strong>one</strong> node</td></tr>
+  <tr><td>Separators</td><td>none</td><td>one <code>---</code></td><td>two <code>---</code></td><td>–</td></tr>
+  <tr><td>Where it lives</td><td colspan="3"><code>my_robot_interfaces/msg</code>, <code>/srv</code>, <code>/action</code>: a CMake package</td><td>Inside the node's code: <code>declare_parameter</code></td></tr>
+  <tr><td>When it changes</td><td colspan="3">When you edit the file and rebuild</td><td>Every run (<code>-p</code>, YAML), or live (<code>ros2 param set</code>)</td></tr>
+  <tr><td>Python</td><td><code>from …msg import X</code></td><td><code>from …srv import X</code></td><td><code>from …action import X</code></td><td><code>self.get_parameter("name").value</code></td></tr>
+  <tr><td>Terminal</td><td colspan="3"><code>ros2 interface show my_robot_interfaces/msg/X</code></td><td><code>ros2 param list / get / set</code></td></tr>
+  <tr><td>Car example</td><td><code>VehicleStatus</code></td><td><code>SetDrivingMode</code></td><td><code>ParkCar</code></td><td><code>max_speed: 50.0</code></td></tr>
+</table></div>
+
+<div class="lstep " id="big5"><span class="n">5</span><h3>Choose: what do I need?</h3></div>
+<div class="mermaid">
+flowchart TD
+  Q0{"Is it a setting of a node<br/>(a number, a name, a mode)?"} -- yes --> P["🎛️ Parameter"]
+  Q0 -- "no, it's data sent between nodes" --> Q1{"Does a standard interface fit?<br/>(ros2 interface list)"}
+  Q1 -- yes --> R["📦 Reuse it:<br/>std_msgs, geometry_msgs,<br/>sensor_msgs, nav_msgs"]
+  Q1 -- no --> Q2{"How is it sent?<br/>(Lecture 4)"}
+  Q2 -- "a stream" --> M["📨 your .msg"]
+  Q2 -- "a quick question" --> S["🛎️ your .srv"]
+  Q2 -- "a long job" --> A["🎯 your .action"]
+</div>
+
+<div class="lstep " id="big6"><span class="n">6</span><h3>Check yourself <small>5 min</small></h3></div>
 <div class="quiz">
-  <div class="q"><p>What are the request and response of <code>example_interfaces/srv/SetBool</code>?</p><details><summary>Answer</summary><div class="inner">Request: <code>bool data</code>. Response: <code>bool success</code>, <code>string message</code>.</div></details></div>
-  <div class="q"><p>We want to publish a robot's temperature, whether its motors are ready, and a debug text, all in <em>one</em> message. Which existing message can do that?</p><details><summary>Answer</summary><div class="inner">None is a good fit, so we make our own. That's today's topic.</div></details></div>
+  <div class="q"><p>The car's camera sends images. Do you write a custom message for them?</p><details><summary>Answer</summary><div class="inner">No. <code>sensor_msgs/msg/Image</code> already exists, and every tool (RViz, rqt, OpenCV bridges) understands it. Reuse before you create.</div></details></div>
+  <div class="q"><p>In the "scribbled note" simulator, why did the planner crash when the teammate changed the order?</p><details><summary>Answer</summary><div class="inner">A <code>String</code> has no named fields, so the planner guessed "the 3rd item is the distance". With a custom message, <code>msg.distance_m</code> is always the distance, whatever order it was filled in.</div></details></div>
+  <div class="q"><p>The perception node sends <code>DetectedObject</code>; the planner subscribes with <code>String</code>. What happens?</p><details><summary>Answer</summary><div class="inner">Nothing arrives, with no error in either node. A topic connects only publishers and subscribers of the <strong>same type</strong>. <code>ros2 topic info</code> would show two types on one topic.</div></details></div>
+  <div class="q"><p>The same planner runs in a city (max 50 km/h) and on a motorway (max 110 km/h). Two programs?</p><details><summary>Answer</summary><div class="inner">No: one program with a <strong>parameter</strong> <code>max_speed</code>, started with a different value (or YAML file) in each place.</div></details></div>
+  <div class="q"><p>"Park in bay 7, tell me the distance left, let me cancel." Which file would you write?</p><details><summary>Answer</summary><div class="inner">A <code>.action</code>: goal (bay number) <code>---</code> result <code>---</code> feedback (distance left). Same shape as <code>RotateAbsolute</code> from Lecture 4.</div></details></div>
 </div>
 
-<h2 id="idea"><span class="num">5.1</span>The idea in 10 minutes</h2>
+<div class="game" data-widget="sort" data-cats="📨 .msg|🛎️ .srv|🎯 .action|🎛️ parameter"><div class="kc-head"><span class="sim-tag">🎮 Game</span><b>Message, service, action or parameter?</b></div><ul><li data-cat="0">The car's speed, gear and battery, 20 times per second</li><li data-cat="1">"Switch to sport mode", answer "OK"</li><li data-cat="2">"Park in bay 7", with distance left</li><li data-cat="3">Maximum speed allowed in the city: 50 km/h</li><li data-cat="0">The list of pedestrians the camera sees</li><li data-cat="3">The LiDAR's frame name, <code>lidar_top</code></li><li data-cat="3">Camera frames per second</li><li data-cat="2">Drive 100 m forward, cancellable</li><li data-cat="1">Turn LED 3 on</li><li data-cat="3">The robot's name, "R2D2"</li></ul></div>
+
+<h2 id="ifaces"><span class="num">5.1</span>Custom interfaces, step by step</h2>
+<nav class="lpath ifc" aria-label="Steps in this section"><a href="#if1"><b>1</b>Picture it</a><a href="#if2"><b>2</b>The rules</a><a href="#if3"><b>3</b>Watch it</a><a href="#if4"><b>4</b>Try it</a><a href="#if5"><b>5</b>Remember it</a></nav>
+
+<div class="lstep ifc" id="if1"><span class="n">1</span><h3>Picture it: a printed form, not a scribbled note</h3></div>
 <div class="analogy"><div class="emoji">📝</div><div>
-  <p><strong>An interface is a form with fixed boxes.</strong> A topic is the post box, and the interface is the form you post: everyone agrees that box 1 is "temperature (number)" and box 2 is "motors ready (yes/no)". If the sender and receiver use different forms, nothing works.</p>
+  <p><strong>An interface is a printed form with labelled boxes.</strong> The topic is the post box; the interface is the form you post. Everyone agrees that the box called <em>distance_m</em> holds a decimal number in metres. A scribbled note ("car 0.92 12.5") might be understood today, and misread tomorrow.</p>
 </div></div>
 
+<figure class="notefig">
+<svg viewBox="0 0 640 260" role="img" aria-label="Left: a yellow sticky note reading car,0.92,12.5 with three worried questions around it: which one is the distance? metres or feet? what if the order changes? Right: a printed form DetectedObject.msg with labelled boxes: label string car, confidence float32 0.92, distance_m float64 12.5, each with a green tick.">
+  <!-- sticky note -->
+  <g transform="rotate(-4 150 120)">
+    <rect class="sticky" x="40" y="58" width="220" height="120" rx="4"/>
+    <text class="scrawl" x="150" y="128">car,0.92,12.5</text>
+  </g>
+  <g class="q-g"><rect class="q" x="14" y="12" width="180" height="28" rx="14"/><text class="qt" x="104" y="31">which one is the distance?</text></g>
+  <g class="q-g q2"><rect class="q" x="196" y="196" width="124" height="28" rx="14"/><text class="qt" x="258" y="215">metres or feet?</text></g>
+  <g class="q-g q3"><rect class="q" x="2" y="196" width="184" height="28" rx="14"/><text class="qt" x="94" y="215">what if the order changes?</text></g>
+  <text class="bad" x="276" y="70">✖</text>
+  <text class="vs" x="320" y="130">vs</text>
+  <!-- printed form -->
+  <rect class="sheet" x="360" y="20" width="264" height="196" rx="12"/>
+  <rect class="sheet-h" x="360" y="20" width="264" height="34" rx="12"/><rect class="sheet-h" x="360" y="40" width="264" height="14"/>
+  <text class="sheet-t" x="492" y="42">📄 DetectedObject.msg</text>
+  <text class="lbl-l" x="376" y="84">label</text><text class="ty" x="376" y="100">string</text>
+  <rect class="box" x="470" y="70" width="110" height="34" rx="6"/><text class="val" x="525" y="92">"car"</text><text class="ok" x="602" y="93">✔</text>
+  <text class="lbl-l" x="376" y="134">confidence</text><text class="ty" x="376" y="150">float32</text>
+  <rect class="box" x="470" y="120" width="110" height="34" rx="6"/><text class="val" x="525" y="142">0.92</text><text class="ok" x="602" y="143">✔</text>
+  <text class="lbl-l" x="376" y="184">distance_m</text><text class="ty" x="376" y="200">float64</text>
+  <rect class="box" x="470" y="170" width="110" height="34" rx="6"/><text class="val" x="525" y="192">12.5</text><text class="ok" x="602" y="193">✔</text>
+  <text class="cap" x="160" y="250">a String: the receiver must guess</text>
+  <text class="cap" x="492" y="250">a .msg: every box has a name and a type</text>
+</svg>
+</figure>
+
+<div class="lstep ifc" id="if2"><span class="n">2</span><h3>The rules of an interface</h3></div>
 <div class="box note">
-  <div class="box-title">📌 Name + definition</div>
-  <p>A <strong>topic</strong> is identified by two things: a <em>name</em> (<code>/number_count</code>) and a <em>msg definition</em> (<code>example_interfaces/msg/Int64</code>).<br>
-  A <strong>service</strong> is identified by a <em>name</em> (<code>/reset_counter</code>) and a <em>srv definition</em> (<code>example_interfaces/srv/SetBool</code>).<br>
-  Topics and services are the <strong>communication layer</strong>; interfaces are the <strong>content</strong> you send.</p>
+  <div class="box-title">📌 Name + type, every time</div>
+  <ul>
+    <li>A <strong>topic</strong> is identified by a <em>name</em> (<code>/hardware_status</code>) and a <em>type</em> (<code>my_robot_interfaces/msg/HardwareStatus</code>). A <strong>service</strong> and an <strong>action</strong> too. Both sides must use the <strong>same type</strong>.</li>
+    <li>Topics, services and actions are the <strong>communication layer</strong>; interfaces are the <strong>content</strong>.</li>
+    <li>One field per line: <code>type name</code>. Comments start with <code>#</code>.</li>
+    <li>Interfaces live in their <strong>own package</strong> (here <code>my_robot_interfaces</code>), which must be a <strong>CMake</strong> package, so both Python and C++ packages can use them.</li>
+  </ul>
 </div>
-
-<p>You write a tiny text file. When you run <code>colcon build</code>, ROS 2 <strong>generates code</strong> from it for every language. Your Python node then simply does <code>from my_robot_interfaces.msg import HardwareStatus</code>.</p>
-<div class="mermaid">
-flowchart LR
-  A["HardwareStatus.msg<br/>int64 temperature<br/>bool are_motors_ready<br/>string debug_message"] --> B["colcon build<br/>(rosidl generators)"]
-  B --> C["Python class<br/>HardwareStatus"]
-  B --> D["C++ struct<br/>hardware_status.hpp"]
-  C --> E(["your Python node"])
-  D --> F(["your C++ node"])
-</div>
-
-<h3>Types you can use</h3>
+<h3>Field types you can use</h3>
 <div class="table-wrap"><table>
-  <tr><th>You write</th><th>Meaning</th><th>Example</th></tr>
-  <tr><td><code>bool</code></td><td>true / false</td><td><code>bool are_motors_ready</code></td></tr>
-  <tr><td><code>int64</code> (also int32, uint8…)</td><td>whole number</td><td><code>int64 temperature</code></td></tr>
-  <tr><td><code>float64</code> (also float32)</td><td>decimal number</td><td><code>float64 length</code></td></tr>
-  <tr><td><code>string</code></td><td>text</td><td><code>string debug_message</code></td></tr>
-  <tr><td><code>TYPE[]</code></td><td>a list (array) of any type</td><td><code>int64[] led_states</code></td></tr>
-  <tr><td><code>pkg/Msg</code> or <code>Msg</code></td><td>another message inside yours</td><td><code>geometry_msgs/Point position</code>, <code>Turtle[] turtles</code></td></tr>
+  <tr><th>You write</th><th>Meaning</th><th>In Python</th><th>Robot example</th></tr>
+  <tr><td><code>bool</code></td><td>true / false</td><td><code>bool</code></td><td><code>bool autopilot_on</code></td></tr>
+  <tr><td><code>int8 … int64</code>, <code>uint8 … uint64</code></td><td>whole number (u = never negative)</td><td><code>int</code></td><td><code>uint8 gear</code>, <code>int64 temperature</code></td></tr>
+  <tr><td><code>float32</code>, <code>float64</code></td><td>decimal number</td><td><code>float</code></td><td><code>float64 speed_kmh</code></td></tr>
+  <tr><td><code>string</code></td><td>text</td><td><code>str</code></td><td><code>string label</code></td></tr>
+  <tr><td><code>TYPE[]</code></td><td>a list of any length</td><td><code>list</code> (or <code>array</code>)</td><td><code>int64[] led_states</code></td></tr>
+  <tr><td><code>TYPE[3]</code> · <code>TYPE[&lt;=10]</code></td><td>exactly 3 · at most 10 items</td><td>list</td><td><code>float64[3] rgb</code></td></tr>
+  <tr><td><code>pkg/Msg</code> or <code>Msg</code></td><td>another message inside yours</td><td>nested object</td><td><code>std_msgs/Header header</code>, <code>DetectedObject[] objects</code></td></tr>
 </table></div>
 <div class="box warn"><div class="box-title">⚠️ Naming rules (the build fails if you break them)</div>
-<ul><li>File names: <strong>CamelCase</strong>, with no underscores, starting with a capital: <code>HardwareStatus.msg</code> ✔ <code>hardware_status.msg</code> ✘</li>
-<li>Field names: <strong>snake_case</strong>, lower case: <code>are_motors_ready</code> ✔ <code>AreMotorsReady</code> ✘</li></ul></div>
+<ul><li>File names: <strong>CamelCase</strong>, starting with a capital, no underscores: <code>HardwareStatus.msg</code> ✔ <code>hardware_status.msg</code> ✘</li>
+<li>Field names: <strong>snake_case</strong>, lower case, starting with a letter: <code>are_motors_ready</code> ✔ <code>AreMotorsReady</code> ✘ <code>_speed</code> ✘</li>
+<li>Constants: <strong>UPPER_CASE</strong> with a value: <code>uint8 PEDESTRIAN=1</code></li></ul></div>
 
-<!-- ============================================================ -->
-<h3>🖼️ Interfaces in pictures</h3><div class="fig-pair"><figure class="figure-card"><img src="images/figures/fig3_1.png" alt="A msg is the content carried by a topic." loading="lazy"><figcaption>A msg is the content carried by a topic.</figcaption></figure><figure class="figure-card"><img src="images/figures/fig3_2.png" alt="A srv is a request msg plus a response msg." loading="lazy"><figcaption>A srv is a request msg plus a response msg.</figcaption></figure></div><figure class="figure-card"><img src="images/figures/fig3_3.png" alt="The build system turns one msg definition into code for every language." loading="lazy"><figcaption>The build system turns one msg definition into code for every language.</figcaption></figure>
+<div class="lstep ifc" id="if3"><span class="n">3</span><h3>Watch it: from a text file to code in every language</h3></div>
+<p>You write a few lines of text. <code>colcon build</code> runs the <strong>rosidl</strong> code generators, which write a Python class, a C++ struct and the network description for you. That is why a Python node and a C++ node can exchange your message without any extra work.</p>
+<figure class="helpdesk pipe">
+<svg viewBox="0 0 680 300" role="img" aria-label="Animated build pipeline. A text file VehicleStatus.msg with four fields enters a factory labelled colcon build, rosidl generators. Three outputs come out: a Python class, a C++ struct, and a DDS type for the network.">
+  <!-- the .msg file -->
+  <rect class="pf" x="14" y="40" width="186" height="160" rx="12"/>
+  <rect class="pf-h" x="14" y="40" width="186" height="32" rx="12"/><rect class="pf-h" x="14" y="58" width="186" height="14"/>
+  <text class="pf-ht" x="107" y="61">📄 VehicleStatus.msg</text>
+  <text class="pl" x="26" y="100"><tspan class="ty">float64</tspan> speed_kmh</text>
+  <text class="pl" x="26" y="126"><tspan class="ty">uint8</tspan> gear</text>
+  <text class="pl" x="26" y="152"><tspan class="ty">float32</tspan> battery_pct</text>
+  <text class="pl" x="26" y="178"><tspan class="ty">bool</tspan> autopilot_on</text>
+  <text class="hd-code" x="107" y="222">you write 4 lines</text>
+
+  <!-- factory -->
+  <path class="fac-roof" d="M262 78 L292 56 L292 78 L322 56 L322 78 L352 56 L352 78 L410 78 L410 86 L262 86 Z"/>
+  <rect class="fac" x="262" y="84" width="148" height="92" rx="8"/>
+  <text class="gear" x="336" y="128">⚙️</text>
+  <text class="fac-t" x="336" y="150">colcon build</text>
+  <text class="fac-s" x="336" y="166">rosidl generators</text>
+  <line class="hd-path" x1="200" y1="120" x2="262" y2="120"/>
+  <line class="hd-path" x1="410" y1="120" x2="470" y2="60"/><line class="hd-path" x1="410" y1="120" x2="470" y2="140"/><line class="hd-path" x1="410" y1="120" x2="470" y2="220"/>
+
+  <!-- outputs -->
+  <g class="out o1"><rect x="474" y="30" width="196" height="60" rx="10"/><text class="oh" x="572" y="52">🐍 Python class</text><text class="oc" x="572" y="72">from …msg import VehicleStatus</text></g>
+  <g class="out o2"><rect x="474" y="110" width="196" height="60" rx="10"/><text class="oh" x="572" y="132">⚙️ C++ struct</text><text class="oc" x="572" y="152">msg::VehicleStatus</text></g>
+  <g class="out o3"><rect x="474" y="190" width="196" height="60" rx="10"/><text class="oh" x="572" y="212">🌐 DDS network type</text><text class="oc" x="572" y="232">any computer, any language</text></g>
+
+  <!-- tokens -->
+  <g class="hd-env tok tk0"><rect x="-26" y="-11" width="52" height="22" rx="5"/><text y="4">.msg</text></g>
+  <g class="hd-env tok tk1"><rect x="-26" y="-11" width="52" height="22" rx="5"/><text y="4">.py</text></g>
+  <g class="hd-env tok tk2"><rect x="-26" y="-11" width="52" height="22" rx="5"/><text y="4">.hpp</text></g>
+  <g class="hd-env tok tk3"><rect x="-26" y="-11" width="52" height="22" rx="5"/><text y="4">DDS</text></g>
+
+  <!-- stages -->
+  <g class="hd-stage pst1"><rect x="14" y="264" width="206" height="28" rx="14"/><text x="117" y="283">① write the .msg file</text></g>
+  <g class="hd-stage pst2"><rect x="237" y="264" width="206" height="28" rx="14"/><text x="340" y="283">② colcon build generates</text></g>
+  <g class="hd-stage pst3"><rect x="460" y="264" width="206" height="28" rx="14"/><text x="563" y="283">③ every node can import it</text></g>
+</svg>
+</figure>
+<div class="fig-pair"><figure class="figure-card"><img src="images/figures/fig3_1.png" alt="A msg is the content carried by a topic." loading="lazy"><figcaption>A <code>.msg</code> is the content carried by a topic.</figcaption></figure><figure class="figure-card"><img src="images/figures/fig3_2.png" alt="A srv is a request msg plus a response msg." loading="lazy"><figcaption>A <code>.srv</code> is a request message plus a response message.</figcaption></figure></div>
+<figure class="figure-card"><img src="images/figures/fig3_3.png" alt="The build system turns one msg definition into code for every language." loading="lazy"><figcaption>One definition, code for every language.</figcaption></figure>
+
+<div class="lstep ifc" id="if4"><span class="n">4</span><h3>Try it: design your own interface</h3></div>
+<p>Pick a preset (the three marked <em>car</em> are today's self-driving examples), add or rename fields, and watch the file, the <code>CMakeLists.txt</code> line and the Python code update. Break a naming rule on purpose and read the warning.</p>
 <div data-widget="msgbuilder"></div>
 
-<h3>🃏 Key terms: tap a card to check yourself</h3>
-<div class="flip-grid" data-widget="flip"><div class="flip"><div class="flip-in"><div class="flip-front">Interface<small>tap to flip</small></div><div class="flip-back">The "form" sent on a topic (.msg) or service (.srv).</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">.msg<small>tap to flip</small></div><div class="flip-back">One field per line: <code>type name</code>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">.srv<small>tap to flip</small></div><div class="flip-back">Request fields <code>---</code> response fields.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">rosidl<small>tap to flip</small></div><div class="flip-back">The generator that turns .msg/.srv into Python/C++ code at build time.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">CamelCase<small>tap to flip</small></div><div class="flip-back">Rule for <b>file</b> names: <code>LedStateArray.msg</code>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">snake_case<small>tap to flip</small></div><div class="flip-back">Rule for <b>field</b> names: <code>led_states</code>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Array<small>tap to flip</small></div><div class="flip-back"><code>int64[] led_states</code> is a list in Python.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Nested type<small>tap to flip</small></div><div class="flip-back">A msg can contain another: <code>Turtle[] turtles</code>.</div></div></div></div>
+<div class="lstep ifc" id="if5"><span class="n">5</span><h3>Remember it: tap a card to check yourself</h3></div>
+<div class="flip-grid" data-widget="flip"><div class="flip"><div class="flip-in"><div class="flip-front">Interface<small>tap to flip</small></div><div class="flip-back">The "form" sent on a topic (<code>.msg</code>), service (<code>.srv</code>) or action (<code>.action</code>).</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">.msg<small>tap to flip</small></div><div class="flip-back">One field per line: <code>type name</code>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">.srv<small>tap to flip</small></div><div class="flip-back">Request <code>---</code> response.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">.action<small>tap to flip</small></div><div class="flip-back">Goal <code>---</code> result <code>---</code> feedback.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">rosidl<small>tap to flip</small></div><div class="flip-back">The generators that turn your file into Python and C++ code during <code>colcon build</code>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">rosidl_generate_interfaces<small>tap to flip</small></div><div class="flip-back">The CMake line that lists <b>every</b> interface file to build.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Constant<small>tap to flip</small></div><div class="flip-back"><code>uint8 PEDESTRIAN=1</code>: a fixed, named value. In Python: <code>DetectedObject.PEDESTRIAN</code>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">std_msgs/Header<small>tap to flip</small></div><div class="flip-back">A time stamp + a frame name: <em>when</em> and <em>where</em> the data was measured.</div></div></div></div>
 
+<p class="nextup">✅ You have the idea. Now build it: <strong>Lab 1</strong> creates the package, <strong>Lab 2</strong> publishes your message, <strong>Lab 3</strong> builds richer car messages, <strong>Lab 4</strong> adds your own service and action.</p>
+
+<!-- ============================================================ -->
 <h2 id="lab1"><span class="num">L1</span>Lab 1 — Your interfaces package + a .msg</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB 1 · 30 min</span><h3>my_robot_interfaces with HardwareStatus.msg</h3></div>
+  <div class="lab-h"><span class="badge">LAB 1 · 25 min</span><h3>my_robot_interfaces with HardwareStatus.msg</h3></div>
   <p class="lab-goal">Goal: <code>ros2 interface show my_robot_interfaces/msg/HardwareStatus</code> prints your three fields.</p>
 
-  <div class="step" id="c1-1">
+  <div class="step" id="s1-1">
     <div class="step-h"><span class="step-n">1</span><span class="step-t">Create a package just for interfaces</span></div>
-    <p>Interfaces live in their own package, so every other package (Python or C++) can use them. It must be a CMake package, which is the default.</p>
+    <p>Interfaces live in their own package so that every other package, Python or C++, can depend on them. It must be a CMake package, which is the default for <code>ros2 pkg create</code>. We delete the folders we don't need and make one for each kind of interface.</p>
     <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws/src
 ros2 pkg create my_robot_interfaces
 cd my_robot_interfaces
 rm -rf include/ src/
-mkdir msg srv</code></pre></div>
+mkdir msg srv action
+ls</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>action  CMakeLists.txt  msg  package.xml  srv</pre></div>
   </div>
 
-  <div class="step" id="c1-2">
+  <div class="step" id="s1-2">
     <div class="step-h"><span class="step-n">2</span><span class="step-t">Write the message</span></div>
+    <p>A robot reports its hardware health once a second: motor temperature, whether the motors are ready, and a short text for humans.</p>
     <div class="cmd file"><div class="cmd-h">📄 my_robot_interfaces/msg/HardwareStatus.msg</div><pre><code>int64 temperature
 bool are_motors_ready
 string debug_message</code></pre></div>
   </div>
 
-  <div class="step" id="c1-3">
+  <div class="step" id="s1-3">
     <div class="step-h"><span class="step-n">3</span><span class="step-t">Edit <code>package.xml</code>: add the 3 highlighted lines</span></div>
     <div class="cmd file"><div class="cmd-h">📄 my_robot_interfaces/package.xml</div><pre><code>  &lt;buildtool_depend&gt;ament_cmake&lt;/buildtool_depend&gt;
-
-<span class="hl">  &lt;build_depend&gt;rosidl_default_generators&lt;/build_depend&gt;</span>
+<span class="hl">  &lt;buildtool_depend&gt;rosidl_default_generators&lt;/buildtool_depend&gt;</span>
 <span class="hl">  &lt;exec_depend&gt;rosidl_default_runtime&lt;/exec_depend&gt;</span>
 <span class="hl">  &lt;member_of_group&gt;rosidl_interface_packages&lt;/member_of_group&gt;</span>
 
   &lt;test_depend&gt;ament_lint_auto&lt;/test_depend&gt;</code></pre></div>
+    <p>Line 1: "use the code generators to <em>build</em> me". Line 2: "my users need the runtime library to <em>run</em>". Line 3: "I am an interface package".</p>
   </div>
 
-  <div class="step" id="c1-4">
+  <div class="step" id="s1-4">
     <div class="step-h"><span class="step-n">4</span><span class="step-t">Edit <code>CMakeLists.txt</code>: replace everything with this</span></div>
     <div class="cmd file"><div class="cmd-h">📄 my_robot_interfaces/CMakeLists.txt</div><pre><code>cmake_minimum_required(VERSION 3.8)
 project(my_robot_interfaces)
@@ -177,53 +602,67 @@ find_package(ament_cmake REQUIRED)
 
 <span class="hl">ament_export_dependencies(rosidl_default_runtime)</span>
 ament_package()</code></pre></div>
-    <p>From now on, <strong>every new .msg or .srv file gets one line</strong> inside <code>rosidl_generate_interfaces( … )</code>.</p>
+    <p>From now on, <strong>every new .msg, .srv or .action file gets one line</strong> inside <code>rosidl_generate_interfaces( … )</code>. Forgetting that line is the most common mistake of the day.</p>
   </div>
 
-  <div class="step" id="c1-5">
+  <div class="step" id="s1-5">
     <div class="step-h"><span class="step-n">5</span><span class="step-t">Build and check</span></div>
     <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws
 colcon build --packages-select my_robot_interfaces
 source ~/.bashrc
-ros2 interface show my_robot_interfaces/msg/HardwareStatus</code></pre></div>
+ros2 interface show my_robot_interfaces/msg/HardwareStatus
+ros2 interface proto my_robot_interfaces/msg/HardwareStatus</code></pre></div>
     <div class="out"><div class="out-h">✅ You should see</div><pre>int64 temperature
 bool are_motors_ready
-string debug_message</pre></div>
+string debug_message
+
+"temperature: 0
+are_motors_ready: false
+debug_message: ''
+"</pre></div>
+    <p><code>show</code> prints the definition. <code>proto</code> prints an empty example you can copy into a terminal command. Every field starts at zero, <code>false</code> or an empty string.</p>
   </div>
+
+  <div class="game" data-widget="order"><div class="kc-head"><span class="sim-tag">🎮 Game</span><b>Creating an interfaces package: put the steps in order</b></div><ol><li><code>ros2 pkg create my_robot_interfaces</code></li><li>Delete <code>include/</code> and <code>src/</code>; create <code>msg/</code>, <code>srv/</code>, <code>action/</code></li><li>Write <code>msg/HardwareStatus.msg</code></li><li>Add the 3 lines to <code>package.xml</code></li><li>Add <code>"msg/HardwareStatus.msg"</code> to <code>rosidl_generate_interfaces</code> in <code>CMakeLists.txt</code></li><li><code>colcon build --packages-select my_robot_interfaces</code></li><li><code>source ~/.bashrc</code></li><li><code>ros2 interface show my_robot_interfaces/msg/HardwareStatus</code></li></ol></div>
 </div>
 
 <!-- ============================================================ -->
 <h2 id="lab2"><span class="num">L2</span>Lab 2 — Publish your own message</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB 2 · 25 min</span><h3>The hardware status publisher</h3></div>
+  <div class="lab-h"><span class="badge">LAB 2 · 20 min</span><h3>The hardware status publisher</h3></div>
+  <p class="lab-goal">Goal: a node in <code>my_py_pkg</code> publishes <code>HardwareStatus</code> on <code>/hardware_status</code> once a second, exactly like the number publisher from Lecture 3, but with your own type.</p>
 
-  <div class="step" id="c2-1">
+  <div class="step" id="s2-1">
     <div class="step-h"><span class="step-n">1</span><span class="step-t">Tell <code>my_py_pkg</code> that it uses your interfaces</span></div>
     <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/package.xml</div><pre><code>  &lt;depend&gt;rclpy&lt;/depend&gt;
   &lt;depend&gt;example_interfaces&lt;/depend&gt;
 <span class="hl">  &lt;depend&gt;my_robot_interfaces&lt;/depend&gt;</span></code></pre></div>
+    <p>This also tells <code>colcon</code> to build <code>my_robot_interfaces</code> <strong>before</strong> <code>my_py_pkg</code>.</p>
   </div>
 
-  <div class="step" id="c2-2">
-    <div class="step-h"><span class="step-n">2</span><span class="step-t">Write the node</span></div>
-    <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/my_py_pkg/hw_status_publisher.py</div><pre><code>#!/usr/bin/env python3
+  <div class="step" id="s2-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Write the node (click the highlighted parts)</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws/src/my_py_pkg/my_py_pkg
+touch hw_status_publisher.py &amp;&amp; chmod +x hw_status_publisher.py</code></pre></div>
+    <div class="cmd file" data-widget="explain"><div class="cmd-h">📄 my_py_pkg/hw_status_publisher.py</div><pre><code>#!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
-<span class="hl">from my_robot_interfaces.msg import HardwareStatus</span>
+<span class="ex" data-tip="Your package name, then <code>.msg</code>, then the file name without <code>.msg</code>. This class was generated by <code>colcon build</code> in Lab 1.">from my_robot_interfaces.msg import HardwareStatus</span>
 
 
 class HardwareStatusPublisherNode(Node):
     def __init__(self):
         super().__init__("hardware_status_publisher")
-        self.hw_status_publisher_ = self.create_publisher(HardwareStatus, "hardware_status", 10)
+<span class="ex" data-tip="Same as Lecture 3: the <b>type</b> (now yours), the <b>topic name</b>, and the queue size.">        self.hw_status_publisher_ = self.create_publisher(
+            HardwareStatus, "hardware_status", 10)</span>
         self.timer_ = self.create_timer(1.0, self.publish_hw_status)
         self.get_logger().info("Hardware status publisher has been started")
 
     def publish_hw_status(self):
-        msg = HardwareStatus()
-        msg.temperature = 45
+<span class="ex" data-tip="An empty message: every field starts at 0, <code>False</code> or <code>&quot;&quot;</code>.">        msg = HardwareStatus()</span>
+<span class="ex" data-tip="Fill the fields by <b>name</b>. Python checks the type: <code>msg.temperature = 45.5</code> would raise an AssertionError, because the field is <code>int64</code>.">        msg.temperature = 45
         msg.are_motors_ready = True
-        msg.debug_message = "Nothing special here"
+        msg.debug_message = "Nothing special here"</span>
         self.hw_status_publisher_.publish(msg)
 
 
@@ -238,92 +677,317 @@ if __name__ == "__main__":
     main()</code></pre></div>
   </div>
 
-  <div class="step" id="c2-3">
-    <div class="step-h"><span class="step-n">3</span><span class="step-t">Register, build, run, echo</span></div>
+  <div class="step" id="s2-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Register, build, run, inspect</span></div>
     <div class="cmd"><div class="cmd-h">💻 Terminal 1</div><pre><code>#  setup.py:  "hw_status_publisher = my_py_pkg.hw_status_publisher:main",
 cd ~/ros2_ws &amp;&amp; colcon build --symlink-install &amp;&amp; source ~/.bashrc
 ros2 run my_py_pkg hw_status_publisher</code></pre></div>
     <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>ros2 topic info /hardware_status
 ros2 topic echo /hardware_status</code></pre></div>
     <div class="out"><div class="out-h">✅ You should see</div><pre>Type: my_robot_interfaces/msg/HardwareStatus
-...
+Publisher count: 1
+Subscription count: 0
+
 temperature: 45
 are_motors_ready: true
 debug_message: Nothing special here
 ---</pre></div>
     <p>We ran <code>colcon build</code> without <code>--packages-select</code>, so it builds <em>all</em> packages in the right order: interfaces first, then the Python package that needs them.</p>
   </div>
+
+  <div class="step" id="s2-4">
+    <div class="step-h"><span class="step-n">4</span><span class="step-t">Publish one message from the terminal</span></div>
+    <p>Keep the echo running in Terminal 2. Pretend a motor is overheating:</p>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 3</div><pre><code>ros2 topic pub --once /hardware_status my_robot_interfaces/msg/HardwareStatus \
+  "{temperature: 92, are_motors_ready: false, debug_message: 'Motor 2 overheating'}"</code></pre></div>
+    <p>Your message appears among the node's messages in Terminal 2. Every <code>ros2</code> tool you know already works with your own types.</p>
+  </div>
 </div>
 
 <!-- ============================================================ -->
-<h2 id="lab3"><span class="num">L3</span>Lab 3 — Create and serve a .srv</h2>
+<h2 id="lab3"><span class="num">L3</span>Lab 3 — Richer messages: a self-driving car</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB 3 · 25 min</span><h3>ComputeRectangleArea</h3></div>
+  <div class="lab-h"><span class="badge">LAB 3 · 20 min</span><h3>DetectedObject.msg and DetectedObjectArray.msg</h3></div>
+  <p class="lab-goal">Goal: the message a real perception system sends: a time stamp and frame, a named object class, a confidence, a 3D position, and a list of many objects. You use four new tools: <strong>comments</strong>, <strong>constants</strong>, <strong>default values</strong> and <strong>messages inside messages</strong>.</p>
 
-  <div class="step" id="c3-1">
-    <div class="step-h"><span class="step-n">1</span><span class="step-t">Write the service definition</span></div>
-    <div class="cmd file"><div class="cmd-h">📄 my_robot_interfaces/srv/ComputeRectangleArea.srv</div><pre><code>float64 length
-float64 width
----
-float64 area</code></pre></div>
-    <div class="cmd file"><div class="cmd-h">📄 my_robot_interfaces/CMakeLists.txt (inside rosidl_generate_interfaces)</div><pre><code>rosidl_generate_interfaces(${PROJECT_NAME}
+  <div class="step" id="s3-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">One detected object</span></div>
+    <div class="cmd file" data-widget="explain"><div class="cmd-h">📄 my_robot_interfaces/msg/DetectedObject.msg</div><pre><code><span class="ex" data-tip="Comments start with <code>#</code>. <code>ros2 interface show</code> prints them, so write them for your teammates."># One object seen by the car's perception system</span>
+<span class="ex" data-tip="A message from another package: <code>stamp</code> (<em>when</em> it was measured) and <code>frame_id</code> (<em>which sensor</em>, e.g. <code>camera_front</code>). Almost every sensor message in ROS starts with it.">std_msgs/Header header</span>
+
+<span class="ex" data-tip="<b>Constants</b>: UPPER_CASE name, a value, no space around <code>=</code>. They are not sent; they are fixed names for numbers. In Python: <code>DetectedObject.PEDESTRIAN</code>.">uint8 CAR=0
+uint8 PEDESTRIAN=1
+uint8 CYCLIST=2
+uint8 TRAFFIC_LIGHT=3</span>
+uint8 type
+
+string label
+float32 confidence
+<span class="ex" data-tip="A <code>geometry_msgs/Point</code> has <code>x</code>, <code>y</code>, <code>z</code> (metres). In a car: x forward, y left, z up.">geometry_msgs/Point position</span>
+<span class="ex" data-tip="A <b>default value</b>: the third word. A new message starts with <code>distance_m = 0.0</code> unless you set it.">float64 distance_m 0.0</span></code></pre></div>
+  </div>
+
+  <div class="step" id="s3-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">A list of objects</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_robot_interfaces/msg/DetectedObjectArray.msg</div><pre><code>std_msgs/Header header
+DetectedObject[] objects</code></pre></div>
+    <p>A message from the <strong>same</strong> package needs no package name: just <code>DetectedObject</code>. The <code>[]</code> makes it a list of any length, from zero objects on an empty road to fifty in a busy street.</p>
+  </div>
+
+  <div class="step" id="s3-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Declare the two new dependencies</span></div>
+    <p>Your messages now use <code>std_msgs</code> and <code>geometry_msgs</code>. CMake must find them, the generator must know about them, and <code>package.xml</code> must list them.</p>
+    <div class="cmd file"><div class="cmd-h">📄 my_robot_interfaces/CMakeLists.txt</div><pre><code>find_package(ament_cmake REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+<span class="hl">find_package(std_msgs REQUIRED)</span>
+<span class="hl">find_package(geometry_msgs REQUIRED)</span>
+
+rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/HardwareStatus.msg"
-<span class="hl">  "srv/ComputeRectangleArea.srv"</span>
+<span class="hl">  "msg/DetectedObject.msg"</span>
+<span class="hl">  "msg/DetectedObjectArray.msg"</span>
+<span class="hl">  DEPENDENCIES std_msgs geometry_msgs</span>
 )</code></pre></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_robot_interfaces/package.xml (below the 3 lines from Lab 1)</div><pre><code><span class="hl">  &lt;depend&gt;std_msgs&lt;/depend&gt;</span>
+<span class="hl">  &lt;depend&gt;geometry_msgs&lt;/depend&gt;</span></code></pre></div>
   </div>
 
-  <div class="step" id="c3-2">
-    <div class="step-h"><span class="step-n">2</span><span class="step-t">Build and explore with the interface tools</span></div>
+  <div class="step" id="s3-4">
+    <div class="step-h"><span class="step-n">4</span><span class="step-t">Build and look inside</span></div>
     <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws &amp;&amp; colcon build --packages-select my_robot_interfaces &amp;&amp; source ~/.bashrc
-ros2 interface show my_robot_interfaces/srv/ComputeRectangleArea
-ros2 interface package my_robot_interfaces
-ros2 interface list | grep my_robot</code></pre></div>
+ros2 interface show my_robot_interfaces/msg/DetectedObjectArray</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see (shortened)</div><pre>std_msgs/Header header
+	builtin_interfaces/Time stamp
+		int32 sec
+		uint32 nanosec
+	string frame_id
+DetectedObject[] objects
+	std_msgs/Header header
+	...
+	uint8 CAR=0
+	uint8 PEDESTRIAN=1
+	...
+	geometry_msgs/Point position
+		float64 x
+		float64 y
+		float64 z
+	float64 distance_m 0.0</pre></div>
+    <p>ROS 2 opens every nested message for you, all the way down to plain numbers.</p>
   </div>
 
-  <div class="step" id="c3-3">
-    <div class="step-h"><span class="step-n">3</span><span class="step-t">Serve it (use your Lecture 4 server as a model)</span></div>
-    <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/my_py_pkg/rectangle_server.py</div><pre><code>#!/usr/bin/env python3
+  <div class="step" id="s3-5">
+    <div class="step-h"><span class="step-n">5</span><span class="step-t">Fill it in Python (read this; you use it in the Gold challenge)</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 a fake perception node, inside a timer callback</div><pre><code>from my_robot_interfaces.msg import DetectedObject, DetectedObjectArray
+
+obj = DetectedObject()
+obj.header.stamp = self.get_clock().now().to_msg()     # when
+obj.header.frame_id = "camera_front"                   # which sensor
+obj.type = DetectedObject.PEDESTRIAN                   # a constant, not a magic 1
+obj.label = "pedestrian"
+obj.confidence = 0.87
+obj.position.x = 8.0                                   # 8 m ahead
+obj.distance_m = 8.0
+
+msg = DetectedObjectArray()
+msg.header = obj.header
+msg.objects = [obj]                                    # a Python list
+self.objects_publisher_.publish(msg)</code></pre></div>
+  </div>
+
+  <div class="box idea"><div class="box-title">🤖 A real robot does exactly this: your LIMO</div>
+  <p>The LIMO driver publishes its health on <code>/limo_status</code> with a custom message from the <code>limo_msgs</code> package. You will see it again in Part B:</p>
+  <div class="cmd file"><div class="cmd-h">📄 limo_msgs/msg/LimoStatus.msg</div><pre><code>std_msgs/Header header
+
+uint8 vehicle_state
+uint8 control_mode
+float64 battery_voltage
+uint16 error_code
+uint8 motion_mode</code></pre></div>
+  <p>Its <code>CMakeLists.txt</code> has the same <code>DEPENDENCIES std_msgs</code> line you just wrote.</p></div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab4"><span class="num">L4</span>Lab 4 — Your own .srv and .action</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 4 · 20 min</span><h3>SetDrivingMode.srv and DriveDistance.action</h3></div>
+  <p class="lab-goal">Goal: a service the car's dashboard calls to change the driving mode, served by your own node, plus your first <code>.action</code> type. Use your Lecture 4 server as a model: only the type changes.</p>
+
+  <div class="step" id="s4-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Write the service definition</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_robot_interfaces/srv/SetDrivingMode.srv</div><pre><code># Request: one of "manual", "eco", "sport", "autopilot"
+string mode
+---
+# Response
+bool success
+string message</code></pre></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_robot_interfaces/CMakeLists.txt (inside rosidl_generate_interfaces)</div><pre><code>  "msg/DetectedObjectArray.msg"
+<span class="hl">  "srv/SetDrivingMode.srv"</span>
+  DEPENDENCIES std_msgs geometry_msgs</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws &amp;&amp; colcon build --packages-select my_robot_interfaces &amp;&amp; source ~/.bashrc
+ros2 interface show my_robot_interfaces/srv/SetDrivingMode
+ros2 interface package my_robot_interfaces</code></pre></div>
+    <div class="out"><div class="out-h">✅ The second command lists everything you made so far</div><pre>my_robot_interfaces/msg/HardwareStatus
+my_robot_interfaces/msg/DetectedObject
+my_robot_interfaces/msg/DetectedObjectArray
+my_robot_interfaces/srv/SetDrivingMode</pre></div>
+  </div>
+
+  <div class="step" id="s4-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Serve it (click the highlighted parts)</span></div>
+    <div class="cmd file" data-widget="explain"><div class="cmd-h">📄 my_py_pkg/driving_mode_server.py</div><pre><code>#!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
-from my_robot_interfaces.srv import ComputeRectangleArea
+<span class="ex" data-tip="Your own service type: package, then <code>.srv</code>, then the file name.">from my_robot_interfaces.srv import SetDrivingMode</span>
+
+<span class="ex" data-tip="The modes the car understands. Anything else is refused.">MODES = ["manual", "eco", "sport", "autopilot"]</span>
 
 
-class RectangleServer(Node):
+class DrivingModeServerNode(Node):
     def __init__(self):
-        super().__init__("rectangle_server")
-        self.create_service(ComputeRectangleArea, "compute_rectangle_area", self.callback_area)
-        self.get_logger().info("Rectangle area server ready")
+        super().__init__("driving_mode_server")
+        self.mode_ = "manual"
+<span class="ex" data-tip="Exactly Lecture 4's <code>create_service</code>: type, name, callback.">        self.server_ = self.create_service(
+            SetDrivingMode, "set_driving_mode", self.callback_set_driving_mode)</span>
+        self.get_logger().info("Driving mode server started in mode: manual")
 
-    def callback_area(self, request, response):
-        response.area = request.length * request.width
-        self.get_logger().info(f"{request.length} x {request.width} = {response.area}")
-        return response
+    def callback_set_driving_mode(self, request, response):
+<span class="ex" data-tip="Never trust a request: check it, and say <em>why</em> it was refused in <code>message</code>.">        if request.mode not in MODES:
+            response.success = False
+            response.message = f"Unknown mode '{request.mode}'. Use one of {MODES}"
+            return response</span>
+        self.mode_ = request.mode
+        response.success = True
+        response.message = f"Driving mode is now {self.mode_}"
+        self.get_logger().info(response.message)
+<span class="ex" data-tip="Still the most-forgotten line.">        return response</span>
 
 
 def main(args=None):
     rclpy.init(args=args)
-    rclpy.spin(RectangleServer())
+    node = DrivingModeServerNode()
+    rclpy.spin(node)
     rclpy.shutdown()
 
 
 if __name__ == "__main__":
     main()</code></pre></div>
-    <div class="cmd"><div class="cmd-h">💻 Terminals 1 &amp; 2</div><pre><code>#  setup.py:  "rectangle_server = my_py_pkg.rectangle_server:main",
+    <div class="cmd"><div class="cmd-h">💻 Terminals 1 &amp; 2</div><pre><code>#  setup.py:  "driving_mode_server = my_py_pkg.driving_mode_server:main",
 cd ~/ros2_ws &amp;&amp; colcon build --packages-select my_py_pkg --symlink-install &amp;&amp; source ~/.bashrc
-ros2 run my_py_pkg rectangle_server
-ros2 service call /compute_rectangle_area my_robot_interfaces/srv/ComputeRectangleArea "{length: 3.0, width: 2.5}"</code></pre></div>
+ros2 run my_py_pkg driving_mode_server
+ros2 service call /set_driving_mode my_robot_interfaces/srv/SetDrivingMode "{mode: 'sport'}"
+ros2 service call /set_driving_mode my_robot_interfaces/srv/SetDrivingMode "{mode: 'turbo'}"</code></pre></div>
     <div class="out"><div class="out-h">✅ You should see</div><pre>response:
-my_robot_interfaces.srv.ComputeRectangleArea_Response(area=7.5)</pre></div>
+my_robot_interfaces.srv.SetDrivingMode_Response(success=True, message='Driving mode is now sport')
+
+response:
+my_robot_interfaces.srv.SetDrivingMode_Response(success=False, message="Unknown mode 'turbo'. Use one of ['manual', 'eco', 'sport', 'autopilot']")</pre></div>
+  </div>
+
+  <div class="step" id="s4-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Your first .action type</span></div>
+    <p>In Lecture 4 you used <code>RotateAbsolute</code>. Now write your own: "drive this far at this speed, tell me how much is left".</p>
+    <div class="cmd file"><div class="cmd-h">📄 my_robot_interfaces/action/DriveDistance.action</div><pre><code># Goal
+float64 distance_m
+float64 speed_mps
+---
+# Result
+float64 travelled_m
+---
+# Feedback
+float64 remaining_m</code></pre></div>
+    <div class="cmd file"><div class="cmd-h">📄 CMakeLists.txt (inside rosidl_generate_interfaces) and package.xml</div><pre><code><span class="hl">  "action/DriveDistance.action"</span>
+
+<span class="hl">  &lt;depend&gt;action_msgs&lt;/depend&gt;</span>      &lt;!-- package.xml: actions need it --&gt;</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws &amp;&amp; colcon build --packages-select my_robot_interfaces &amp;&amp; source ~/.bashrc
+ros2 interface show my_robot_interfaces/action/DriveDistance</code></pre></div>
+    <p>Same order as Lecture 4: goal <code>---</code> result <code>---</code> feedback. The server is in the box below.</p>
   </div>
 </div>
 
+<details class="box">
+  <summary>➕ Going further (optional): the DriveDistance action server</summary>
+  <div class="inner">
+  <p>The Fibonacci server from Lecture 4, with your own type. It "drives" in half-second steps, publishes the distance left as feedback, rejects silly goals and accepts cancel requests.</p>
+  <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/drive_distance_server.py</div><pre><code>#!/usr/bin/env python3
+import time
+import rclpy
+from rclpy.node import Node
+from rclpy.action import ActionServer, CancelResponse, GoalResponse
+from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.executors import MultiThreadedExecutor
+from my_robot_interfaces.action import DriveDistance
+
+
+class DriveDistanceServerNode(Node):
+    def __init__(self):
+        super().__init__("drive_distance_server")
+        self.server_ = ActionServer(
+            self, DriveDistance, "drive_distance",
+            execute_callback=self.callback_execute,
+            goal_callback=self.callback_goal,
+            cancel_callback=self.callback_cancel,
+            callback_group=ReentrantCallbackGroup())
+        self.get_logger().info("Drive distance action server has been started")
+
+    def callback_goal(self, goal_request):
+        if goal_request.distance_m &lt;= 0.0 or goal_request.speed_mps &lt;= 0.0:
+            self.get_logger().warn("Rejecting goal: distance and speed must be &gt; 0")
+            return GoalResponse.REJECT
+        return GoalResponse.ACCEPT
+
+    def callback_cancel(self, goal_handle):
+        return CancelResponse.ACCEPT
+
+    def callback_execute(self, goal_handle):
+        goal = goal_handle.request
+        feedback = DriveDistance.Feedback()
+        travelled = 0.0
+        step = goal.speed_mps * 0.5                     # metres covered every 0.5 s
+        while travelled &lt; goal.distance_m:
+            if goal_handle.is_cancel_requested:
+                goal_handle.canceled()
+                return DriveDistance.Result(travelled_m=travelled)
+            travelled = min(goal.distance_m, travelled + step)
+            feedback.remaining_m = goal.distance_m - travelled
+            goal_handle.publish_feedback(feedback)
+            time.sleep(0.5)
+        goal_handle.succeed()
+        return DriveDistance.Result(travelled_m=travelled)
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = DriveDistanceServerNode()
+    rclpy.spin(node, executor=MultiThreadedExecutor())
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+  <div class="cmd"><div class="cmd-h">💻 Terminals 1 &amp; 2</div><pre><code>#  setup.py:  "drive_distance_server = my_py_pkg.drive_distance_server:main",
+ros2 run my_py_pkg drive_distance_server
+ros2 action send_goal /drive_distance my_robot_interfaces/action/DriveDistance "{distance_m: 5.0, speed_mps: 1.0}" --feedback</code></pre></div>
+  <div class="out"><div class="out-h">✅ Final lines in Terminal 2</div><pre>Feedback:
+    remaining_m: 0.5
+
+Feedback:
+    remaining_m: 0.0
+
+Result:
+    travelled_m: 5.0
+
+Goal finished with status: SUCCEEDED</pre></div>
+  <p>Then try <code>{distance_m: -2.0, speed_mps: 1.0}</code> (rejected) and stop a long goal with <kbd>Ctrl</kbd>+<kbd>C</kbd> (canceled). Write an action client for it by copying your Lab 6 client from Lecture 4 and changing only the type, the name and the field names.</p>
+  </div>
+</details>
+
 <!-- ============================================================ -->
-<h2 id="activity"><span class="num">5.2</span>Your turn</h2>
+<h2 id="activity"><span class="num">5.2</span>Your turn: the battery and the LED panel</h2>
 <div class="activity">
-  <div class="lvl">Activity 5.1 · Core · 50 min</div>
+  <div class="lvl">Activity 5.1 · Core · 40 min (finish as homework if needed)</div>
   <h3>The battery and the LED panel</h3>
+  <p>In Lecture 4 you saw this picture: the battery asks the LED panel to turn LED 3 on. Today you build it, with <strong>your own</strong> message and service.</p>
 <figure class="figure-card"><img src="images/figures/fig3_4.png" alt="The activity. Blue boxes are nodes, orange services, green topics." loading="lazy"><figcaption>The activity. Blue boxes are nodes, orange services, green topics.</figcaption></figure><div class="fig-pair"><figure class="figure-card"><img src="images/figures/fig3_5.png" alt="Battery empty → request LED 3 on." loading="lazy"><figcaption>Battery empty → request LED 3 on.</figcaption></figure><figure class="figure-card"><img src="images/figures/fig3_6.png" alt="Battery full → request LED 3 off." loading="lazy"><figcaption>Battery full → request LED 3 off.</figcaption></figure></div>
-  <p>When the battery is <strong>empty</strong>, the battery node asks the LED panel to turn LED 3 <strong>on</strong>. When the battery is <strong>full</strong> again, it asks to turn LED 3 <strong>off</strong>. The LED panel publishes its LED states all the time.</p>
   <div class="mermaid">
 flowchart LR
   B(["battery"]) -. "SetLed request<br/>{led_number: 3, state: 1}" .-> S{{"/set_led"}} -.-> P(["led_panel"])
@@ -348,7 +1012,7 @@ bool success</code></pre></div>
   <code>self.get_clock().now().nanoseconds / 1e9</code> gives the current time in seconds.</div></details>
 
   <details class="solution"><summary>Solution: led_panel.py</summary><div class="inner">
-  <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/my_py_pkg/led_panel.py</div><pre><code>#!/usr/bin/env python3
+  <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/led_panel.py</div><pre><code>#!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
 from my_robot_interfaces.msg import LedStateArray
@@ -373,7 +1037,7 @@ class LedPanelNode(Node):
         led_number = request.led_number
         state = request.state
 
-        if led_number > len(self.led_states_) or led_number &lt;= 0:
+        if led_number &gt; len(self.led_states_) or led_number &lt;= 0:
             response.success = False
             return response
         if state not in [0, 1]:
@@ -396,7 +1060,7 @@ if __name__ == "__main__":
     main()</code></pre></div></div></details>
 
   <details class="solution"><summary>Solution: battery.py</summary><div class="inner">
-  <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/my_py_pkg/battery.py</div><pre><code>#!/usr/bin/env python3
+  <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/battery.py</div><pre><code>#!/usr/bin/env python3
 from functools import partial
 import rclpy
 from rclpy.node import Node
@@ -417,12 +1081,12 @@ class BatteryNode(Node):
 
     def check_battery_state(self):
         time_now = self.now_seconds()
-        if self.battery_state_ == "full" and time_now - self.last_change_ > 4.0:
+        if self.battery_state_ == "full" and time_now - self.last_change_ &gt; 4.0:
             self.battery_state_ = "empty"
             self.get_logger().info("Battery is empty! Charging battery...")
             self.last_change_ = time_now
             self.call_set_led_server(3, 1)
-        elif self.battery_state_ == "empty" and time_now - self.last_change_ > 6.0:
+        elif self.battery_state_ == "empty" and time_now - self.last_change_ &gt; 6.0:
             self.battery_state_ = "full"
             self.get_logger().info("Battery is now full again.")
             self.last_change_ = time_now
@@ -440,7 +1104,7 @@ class BatteryNode(Node):
 
     def callback_set_led(self, future, led_number, state):
         try:
-            self.get_logger().info(f"LED {led_number} -> {state}: success={future.result().success}")
+            self.get_logger().info(f"LED {led_number} -&gt; {state}: success={future.result().success}")
         except Exception as e:
             self.get_logger().error(f"Service call failed {e!r}")
 
@@ -458,58 +1122,459 @@ cd ~/ros2_ws &amp;&amp; colcon build --symlink-install &amp;&amp; source ~/.bash
 ros2 run my_py_pkg led_panel          # terminal 1
 ros2 topic echo /led_states           # terminal 2
 ros2 run my_py_pkg battery            # terminal 3</code></pre></div>
-  <p>Why <code>service_is_ready()</code> instead of the <code>while … wait_for_service</code> loop? Because this call happens <em>inside a timer callback</em>, where a blocking loop would freeze the node (see Lecture 4, "When things go wrong").</p>
+  <p>Why <code>service_is_ready()</code> instead of the <code>while … wait_for_service</code> loop? Because this call happens <em>inside a timer callback</em>, where a blocking loop would freeze the node (Lecture 4, "When things go wrong").</p>
   </div></details>
 </div>
 
+<div class="game" data-widget="order"><div class="kc-head"><span class="sim-tag">🎮 Game</span><b>Adding a new .srv to an existing interfaces package and using it: put the steps in order</b></div><ol><li>Create <code>srv/SetLed.srv</code></li><li>Add <code>"srv/SetLed.srv"</code> to <code>rosidl_generate_interfaces</code></li><li><code>colcon build --packages-select my_robot_interfaces</code></li><li><code>source ~/.bashrc</code> and check with <code>ros2 interface show</code></li><li><code>from my_robot_interfaces.srv import SetLed</code> in the node</li><li><code>colcon build --packages-select my_py_pkg</code> and run the node</li></ol></div>
 
-<div class="game" data-widget="order"><div class="kc-head"><span class="sim-tag">🎮 Game</span><b>Adding a new .srv to an existing interfaces package: put the steps in order</b></div><ol><li>Create <code>srv/SetLed.srv</code></li><li>Add <code>"srv/SetLed.srv"</code> to <code>rosidl_generate_interfaces</code></li><li><code>colcon build --packages-select my_robot_interfaces</code></li><li><code>source ~/.bashrc</code></li><li>Check with <code>ros2 interface show my_robot_interfaces/srv/SetLed</code></li><li><code>from my_robot_interfaces.srv import SetLed</code> in your node</li></ol></div>
+<!-- ============================================================ -->
+<h2 id="params"><span class="num">5.3</span>Parameters, step by step</h2>
+<nav class="lpath prm" aria-label="Steps in this section"><a href="#pr1"><b>1</b>Why</a><a href="#pr2"><b>2</b>Picture it</a><a href="#pr3"><b>3</b>The rules</a><a href="#pr4"><b>4</b>Try it</a><a href="#pr5"><b>5</b>Remember it</a></nav>
+
+<div class="lstep prm" id="pr1"><span class="n">1</span><h3>Why: hard-coded numbers don't survive the real world</h3></div>
+<p>Look at the nodes you wrote: <code>self.number_ = 2</code>, <code>create_timer(0.5, …)</code>, <code>self.robot_name_ = "LIMO"</code>. To change any of them you edit the code (and for C++, recompile). Now imagine the self-driving car: the cruise-control code is the same in Lahore traffic, on the M2 motorway and in a car park, but the <strong>maximum speed</strong> and <strong>following distance</strong> are not. You don't want three copies of the code. You want one program with <strong>knobs</strong>.</p>
+
+<div class="lstep prm" id="pr2"><span class="n">2</span><h3>Picture it: the settings menu of a car</h3></div>
+<div class="analogy"><div class="emoji">🎛️</div><div>
+  <p><strong>Parameters are the settings menu of a car.</strong> The engine and the software (the <em>code</em>) are the same in every car of the model. The owner picks eco or sport mode, sets the speed limiter, chooses the cruise-control distance (the <em>parameters</em>). The factory sets <em>defaults</em>; you can change them before you drive, and some even while you drive.</p>
+</div></div>
+<p>A parameter's value can come from three places. The later one wins:</p>
+<div class="pflow">
+  <div><span class="when">① in the code</span><b>The default</b><code>declare_parameter("max_speed", 50.0)</code><br><span class="val">max_speed = 50.0</span></div>
+  <div><span class="when">② at startup</span><b>A command or a YAML file</b><code>--ros-args -p max_speed:=110.0</code><br><code>--params-file motorway.yaml</code><br><span class="val">max_speed = 110.0</span></div>
+  <div><span class="when">③ while running</span><b>From the terminal or another node</b><code>ros2 param set /adaptive_cruise max_speed 90.0</code><br><span class="val">max_speed = 90.0</span> <small>only <em>used</em> if the node listens: Lab 7</small></div>
+</div>
+<figure class="figure-card"><img src="images/figures/fig3_7.png" alt="One camera-driver program started twice, each with its own parameters (device, fps, simulation mode)." loading="lazy"><figcaption>One camera-driver program started twice, each with its own parameters: device, frames per second, simulation mode.</figcaption></figure>
+
+<div class="lstep prm" id="pr3"><span class="n">3</span><h3>The rules of a parameter</h3></div>
+<div class="box note">
+  <div class="box-title">📌 Properties of a parameter</div>
+  <ul>
+    <li>A parameter belongs to <strong>one node</strong>. Two nodes can each have a <code>max_speed</code>; they are different parameters.</li>
+    <li>It has a <strong>name</strong>, a <strong>type</strong> and a <strong>value</strong>. Types: <code>bool</code>, <code>int</code>, <code>double</code>, <code>string</code>, and lists of each (plus <code>byte[]</code>).</li>
+    <li>A node must <strong>declare</strong> it before using it, with a <strong>default value</strong>. The default fixes the type: <code>2</code> is an int, <code>2.0</code> is a double.</li>
+    <li>It is set at <strong>startup</strong> (<code>-p</code>, YAML) or <strong>while running</strong> (<code>ros2 param set</code>). The node reads it with <code>get_parameter("name").value</code>.</li>
+    <li>Under the hood, every node offers <strong>parameter services</strong> (<code>/node/get_parameters</code>, <code>/node/set_parameters</code>, …). You'll list them in Lab 6: parameters are built on the services you learned in Lecture 4.</li>
+  </ul>
+</div>
+
+<div class="lstep prm" id="pr4"><span class="n">4</span><h3>Try it: tune the adaptive cruise control</h3></div>
+<p>Your car follows another car. <code>max_speed</code>, <code>safe_distance</code> and <code>driving_mode</code> are parameters of the <code>adaptive_cruise</code> node. Change them while it drives, restart it with a different YAML file, and find out why a <strong>parameter callback</strong> matters.</p>
+<div data-widget="carparams"></div>
+
+<div class="lstep prm" id="pr5"><span class="n">5</span><h3>Remember it</h3></div>
+<div class="flip-grid" data-widget="flip"><div class="flip"><div class="flip-in"><div class="flip-front">Parameter<small>tap to flip</small></div><div class="flip-back">A named, typed <b>setting</b> of one node.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">declare_parameter<small>tap to flip</small></div><div class="flip-back"><code>("name", default)</code>: the default also fixes the <b>type</b>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">-p<small>tap to flip</small></div><div class="flip-back"><code>--ros-args -p name:=value</code>: set at startup.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">YAML file<small>tap to flip</small></div><div class="flip-back"><code>node_name:</code> → <code>ros__parameters:</code> → <code>name: value</code>. Load with <code>--params-file</code>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">ros2 param set<small>tap to flip</small></div><div class="flip-back">Changes the value while the node runs.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Parameter callback<small>tap to flip</small></div><div class="flip-back"><code>add_on_set_parameters_callback</code>: react to, or refuse, a change.</div></div></div></div>
+
+<p class="nextup">✅ Now use it: <strong>Lab 5</strong> adds parameters to your nodes, <strong>Lab 6</strong> uses the tools and YAML files, <strong>Lab 7</strong> reacts to changes while the node runs.</p>
+
+<!-- ============================================================ -->
+<h2 id="lab5"><span class="num">L5</span>Lab 5 — Add parameters to a node</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 5 · 20 min</span><h3>number_publisher with two knobs</h3></div>
+  <p class="lab-goal">Goal: one <code>number_publisher</code> program that publishes any number at any rate, chosen when you start it.</p>
+
+  <div class="step" id="s5-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Every node already has one parameter</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminals 1 &amp; 2</div><pre><code>ros2 run my_py_pkg number_publisher
+ros2 param list</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>/number_publisher:
+  use_sim_time</pre></div>
+    <p><code>use_sim_time</code> is on every node. It tells the node to follow the simulator's clock instead of the computer's; you'll set it with Gazebo in Lecture 8.</p>
+  </div>
+
+  <div class="step" id="s5-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Declare and read two parameters (click the highlighted parts)</span></div>
+    <p>Open <code>number_publisher.py</code> from Lecture 3 and change it like this:</p>
+    <div class="cmd file" data-widget="explain"><div class="cmd-h">📄 my_py_pkg/number_publisher.py</div><pre><code>#!/usr/bin/env python3
+import rclpy
+from rclpy.node import Node
+from example_interfaces.msg import Int64
+
+
+class NumberPublisherNode(Node):
+    def __init__(self):
+        super().__init__("number_publisher")
+<span class="ex" data-tip="Name and <b>default value</b>. The default fixes the type: <code>2</code> makes this an <b>integer</b> parameter.">        self.declare_parameter("number_to_publish", 2)</span>
+<span class="ex" data-tip="<code>2.0</code> (not <code>2</code>) makes this a <b>double</b>. 2 Hz is the same rate as Lecture 3's 0.5 s timer.">        self.declare_parameter("publish_frequency", 2.0)</span>
+
+<span class="ex" data-tip="Read the values. <code>.value</code> gives a plain Python <code>int</code> / <code>float</code>. If <code>-p</code> was used at startup you get that value, otherwise the default.">        self.number_ = self.get_parameter("number_to_publish").value
+        self.publish_frequency_ = self.get_parameter("publish_frequency").value</span>
+
+        self.number_publisher_ = self.create_publisher(Int64, "number", 10)
+<span class="ex" data-tip="A timer wants a <b>period</b> in seconds: period = 1 / frequency.">        self.number_timer_ = self.create_timer(
+            1.0 / self.publish_frequency_, self.publish_number)</span>
+        self.get_logger().info("Number publisher has been started")
+
+    def publish_number(self):
+        msg = Int64()
+        msg.data = self.number_
+        self.number_publisher_.publish(msg)
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = NumberPublisherNode()
+    rclpy.spin(node)
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+    <div class="box warn"><div class="box-title">⚠️ Always give a default value</div>
+    <p>Some older tutorials write <code>declare_parameter("number_to_publish")</code> without a default. On Humble this creates a parameter with <em>no type</em> that fails later in confusing ways. Always write <code>declare_parameter("name", default)</code>.</p></div>
+  </div>
+
+  <div class="step" id="s5-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Set the knobs at startup with <code>-p</code></span></div>
+    <p>With <code>--symlink-install</code> from Lecture 2 you don't need to rebuild after editing Python. Stop the old node and start it again:</p>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 1</div><pre><code>ros2 run my_py_pkg number_publisher --ros-args -p number_to_publish:=5 -p publish_frequency:=4.0</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>ros2 param get /number_publisher number_to_publish
+ros2 topic echo /number --once
+ros2 topic hz /number</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>Integer value is: 5
+data: 5
+---
+average rate: 4.000</pre></div>
+    <p>Same code, different behaviour. Now try <code>-p number_to_publish:=hello</code> and read the error: the type was fixed by the default value. And try <code>-p numbr_to_publish:=5</code> (typo): no error at all, the value is silently ignored. Remember that one.</p>
+  </div>
+
+  <div class="step" id="s5-4">
+    <div class="step-h"><span class="step-n">4</span><span class="step-t">Name your robot</span></div>
+    <p>In <code>robot_news_station.py</code> (Lecture 3), replace the fixed name with a parameter:</p>
+    <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/robot_news_station.py (in __init__)</div><pre><code><span class="hl">        self.declare_parameter("robot_name", "LIMO")</span>
+<span class="hl">        self.robot_name_ = self.get_parameter("robot_name").value</span></code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Three terminals</div><pre><code>ros2 run my_py_pkg robot_news_station --ros-args -r __node:=station_a -p robot_name:=R2D2
+ros2 run my_py_pkg robot_news_station --ros-args -r __node:=station_b -p robot_name:=C3PO
+ros2 topic echo /robot_news</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see both robots</div><pre>data: Hi, this is R2D2 from the robot news station.
+---
+data: Hi, this is C3PO from the robot news station.
+---</pre></div>
+    <p>One program, two robots. We renamed the nodes with <code>-r __node:=</code> because two nodes must never share a name.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab6"><span class="num">L6</span>Lab 6 — Parameter tools &amp; YAML files</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 6 · 15 min</span><h3>Read, change, save and load settings</h3></div>
+  <p class="lab-goal">Goal: change turtlesim's colour while it runs, save all its settings to a file, start it again from that file, and see the services behind it all.</p>
+
+  <div class="step" id="s6-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">List, describe and change parameters</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2 (<code>ros2 run turtlesim turtlesim_node</code> in Terminal 1)</div><pre><code>ros2 param list /turtlesim
+ros2 param describe /turtlesim background_r
+ros2 param set /turtlesim background_r 150
+ros2 param set /turtlesim background_g 0</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see (shortened)</div><pre>  background_b
+  background_g
+  background_r
+  ...
+  use_sim_time
+
+Parameter name: background_r
+  Type: integer
+  Description: Red channel of the background color
+  Constraints:
+    Min value: 0
+    Max value: 255
+
+Set parameter successful
+Set parameter successful</pre></div>
+    <p>The background turns purple. <code>describe</code> shows that turtlesim wrote a <em>description</em> and a <em>range</em> for its parameters: good practice you'll copy in the Going-further box of Lab 7. Try <code>ros2 param set /turtlesim background_r 300</code>: refused, out of range.</p>
+  </div>
+
+  <div class="step" id="s6-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Save all parameters to a YAML file and load them back</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>mkdir -p ~/ros2_ws/params
+ros2 param dump /turtlesim &gt; ~/ros2_ws/params/turtlesim.yaml
+cat ~/ros2_ws/params/turtlesim.yaml</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see (shortened)</div><pre>/turtlesim:
+  ros__parameters:
+    background_b: 255
+    background_g: 0
+    background_r: 150
+    ...
+    use_sim_time: false</pre></div>
+    <p>Stop turtlesim, then start it with the saved settings. It opens purple straight away:</p>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 1</div><pre><code>ros2 run turtlesim turtlesim_node --ros-args --params-file ~/ros2_ws/params/turtlesim.yaml</code></pre></div>
+    <p><code>ros2 param load /turtlesim ~/ros2_ws/params/turtlesim.yaml</code> loads a file into a node that is <em>already running</em>.</p>
+  </div>
+
+  <div class="step" id="s6-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Write your own YAML file</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 ~/ros2_ws/params/number_app.yaml</div><pre><code><span class="hl">/number_publisher:</span>          # the node name: must match exactly
+<span class="hl">  ros__parameters:</span>          # two underscores!
+    number_to_publish: 7
+    publish_frequency: 4.0     # 4.0, not 4: the type must match the default</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 1</div><pre><code>ros2 run my_py_pkg number_publisher --ros-args --params-file ~/ros2_ws/params/number_app.yaml</code></pre></div>
+    <p>Check with <code>ros2 topic echo /number</code>: <code>data: 7</code>. One file can hold the settings of many nodes; just add another block with another node name. In Lecture 6 a launch file will load this file for you.</p>
+  </div>
+
+  <div class="step" id="s6-4">
+    <div class="step-h"><span class="step-n">4</span><span class="step-t">Look under the hood: parameters are services</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>ros2 service list | grep turtlesim/</code></pre></div>
+    <div class="out"><div class="out-h">✅ Among others you'll see</div><pre>/turtlesim/describe_parameters
+/turtlesim/get_parameter_types
+/turtlesim/get_parameters
+/turtlesim/list_parameters
+/turtlesim/set_parameters
+/turtlesim/set_parameters_atomically</pre></div>
+    <p>Every node gets these six services for free. <code>ros2 param set</code> is just a service client calling <code>/turtlesim/set_parameters</code>, exactly like your client in Lecture 4. For a GUI, run <code>ros2 run rqt_reconfigure rqt_reconfigure</code>: it calls the same services when you move its sliders.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="lab7"><span class="num">L7</span>Lab 7 — Change parameters while running</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">LAB 7 · 15 min</span><h3>A parameter callback that applies and checks changes</h3></div>
+  <p class="lab-goal">Goal: <code>ros2 param set /number_publisher number_to_publish 9</code> changes the published number <em>immediately</em>, and a bad frequency is refused with a clear reason. This is the "callback" box in the cruise-control simulator.</p>
+
+  <div class="step" id="s7-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">See the problem first</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminals 1, 2 &amp; 3</div><pre><code>ros2 run my_py_pkg number_publisher
+ros2 topic echo /number
+ros2 param set /number_publisher number_to_publish 9</code></pre></div>
+    <p>"Set parameter successful", yet the echo still shows <code>data: 2</code>. The node read its parameters once, in <code>__init__</code>, and never looked again. turtlesim changed colour in Lab 6 because <em>it</em> listens for changes. Let's make ours listen.</p>
+  </div>
+
+  <div class="step" id="s7-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Add a parameter callback (click the highlighted parts)</span></div>
+    <div class="cmd file" data-widget="explain"><div class="cmd-h">📄 my_py_pkg/number_publisher.py (new parts)</div><pre><code><span class="ex" data-tip="The answer type the callback must return: <code>successful</code> (True / False) and an optional <code>reason</code>.">from rcl_interfaces.msg import SetParametersResult</span>
+...
+        self.number_timer_ = self.create_timer(
+            1.0 / self.publish_frequency_, self.publish_number)
+<span class="ex" data-tip="Ask ROS 2 to call this method <b>every time</b> someone tries to set one or more parameters of this node.">        self.add_on_set_parameters_callback(self.callback_parameters)</span>
+        self.get_logger().info("Number publisher has been started")
+
+<span class="ex" data-tip="Receives a <b>list</b> of the parameters being changed, with their <b>new</b> values. They are not stored yet: you decide.">    def callback_parameters(self, params):</span>
+<span class="ex" data-tip="First check everything. One bad value refuses the whole change, and <code>ros2 param set</code> prints your <code>reason</code>.">        for param in params:
+            if param.name == "publish_frequency" and param.value &lt;= 0.0:
+                return SetParametersResult(
+                    successful=False, reason="publish_frequency must be > 0")</span>
+<span class="ex" data-tip="Then apply. The number is used at the next timer tick.">        for param in params:
+            if param.name == "number_to_publish":
+                self.number_ = param.value
+                self.get_logger().info(f"number_to_publish is now {self.number_}")</span>
+<span class="ex" data-tip="A timer's period can't be edited, so replace the timer.">            elif param.name == "publish_frequency":
+                self.destroy_timer(self.number_timer_)
+                self.number_timer_ = self.create_timer(
+                    1.0 / param.value, self.publish_number)
+                self.get_logger().info(f"publish_frequency is now {param.value} Hz")</span>
+<span class="ex" data-tip="Accept: ROS 2 now stores the new values.">        return SetParametersResult(successful=True)</span></code></pre></div>
+  </div>
+
+  <div class="step" id="s7-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Test it live</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 3 (publisher and echo running)</div><pre><code>ros2 param set /number_publisher number_to_publish 9
+ros2 param set /number_publisher publish_frequency 10.0
+ros2 param set /number_publisher publish_frequency -1.0</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>Set parameter successful
+Set parameter successful
+Setting parameter failed: publish_frequency must be > 0</pre></div>
+    <p>The echo switches to <code>data: 9</code> at once and <code>ros2 topic hz /number</code> shows 10 Hz. The negative value is refused, and <code>ros2 param get</code> still shows 10.0. This is how real drivers let you tune a robot without restarting it.</p>
+  </div>
+</div>
+
+<details class="box">
+  <summary>➕ Going further (optional): describe your parameters like turtlesim does</summary>
+  <div class="inner">
+  <p>A <code>ParameterDescriptor</code> adds a description for <code>ros2 param describe</code>, and can make a parameter <strong>read-only</strong> (set at startup only):</p>
+  <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/robot_news_station.py</div><pre><code>from rcl_interfaces.msg import ParameterDescriptor
+...
+        self.declare_parameter(
+            "robot_name", "LIMO",
+            ParameterDescriptor(description="Name used in every news message",
+                                read_only=True))</code></pre></div>
+  <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>ros2 param describe /robot_news_station robot_name
+ros2 param set /robot_news_station robot_name BB8        # refused: read-only</code></pre></div>
+  <p>Use <code>read_only=True</code> for settings that would break a running robot if changed, such as a serial port or a sensor's frame name.</p>
+  </div>
+</details>
+
+<!-- ============================================================ -->
+<h2 id="activity2"><span class="num">5.4</span>Your turn: parameters</h2>
+<div class="activity">
+  <div class="lvl">Activity 5.2 · Core · 25 min</div>
+  <h3>A configurable LED panel and battery</h3>
+  <p>Remove the hard-coded numbers from Activity 5.1:</p>
+  <ul>
+    <li><code>led_panel</code>: a parameter <code>led_states</code>, default <code>[0, 0, 0]</code>, gives the number of LEDs and their start states.</li>
+    <li><code>battery</code>: parameters <code>empty_after_s</code> (4.0), <code>full_after_s</code> (6.0) and <code>led_number</code> (3).</li>
+    <li>One YAML file <code>~/ros2_ws/params/led_system.yaml</code> sets a 5-LED panel and a battery that empties after 2 s and controls LED 5.</li>
+  </ul>
+  <details class="hint"><summary>Hint</summary><div class="inner">A list default makes a list parameter: <code>self.declare_parameter("led_states", [0, 0, 0])</code>. Then <code>self.led_states_ = list(self.get_parameter("led_states").value)</code>. Start both nodes with the <em>same</em> <code>--params-file</code>: each takes its own block.</div></details>
+  <details class="solution"><summary>Solution</summary><div class="inner">
+  <div class="cmd file"><div class="cmd-h">📄 led_panel.py (in __init__)</div><pre><code>        self.declare_parameter("led_states", [0, 0, 0])
+        self.led_states_ = list(self.get_parameter("led_states").value)</code></pre></div>
+  <div class="cmd file"><div class="cmd-h">📄 battery.py (in __init__, and use the values in check_battery_state)</div><pre><code>        self.declare_parameter("empty_after_s", 4.0)
+        self.declare_parameter("full_after_s", 6.0)
+        self.declare_parameter("led_number", 3)
+        self.empty_after_s_ = self.get_parameter("empty_after_s").value
+        self.full_after_s_ = self.get_parameter("full_after_s").value
+        self.led_number_ = self.get_parameter("led_number").value
+...
+        if self.battery_state_ == "full" and time_now - self.last_change_ &gt; self.empty_after_s_:
+            ...
+            self.call_set_led_server(self.led_number_, 1)
+        elif self.battery_state_ == "empty" and time_now - self.last_change_ &gt; self.full_after_s_:
+            ...
+            self.call_set_led_server(self.led_number_, 0)</code></pre></div>
+  <div class="cmd file"><div class="cmd-h">📄 ~/ros2_ws/params/led_system.yaml</div><pre><code>/led_panel:
+  ros__parameters:
+    led_states: [0, 0, 0, 0, 0]
+/battery:
+  ros__parameters:
+    empty_after_s: 2.0
+    full_after_s: 6.0
+    led_number: 5</code></pre></div>
+  <div class="cmd"><div class="cmd-h">💻 Run it</div><pre><code>ros2 run my_py_pkg led_panel --ros-args --params-file ~/ros2_ws/params/led_system.yaml
+ros2 run my_py_pkg battery   --ros-args --params-file ~/ros2_ws/params/led_system.yaml
+ros2 topic echo /led_states</code></pre></div></div></details>
+</div>
+
+<div class="activity">
+  <div class="lvl">Challenge 5.3 · Stretch · self-driving</div>
+  <h3>The speed limiter (a school zone for turtles)</h3>
+  <p>Self-driving cars have a <strong>speed limiter</strong> between the planner and the motors. Build one for turtlesim: a node <code>speed_limiter</code> subscribes to <code>cmd_vel_raw</code> (<code>geometry_msgs/msg/Twist</code>), clamps <code>linear.x</code> to ±<code>max_speed</code> (default 1.0) and <code>angular.z</code> to ±<code>max_turn</code> (default 1.5), and publishes on <code>turtle1/cmd_vel</code>. Both limits must change <strong>live</strong>, and negative values must be refused.</p>
+  <div class="mermaid">
+flowchart LR
+  K(["turtle_teleop_key"]) -- "/cmd_vel_raw" --> L(["speed_limiter<br/>max_speed, max_turn"]) -- "/turtle1/cmd_vel" --> T(["turtlesim"])
+  </div>
+  <div class="cmd"><div class="cmd-h">💻 Test it</div><pre><code>ros2 run turtlesim turtlesim_node
+ros2 run my_py_pkg speed_limiter
+ros2 run turtlesim turtle_teleop_key --ros-args -r turtle1/cmd_vel:=cmd_vel_raw
+ros2 param set /speed_limiter max_speed 0.3          # entering a school zone
+ros2 param set /speed_limiter max_speed -1.0         # must be refused</code></pre></div>
+  <details class="solution"><summary>Solution</summary><div class="inner">
+  <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/speed_limiter.py</div><pre><code>#!/usr/bin/env python3
+import rclpy
+from rclpy.node import Node
+from geometry_msgs.msg import Twist
+from rcl_interfaces.msg import SetParametersResult
+
+
+def clamp(value, limit):
+    return max(-limit, min(limit, value))
+
+
+class SpeedLimiterNode(Node):
+    def __init__(self):
+        super().__init__("speed_limiter")
+        self.declare_parameter("max_speed", 1.0)     # m/s
+        self.declare_parameter("max_turn", 1.5)      # rad/s
+        self.max_speed_ = self.get_parameter("max_speed").value
+        self.max_turn_ = self.get_parameter("max_turn").value
+        self.add_on_set_parameters_callback(self.callback_parameters)
+        self.cmd_publisher_ = self.create_publisher(Twist, "turtle1/cmd_vel", 10)
+        self.cmd_subscriber_ = self.create_subscription(
+            Twist, "cmd_vel_raw", self.callback_cmd, 10)
+        self.get_logger().info(f"Speed limiter ready: max {self.max_speed_} m/s")
+
+    def callback_cmd(self, msg):
+        msg.linear.x = clamp(msg.linear.x, self.max_speed_)
+        msg.angular.z = clamp(msg.angular.z, self.max_turn_)
+        self.cmd_publisher_.publish(msg)
+
+    def callback_parameters(self, params):
+        for p in params:
+            if p.name in ("max_speed", "max_turn") and p.value &lt; 0.0:
+                return SetParametersResult(successful=False, reason=f"{p.name} must be &gt;= 0")
+        for p in params:
+            if p.name == "max_speed":
+                self.max_speed_ = p.value
+            elif p.name == "max_turn":
+                self.max_turn_ = p.value
+            self.get_logger().info(f"{p.name} is now {p.value}")
+        return SetParametersResult(successful=True)
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    rclpy.spin(SpeedLimiterNode())
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+  <p>Add <code>&lt;depend&gt;geometry_msgs&lt;/depend&gt;</code> to <code>my_py_pkg/package.xml</code>. Teleop sends 2.0 m/s per key press; with <code>max_speed = 0.3</code> the turtle crawls. Same idea as a real car's speed limiter, with a standard message and two parameters.</p>
+  </div></details>
+</div>
 
 <h3>🏅 Level up: choose your challenge</h3>
-<div class="levels"><div class="lv bronze"><b>🥉 Bronze: everyone</b><span>Activity 5.1 with all three nodes running together.</span></div><div class="lv silver"><b>🥈 Silver: confident</b><span>Add a 4th LED and a second battery that controls LED 1, with no changes to the LED panel code.</span></div><div class="lv gold"><b>🥇 Gold: future expert</b><span>Design <code>RobotStatus.msg</code> with a nested <code>geometry_msgs/Point position</code>, publish it, and echo it.</span></div></div>
+<div class="levels"><div class="lv bronze"><b>🥉 Bronze: everyone</b><span>Labs 1–2 and Activity 5.1: the battery and LED panel running together. Lab 5: start <code>number_publisher</code> with your own number and rate.</span></div><div class="lv silver"><b>🥈 Silver: confident</b><span>Activity 5.2 (one YAML file for both nodes), Lab 7 (live changes), and Challenge 5.3, the speed limiter.</span></div><div class="lv gold"><b>🥇 Gold: future expert</b><span>A mini perception stack: <code>fake_perception</code> publishes a <code>DetectedObjectArray</code> (parameters: <code>frame_id</code>, <code>num_pedestrians</code>), and <code>emergency_brake</code> subscribes and logs <strong>BRAKE!</strong> when any <code>PEDESTRIAN</code> is closer than its parameter <code>brake_distance</code>, changeable live.</span></div></div>
 
-<div class="kc" data-widget="kc"><div class="kc-head"><span class="sim-tag">✅ Knowledge check</span><b>Lecture 5 check: 5 questions</b></div><div class="kc-q" data-a="1"><p>Which file name is valid?</p><div class="kc-opts"><button><code>hardware_status.msg</code></button><button><code>HardwareStatus.msg</code></button><button><code>Hardware_Status.msg</code></button><button><code>hardwareStatus.msg</code></button></div><div class="kc-why">CamelCase, starting with a capital, with no underscores.</div></div><div class="kc-q" data-a="1"><p>Why do interfaces live in their own package?</p><div class="kc-opts"><button>It is faster</button><button>So Python and C++ packages can all depend on them</button><button>ROS 2 forbids msg in Python packages only</button><button>For licensing</button></div><div class="kc-why">One interfaces package can be shared by every other package, whatever its language.</div></div><div class="kc-q" data-a="1"><p>What does <code>int64[] led_states</code> become in Python?</p><div class="kc-opts"><button>A string</button><button>A list of ints</button><button>A dict</button><button>A single int</button></div><div class="kc-why">Arrays become Python lists (or array-likes).</div></div><div class="kc-q" data-a="0"><p>You added a new .msg but the import fails. What did you most likely forget?</p><div class="kc-opts"><button>The line in <code>rosidl_generate_interfaces</code>, or rebuilding and sourcing</button><button>chmod +x</button><button>A timer</button><button>A launch file</button></div><div class="kc-why">Every new file needs its CMake line, then a build and a source.</div></div><div class="kc-q" data-a="1"><p>Where do you declare that <code>my_py_pkg</code> uses your interfaces?</p><div class="kc-opts"><button>setup.cfg</button><button><code>&lt;depend&gt;my_robot_interfaces&lt;/depend&gt;</code> in its package.xml</button><button>CMakeLists.txt of my_py_pkg</button><button>Nowhere</button></div><div class="kc-why">Python packages declare dependencies in package.xml.</div></div></div>
-<h2 id="errors"><span class="num">5.3</span>When things go wrong</h2>
+<div class="kc" data-widget="kc"><div class="kc-head"><span class="sim-tag">✅ Knowledge check</span><b>Lecture 5 check: 10 questions</b></div><div class="kc-q" data-a="1"><p>Which file name is valid?</p><div class="kc-opts"><button><code>hardware_status.msg</code></button><button><code>HardwareStatus.msg</code></button><button><code>Hardware_Status.msg</code></button><button><code>hardwareStatus.msg</code></button></div><div class="kc-why">CamelCase, starting with a capital, no underscores.</div></div><div class="kc-q" data-a="2"><p>You added <code>srv/SetLed.srv</code>, rebuilt, but Python says <code>cannot import name 'SetLed'</code>. Most likely?</p><div class="kc-opts"><button>The file needs a .py extension</button><button>Python can't use services</button><button>It isn't listed in <code>rosidl_generate_interfaces</code></button><button>You need a new package</button></div><div class="kc-why">Every interface file needs its own line in <code>CMakeLists.txt</code>, then a rebuild and <code>source</code>.</div></div><div class="kc-q" data-a="0"><p>Why do interfaces live in their own package?</p><div class="kc-opts"><button>So every package, Python or C++, can depend on them</button><button>Python packages are not allowed to have files</button><button>It makes them faster</button><button>ROS 2 requires one package per message</button></div><div class="kc-why">Interfaces need CMake and rosidl; a separate package keeps them shareable.</div></div><div class="kc-q" data-a="3"><p>A publisher sends <code>DetectedObject</code> and a subscriber expects <code>String</code> on the same topic. What happens?</p><div class="kc-opts"><button>The message is converted</button><button>The subscriber crashes</button><button>The publisher crashes</button><button>Nothing is received, and there is no error</button></div><div class="kc-why">Only publishers and subscribers of the same type connect. Check with <code>ros2 topic info</code>.</div></div><div class="kc-q" data-a="1"><p>Your <code>.msg</code> uses <code>geometry_msgs/Point</code>. What else must you add?</p><div class="kc-opts"><button>Nothing</button><button><code>find_package(geometry_msgs)</code>, <code>DEPENDENCIES geometry_msgs</code> and <code>&lt;depend&gt;geometry_msgs&lt;/depend&gt;</code></button><button>A copy of Point.msg in your package</button><button>An import in the .msg file</button></div><div class="kc-why">Three places: CMake finds it, the generator uses it, package.xml declares it.</div></div><div class="kc-q" data-a="2"><p>What does <code>uint8 PEDESTRIAN=1</code> in a .msg file create?</p><div class="kc-opts"><button>A field sent in every message</button><button>A default value</button><button>A constant: <code>DetectedObject.PEDESTRIAN</code> in Python</button><button>A build error</button></div><div class="kc-why">Constants are UPPER_CASE with <code>=</code>; they are not sent, they name a value.</div></div><div class="kc-q" data-a="0"><p><code>self.declare_parameter("publish_frequency", 2)</code>, then <code>-p publish_frequency:=2.5</code>. What happens?</p><div class="kc-opts"><button>Error: the default <code>2</code> made it an integer</button><button>It works: 2.5</button><button>It is rounded to 2</button><button>It is ignored</button></div><div class="kc-why">The default fixes the type. Write <code>2.0</code> for a double.</div></div><div class="kc-q" data-a="1"><p>The YAML file loads without error but the node still uses its defaults. Most likely?</p><div class="kc-opts"><button>YAML files only work in launch files</button><button>The node name in the file doesn't match, or <code>ros__parameters</code> is misspelled</button><button>Values must be strings</button><button>You need <code>ros2 param dump</code> first</button></div><div class="kc-why">The first key is the node name; the second is <code>ros__parameters</code> with two underscores.</div></div><div class="kc-q" data-a="2"><p><code>ros2 param set</code> says "successful", but the node behaves the same. Why?</p><div class="kc-opts"><button>The parameter is read-only</button><button>You need to rebuild</button><button>The node read the value only in <code>__init__</code> and has no parameter callback</button><button>The type is wrong</button></div><div class="kc-why">Add <code>add_on_set_parameters_callback</code> to apply changes while running (Lab 7).</div></div><div class="kc-q" data-a="3"><p>Under the hood, <code>ros2 param set</code> works by…</p><div class="kc-opts"><button>Editing the Python file</button><button>Publishing on a topic</button><button>Restarting the node</button><button>Calling the node's <code>set_parameters</code> service</button></div><div class="kc-why">Every node offers six parameter services. You listed them in Lab 6.</div></div></div>
+
+<h2 id="errors"><span class="num">5.5</span>When things go wrong</h2>
 <div class="table-wrap"><table class="fix">
   <tr><th>You see…</th><th>Why</th><th>Fix</th></tr>
-  <tr><td>ModuleNotFoundError: my_robot_interfaces</td><td>Interfaces not built or not sourced, or dependency missing.</td><td>Build the interfaces package, <code>source ~/.bashrc</code>, and add <code>&lt;depend&gt;my_robot_interfaces&lt;/depend&gt;</code>.</td></tr>
-  <tr><td>rosidl … "is not a valid message name"</td><td>A file name with an underscore or lower case.</td><td>Rename it to CamelCase: <code>LedStateArray.msg</code>.</td></tr>
-  <tr><td>ImportError: cannot import name 'SetLed'</td><td>New file not listed in CMakeLists, or not rebuilt.</td><td>Add the line to <code>rosidl_generate_interfaces</code> and rebuild.</td></tr>
-  <tr><td>AssertionError: The 'led_states' field must be…</td><td>Wrong Python type for the field.</td><td><code>int64[]</code> needs a list of <code>int</code>; <code>float64</code> needs a <code>float</code> (<code>3.0</code>, not <code>3</code>).</td></tr>
-  <tr><td>Old fields still shown after editing a .msg</td><td>Old build still used.</td><td>Rebuild the interfaces <em>and</em> the Python package, then source. If still stuck, delete <code>build/ install/</code> and build again.</td></tr>
+  <tr><td><code>ModuleNotFoundError: No module named 'my_robot_interfaces'</code></td><td>Interfaces not built or not sourced, or the dependency is missing.</td><td>Build the interfaces package, <code>source ~/.bashrc</code>, and add <code>&lt;depend&gt;my_robot_interfaces&lt;/depend&gt;</code> to the user package.</td></tr>
+  <tr><td>rosidl: "… is not a valid message name" / "field name"</td><td>A file name with an underscore or lower case, or a field name in CamelCase.</td><td>Files: <code>LedStateArray.msg</code>. Fields: <code>led_states</code>.</td></tr>
+  <tr><td><code>ImportError: cannot import name 'SetLed'</code></td><td>New file not listed in <code>CMakeLists.txt</code>, or not rebuilt.</td><td>Add the line to <code>rosidl_generate_interfaces</code>, rebuild, source.</td></tr>
+  <tr><td>CMake: "Could not find a package configuration file provided by geometry_msgs"</td><td>Your message uses another package that isn't declared.</td><td><code>find_package(geometry_msgs REQUIRED)</code>, <code>DEPENDENCIES geometry_msgs</code>, <code>&lt;depend&gt;geometry_msgs&lt;/depend&gt;</code>.</td></tr>
+  <tr><td><code>AssertionError: The 'temperature' field must be of type 'int'</code></td><td>Wrong Python type for the field.</td><td><code>int64</code> needs an <code>int</code>; <code>float64</code> needs a <code>float</code> (<code>3.0</code>, not <code>3</code>).</td></tr>
+  <tr><td>Old fields still shown after editing a .msg</td><td>The old build is still used.</td><td>Rebuild the interfaces <em>and</em> the Python package, then source. If still stuck, delete <code>build/ install/ log/</code> and build again.</td></tr>
+  <tr><td>Nothing arrives, no error, <code>ros2 topic info</code> shows two types</td><td>Publisher and subscriber use different interface types.</td><td>Use the same type on both sides.</td></tr>
+  <tr><td><code>ParameterNotDeclaredException</code></td><td><code>get_parameter</code> before <code>declare_parameter</code>, or a typo in the name.</td><td>Declare first, with exactly the same name.</td></tr>
+  <tr><td><code>InvalidParameterTypeException</code> at startup</td><td>The value's type doesn't match the default (<code>2</code> vs <code>2.0</code>, or text for a number).</td><td>Match the default's type in <code>-p</code> and in YAML.</td></tr>
+  <tr><td><code>-p</code> or YAML value silently ignored</td><td>Typo in the parameter name, wrong node name in YAML, or <code>ros_parameters</code> with one underscore.</td><td><code>ros2 param list</code> and <code>ros2 param get</code>; check the YAML keys.</td></tr>
+  <tr><td><code>ros2 param set</code> works but nothing changes</td><td>The node reads parameters only in <code>__init__</code>.</td><td>Add a parameter callback (Lab 7), or restart the node with the new value.</td></tr>
 </table></div>
 
-<h2 id="exit"><span class="num">5.4</span>Exit ticket (5 min)</h2>
+<h2 id="exit"><span class="num">5.6</span>Exit ticket &amp; homework</h2>
+<p>Five quick questions (5 min), then today's commands and homework.</p>
 <div class="quiz">
-  <div class="q"><p>Why do we put interfaces in a separate package?</p><details><summary>Answer</summary><div class="inner">So any package (Python or C++) can depend on them. It also avoids mixing build systems, because interfaces need CMake.</div></details></div>
-  <div class="q"><p>Which three places do you touch to add a new <code>.srv</code> to an existing interfaces package?</p><details><summary>Answer</summary><div class="inner">Create the <code>.srv</code> file, add one line in <code>rosidl_generate_interfaces</code> in CMakeLists.txt, then rebuild (and source).</div></details></div>
+  <div class="q"><p>Which three places do you touch to add a new <code>.srv</code> to an existing interfaces package?</p><details><summary>Answer</summary><div class="inner">Create the <code>.srv</code> file, add one line in <code>rosidl_generate_interfaces</code>, rebuild and source. (A new <em>dependency</em> also needs <code>find_package</code>, <code>DEPENDENCIES</code> and <code>&lt;depend&gt;</code>.)</div></details></div>
   <div class="q"><p>Write a message <code>Turtle.msg</code> with a name and an x, y position.</p><details><summary>Answer</summary><div class="inner"><code>string name</code> / <code>float64 x</code> / <code>float64 y</code>. You'll use exactly this in Lecture 7.</div></details></div>
-  <div class="q"><p>Is <code>robot_Status.msg</code> a valid file name?</p><details><summary>Answer</summary><div class="inner">No. It must be CamelCase with no underscore: <code>RobotStatus.msg</code>.</div></details></div>
+  <div class="q"><p>A car's planner must run with <code>max_speed</code> 50 in the city and 110 on the motorway. Write the two start commands.</p><details><summary>Answer</summary><div class="inner"><code>ros2 run my_car planner --ros-args -p max_speed:=50.0</code> and <code>… -p max_speed:=110.0</code>, or one YAML file per place with <code>--params-file</code>.</div></details></div>
+  <div class="q"><p>Write the YAML file that sets <code>robot_name</code> to <code>"WALL-E"</code> for the node <code>robot_news_station</code>.</p><details><summary>Answer</summary><div class="inner"><code>/robot_news_station:</code> → <code>&nbsp;&nbsp;ros__parameters:</code> → <code>&nbsp;&nbsp;&nbsp;&nbsp;robot_name: "WALL-E"</code></div></details></div>
+  <div class="q"><p>What must a parameter callback return, and what happens if <code>successful</code> is <code>False</code>?</p><details><summary>Answer</summary><div class="inner">A <code>SetParametersResult</code>. With <code>successful=False</code> the change is refused, the old value stays, and the <code>reason</code> is shown to whoever tried to set it.</div></details></div>
 </div>
 
 <h3>📋 Today's commands</h3>
 <div class="cheat">
-  <div><code>ros2 pkg create my_robot_interfaces</code><span>then delete include/ src/, add msg/ srv/</span></div>
-  <div><code>rosidl_generate_interfaces(${PROJECT_NAME} "msg/X.msg" "srv/Y.srv")</code><span>in CMakeLists.txt</span></div>
-  <div><code>ros2 interface show pkg/msg/X</code><span>check your definition</span></div>
-  <div><code>ros2 interface list</code> · <code>ros2 interface package PKG</code><span>find interfaces</span></div>
-  <div><code>from my_robot_interfaces.msg import X</code><span>use it in Python</span></div>
-  <div><code>&lt;depend&gt;my_robot_interfaces&lt;/depend&gt;</code><span>in the user package's package.xml</span></div>
+  <div><code>ros2 pkg create my_robot_interfaces</code><span>then delete include/ src/, add msg/ srv/ action/</span></div>
+  <div><code>rosidl_generate_interfaces(${PROJECT_NAME} "msg/X.msg" …)</code><span>one line per interface file</span></div>
+  <div><code>DEPENDENCIES std_msgs geometry_msgs</code><span>when your interface uses other packages</span></div>
+  <div><code>ros2 interface show</code> · <code>proto</code> · <code>package</code><span>check, get an example, list a package</span></div>
+  <div><code>from my_robot_interfaces.msg import X</code><span>use it in Python (also .srv, .action)</span></div>
+  <div><code>self.declare_parameter("name", default)</code><span>declare (default fixes the type)</span></div>
+  <div><code>self.get_parameter("name").value</code><span>read the value</span></div>
+  <div><code>--ros-args -p name:=value</code><span>set at startup</span></div>
+  <div><code>--ros-args --params-file file.yaml</code><span>load a YAML file at startup</span></div>
+  <div><code>ros2 param list / get / set / describe</code><span>inspect and change while running</span></div>
+  <div><code>ros2 param dump /node &gt; file.yaml</code> · <code>ros2 param load</code><span>save / restore settings</span></div>
+  <div><code>add_on_set_parameters_callback(cb)</code><span>react to (or refuse) live changes</span></div>
 </div>
 
 <div class="box note">
   <div class="box-title">🏠 Homework</div>
   <ol>
-    <li>Finish Activity 5.1 (all three nodes running together).</li>
-    <li>Create <code>Turtle.msg</code> (<code>string name</code>, <code>float64 x</code>, <code>float64 y</code>, <code>float64 theta</code>) and <code>TurtleArray.msg</code> (<code>Turtle[] turtles</code>). Build and <code>ros2 interface show</code> them; you'll need them in Lecture 7.</li>
-    <li>Preview: with turtlesim running, try <code>ros2 param list</code> and <code>ros2 param get /turtlesim background_r</code>.</li>
+    <li>Finish Activity 5.1 (all three nodes running together) and Activity 5.2 (one YAML file).</li>
+    <li>For Lecture 7, create <code>Turtle.msg</code> (<code>string name</code>, <code>float64 x</code>, <code>float64 y</code>, <code>float64 theta</code>) and <code>TurtleArray.msg</code> (<code>Turtle[] turtles</code>). Build them and check with <code>ros2 interface show</code>.</li>
+    <li>Preview for Lecture 6: count how many terminals and how many <code>-p</code> / <code>--params-file</code> options the battery + LED system needs. Next week a <strong>launch file</strong> starts all of it, with all its parameters, in one command.</li>
   </ol>
 </div>
 
+<div class="box">
+  <div class="box-title">📚 Read more</div>
+  <ul>
+    <li><a href="https://docs.ros.org/en/humble/Concepts/Basic/About-Interfaces.html">ROS 2 Humble docs: About interfaces</a> (all field types, bounded arrays, constants, default values)</li>
+    <li><a href="https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries/Custom-ROS2-Interfaces.html">ROS 2 Humble docs: Creating custom msg and srv files</a></li>
+    <li><a href="https://docs.ros.org/en/humble/Tutorials/Intermediate/Creating-an-Action.html">ROS 2 Humble docs: Creating an action</a></li>
+    <li><a href="https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Parameters/Understanding-ROS2-Parameters.html">ROS 2 Humble docs: Understanding parameters</a></li>
+    <li><a href="https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries/Using-Parameters-In-A-Class-Python.html">ROS 2 Humble docs: Using parameters in a class (Python)</a></li>
+    <li><a href="https://docs.ros.org/en/humble/Concepts/Basic/About-Parameters.html">ROS 2 Humble docs: About parameters</a> (types, callbacks, the parameter services)</li>
+    <li><a href="https://github.com/autowarefoundation/autoware_msgs">Autoware's interface packages on GitHub</a>: how a real self-driving stack organises its messages</li>
+  </ul>
+</div>
+
 <div class="footer-nav">
-  <a href="L04-services.html">← Lecture 4: Services</a>
+  <a href="L04-services.html">← Lecture 4: Services &amp; Actions</a>
   <a href="index.html#lectures">All lectures</a>
-  <a href="L06-parameters-launch.html">Lecture 6: Parameters &amp; Launch →</a>
+  <a href="L06-parameters-launch.html">Lecture 6: Launch Files →</a>
 </div>
 </div>
 <script src="lab.js"></script>
