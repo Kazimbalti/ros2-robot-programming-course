@@ -240,6 +240,10 @@
   .plan tr.brk td{background:rgba(250,204,21,.12);}
   .lpath.rev a b, .lstep.rev .n{background:linear-gradient(135deg,#94a3b8,#475569);}
   .pair{border-left:5px solid var(--purple) !important;}
+  .trio.two{grid-template-columns:repeat(2,minmax(0,1fr));}
+  @media (max-width:760px){ .trio.two{grid-template-columns:1fr;} }
+  .recap{table-layout:fixed; width:100%;} .recap td, .recap th{overflow-wrap:anywhere;} .recap code{white-space:normal;}
+  .recap th:nth-child(1){width:16%;} .recap th:nth-child(2){width:26%;} .recap th:nth-child(3){width:32%;}
 </style>
 </head>
 <body>
@@ -267,6 +271,7 @@
 
 <div class="card toc solo">
   <h3>🗺️ Today's route</h3>
+  <a href="#recap"><span>Recap</span>Lectures 2–5 in one table</a>
   <a href="#idea"><span>6.0</span>Launch files in 10 minutes</a>
   <a href="#lab1"><span>Lab 1</span>Your first launch file</a>
   <a href="#lab2"><span>Lab 2</span>Remap, parameters + YAML</a>
@@ -280,12 +285,37 @@
 
 <div class="table-wrap"><table class="plan">
   <tr><th>Time</th><th>Block</th></tr>
-  <tr><td>0:00–0:10</td><td>6.0 Launch files in 10 minutes</td></tr>
-  <tr><td>0:10–1:05</td><td>Labs 1–3</td></tr>
+  <tr><td>0:00–0:05</td><td>Recap of Lectures 2–5</td></tr>
+  <tr><td>0:05–0:15</td><td>6.0 Launch files in 10 minutes</td></tr>
+  <tr><td>0:15–1:05</td><td>Labs 1–3</td></tr>
   <tr class="brk"><td>1:05–1:15</td><td>☕ Break</td></tr>
   <tr><td>1:15–1:35</td><td>6.1 Project brief · 6.2 Go-to-goal controller</td></tr>
   <tr><td>1:35–2:45</td><td>Milestones M1–M6</td></tr>
   <tr><td>2:45–3:00</td><td>Test · check · homework</td></tr>
+</table></div>
+
+<!-- ============================================================ -->
+<div class="box note">
+  <div class="box-title">🎯 Learning outcomes: by the end of this lecture you can…</div>
+  <ol>
+    <li>Create a <strong>bringup package</strong> and start several nodes with one <code>ros2 launch</code> command.</li>
+    <li>Rename nodes, remap topics and load parameters from an installed <strong>YAML file</strong> inside a launch file.</li>
+    <li>Use <strong>launch arguments</strong> and <strong>namespaces</strong> to run the same software in different configurations or on several robots.</li>
+    <li>Design a <strong>multi-node system</strong>: choose topics, services, custom interfaces and parameters for each part.</li>
+    <li>Write a <strong>go-to-goal P-controller</strong> and build the complete Catch Them All game, started with one launch file.</li>
+  </ol>
+</div>
+
+<h2 id="recap"><span class="num">↺</span>Recap: Lectures 2–5 in one table</h2>
+<p>Today's project uses all of these. Read each row and say where you used it.</p>
+<div class="table-wrap"><table class="vs recap">
+  <tr><th>Lecture</th><th>Key idea</th><th>Code to remember</th><th>Used in the project</th></tr>
+  <tr><td>2 · Nodes</td><td>A program; a timer runs code at a steady rate</td><td><code>class MyNode(Node)</code><br><code>create_timer(0.01, cb)</code></td><td>controller, spawner</td></tr>
+  <tr><td>3 · Topics</td><td>A stream of data: publish / subscribe</td><td><code>create_publisher(…)</code><br><code>create_subscription(…)</code></td><td><code>pose</code>, <code>cmd_vel</code>, <code>alive_turtles</code></td></tr>
+  <tr><td>4 · Services</td><td>Request → response</td><td><code>create_service(…)</code><br><code>call_async(req)</code></td><td><code>spawn</code>, <code>kill</code>, <code>catch_turtle</code></td></tr>
+  <tr><td>5 · Interfaces</td><td>Your own .msg / .srv</td><td><code>msg/Turtle.msg</code><br><code>srv/CatchTurtle.srv</code></td><td><code>Turtle</code>, <code>TurtleArray</code>, <code>CatchTurtle</code></td></tr>
+  <tr><td>5 · Parameters</td><td>Settings without editing code</td><td><code>declare_parameter(…)</code><br><code>--params-file x.yaml</code></td><td><code>spawn_frequency</code>, <code>closest</code></td></tr>
+  <tr><td><strong>6 · Launch</strong></td><td><strong>Start everything with one command</strong></td><td><code>ros2 launch pkg file.launch.py</code></td><td>the whole game</td></tr>
 </table></div>
 
 <!-- ============================================================ -->
@@ -299,9 +329,8 @@
 </table></div>
 
 <figure class="figure-card"><img src="images/self-driving-car-sensors.jpg" alt="A self-driving car with its sensors labelled: LIDAR and GPS on the roof, a camera behind the windscreen, radar at the front bumper, a computer inside the car and a wheel encoder on the rear wheel." loading="lazy"><figcaption>Every sensor and software block of this car is a node. Nobody opens a terminal for each one: one launch file starts them all.</figcaption></figure>
-<div class="trio">
+<div class="trio two">
   <div class="t-lch"><div class="big">🚗</div><b>Self-driving car (Autoware)</b><ul><li><code>ros2 launch autoware_launch autoware.launch.xml</code></li><li>arguments: <code>map_path</code>, <code>vehicle_model</code></li></ul></div>
-  <div class="t-arg"><div class="big">🗺️</div><b>Mobile robot (Nav2)</b><ul><li><code>ros2 launch nav2_bringup bringup_launch.py</code></li><li>arguments: <code>map:=</code>, <code>use_sim_time:=</code></li></ul></div>
   <div class="t-tk"><div class="big">🤖</div><b>Your LIMO (Lecture 8)</b><ul><li><code>ros2 launch limo_gazebosim limo_gazebo_diff.launch.py</code></li><li>one command: Gazebo + robot + sensors</li></ul></div>
 </div>
 
@@ -1275,6 +1304,18 @@ ros2 bag play catch_run --topics /turtle1/cmd_vel</code></pre></div>
 <!-- ============================================================ -->
 <h2 id="exit"><span class="num">6.3</span>Check &amp; homework</h2>
 <div class="kc" data-widget="kc"><div class="kc-head"><span class="sim-tag">✅ Knowledge check</span><b>Lecture 6: 5 questions</b></div><div class="kc-q" data-a="1"><p>Which function must every Python launch file contain?</p><div class="kc-opts"><button><code>main()</code></button><button><code>generate_launch_description()</code></button><button><code>launch()</code></button><button><code>start()</code></button></div><div class="kc-why"><code>ros2 launch</code> calls exactly this function.</div></div><div class="kc-q" data-a="1"><p>A new launch file is "not found". Most likely?</p><div class="kc-opts"><button>It must be XML</button><button>Not installed or not rebuilt</button><button>It needs <code>chmod +x</code></button><button>Wrong Python version</button></div><div class="kc-why">Check <code>install(DIRECTORY launch config …)</code>, rebuild, source.</div></div><div class="kc-q" data-a="1"><p>Heading 170°, goal −170°, no angle wrap. What does the hunter do?</p><div class="kc-opts"><button>Turns 20° left</button><button>Turns 340° the long way</button><button>Drives backwards</button><button>Stops</button></div><div class="kc-why">Wrapping adds 360°: +20°.</div></div><div class="kc-q" data-a="2"><p>Why does the controller call <code>/catch_turtle</code>, not <code>/kill</code>?</p><div class="kc-opts"><button><code>/kill</code> is slower</button><button>Only C++ can call <code>/kill</code></button><button>The spawner owns the list and must keep it correct</button><button>No reason</button></div><div class="kc-why">One owner per piece of data.</div></div><div class="kc-q" data-a="1"><p><code>catch_them_all.launch.py closest:=false</code>: what changes?</p><div class="kc-opts"><button>Nothing: the YAML says true</button><button>The controller chases the first turtle: the dict after the YAML wins</button><button>An error</button><button>The spawner stops</button></div><div class="kc-why">Later entries in <code>parameters=[…]</code> win.</div></div></div>
+
+<div class="box tip">
+  <div class="box-title">🔑 Key takeaways</div>
+  <ul>
+    <li>A launch file is the <strong>start button</strong> of a robot: one command starts, names, connects and configures every node.</li>
+    <li>Settings live in <strong>YAML files</strong> installed with the bringup package; <strong>arguments</strong> choose between them at start time.</li>
+    <li><strong>Namespaces</strong> let the same launch file run many robots or vehicles without clashes.</li>
+    <li>Every autonomous robot runs <strong>sense → think → act</strong>: subscribe, decide in a timer, publish commands.</li>
+    <li>One owner per piece of data: the spawner owns the turtle list; others <strong>ask</strong> it through a service.</li>
+    <li>Next lecture, the same controller drives the LIMO: only the topic names (<code>/odom</code>, <code>/cmd_vel</code>) change.</li>
+  </ul>
+</div>
 
 <div class="box note">
   <div class="box-title">🏠 Homework</div>
