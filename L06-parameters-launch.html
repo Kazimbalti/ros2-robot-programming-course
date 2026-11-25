@@ -294,11 +294,25 @@
 </table></div>
 
 <!-- ============================================================ -->
-<h2 id="launch"><span class="num">6.1</span>Scale your Application with ROS2 Launch Files</h2>
-<p>Running all the nodes of an application, each in its own terminal with its own settings, quickly becomes difficult (Fig. 3.8). A <strong>launch file</strong> starts all of them with one command (Fig. 3.9).</p>
-<div class="fig-pair"><figure class="figure-card"><img src="images/figures/fig3_8.png" alt="Many nodes, each with parameters: too many terminals to start by hand." loading="lazy"><figcaption>Fig. 3.8 — Different nodes, each started by hand.</figcaption></figure><figure class="figure-card"><img src="images/figures/fig3_9.png" alt="One launch file starts and configures all the nodes." loading="lazy"><figcaption>Fig. 3.9 — One ROS 2 launch file starts them all.</figcaption></figure></div>
+<h2 id="what"><span class="num">💡</span>What is a launch file? A self-driving car example</h2>
+<p>A self-driving car runs many programs at the same time. In ROS 2, each one is a <strong>node</strong>:</p>
+<figure class="figure-card"><img src="images/self-driving-car-sensors.jpg" alt="A self-driving car with its sensors labelled: LIDAR and GPS on the roof, a camera behind the windscreen, radar at the front bumper, a computer inside the car and a wheel encoder on the rear wheel." loading="lazy"><figcaption>Fig. 1 — Every sensor and software block of the car is a node: LiDAR driver, camera driver, GPS, radar, perception, planner, controller…</figcaption></figure>
+<ul>
+  <li><strong>Without a launch file:</strong> one terminal per node, each with its own <code>ros2 run … --ros-args …</code>. Ten nodes = ten terminals, ten long commands, and one typo can stop the car from working.</li>
+  <li><strong>With a launch file:</strong> one Python file lists every node with its name, topic connections and parameters. One command, <code>ros2 launch car_bringup car.launch.py</code>, starts the whole car; <kbd>Ctrl</kbd>+<kbd>C</kbd> stops all of it.</li>
+</ul>
+<div class="mermaid">
+flowchart LR
+  L["🚀 ros2 launch car_bringup car.launch.py"] --> A(["lidar_driver"]) & B(["camera_driver"]) & C(["gps_driver"]) & D(["perception"]) & E(["planner"]) & F(["controller"])
+</div>
+<p>A launch file is the car's <strong>start button</strong>: write it once, then start the same system every time, on any computer.</p>
 
-<p>🚗 <strong>In real robots:</strong> every sensor and software block of a self-driving car is a node, and the whole car is started with one launch file. Your LIMO works the same way.</p>
+<!-- ============================================================ -->
+<h2 id="launch"><span class="num">6.1</span>Scale your Application with ROS2 Launch Files</h2>
+<p>Running all the nodes of an application, each in its own terminal with its own settings, quickly becomes difficult (Fig. 2). A <strong>launch file</strong> starts all of them with one command (Fig. 3).</p>
+<div class="fig-pair"><figure class="figure-card"><img src="images/figures/fig3_8.png" alt="Many nodes, each with parameters: too many terminals to start by hand." loading="lazy"><figcaption>Fig. 2 — Different nodes, each started by hand.</figcaption></figure><figure class="figure-card"><img src="images/figures/fig3_9.png" alt="One launch file starts and configures all the nodes." loading="lazy"><figcaption>Fig. 3 — One ROS 2 launch file starts them all.</figcaption></figure></div>
+
+<p>🚗 <strong>Real examples</strong> of one-command start-up:</p>
 <div class="trio two">
   <div class="t-lch"><div class="big">🚗</div><b>Self-driving car (Autoware)</b><ul><li><code>ros2 launch autoware_launch autoware.launch.xml</code></li><li>starts sensing, perception, planning and control</li></ul></div>
   <div class="t-tk"><div class="big">🤖</div><b>Your LIMO (Lecture 8)</b><ul><li><code>ros2 launch limo_gazebosim limo_gazebo_diff.launch.py</code></li><li>one command: Gazebo + robot + sensors</li></ul></div>
@@ -470,7 +484,7 @@ average rate: 5.000</pre></div>
 <div class="activity">
   <div class="lvl">Activity · 25 min</div>
   <h3>radio.launch.py: 5 robot news stations + 1 smartphone</h3>
-  <figure class="figure-card"><img src="images/figures/fig3_10.png" alt="The radio activity graph: five renamed robot news station nodes publish on /robot_news; one smartphone node subscribes." loading="lazy"><figcaption>Fig. 3.10 — ROS 2 launch activity.</figcaption></figure>
+  <figure class="figure-card"><img src="images/figures/fig3_10.png" alt="The radio activity graph: five renamed robot news station nodes publish on /robot_news; one smartphone node subscribes." loading="lazy"><figcaption>Fig. 4 — ROS 2 launch activity.</figcaption></figure>
   <p><strong>Goal:</strong> start <strong>5</strong> <code>robot_news_station</code> nodes and <strong>1</strong> <code>smartphone</code> node. Each station needs a different name and publishes "Hi, this is &lt;robot_name&gt; from the Robot News Station!". The smartphone receives all the messages. Robot names: <code>Giskard, BB8, Daneel, Jander, C3PO</code>.</p>
   <p>No node needs to be created or changed: you only write one launch file that starts the renamed nodes with parameters.</p>
   <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws/src/my_robot_bringup/launch
