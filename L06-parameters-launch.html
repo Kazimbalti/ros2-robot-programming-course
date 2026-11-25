@@ -244,6 +244,33 @@
   @media (max-width:760px){ .trio.two{grid-template-columns:1fr;} }
   .recap{table-layout:fixed; width:100%;} .recap td, .recap th{overflow-wrap:anywhere;} .recap code{white-space:normal;}
   .recap th:nth-child(1){width:16%;} .recap th:nth-child(2){width:26%;} .recap th:nth-child(3){width:32%;}
+  /* Fig. 1: self-driving car → nodes → one launch file */
+  .sdcfig svg{display:block; width:100%; height:auto;}
+  .sdcfig text{font-family:Inter, sans-serif; font-weight:700; text-anchor:middle; fill:var(--text); font-size:12px;}
+  .sdcfig .sdc-step{font-size:13.5px; font-weight:800; fill:var(--accent);}
+  .sdcfig .sdc-sm{font-size:11px; fill:var(--muted);}
+  .sdcfig .sdc-frame{fill:none; stroke:var(--border); stroke-width:1.5;}
+  .sdcfig .sdc-group{fill:var(--panel); stroke:var(--accent); stroke-width:1.5; stroke-dasharray:6 5; opacity:.9;}
+  .sdcfig .sdc-node rect{fill:var(--panel2); stroke:var(--border); stroke-width:2;}
+  .sdcfig .sdc-node text{font-family:'JetBrains Mono', monospace; font-size:12px;}
+  .sdcfig .sdc-wire{fill:none; stroke:var(--muted); stroke-width:1.6; stroke-dasharray:4 4;}
+  .sdcfig .sdc-topic{fill:none; stroke:var(--accent); stroke-width:2;}
+  .sdcfig .sdc-ah{fill:var(--accent);} .sdcfig .sdc-ah2{fill:#e8590c;}
+  .sdcfig .sdc-t{font-family:'JetBrains Mono', monospace; font-size:10.5px; fill:var(--accent); paint-order:stroke; stroke:var(--panel); stroke-width:4px; stroke-linejoin:round;}
+  .sdcfig .sdc-act{fill:var(--panel2); stroke:var(--accent2); stroke-width:1.5;}
+  .sdcfig .sdc-start{stroke:#e8590c; stroke-width:3;}
+  .sdcfig .sdc-startt{text-anchor:start; font-size:12px; fill:#e8590c;}
+  .sdcfig .sdc-file{fill:var(--panel); stroke:#e8590c; stroke-width:2;}
+  .sdcfig .sdc-fileh{fill:#e8590c;} .sdcfig .sdc-filet{fill:#fff; font-size:12.5px;}
+  .sdcfig .sdc-code{text-anchor:start; font-family:'JetBrains Mono', monospace; font-size:11.5px; font-weight:600;}
+  .sdcfig .sdc-btn{fill:#e8590c;} .sdcfig .sdc-btnt{fill:#fff; font-family:'JetBrains Mono', monospace; font-size:12px;}
+  .sdcfig .sdc-pulse{fill:none; stroke:#e8590c; stroke-width:2; transform-box:fill-box; transform-origin:center; animation:sdc-pulse 6s ease-out infinite;}
+  .sdcfig .sdc-li{text-anchor:start; font-size:12.5px; font-weight:600;} .sdcfig .sdc-li.bad{fill:var(--danger);}
+  .sdcfig .sdc-node rect{animation:sdc-on 6s infinite;}
+  .sdcfig .n2 rect{animation-delay:.25s} .sdcfig .n3 rect{animation-delay:.5s} .sdcfig .n4 rect{animation-delay:.75s} .sdcfig .n5 rect{animation-delay:1s} .sdcfig .n6 rect{animation-delay:1.25s}
+  @keyframes sdc-on{0%,10%{stroke:var(--border)} 15%,85%{stroke:var(--accent2)} 92%,100%{stroke:var(--border)}}
+  @keyframes sdc-pulse{0%{transform:scale(1); opacity:.9} 25%,100%{transform:scale(2.2); opacity:0}}
+  @media (prefers-reduced-motion:reduce){ .sdcfig *{animation:none !important;} }
 </style>
 </head>
 <body>
@@ -295,17 +322,128 @@
 
 <!-- ============================================================ -->
 <h2 id="what"><span class="num">💡</span>What is a launch file? A self-driving car example</h2>
-<p>A self-driving car runs many programs at the same time. In ROS 2, each one is a <strong>node</strong>:</p>
-<figure class="figure-card"><img src="images/self-driving-car-sensors.jpg" alt="A self-driving car with its sensors labelled: LIDAR and GPS on the roof, a camera behind the windscreen, radar at the front bumper, a computer inside the car and a wheel encoder on the rear wheel." loading="lazy"><figcaption>Fig. 1 — Every sensor and software block of the car is a node: LiDAR driver, camera driver, GPS, radar, perception, planner, controller…</figcaption></figure>
+<p>A self-driving car runs many programs at the same time. In ROS 2, each one is a <strong>node</strong>, the nodes talk through <strong>topics</strong>, and <strong>one launch file</strong> starts them all (Fig. 1).</p>
+<figure class="figure-card sdcfig">
+<svg viewBox="0 0 900 470" role="img" aria-label="Three parts. One: a self-driving car with LiDAR, camera and GPS. Two: its six nodes and their topic connections: lidar_driver, camera_driver and gps_driver send /scan, /image and /gps to perception, which sends /objects to planner, which sends /path to controller, which sends /cmd_vel to the steering, throttle and brake. Three: one launch file, car.launch.py, lists the six nodes; the command ros2 launch car_bringup car.launch.py starts all of them, and Ctrl+C stops all of them.">
+  <defs>
+    <marker id="sdc-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="sdc-ah" d="M0 0 L10 5 L0 10 Z"/></marker>
+    <marker id="sdc-arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="sdc-ah2" d="M0 0 L10 5 L0 10 Z"/></marker>
+  </defs>
+
+  <!-- ① the car -->
+  <text class="sdc-step" x="150" y="22">① The car: sensors + computer</text>
+  <image href="images/self-driving-car-sensors.jpg" x="10" y="40" width="280" height="147" preserveAspectRatio="xMidYMid meet"/>
+  <rect class="sdc-frame" x="10" y="40" width="280" height="147" rx="8"/>
+  <text class="sdc-sm" x="150" y="210">LiDAR · camera · GPS · computer</text>
+  <text class="sdc-sm" x="150" y="228">each sensor and program = one node</text>
+
+  <!-- sensor wires: car → driver nodes -->
+  <path class="sdc-wire" d="M290 80 C315 80 315 67 338 67" marker-end="url(#sdc-arr)"/>
+  <path class="sdc-wire" d="M290 115 C315 115 315 127 338 127" marker-end="url(#sdc-arr)"/>
+  <path class="sdc-wire" d="M290 150 C315 150 315 187 338 187" marker-end="url(#sdc-arr)"/>
+
+  <!-- ② nodes + topics -->
+  <rect class="sdc-group" x="322" y="30" width="568" height="236" rx="14"/>
+  <text class="sdc-step" x="606" y="22">② The nodes and their connections (topics)</text>
+
+  <g class="sdc-node n1"><rect x="340" y="50" width="128" height="34" rx="17"/><text x="404" y="72">lidar_driver</text></g>
+  <g class="sdc-node n2"><rect x="340" y="110" width="128" height="34" rx="17"/><text x="404" y="132">camera_driver</text></g>
+  <g class="sdc-node n3"><rect x="340" y="170" width="128" height="34" rx="17"/><text x="404" y="192">gps_driver</text></g>
+  <g class="sdc-node n4"><rect x="520" y="110" width="110" height="34" rx="17"/><text x="575" y="132">perception</text></g>
+  <g class="sdc-node n5"><rect x="660" y="110" width="94" height="34" rx="17"/><text x="707" y="132">planner</text></g>
+  <g class="sdc-node n6"><rect x="780" y="110" width="100" height="34" rx="17"/><text x="830" y="132">controller</text></g>
+
+  <path class="sdc-topic" d="M468 67 C500 67 500 118 518 121" marker-end="url(#sdc-arr)"/>
+  <path class="sdc-topic" d="M468 127 L518 127" marker-end="url(#sdc-arr)"/>
+  <path class="sdc-topic" d="M468 187 C495 187 495 134 518 132" marker-end="url(#sdc-arr)"/>
+  <text class="sdc-t" x="494" y="60">/scan</text>
+  <text class="sdc-t" x="490" y="120">/image</text>
+  <text class="sdc-t" x="494" y="200">/gps</text>
+  <path class="sdc-topic" d="M630 127 L658 127" marker-end="url(#sdc-arr)"/>
+  <text class="sdc-t" x="645" y="104">/objects</text>
+  <path class="sdc-topic" d="M754 127 L778 127" marker-end="url(#sdc-arr)"/>
+  <text class="sdc-t" x="766" y="104">/path</text>
+  <path class="sdc-topic" d="M830 144 L830 196" marker-end="url(#sdc-arr)"/>
+  <text class="sdc-t" x="856" y="174">/cmd_vel</text>
+  <rect class="sdc-act" x="752" y="198" width="128" height="50" rx="10"/>
+  <text class="sdc-sm" x="816" y="219">🚗 steering</text>
+  <text class="sdc-sm" x="816" y="237">throttle · brake</text>
+
+  <!-- ③ one launch file -->
+  <path class="sdc-start" d="M606 300 L606 270" marker-end="url(#sdc-arr2)"/>
+  <text class="sdc-startt" x="616" y="290">starts all 6 nodes</text>
+
+  <rect class="sdc-file" x="322" y="304" width="568" height="156" rx="12"/>
+  <rect class="sdc-fileh" x="322" y="304" width="568" height="30" rx="12"/><rect class="sdc-fileh" x="322" y="320" width="568" height="14"/>
+  <text class="sdc-filet" x="606" y="324">③ One launch file: 📄 car_bringup/launch/car.launch.py</text>
+  <text class="sdc-code" x="340" y="358">Node(executable="lidar_driver")</text>
+  <text class="sdc-code" x="340" y="380">Node(executable="camera_driver")</text>
+  <text class="sdc-code" x="340" y="402">Node(executable="gps_driver")</text>
+  <text class="sdc-code" x="620" y="358">Node(executable="perception")</text>
+  <text class="sdc-code" x="620" y="380">Node(executable="planner")</text>
+  <text class="sdc-code" x="620" y="402">Node(executable="controller")</text>
+  <rect class="sdc-btn" x="436" y="422" width="340" height="28" rx="14"/>
+  <text class="sdc-btnt" x="606" y="441">▶ ros2 launch car_bringup car.launch.py</text>
+
+  <!-- left bottom: what it manages -->
+  <text class="sdc-step" x="150" y="320">What the launch file manages</text>
+  <text class="sdc-li" x="22" y="352">✅ starts every node: 1 command</text>
+  <text class="sdc-li" x="22" y="378">✅ sets names, topics, parameters</text>
+  <text class="sdc-li" x="22" y="404">✅ Ctrl+C stops all of them</text>
+  <text class="sdc-li bad" x="22" y="436">❌ without it: 6 terminals,</text>
+  <text class="sdc-li bad" x="42" y="456">6 long commands</text>
+</svg>
+<figcaption>Fig. 1 — ① The car's sensors and computer. ② Each one becomes a node; nodes are connected by topics. ③ One launch file starts and manages all of them with a single command.</figcaption>
+</figure>
+
 <ul>
-  <li><strong>Without a launch file:</strong> one terminal per node, each with its own <code>ros2 run … --ros-args …</code>. Ten nodes = ten terminals, ten long commands, and one typo can stop the car from working.</li>
-  <li><strong>With a launch file:</strong> one Python file lists every node with its name, topic connections and parameters. One command, <code>ros2 launch car_bringup car.launch.py</code>, starts the whole car; <kbd>Ctrl</kbd>+<kbd>C</kbd> stops all of it.</li>
+  <li><strong>Without a launch file:</strong> one terminal per node, each with its own <code>ros2 run … --ros-args …</code>. Six nodes = six terminals, six long commands, and one typo can stop the car from working.</li>
+  <li><strong>With a launch file:</strong> one Python file lists every node with its name, topic connections and parameters. One command starts the whole car; <kbd>Ctrl</kbd>+<kbd>C</kbd> stops all of it.</li>
 </ul>
-<div class="mermaid">
-flowchart LR
-  L["🚀 ros2 launch car_bringup car.launch.py"] --> A(["lidar_driver"]) & B(["camera_driver"]) & C(["gps_driver"]) & D(["perception"]) & E(["planner"]) & F(["controller"])
-</div>
 <p>A launch file is the car's <strong>start button</strong>: write it once, then start the same system every time, on any computer.</p>
+
+<h3>A simple launch file for the car</h3>
+<p>This is what <code>car.launch.py</code> from Fig. 1 looks like. Read it top to bottom: it is only a list of nodes to start.</p>
+<div class="cmd file"><div class="cmd-h">📄 car_bringup/launch/car.launch.py (example)</div><pre><code># 1. Two imports, in every launch file
+from launch import LaunchDescription
+from launch_ros.actions import Node
+
+
+# 2. ros2 launch calls this function
+def generate_launch_description():
+    ld = LaunchDescription()        # the list of things to start
+
+    # 3. One Node(...) = one "ros2 run package executable"
+    # sensors
+    lidar_node = Node(package="car_sensors", executable="lidar_driver")
+    camera_node = Node(package="car_sensors", executable="camera_driver")
+    gps_node = Node(package="car_sensors", executable="gps_driver")
+
+    # software
+    perception_node = Node(package="car_autonomy", executable="perception")
+    planner_node = Node(package="car_autonomy", executable="planner",
+                        parameters=[{"max_speed": 13.9}])   # 50 km/h
+    controller_node = Node(package="car_autonomy", executable="controller")
+
+    # 4. Add every node to the list
+    ld.add_action(lidar_node)
+    ld.add_action(camera_node)
+    ld.add_action(gps_node)
+    ld.add_action(perception_node)
+    ld.add_action(planner_node)
+    ld.add_action(controller_node)
+
+    # 5. Return the list: ros2 launch starts everything in it
+    return ld</code></pre></div>
+<div class="cmd"><div class="cmd-h">💻 One command starts the whole car</div><pre><code>ros2 launch car_bringup car.launch.py</code></pre></div>
+<div class="table-wrap"><table>
+  <tr><th>Part</th><th>Meaning</th></tr>
+  <tr><td><code>generate_launch_description()</code></td><td>the function <code>ros2 launch</code> calls</td></tr>
+  <tr><td><code>Node(package=…, executable=…)</code></td><td>one node = one <code>ros2 run package executable</code></td></tr>
+  <tr><td><code>parameters=[{…}]</code></td><td>the node's settings, like <code>-p max_speed:=13.9</code></td></tr>
+  <tr><td><code>ld.add_action(…)</code></td><td>add the node to the list to start</td></tr>
+</table></div>
+<p class="credit">This car package is an example to show the idea. In 6.1 you write a real launch file for your own nodes, step by step.</p>
 
 <!-- ============================================================ -->
 <h2 id="launch"><span class="num">6.1</span>Scale your Application with ROS2 Launch Files</h2>
