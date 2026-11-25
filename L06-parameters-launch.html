@@ -4,8 +4,8 @@
 <script>(function(){try{var t=localStorage.getItem('limo-book-theme');if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lecture 6 — Launch Files &amp; the ROS 2 Toolkit</title>
-<meta name="description" content="Hands-on Lecture 6: start whole ROS 2 applications with launch files: a bringup package, rename, remap, parameters and YAML files, launch arguments and conditions, namespaces for many robots, including launch files, respawn, timers and event handlers, XML and YAML launch files. Plus the missing ROS 2 toolkit: QoS, ROS_DOMAIN_ID, log levels, rqt_console and ros2 doctor. Self-driving car and robot examples throughout.">
+<title>Lecture 6 — Launch Files + Project: Catch Them All</title>
+<meta name="description" content="Hands-on Lecture 6: launch files (bringup package, remap, parameters, YAML, arguments, namespaces), then the Catch Them All project: go-to-goal controller, spawner, custom messages and service, parameters and one launch file. Examples from self-driving cars and real robots.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
@@ -116,45 +116,6 @@
   /* route card on its own: two columns of links on wide screens */
   @media (min-width:761px){ .toc.solo{columns:2; column-gap:32px;} .toc.solo h3{column-span:all;} .toc.solo a{break-inside:avoid;} }
 
-  /* Lecture 4 style: pictorial "at a glance" infographic */
-  .l4ig-grid{display:grid; grid-template-columns:1fr; gap:14px; margin-top:6px;}
-  .l4ig-card{margin:0; background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:14px 18px 10px; position:relative; overflow:hidden;
-    display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); grid-template-rows:auto 1fr; column-gap:22px;}
-  .l4ig-card svg{grid-column:1; grid-row:1 / span 2;}
-  .l4ig-card figcaption{grid-column:2; grid-row:1; align-self:end; margin-top:10px;}
-  .l4ig-card ul{grid-column:2; grid-row:2; align-self:start; margin-top:10px !important;}
-  .l4ig-card::before{content:""; position:absolute; top:0; left:0; right:0; height:5px;}
-  .l4ig-card.t-topic::before{background:var(--accent);} .l4ig-card.t-srv::before{background:var(--gold);} .l4ig-card.t-act::before{background:var(--accent2);}
-  .l4ig-card figcaption{display:grid; grid-template-columns:auto 1fr; column-gap:8px; align-items:center;}
-  .l4ig-card figcaption .ic{font-size:1.6em; grid-row:span 2;}
-  .l4ig-card figcaption b{font-size:1.1em; color:var(--text);}
-  .l4ig-card figcaption span:last-child{font-size:.85em; font-style:italic; color:var(--muted); line-height:1.35;}
-  .l4ig-card svg{display:block; width:100%; height:auto; margin:6px 0 2px;}
-  .l4ig-card ul{font-size:.86em; padding-inline-start:18px; margin:0;}
-  .l4ig-card li{margin-bottom:2px;}
-  .l4ig-foot{font-size:.9em; color:var(--muted); margin:12px 0 0; text-align:center;}
-  @media (max-width:760px){
-    .l4ig-card{display:block; padding:12px 12px 8px;}
-    .l4ig-card ul{margin-top:4px !important;}
-  }
-
-  .l4ig svg text{font-family:Inter, sans-serif; font-weight:700; font-size:11px; fill:var(--text); text-anchor:middle;}
-  .l4ig .lbl{font-size:10.5px; fill:var(--muted);}
-  .l4ig .ln{stroke:var(--muted); stroke-width:1.6; fill:none; stroke-dasharray:5 5; opacity:.55;}
-  .l4ig .ln.solid{stroke-dasharray:none; opacity:.8;}
-  .l4ig .arrhead{fill:var(--muted);}
-  .l4ig .arm{stroke:var(--text); stroke-width:2.4; stroke-linecap:round;}
-  .l4ig .rotor{fill:var(--muted); opacity:.7; transform-box:fill-box; transform-origin:center; animation:l4-rotor .18s linear infinite alternate;}
-  .l4ig .drone-body{fill:var(--accent);} .l4ig .lens{fill:var(--text);}
-  .l4ig .robot-body{fill:var(--accent2);} .l4ig .robot-top{fill:var(--text);} .l4ig .wheel{fill:var(--text);}
-  .l4ig .lap{fill:var(--muted);} .l4ig .scr{fill:var(--panel2);}
-  .l4ig .pill{stroke-width:1.5;} .l4ig .pill-t{font-family:'JetBrains Mono', monospace; font-size:10.5px;}
-  .l4ig .p-topic{fill:var(--panel2); stroke:var(--accent);} .l4ig .p-srv{fill:var(--panel2); stroke:var(--gold);}
-  .l4ig .pk text{fill:#fff; font-size:10.5px;}
-  .l4ig .pk-topic rect{fill:var(--accent);} .l4ig .pk-req rect{fill:var(--gold);} .l4ig .pk-res rect{fill:var(--accent2);}
-  .l4ig .msgbox{fill:var(--panel2); stroke:var(--border);}
-
-
   /* ---------- Lecture 6 only ---------- */
   .lpath.lch a b, .lstep.lch .n{background:linear-gradient(135deg,#f9844a,#e8590c);}
   .lpath.tk a b, .lstep.tk .n{background:linear-gradient(135deg,#22b8cf,#1c7ed6);}
@@ -165,42 +126,6 @@
   .trio code{font-size:.9em;}
   p code, li code, td code, .cheat code, .inner code, .lv code{overflow-wrap:anywhere;}
   .step-t{min-width:0; overflow-wrap:anywhere;}
-
-  /* big-picture cards */
-  .l4ig .term{fill:var(--panel2); stroke:var(--border); stroke-width:1.5;}
-  .l4ig .term-h{fill:var(--muted); opacity:.55;}
-  .l4ig .tt{text-anchor:start; font-family:'JetBrains Mono', monospace; font-size:9.5px; font-weight:600; fill:var(--text);}
-  .l4ig .tt.p{fill:var(--accent2);} .l4ig .tt.bad{fill:var(--danger);}
-  .l4ig .tw{animation:l6-pop 9s infinite both;}
-  .l4ig .tw.d1{animation-delay:.6s} .l4ig .tw.d2{animation-delay:1.2s} .l4ig .tw.d3{animation-delay:1.8s} .l4ig .tw.d4{animation-delay:2.4s} .l4ig .tw.d5{animation-delay:3s}
-  .l4ig .blink{animation:l6-blink 1s steps(1) infinite;}
-  .l4ig .file{fill:var(--panel2); stroke:#e8590c; stroke-width:2;} .l4ig .file-h{fill:#e8590c;} .l4ig .file-t{fill:#fff; font-size:10.5px;}
-  .l4ig .np rect{fill:var(--panel2); stroke:var(--border); stroke-width:2;}
-  .l4ig .np circle{fill:var(--border);}
-  .l4ig .np{animation:none;} .l4ig .np rect{animation:l6-on 6s infinite;} .l4ig .np circle{animation:l6-dot 6s infinite;}
-  .l4ig .np.d1 rect,.l4ig .np.d1 circle{animation-delay:.3s} .l4ig .np.d2 rect,.l4ig .np.d2 circle{animation-delay:.6s}
-  .l4ig .np.d3 rect,.l4ig .np.d3 circle{animation-delay:.9s} .l4ig .np.d4 rect,.l4ig .np.d4 circle{animation-delay:1.2s}
-  .l4ig .gobtn{fill:#e8590c;} .l4ig .gobtn-t{fill:#fff; font-size:11px;}
-  .l4ig .gopulse{fill:none; stroke:#e8590c; stroke-width:2; transform-box:fill-box; transform-origin:center; animation:l6-pulse 6s ease-out infinite;}
-  .l4ig .incl{fill:var(--panel); stroke:var(--accent2); stroke-width:1.5; stroke-dasharray:5 4;}
-  .l4ig .incl-o{fill:var(--panel2); stroke:var(--accent2); stroke-width:2;}
-  .l4ig .sw1{animation:l6-a 8s steps(1) infinite;} .l4ig .sw2{animation:l6-b 8s steps(1) infinite;}
-  .l4ig .mode rect{fill:var(--panel); stroke:var(--border); stroke-width:1.5;}
-  .l4ig .mode.m1 rect{animation:l6-m1 8s steps(1) infinite;} .l4ig .mode.m2 rect{animation:l6-m2 8s steps(1) infinite;}
-  .l4ig .mono{font-family:'JetBrains Mono', monospace; font-size:10px;}
-  @keyframes l6-pop{0%{opacity:0; transform:translateY(4px)} 5%{opacity:1; transform:none} 88%{opacity:1} 96%,100%{opacity:0}}
-  @keyframes l6-blink{0%{opacity:1} 50%{opacity:0}}
-  @keyframes l6-on{0%,8%{stroke:var(--border)} 12%,85%{stroke:var(--accent2)} 92%,100%{stroke:var(--border)}}
-  @keyframes l6-dot{0%,8%{fill:var(--border)} 12%,85%{fill:var(--accent2)} 92%,100%{fill:var(--border)}}
-  @keyframes l6-pulse{0%{transform:scale(1); opacity:.9} 25%,100%{transform:scale(1.6); opacity:0}}
-  @keyframes l6-a{0%{opacity:1} 50%{opacity:0}} @keyframes l6-b{0%{opacity:0} 50%{opacity:1}}
-  @keyframes l6-m1{0%{stroke:var(--accent2); stroke-width:3} 50%{stroke:var(--border); stroke-width:1.5}}
-  @keyframes l6-m2{0%{stroke:var(--border); stroke-width:1.5} 50%{stroke:var(--accent2); stroke-width:3}}
-  @media (prefers-reduced-motion:reduce){
-    .l4ig *{animation:none !important;}
-    .l4ig .sw2{display:none;}
-  }
-
   /* "watch it": ros2 launch starting processes (6.1 step 3) */
   .lfig svg{max-width:760px;}
   .lfig .lf-file{fill:var(--panel); stroke:#e8590c; stroke-width:2;} .lfig .lf-fh{fill:#e8590c;} .lfig .lf-ft{fill:#fff; font-size:12.5px;}
@@ -259,6 +184,62 @@
   .addr span{padding:4px 10px; border-radius:8px; border:1px solid var(--border); background:var(--panel);}
   .addr .a1{border-color:var(--accent); color:var(--accent);} .addr .a2{border-color:var(--accent2); color:var(--accent2);} .addr .a3{border-color:#e8590c; color:#e8590c;}
   .addr i{font-style:normal; color:var(--muted);}
+  .lpath.dsg a b, .lstep.dsg .n{background:linear-gradient(135deg,#a78bfa,var(--purple));}
+  .lpath.ctl a b, .lstep.ctl .n{background:linear-gradient(135deg,var(--accent2),#12b886);}
+  /* go-to-goal picture (7.2 step 1) */
+  .ggfig svg{max-width:720px;}
+  .ggfig .gw{fill:#4556ff;} .ggfig .gg{stroke:rgba(255,255,255,.14); stroke-width:1;}
+  .ggfig .gt{fill:#fff; font-size:12px;}
+  .ggfig .dx{stroke:#fff; stroke-width:1.6; stroke-dasharray:5 5; opacity:.7;}
+  .ggfig .dist{stroke:#ffd166; stroke-width:3;}
+  .ggfig .arc{fill:none; stroke:#ff8fab; stroke-width:3;}
+  .ggfig .head{stroke:#3ee8a0; stroke-width:2.5; stroke-dasharray:4 3;}
+  .ggfig .me{fill:#3ee8a0;} .ggfig .goal{fill:#ffd166;}
+  .ggfig .phase rect{fill:var(--panel); stroke:var(--border); stroke-width:1.5;}
+  .ggfig .phase text{font-size:12.5px; fill:var(--muted);}
+  .ggfig .ph1 rect{animation:gg-p1 9s infinite;} .ggfig .ph2 rect{animation:gg-p2 9s infinite;} .ggfig .ph3 rect{animation:gg-p3 9s infinite;}
+  .ggfig .ph1 text{animation:gg-p1t 9s infinite;} .ggfig .ph2 text{animation:gg-p2t 9s infinite;} .ggfig .ph3 text{animation:gg-p3t 9s infinite;}
+  .ggfig .bot{animation:gg-bot 9s ease-in-out infinite;}
+  .ggfig .botr{transform-box:fill-box; transform-origin:center; animation:gg-rot 9s ease-in-out infinite;}
+  .ggfig .eq{font-family:'JetBrains Mono', monospace; font-size:12.5px; font-weight:600; text-anchor:start; fill:var(--text);}
+  .ggfig .eq .y{fill:#c99410;} .ggfig .eq .p{fill:#d6336c;} .ggfig .eq .g{fill:var(--accent2);}
+  html[data-theme="dark"] .ggfig .eq .y{fill:#ffd166;} html[data-theme="dark"] .ggfig .eq .p{fill:#ff8fab;}
+  @keyframes gg-rot{0%,8%{transform:rotate(0deg)} 30%,100%{transform:rotate(-34deg)}}
+  @keyframes gg-bot{0%,32%{transform:translate(0,0)} 78%,92%{transform:translate(214px,-144px)} 100%{transform:translate(0,0)}}
+  @keyframes gg-p1{0%,30%{fill:var(--danger); stroke:var(--danger)} 31%,100%{fill:var(--panel); stroke:var(--border)}}
+  @keyframes gg-p2{0%,30%{fill:var(--panel); stroke:var(--border)} 31%,76%{fill:var(--accent); stroke:var(--accent)} 77%,100%{fill:var(--panel); stroke:var(--border)}}
+  @keyframes gg-p3{0%,76%{fill:var(--panel); stroke:var(--border)} 77%,95%{fill:var(--accent2); stroke:var(--accent2)} 96%,100%{fill:var(--panel); stroke:var(--border)}}
+  @keyframes gg-p1t{0%,30%{fill:#fff} 31%,100%{fill:var(--muted)}}
+  @keyframes gg-p2t{0%,30%{fill:var(--muted)} 31%,76%{fill:#fff} 77%,100%{fill:var(--muted)}}
+  @keyframes gg-p3t{0%,76%{fill:var(--muted)} 77%,95%{fill:#fff} 96%,100%{fill:var(--muted)}}
+  @media (prefers-reduced-motion:reduce){ .ggfig *{animation:none !important;} }
+
+  /* angle-wrap number line (7.2 step 3) */
+  .wrapline{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin:14px 0;}
+  .wrapline > div{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:12px 14px;}
+  .wrapline svg{width:100%; height:auto; display:block;}
+  .wrapline text{font-family:Inter, sans-serif; font-weight:700; font-size:11px; fill:var(--text); text-anchor:middle;}
+  .wrapline .rim{fill:none; stroke:var(--border); stroke-width:10;}
+  .wrapline .bad{fill:none; stroke:var(--danger); stroke-width:5; stroke-linecap:round;}
+  .wrapline .good{fill:none; stroke:var(--accent2); stroke-width:5; stroke-linecap:round;}
+  .wrapline .hd{stroke:var(--text); stroke-width:2.5;} .wrapline .gl{stroke:#c99410; stroke-width:2.5;}
+  @media (max-width:760px){ .wrapline{grid-template-columns:1fr;} }
+
+  /* milestone timeline */
+  .mstones{display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px; margin:14px 0 18px; counter-reset:ms;}
+  .mstones a{display:block; text-decoration:none; color:var(--text); background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:10px 10px 8px; position:relative; transition:transform .15s, border-color .15s;}
+  .mstones a:hover{transform:translateY(-2px); border-color:var(--accent2);}
+  .mstones b{display:block; font-size:.78em; color:var(--accent2); letter-spacing:.5px;}
+  .mstones span{display:block; font-weight:700; font-size:.88em; margin:2px 0 4px;}
+  .mstones i{display:block; font-style:normal; font-size:.75em; color:var(--muted);}
+  .mstones .ic{font-size:1.4em;}
+  @media (max-width:900px){ .mstones{grid-template-columns:repeat(3,minmax(0,1fr));} }
+  @media (max-width:520px){ .mstones{grid-template-columns:repeat(2,minmax(0,1fr));} }
+  /* session plan + revision tables */
+  .plan td:first-child{white-space:nowrap; font-weight:700; font-family:"JetBrains Mono", monospace; font-size:.88em;}
+  .plan tr.brk td{background:rgba(250,204,21,.12);}
+  .lpath.rev a b, .lstep.rev .n{background:linear-gradient(135deg,#94a3b8,#475569);}
+  .pair{border-left:5px solid var(--purple) !important;}
 </style>
 </head>
 <body>
@@ -272,210 +253,79 @@
 <div class="lesson-progress"><div class="lp-top"><span>Lecture 6 · your progress</span><span><b class="lp-count">0 / 0 steps</b> · <a href="#" class="lp-reset">reset</a></span></div><div class="lp-bar"><div class="lp-fill"></div></div></div>
 
 <div class="cover">
-    <div class="cover-art" aria-hidden="true">🚀</div>
-  <div class="kicker">Part A · ROS 2 Bootcamp · Lecture 6 of 14</div>
-  <h1>Launch Files &amp; the ROS 2 Toolkit — Start Your Whole Robot with One Command</h1>
-  <div class="subtitle">In Lecture 5 your battery + LED system needed <strong>three terminals</strong> and a <code>--params-file</code> in each. A self-driving car runs <em>hundreds</em> of nodes; nobody opens hundreds of terminals. Today one <strong>launch file</strong> starts, names, wires and configures a whole application, takes <strong>arguments</strong> (simulation or real car? which robot?), runs <strong>many robots</strong> side by side with <strong>namespaces</strong>, and <strong>restarts</strong> a node that crashes. Then you fill the last gaps of the ROS 2 basics: <strong>QoS</strong>, <strong>ROS_DOMAIN_ID</strong>, <strong>log levels</strong> and <strong>ros2 doctor</strong>.</div>
+  <div class="cover-art" aria-hidden="true">🐢</div>
+  <div class="kicker">Part A · ROS 2 Bootcamp · Lecture 6 · Launch Files + Project</div>
+  <h1>Launch Files + Project: Catch Them All</h1>
+  <div class="subtitle">First, start many nodes with <strong>one launch file</strong>. Then build <strong>Catch Them All</strong>: a turtle that hunts other turtles by itself, using topics, services, custom interfaces, parameters, and the launch file you just learned.</div>
   <div class="meta-row">
-    <div class="chip">⏱ 3 h · 35 min teach · 2 h 25 min hands-on</div>
-    <div class="chip">🐍 Python · ROS 2 Humble</div>
-    <div class="chip">Before this: Lecture 5 (parameters, <code>led_system.yaml</code>)</div>
+    <div class="chip">⏱ 3 h · 20 min teach · 2 h 40 min hands-on</div>
+    <div class="chip">🐍 Python · ROS 2 Humble · turtlesim</div>
+    <div class="chip">Before this: Lectures 2–5</div>
   </div>
-  <div class="skill-path" aria-label="Course path"><a class="done" href="01-installation-vmware-ros2-limo-intro.html">L1 · Install</a><a class="done" href="L02-first-node.html">L2 · Nodes</a><a class="done" href="L03-topics.html">L3 · Topics</a><a class="done" href="L04-services.html">L4 · Services &amp; Actions</a><a class="done" href="L05-custom-interfaces.html">L5 · Interfaces &amp; Params</a><a class="now" href="L06-parameters-launch.html">L6 · Launch</a><a class="" href="L07-catch-them-all.html">L7 · Project</a><a class="" href="L08-drive-limo.html">L8 · Drive</a><a class="" href="L09-limo-urdf-tf-rviz.html">L9 · URDF/TF</a><a class="" href="L10-limo-lidar-imu.html">L10 · LiDAR/IMU</a><a class="" href="L11-limo-camera-vision.html">L11 · Vision</a><a class="" href="L12-limo-slam-localization.html">L12 · SLAM</a><a class="" href="L13-limo-nav2.html">L13 · Nav2</a><a class="" href="L14-real-limo-mission.html">L14 · Real LIMO</a><a href="projects.html">+ Projects</a></div>
+  <div class="skill-path" aria-label="Course path"><a class="done" href="01-installation-vmware-ros2-limo-intro.html">L1 · Install</a><a class="done" href="L02-first-node.html">L2 · Nodes</a><a class="done" href="L03-topics.html">L3 · Topics</a><a class="done" href="L04-services.html">L4 · Services &amp; Actions</a><a class="done" href="L05-custom-interfaces.html">L5 · Interfaces &amp; Params</a><a class="now" href="L06-parameters-launch.html">L6 · Launch + Project</a><a class="" href="L08-drive-limo.html">L8 · Drive</a><a class="" href="L09-limo-urdf-tf-rviz.html">L9 · URDF/TF</a><a class="" href="L10-limo-lidar-imu.html">L10 · LiDAR/IMU</a><a class="" href="L11-limo-camera-vision.html">L11 · Vision</a><a class="" href="L12-limo-slam-localization.html">L12 · SLAM</a><a class="" href="L13-limo-nav2.html">L13 · Nav2</a><a class="" href="L14-real-limo-mission.html">L14 · Real LIMO</a><a href="projects.html">+ Projects</a></div>
 </div>
 
-  <div class="card toc solo">
-    <h3>🗺️ Today's route</h3>
-    <a href="#big"><span>6.0</span>The big picture</a>
-    <a href="#launch"><span>6.1</span>Launch files, step by step</a>
-    <a href="#lab1"><span>Lab 1</span>Your first launch file</a>
-    <a href="#lab2"><span>Lab 2</span>Rename, remap, parameters, YAML</a>
-    <a href="#lab3"><span>Lab 3</span>Launch arguments &amp; conditions</a>
-    <a href="#lab4"><span>Lab 4</span>Namespaces: many robots at once</a>
-    <a href="#lab5"><span>Lab 5</span>Include launch files</a>
-    <a href="#lab6"><span>Lab 6</span>Robust launch: respawn, timers, events</a>
-    <a href="#formats"><span>6.2</span>XML and YAML launch files</a>
-    <a href="#activity"><span>6.3</span>Your turn: radio, LED system, car</a>
-    <a href="#toolkit"><span>6.4</span>The ROS 2 toolkit you were missing</a>
-    <a href="#lab7"><span>Lab 7</span>QoS, domains, logs, doctor</a>
-    <a href="#errors"><span>6.5</span>When things go wrong</a>
-    <a href="#exit"><span>6.6</span>Exit ticket &amp; homework</a>
-  </div>
-
-
-<h2 id="big"><span class="num">6.0</span>The big picture: from ten terminals to one start button</h2>
-<p>Lectures 3 to 5 gave you the pieces: nodes that talk (topics, services, actions), in your own words (interfaces), with your own settings (parameters). Today is about <strong>starting</strong> all of it, the way every real robot does. Six small steps first, no code.</p>
-<nav class="lpath " aria-label="Steps in this section"><a href="#big1"><b>1</b>See it</a><a href="#big2"><b>2</b>A real robot</a><a href="#big3"><b>3</b>Feel the difference</a><a href="#big4"><b>4</b>Compare</a><a href="#big5"><b>5</b>Choose</a><a href="#big6"><b>6</b>Check yourself</a></nav>
-
-<div class="lstep " id="big1"><span class="n">1</span><h3>See it: by hand, with a launch file, with arguments</h3></div>
-<div class="ig l4ig">
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
-  <marker id="ig6-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path style="fill:var(--muted)" d="M0 0 L10 5 L0 10 Z"/></marker>
-</defs></svg>
-<div class="l4ig-grid">
-  <figure class="l4ig-card t-run">
-    <figcaption><span class="ic">😩</span><b>By hand: one terminal per node</b><span>"Six terminals, six long commands, and I forgot a -p in one of them."</span></figcaption>
-    <svg viewBox="0 0 320 230" role="img" aria-label="Six terminal windows appear one after another, each running ros2 run for one node of a car: lidar_driver, camera_driver, perception, planner, controller and rviz2. The planner terminal shows a red warning: forgot -p!">
-      <g class="tw"><rect class="term" x="6" y="8" width="98" height="62" rx="6"/><rect class="term-h" x="6" y="8" width="98" height="11" rx="6"/><text class="tt" x="12" y="34">$ ros2 run</text><text class="tt p" x="12" y="48">lidar_driver</text><text class="tt" x="12" y="62">--ros-args -p…</text></g>
-      <g class="tw d1"><rect class="term" x="111" y="8" width="98" height="62" rx="6"/><rect class="term-h" x="111" y="8" width="98" height="11" rx="6"/><text class="tt" x="117" y="34">$ ros2 run</text><text class="tt p" x="117" y="48">camera_driver</text><text class="tt" x="117" y="62">--ros-args -p…</text></g>
-      <g class="tw d2"><rect class="term" x="216" y="8" width="98" height="62" rx="6"/><rect class="term-h" x="216" y="8" width="98" height="11" rx="6"/><text class="tt" x="222" y="34">$ ros2 run</text><text class="tt p" x="222" y="48">perception</text><text class="tt" x="222" y="62">--params-file…</text></g>
-      <g class="tw d3"><rect class="term" x="6" y="80" width="98" height="62" rx="6"/><rect class="term-h" x="6" y="80" width="98" height="11" rx="6"/><text class="tt" x="12" y="106">$ ros2 run</text><text class="tt p" x="12" y="120">planner</text><text class="tt bad blink" x="12" y="134">forgot -p!</text></g>
-      <g class="tw d4"><rect class="term" x="111" y="80" width="98" height="62" rx="6"/><rect class="term-h" x="111" y="80" width="98" height="11" rx="6"/><text class="tt" x="117" y="106">$ ros2 run</text><text class="tt p" x="117" y="120">controller</text><text class="tt" x="117" y="134">-r cmd_vel:=…</text></g>
-      <g class="tw d5"><rect class="term" x="216" y="80" width="98" height="62" rx="6"/><rect class="term-h" x="216" y="80" width="98" height="11" rx="6"/><text class="tt" x="222" y="106">$ rviz2</text><text class="tt p" x="222" y="120">-d car.rviz</text><text class="tt" x="222" y="134">_</text></g>
-      <text x="160" y="172">6 terminals · 6 commands · 0 checks</text>
-      <text class="lbl" x="160" y="192">stop it all? Ctrl+C six times</text>
-      <text class="lbl" x="160" y="212">a new teammate? explain all six</text>
-    </svg>
-    <ul><li>What you did in Lectures 2–5</li><li>Fine for 1–3 nodes while learning</li><li>Impossible for a real robot (Nav2: ~15 nodes)</li></ul>
-  </figure>
-
-  <figure class="l4ig-card t-lch">
-    <figcaption><span class="ic">🚀</span><b>One launch file</b><span>"One command starts, names, wires and configures everything."</span></figcaption>
-    <svg viewBox="0 0 320 230" role="img" aria-label="A file called car.launch.py with a ros2 launch button. Arrows go from the file to five nodes, which light up green one after another: lidar_driver, camera_driver, perception, planner and controller.">
-      <rect class="file" x="8" y="24" width="112" height="128" rx="10"/>
-      <rect class="file-h" x="8" y="24" width="112" height="24" rx="10"/><rect class="file-h" x="8" y="38" width="112" height="10"/>
-      <text class="file-t" x="64" y="40">📄 car.launch.py</text>
-      <text class="tt" x="16" y="68">Node(lidar…)</text><text class="tt" x="16" y="84">Node(camera…)</text><text class="tt" x="16" y="100">Node(percep…)</text><text class="tt" x="16" y="116">Node(planner…)</text><text class="tt" x="16" y="132">Node(control…)</text>
-      <circle class="gopulse" cx="64" cy="186" r="22"/>
-      <rect class="gobtn" x="14" y="172" width="100" height="28" rx="14"/><text class="gobtn-t" x="64" y="190">▶ ros2 launch</text>
-      <line class="ln" x1="122" y1="88" x2="184" y2="32" marker-end="url(#ig6-arr)"/>
-      <line class="ln" x1="122" y1="88" x2="184" y2="72" marker-end="url(#ig6-arr)"/>
-      <line class="ln" x1="122" y1="88" x2="184" y2="112" marker-end="url(#ig6-arr)"/>
-      <line class="ln" x1="122" y1="88" x2="184" y2="152" marker-end="url(#ig6-arr)"/>
-      <line class="ln" x1="122" y1="88" x2="184" y2="192" marker-end="url(#ig6-arr)"/>
-      <g class="np"><rect x="188" y="18" width="126" height="28" rx="14"/><circle cx="202" cy="32" r="5"/><text class="pill-t" x="258" y="36">lidar_driver</text></g>
-      <g class="np d1"><rect x="188" y="58" width="126" height="28" rx="14"/><circle cx="202" cy="72" r="5"/><text class="pill-t" x="258" y="76">camera_driver</text></g>
-      <g class="np d2"><rect x="188" y="98" width="126" height="28" rx="14"/><circle cx="202" cy="112" r="5"/><text class="pill-t" x="258" y="116">perception</text></g>
-      <g class="np d3"><rect x="188" y="138" width="126" height="28" rx="14"/><circle cx="202" cy="152" r="5"/><text class="pill-t" x="258" y="156">planner</text></g>
-      <g class="np d4"><rect x="188" y="178" width="126" height="28" rx="14"/><circle cx="202" cy="192" r="5"/><text class="pill-t" x="258" y="196">controller</text></g>
-      <text class="lbl" x="160" y="224">Ctrl+C once stops them all</text>
-    </svg>
-    <ul><li>A Python file in a <strong>bringup</strong> package</li><li>Each <code>Node(…)</code> = one <code>ros2 run</code></li><li>Names, remaps, parameters, YAML files: all inside</li></ul>
-  </figure>
-
-  <figure class="l4ig-card t-arg">
-    <figcaption><span class="ic">🎚️</span><b>Arguments &amp; includes</b><span>"Same launch file. Simulation today, real car tomorrow."</span></figcaption>
-    <svg viewBox="0 0 320 230" role="img" aria-label="The command ros2 launch car.launch.py use_sim:= switches between true and false. The launch file car.launch.py includes three smaller launch files: sensors, perception and control. When use_sim is true the Gazebo simulator is highlighted; when false, the real car sensors are highlighted.">
-      <rect class="pill p-topic" x="6" y="8" width="308" height="26" rx="13" style="stroke:var(--accent2)"/>
-      <text class="pill-t" x="132" y="25">ros2 launch car.launch.py use_sim:=</text>
-      <text class="pill-t sw1" x="282" y="25" style="fill:var(--accent2)">true</text><text class="pill-t sw2" x="282" y="25" style="fill:var(--danger)">false</text>
-      <rect class="incl-o" x="10" y="48" width="300" height="104" rx="12"/>
-      <text x="160" y="66">📄 car.launch.py</text>
-      <rect class="incl" x="20" y="78" width="88" height="62" rx="9"/><text class="mono" x="64" y="104">sensors</text><text class="lbl" x="64" y="122">.launch.py</text>
-      <rect class="incl" x="116" y="78" width="88" height="62" rx="9"/><text class="mono" x="160" y="104">perception</text><text class="lbl" x="160" y="122">.launch.py</text>
-      <rect class="incl" x="212" y="78" width="88" height="62" rx="9"/><text class="mono" x="256" y="104">control</text><text class="lbl" x="256" y="122">.launch.py</text>
-      <line class="ln" x1="64" y1="140" x2="84" y2="168"/><line class="ln" x1="64" y1="140" x2="236" y2="168"/>
-      <g class="mode m1"><rect x="20" y="168" width="130" height="40" rx="10"/><text x="85" y="186">🖥 Gazebo</text><text class="lbl" x="85" y="200">simulated sensors</text></g>
-      <g class="mode m2"><rect x="170" y="168" width="130" height="40" rx="10"/><text x="235" y="186">🚗 real drivers</text><text class="lbl" x="235" y="200">LiDAR + camera</text></g>
-      <text class="lbl" x="160" y="224">one big launch file, built from small ones</text>
-    </svg>
-    <ul><li><strong>Arguments</strong>: <code>name:=value</code> on the command line</li><li><strong>Includes</strong>: big launch files are made of small ones</li><li><strong>Namespaces</strong>: the same launch file for robot 1, 2, 3…</li></ul>
-  </figure>
-</div>
+<div class="card toc solo">
+  <h3>🗺️ Today's route</h3>
+  <a href="#idea"><span>6.0</span>Launch files in 10 minutes</a>
+  <a href="#lab1"><span>Lab 1</span>Your first launch file</a>
+  <a href="#lab2"><span>Lab 2</span>Remap, parameters + YAML</a>
+  <a href="#lab3"><span>Lab 3</span>Arguments + namespaces</a>
+  <a href="#project"><span>6.1</span>Project brief: Catch Them All</a>
+  <a href="#control"><span>6.2</span>The go-to-goal controller</a>
+  <a href="#m1"><span>M1–M6</span>Build it in six milestones</a>
+  <a href="#test"><span>Test</span>Inspect, catch by hand, record</a>
+  <a href="#exit"><span>6.3</span>Check &amp; homework</a>
 </div>
 
-<div class="lstep " id="big2"><span class="n">2</span><h3>A real robot: how the self-driving car is started</h3></div>
-<p>Look at the car from Lectures 4 and 5 once more. Every sensor and every software block is a node, with its own parameter file. Real self-driving software is started with <strong>one</strong> command, from a launch file that includes one launch file per subsystem.</p>
-<figure class="figure-card"><img src="images/self-driving-car-sensors.jpg" alt="A self-driving car with its sensors labelled: LIDAR and GPS on the roof, a camera behind the windscreen, radar at the front bumper, a computer inside the car and a wheel encoder on the rear wheel." loading="lazy"><figcaption>The same car again. Today's question: <em>how do you start every one of these nodes, with the right settings, in the right order, every time?</em></figcaption></figure>
-<div class="mermaid">
-flowchart TD
-  T["🚀 ros2 launch car_bringup car.launch.py<br/>use_sim:=false  vehicle:=car1"] --> S["📄 sensors.launch.py"]
-  T --> P["📄 perception.launch.py"]
-  T --> PL["📄 planning.launch.py"]
-  T --> C["📄 control.launch.py"]
-  S --> S1(["lidar_driver"]) & S2(["camera_driver"]) & S3(["gps_driver"])
-  P --> P1(["object_detector"]) & P2(["tracker"])
-  PL --> PL1(["route_planner"]) & PL2(["adaptive_cruise"])
-  C --> C1(["steering_controller"]) & C2(["speed_limiter"])
-</div>
-<div class="trio">
-  <div class="t-lch"><div class="big">🚀</div><b>Autoware (self-driving cars)</b><div class="say">one command for a whole car</div><ul><li><code>ros2 launch autoware_launch autoware.launch.xml</code></li><li>includes sensing, localization, perception, planning, control</li><li>arguments: <code>map_path</code>, <code>vehicle_model</code>, <code>sensor_model</code></li></ul></div>
-  <div class="t-arg"><div class="big">🗺️</div><b>Nav2 (mobile robots)</b><div class="say">the navigation you'll run in Lecture 13</div><ul><li><code>ros2 launch nav2_bringup bringup_launch.py</code></li><li>arguments: <code>map:=</code>, <code>params_file:=</code>, <code>use_sim_time:=</code>, <code>namespace:=</code></li><li>one YAML file with hundreds of parameters</li></ul></div>
-  <div class="t-tk"><div class="big">🤖</div><b>Your LIMO</b><div class="say">you already used launch files</div><ul><li>L1: <code>ros2 launch limo_gazebosim limo_gazebo_diff.launch.py</code></li><li>L9: <code>display.launch.py model:=…</code> (an argument!)</li><li>L14: one <code>ROS_DOMAIN_ID</code> per team keeps the LIMOs apart (section 6.4 today)</li></ul></div>
-</div>
-<div class="box idea"><div class="box-title">💡 Why professionals care so much</div>
-<p>A launch file is <strong>documentation that runs</strong>. It records exactly which nodes, names, topic connections and parameter files make up the robot, so a teammate, a test server or the robot itself at boot can start the identical system. Every ROS 2 robot you will ever meet has a <code>*_bringup</code> package.</p></div>
-
-<div class="lstep " id="big3"><span class="n">3</span><h3>Feel the difference: launch a car, crash a node, change the arguments</h3></div>
-<p>This is the launch file you will be able to write by the end of today. Launch it, read the real launch output in the log, then play with its arguments and options.</p>
-<div data-widget="launchsim"></div>
-
-<div class="lstep " id="big4"><span class="n">4</span><h3>Compare: by hand vs one launch file</h3></div>
-<div class="table-wrap"><table class="vs">
-  <tr><th></th><th>By hand: <code>ros2 run</code> 😩</th><th>Launch file: <code>ros2 launch</code> 🚀</th></tr>
-  <tr><td>Start N nodes</td><td>N terminals, N commands</td><td>1 terminal, 1 command</td></tr>
-  <tr><td>Stop them</td><td><kbd>Ctrl</kbd>+<kbd>C</kbd> N times</td><td><kbd>Ctrl</kbd>+<kbd>C</kbd> once</td></tr>
-  <tr><td>Names, remaps, parameters</td><td>typed every time: <code>--ros-args -r … -p …</code></td><td>written once: <code>name=</code>, <code>remappings=</code>, <code>parameters=</code></td></tr>
-  <tr><td>Variations (sim / real, robot 1 / 2)</td><td>remember different commands</td><td>arguments: <code>use_sim:=true</code>, <code>namespace:=robot2</code></td></tr>
-  <tr><td>A node crashes</td><td>you notice (maybe) and restart it</td><td><code>respawn=True</code> restarts it</td></tr>
-  <tr><td>Start order</td><td>you wait and type</td><td><code>TimerAction</code>, event handlers</td></tr>
-  <tr><td>Share with the team</td><td>a list of commands in a README</td><td>a file in Git, in the <code>bringup</code> package</td></tr>
-  <tr><td>Self-driving car example</td><td>impossible: hundreds of nodes</td><td><code>ros2 launch autoware_launch autoware.launch.xml</code></td></tr>
+<div class="table-wrap"><table class="plan">
+  <tr><th>Time</th><th>Block</th></tr>
+  <tr><td>0:00–0:10</td><td>6.0 Launch files in 10 minutes</td></tr>
+  <tr><td>0:10–1:05</td><td>Labs 1–3</td></tr>
+  <tr class="brk"><td>1:05–1:15</td><td>☕ Break</td></tr>
+  <tr><td>1:15–1:35</td><td>6.1 Project brief · 6.2 Go-to-goal controller</td></tr>
+  <tr><td>1:35–2:45</td><td>Milestones M1–M6</td></tr>
+  <tr><td>2:45–3:00</td><td>Test · check · homework</td></tr>
 </table></div>
 
-<div class="lstep " id="big5"><span class="n">5</span><h3>Choose: which launch feature do I need?</h3></div>
-<div class="mermaid">
-flowchart TD
-  Q0{"What do you want?"} -- "start several nodes" --> N["🧱 Node(...) in a launch file<br/>Lab 1"]
-  Q0 -- "rename / rewire / configure" --> R["🔀 name= · remappings= · parameters=<br/>Lab 2"]
-  Q0 -- "choose at start time<br/>(sim or real, a number, a file)" --> A["🎚️ DeclareLaunchArgument<br/>+ LaunchConfiguration · IfCondition<br/>Lab 3"]
-  Q0 -- "the same nodes for 2+ robots" --> NS["🏷️ namespace= · PushRosNamespace<br/>Lab 4"]
-  Q0 -- "reuse another launch file" --> I["📦 IncludeLaunchDescription<br/>Lab 5"]
-  Q0 -- "survive crashes, start in order" --> E["🛟 respawn · TimerAction · OnProcessExit<br/>Lab 6"]
+<!-- ============================================================ -->
+<h2 id="idea"><span class="num">6.0</span>Launch files in 10 minutes</h2>
+
+<div class="table-wrap"><table class="vs">
+  <tr><th></th><th>By hand: <code>ros2 run</code></th><th>Launch file: <code>ros2 launch</code></th></tr>
+  <tr><td>Start N nodes</td><td>N terminals, N commands</td><td>1 terminal, 1 command</td></tr>
+  <tr><td>Stop them</td><td><kbd>Ctrl</kbd>+<kbd>C</kbd> N times</td><td><kbd>Ctrl</kbd>+<kbd>C</kbd> once</td></tr>
+  <tr><td>Names, remaps, parameters</td><td>typed every time</td><td>written once, in a file</td></tr>
+</table></div>
+
+<figure class="figure-card"><img src="images/self-driving-car-sensors.jpg" alt="A self-driving car with its sensors labelled: LIDAR and GPS on the roof, a camera behind the windscreen, radar at the front bumper, a computer inside the car and a wheel encoder on the rear wheel." loading="lazy"><figcaption>Every sensor and software block of this car is a node. Nobody opens a terminal for each one: one launch file starts them all.</figcaption></figure>
+<div class="trio">
+  <div class="t-lch"><div class="big">🚗</div><b>Self-driving car (Autoware)</b><ul><li><code>ros2 launch autoware_launch autoware.launch.xml</code></li><li>arguments: <code>map_path</code>, <code>vehicle_model</code></li></ul></div>
+  <div class="t-arg"><div class="big">🗺️</div><b>Mobile robot (Nav2)</b><ul><li><code>ros2 launch nav2_bringup bringup_launch.py</code></li><li>arguments: <code>map:=</code>, <code>use_sim_time:=</code></li></ul></div>
+  <div class="t-tk"><div class="big">🤖</div><b>Your LIMO (Lecture 8)</b><ul><li><code>ros2 launch limo_gazebosim limo_gazebo_diff.launch.py</code></li><li>one command: Gazebo + robot + sensors</li></ul></div>
 </div>
 
-<div class="lstep " id="big6"><span class="n">6</span><h3>Check yourself <small>5 min</small></h3></div>
-<div class="quiz">
-  <div class="q"><p>Lecture 5 recap: write the command that starts <code>number_publisher</code> publishing 5, four times per second.</p><details><summary>Answer</summary><div class="inner"><code>ros2 run my_py_pkg number_publisher --ros-args -p number_to_publish:=5 -p publish_frequency:=4.0</code>. Today the same settings go into a launch file, once.</div></details></div>
-  <div class="q"><p>How many terminals, and how many <code>--params-file</code> options, did the battery + LED system need in Lecture 5?</p><details><summary>Answer</summary><div class="inner">Three terminals (panel, battery, echo) and the YAML file twice. After today: <strong>one</strong> launch command loads it all.</div></details></div>
-  <div class="q"><p>In the simulator, what changed in <code>ros2 node list</code> when you set the namespace to <code>car2</code>?</p><details><summary>Answer</summary><div class="inner">Every node inside the namespace became <code>/car2/…</code> (for example <code>/car2/perception</code>), while <code>/gazebo</code> and <code>/rviz2</code> stayed global. That is how two cars run the same launch file without clashing.</div></details></div>
-  <div class="q"><p>Perception crashed. What did <code>respawn=True</code> change?</p><details><summary>Answer</summary><div class="inner">The launch system started it again after <code>respawn_delay</code> (2 s), with a new pid. Without it, the process stays dead and the planner complains that no detections arrive.</div></details></div>
-  <div class="q"><p>You ticked "use_sim" while the car was running and nothing happened. Why?</p><details><summary>Answer</summary><div class="inner">Launch arguments are read once, when <code>ros2 launch</code> starts. Stop with <kbd>Ctrl</kbd>+<kbd>C</kbd> and launch again with the new value.</div></details></div>
-</div>
-
-<div class="game" data-widget="sort" data-cats="🧱 Node(...) option|🎚️ launch argument|🏷️ namespace|🛟 respawn / timer / event"><div class="kc-head"><span class="sim-tag">🎮 Game</span><b>Which launch feature solves it?</b></div><ul><li data-cat="0">Call the node <code>front_lidar</code> instead of <code>lidar_driver</code></li><li data-cat="1">Choose simulation or the real car when you type the command</li><li data-cat="2">Run the same five nodes for <code>car1</code> and <code>car2</code></li><li data-cat="3">The camera driver sometimes crashes; restart it automatically</li><li data-cat="0">Load <code>config/planner.yaml</code> into the planner</li><li data-cat="1">Pass the map file name: <code>map:=campus.yaml</code></li><li data-cat="3">Start the planner only 3 s after the sensors</li><li data-cat="2">Topics should become <code>/car2/scan</code>, <code>/car2/cmd_vel</code></li><li data-cat="0">Connect <code>cmd_vel</code> to <code>turtle1/cmd_vel</code></li><li data-cat="3">When the simulator window closes, stop everything</li></ul></div>
-
-
-<h2 id="launch"><span class="num">6.1</span>Launch files, step by step</h2>
-<nav class="lpath lch" aria-label="Steps in this section"><a href="#lc1"><b>1</b>Picture it</a><a href="#lc2"><b>2</b>The rules</a><a href="#lc3"><b>3</b>Watch it</a><a href="#lc4"><b>4</b>Try it</a><a href="#lc5"><b>5</b>Remember it</a></nav>
-
-<div class="lstep lch" id="lc1"><span class="n">1</span><h3>Picture it: the car's start button</h3></div>
-<div class="grid2">
-  <div class="analogy"><div class="emoji">🔑</div><div>
-    <p><strong>A launch file is the start button of a car.</strong> You press one button; the car starts the engine, the dashboard, the lights, the cameras and the driver-assist computer, in the right order, with the right settings. You don't start each part by hand.</p>
-  </div></div>
-  <div class="analogy"><div class="emoji">🎬</div><div>
-    <p><strong>Or a film director's call sheet.</strong> It lists every actor (node), the role they play (<code>name=</code>), who they talk to (<code>remappings=</code>) and their script notes (<code>parameters=</code>). "Action!" (<code>ros2 launch</code>) starts them all; "Cut!" (<kbd>Ctrl</kbd>+<kbd>C</kbd>) stops them all.</p>
-  </div></div>
-</div>
-<figure class="figure-card"><img src="images/figures/fig3_7.png" alt="One camera-driver program started twice, each with its own parameters (device, fps, simulation mode)." loading="lazy"><figcaption>Lecture 5 recap: one program, started twice with different parameters. Today a launch file does the starting.</figcaption></figure>
-<div class="fig-pair"><figure class="figure-card"><img src="images/figures/fig3_8.png" alt="Many nodes, each with parameters: too many terminals to start by hand." loading="lazy"><figcaption>Many nodes, each with parameters: too many terminals to start by hand…</figcaption></figure><figure class="figure-card"><img src="images/figures/fig3_9.png" alt="One launch file starts and configures all the nodes." loading="lazy"><figcaption>…so one launch file starts and configures them all.</figcaption></figure></div>
-
-<div class="lstep lch" id="lc2"><span class="n">2</span><h3>The rules of a launch file</h3></div>
 <div class="box note">
-  <div class="box-title">📌 Five rules</div>
-  <ul>
-    <li>A launch file is a <strong>Python file</strong> ending in <code>.launch.py</code> (XML and YAML also exist: section 6.2).</li>
-    <li>It must contain a function <code>generate_launch_description()</code> that <strong>returns a <code>LaunchDescription</code></strong>: the list of things to start.</li>
-    <li>Each <code>Node(package=…, executable=…)</code> is <strong>exactly one</strong> <code>ros2 run package executable</code>.</li>
-    <li>Launch files live in the <code>launch/</code> folder of a <strong>bringup package</strong> (<code>my_robot_bringup</code>), which must <strong>install</strong> that folder.</li>
-    <li>The bringup package lists every package it starts as an <code>&lt;exec_depend&gt;</code> in <code>package.xml</code>.</li>
-  </ul>
-</div>
-<p>Everything you typed after <code>--ros-args</code> has a launch-file twin:</p>
-<div class="xlat">
-  <div><span class="ic">🏷️</span><b>Rename the node</b><code class="t">-r __node:=front_lidar</code><code class="l">name="front_lidar"</code></div>
-  <div><span class="ic">🔀</span><b>Remap a topic or service</b><code class="t">-r scan:=front/scan</code><code class="l">remappings=[("scan", "front/scan")]</code></div>
-  <div><span class="ic">🎛️</span><b>Set a parameter</b><code class="t">-p max_speed:=50.0</code><code class="l">parameters=[{"max_speed": 50.0}]</code></div>
-  <div><span class="ic">📄</span><b>Load a YAML file</b><code class="t">--params-file city.yaml</code><code class="l">parameters=[path_to_city_yaml]</code></div>
-  <div><span class="ic">📁</span><b>Put it in a namespace</b><code class="t">-r __ns:=/car1</code><code class="l">namespace="car1"</code></div>
-  <div><span class="ic">🔊</span><b>Log level</b><code class="t">--log-level debug</code><code class="l">arguments=["--ros-args", "--log-level", "debug"]</code></div>
+  <div class="box-title">📌 The rules</div>
+  <ol>
+    <li>A launch file is a Python file named <code>*.launch.py</code>.</li>
+    <li>It contains <code>generate_launch_description()</code>, which returns a <code>LaunchDescription</code>.</li>
+    <li>One <code>Node(package=…, executable=…)</code> = one <code>ros2 run</code>.</li>
+    <li>Launch files live in the <code>launch/</code> folder of a <strong>bringup package</strong>, which installs that folder.</li>
+  </ol>
 </div>
 
-<div class="lstep lch" id="lc3"><span class="n">3</span><h3>Watch it: what <code>ros2 launch</code> does</h3></div>
-<p><code>ros2 launch</code> reads your file, calls <code>generate_launch_description()</code>, and starts <strong>one operating-system process per <code>Node</code></strong>, each with its own pid. It collects their output in one terminal and, on <kbd>Ctrl</kbd>+<kbd>C</kbd>, stops every one of them.</p>
+<p>Every <code>--ros-args</code> option has a launch-file version:</p>
+<div class="xlat">
+  <div><span class="ic">🏷️</span><b>Rename the node</b><code class="t">-r __node:=my_pub</code><code class="l">name="my_pub"</code></div>
+  <div><span class="ic">🔀</span><b>Remap a topic</b><code class="t">-r number:=my_number</code><code class="l">remappings=[("number", "my_number")]</code></div>
+  <div><span class="ic">🎛️</span><b>Set a parameter</b><code class="t">-p number_to_publish:=4</code><code class="l">parameters=[{"number_to_publish": 4}]</code></div>
+  <div><span class="ic">📄</span><b>Load a YAML file</b><code class="t">--params-file app.yaml</code><code class="l">parameters=[yaml_path]</code></div>
+  <div><span class="ic">📁</span><b>Namespace</b><code class="t">-r __ns:=/robot1</code><code class="l">namespace="robot1"</code></div>
+</div>
+
 <figure class="helpdesk lfig">
-<svg viewBox="0 0 680 300" role="img" aria-label="Animated: a launch file number_app.launch.py with three Node lines is read by ros2 launch. Each line, in turn, starts a process: number_publisher-1, number_counter-2 and turtlesim_node-3, which light up green with their pid. Then Ctrl+C stops all three at once.">
+<svg viewBox="0 0 680 300" role="img" aria-label="Animated: a launch file number_app.launch.py with three Node lines is read by ros2 launch. Each line starts a process: number_publisher-1, number_counter-2 and turtlesim_node-3. Then Ctrl+C stops all three at once.">
   <rect class="lf-file" x="14" y="40" width="210" height="160" rx="12"/>
   <rect class="lf-fh" x="14" y="40" width="210" height="32" rx="12"/><rect class="lf-fh" x="14" y="58" width="210" height="14"/>
   <text class="lf-ft" x="119" y="61">📄 number_app.launch.py</text>
@@ -484,98 +334,73 @@ flowchart TD
   <text class="lf-l r2" x="36" y="148">Node(…number_counter)</text>
   <text class="lf-l r3" x="36" y="174">Node(…turtlesim_node)</text>
   <text class="hd-code" x="119" y="222">you write it once</text>
-
   <rect class="eng" x="264" y="74" width="148" height="92" rx="12"/>
   <text class="rocket" x="338" y="114">🚀</text>
   <text class="eng-t" x="338" y="138">ros2 launch</text>
   <text class="eng-s" x="338" y="154">launch service</text>
   <line class="hd-path" x1="224" y1="120" x2="264" y2="120"/>
   <line class="hd-path" x1="412" y1="120" x2="474" y2="62"/><line class="hd-path" x1="412" y1="120" x2="474" y2="142"/><line class="hd-path" x1="412" y1="120" x2="474" y2="222"/>
-
   <g class="pr pr1"><rect x="474" y="32" width="196" height="60" rx="10"/><text class="ph" x="572" y="56">number_publisher-1</text><text class="pc" x="572" y="76">pid 4101 · /number_publisher</text></g>
   <g class="pr pr2"><rect x="474" y="112" width="196" height="60" rx="10"/><text class="ph" x="572" y="136">number_counter-2</text><text class="pc" x="572" y="156">pid 4102 · /number_counter</text></g>
   <g class="pr pr3"><rect x="474" y="192" width="196" height="60" rx="10"/><text class="ph" x="572" y="216">turtlesim_node-3</text><text class="pc" x="572" y="236">pid 4103 · /turtlesim</text></g>
-
   <g class="hd-env tk tk1"><rect x="-30" y="-11" width="60" height="22" rx="5"/><text y="4">start</text></g>
   <g class="hd-env tk tk2"><rect x="-30" y="-11" width="60" height="22" rx="5"/><text y="4">start</text></g>
   <g class="hd-env tk tk3"><rect x="-30" y="-11" width="60" height="22" rx="5"/><text y="4">start</text></g>
   <g class="ctrlc"><rect x="276" y="182" width="124" height="30" rx="15"/><text x="338" y="202">⏹ Ctrl+C</text></g>
-
   <g class="hd-stage lst1"><rect x="14" y="264" width="206" height="28" rx="14"/><text x="117" y="283">① read the launch file</text></g>
   <g class="hd-stage lst2"><rect x="237" y="264" width="206" height="28" rx="14"/><text x="340" y="283">② one process per Node</text></g>
   <g class="hd-stage lst3"><rect x="460" y="264" width="206" height="28" rx="14"/><text x="563" y="283">③ Ctrl+C stops them all</text></g>
 </svg>
 </figure>
-<div class="box warn"><div class="box-title">⚠️ A launch file only <em>starts</em> nodes</div>
-<p>The nodes still find each other by topic names, exactly as when you started them by hand. If the names don't match (a missing remap), the launch file starts everything and nothing talks. <code>rqt_graph</code> is still your best friend.</p></div>
-
-<div class="lstep lch" id="lc4"><span class="n">4</span><h3>Try it: build a launch file</h3></div>
-<div data-widget="launchbuilder" data-hint="Pick a preset, edit any box, and watch the launch file and the equivalent <code>ros2 run</code> commands update. The <b>radio</b> preset is Activity 6.1; <b>two robots</b> is Lab 4. Clear the namespace column and see the <code>-r __ns:=</code> flags disappear."></div>
-
-<div class="lstep lch" id="lc5"><span class="n">5</span><h3>Remember it: tap a card to check yourself</h3></div>
-<div class="flip-grid" data-widget="flip"><div class="flip"><div class="flip-in"><div class="flip-front">Launch file<small>tap to flip</small></div><div class="flip-back">A Python file that starts and configures many nodes: <code>ros2 launch pkg file.launch.py</code>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">generate_launch_description()<small>tap to flip</small></div><div class="flip-back">The function every launch file must have. It returns a <code>LaunchDescription</code>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Node(…)<small>tap to flip</small></div><div class="flip-back">One launch entry = one <code>ros2 run</code> = one process.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">bringup package<small>tap to flip</small></div><div class="flip-back">The package that holds launch and config files: <code>my_robot_bringup</code>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Launch argument<small>tap to flip</small></div><div class="flip-back"><code>name:=value</code> after the launch file name. Declared with <code>DeclareLaunchArgument</code>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Namespace<small>tap to flip</small></div><div class="flip-back">A prefix for every relative name: <code>number</code> → <code>/robot1/number</code>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Include<small>tap to flip</small></div><div class="flip-back"><code>IncludeLaunchDescription</code>: start another launch file from yours.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">respawn=True<small>tap to flip</small></div><div class="flip-back">If the process dies, the launch system starts it again.</div></div></div></div>
-
-<p class="nextup">✅ You have the idea. Now build it: <strong>Lab 1</strong> creates the bringup package, <strong>Lab 2</strong> configures nodes and loads YAML, <strong>Lab 3</strong> adds arguments, <strong>Lab 4</strong> runs two robots, <strong>Lab 5</strong> includes launch files, <strong>Lab 6</strong> makes it all crash-proof.</p>
 
 <!-- ============================================================ -->
 <h2 id="lab1"><span class="num">L1</span>Lab 1 — Your first launch file</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB 1 · 25 min</span><h3>my_robot_bringup + number_app.launch.py</h3></div>
-  <p class="lab-goal">Goal: <code>ros2 launch my_robot_bringup number_app.launch.py</code> starts <code>number_publisher</code> and <code>number_counter</code> (Lectures 3–5) from one terminal.</p>
+  <div class="lab-h"><span class="badge">LAB 1 · 15 min</span><h3>my_robot_bringup + number_app.launch.py</h3></div>
+  <p class="lab-goal">Goal: one command starts <code>number_publisher</code> and <code>number_counter</code>.</p>
 
   <div class="step" id="s1-1">
-    <div class="step-h"><span class="step-n">1</span><span class="step-t">Create a bringup package</span></div>
-    <p>By convention, launch files live in a package called <code>&lt;robot&gt;_bringup</code>. Like the interfaces package, it is a CMake package with no code: only <code>launch/</code> and, later, <code>config/</code>.</p>
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Create the bringup package</span></div>
     <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws/src
 ros2 pkg create my_robot_bringup
 cd my_robot_bringup
 rm -rf include/ src/
-mkdir launch
-ls</code></pre></div>
-    <div class="out"><div class="out-h">✅ You should see</div><pre>CMakeLists.txt  launch  package.xml</pre></div>
+mkdir launch config</code></pre></div>
   </div>
 
   <div class="step" id="s1-2">
-    <div class="step-h"><span class="step-n">2</span><span class="step-t">Install the launch folder (CMakeLists) and declare what it starts (package.xml)</span></div>
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Install the folders and add dependencies</span></div>
     <div class="cmd file"><div class="cmd-h">📄 my_robot_bringup/CMakeLists.txt (replace everything)</div><pre><code>cmake_minimum_required(VERSION 3.8)
 project(my_robot_bringup)
 
 find_package(ament_cmake REQUIRED)
 
-<span class="hl">install(DIRECTORY</span>
-<span class="hl">  launch</span>
-<span class="hl">  DESTINATION share/${PROJECT_NAME}</span>
-<span class="hl">)</span>
+install(DIRECTORY
+  launch config
+  DESTINATION share/${PROJECT_NAME}
+)
 
 ament_package()</code></pre></div>
-    <div class="cmd file"><div class="cmd-h">📄 my_robot_bringup/package.xml (after buildtool_depend)</div><pre><code><span class="hl">  &lt;exec_depend&gt;my_py_pkg&lt;/exec_depend&gt;</span></code></pre></div>
-    <p><code>install(DIRECTORY launch …)</code> copies the folder to <code>install/my_robot_bringup/share/my_robot_bringup/launch</code>; that is where <code>ros2 launch</code> looks. <code>exec_depend</code> says "to <em>run</em> me you need <code>my_py_pkg</code>".</p>
+    <div class="cmd file"><div class="cmd-h">📄 my_robot_bringup/package.xml (after buildtool_depend)</div><pre><code>  &lt;exec_depend&gt;my_py_pkg&lt;/exec_depend&gt;
+  &lt;exec_depend&gt;turtlesim&lt;/exec_depend&gt;</code></pre></div>
   </div>
 
   <div class="step" id="s1-3">
-    <div class="step-h"><span class="step-n">3</span><span class="step-t">Write the launch file (click the highlighted parts)</span></div>
-    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws/src/my_robot_bringup/launch
-touch number_app.launch.py</code></pre></div>
-    <div class="cmd file" data-widget="explain"><div class="cmd-h">📄 my_robot_bringup/launch/number_app.launch.py</div><pre><code><span class="ex" data-tip="Two imports you'll use in every launch file: <code>LaunchDescription</code> (the list of things to start) from the <code>launch</code> package, and <code>Node</code> from <code>launch_ros</code> (the ROS-specific actions).">from launch import LaunchDescription
-from launch_ros.actions import Node</span>
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Write the launch file</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_robot_bringup/launch/number_app.launch.py</div><pre><code>from launch import LaunchDescription
+from launch_ros.actions import Node
 
 
-<span class="ex" data-tip="<code>ros2 launch</code> imports your file and calls exactly this function. The name must be spelled exactly like this.">def generate_launch_description():</span>
-    ld = LaunchDescription()
-
-<span class="ex" data-tip="One <code>Node</code> = one <code>ros2 run my_py_pkg number_publisher</code>. <code>package</code> is the package name; <code>executable</code> is the name you registered in <code>setup.py</code>, not the file name.">    number_publisher_node = Node(
+def generate_launch_description():
+    number_publisher = Node(
         package="my_py_pkg",
         executable="number_publisher",
-    )</span>
-
-    number_counter_node = Node(
+    )
+    number_counter = Node(
         package="my_py_pkg",
         executable="number_counter",
     )
-
-<span class="ex" data-tip="Nothing starts until you add it. The order in the list is the order in which the processes are started, but all of them run at the same time.">    ld.add_action(number_publisher_node)
-    ld.add_action(number_counter_node)</span>
-    return ld</code></pre></div>
+    return LaunchDescription([number_publisher, number_counter])</code></pre></div>
   </div>
 
   <div class="step" id="s1-4">
@@ -584,268 +409,113 @@ from launch_ros.actions import Node</span>
 colcon build --packages-select my_robot_bringup --symlink-install
 source ~/.bashrc
 ros2 launch my_robot_bringup number_app.launch.py</code></pre></div>
-    <div class="out"><div class="out-h">✅ You should see</div><pre>[INFO] [launch]: All log files can be found below /home/student/.ros/log/…
-[INFO] [launch]: Default logging verbosity is set to INFO
-[INFO] [number_publisher-1]: process started with pid [5120]
-[INFO] [number_counter-2]: process started with pid [5122]
-[number_publisher-1] [INFO] [1730800000.123] [number_publisher]: Number publisher has been started
-[number_counter-2] [INFO] [1730800000.130] [number_counter]: Number Counter has been started</pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>[INFO] [number_publisher-1]: process started with pid [5120]
+[INFO] [number_counter-2]: process started with pid [5122]</pre></div>
     <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>ros2 node list
 ros2 topic echo /number_count</code></pre></div>
-    <p>Every output line is prefixed with <code>[executable-N]</code>, so you can tell the nodes apart. One command, two nodes. <kbd>Ctrl</kbd>+<kbd>C</kbd> in Terminal 1 stops <em>all</em> of them.</p>
-    <div class="box tip"><div class="box-title">💡 --symlink-install and launch files</div><p>With <code>--symlink-install</code>, the installed launch file is a link to your source file: <strong>editing</strong> it needs no rebuild. A <strong>new</strong> launch file still needs one build, so it gets installed.</p></div>
+    <div class="box tip"><div class="box-title">💡 When to rebuild</div><p>With <code>--symlink-install</code>: editing a launch or YAML file needs no rebuild. A <strong>new</strong> file needs one build.</p></div>
   </div>
-
-  <div class="step" id="s1-5">
-    <div class="step-h"><span class="step-n">5</span><span class="step-t">Ask a launch file what it can do</span></div>
-    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>ros2 launch my_robot_bringup number_app.launch.py --show-args
-ros2 launch my_robot_bringup number_app.launch.py --print     # the full description, without starting anything</code></pre></div>
-    <p>Today the answer to <code>--show-args</code> is "No arguments". After Lab 3 it lists every argument with its default and description. Try it on a launch file you already know: <code>ros2 launch turtlesim multisim.launch.py --show-args</code>.</p>
-  </div>
-
-  <div class="game" data-widget="order"><div class="kc-head"><span class="sim-tag">🎮 Game</span><b>Your first launch file: put the steps in order</b></div><ol><li><code>ros2 pkg create my_robot_bringup</code></li><li>Delete <code>include/</code> and <code>src/</code>; create <code>launch/</code></li><li>Add <code>install(DIRECTORY launch …)</code> to <code>CMakeLists.txt</code></li><li>Add <code>&lt;exec_depend&gt;my_py_pkg&lt;/exec_depend&gt;</code> to <code>package.xml</code></li><li>Write <code>launch/number_app.launch.py</code></li><li><code>colcon build --packages-select my_robot_bringup --symlink-install</code></li><li><code>source ~/.bashrc</code></li><li><code>ros2 launch my_robot_bringup number_app.launch.py</code></li></ol></div>
 </div>
 
 <!-- ============================================================ -->
-<h2 id="lab2"><span class="num">L2</span>Lab 2 — Rename, remap, parameters and YAML files</h2>
+<h2 id="lab2"><span class="num">L2</span>Lab 2 — Remap, parameters + YAML</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB 2 · 25 min</span><h3>Everything you did with <code>--ros-args</code>, now in Python</h3></div>
-  <p class="lab-goal">Goal: the number app starts with new node names, a new topic name and its own parameters, first written in the launch file, then loaded from a YAML file that is installed with the package.</p>
+  <div class="lab-h"><span class="badge">LAB 2 · 20 min</span><h3>Your <code>--ros-args</code>, in Python, with a YAML file</h3></div>
+  <p class="lab-goal">Goal: new node names, a new topic name, and parameters loaded from an installed YAML file.</p>
 
   <div class="step" id="s2-1">
-    <div class="step-h"><span class="step-n">1</span><span class="step-t">Rename, remap and set parameters</span></div>
-    <div class="cmd file" data-widget="explain"><div class="cmd-h">📄 my_robot_bringup/launch/number_app.launch.py</div><pre><code>from launch import LaunchDescription
-from launch_ros.actions import Node
-
-
-def generate_launch_description():
-    ld = LaunchDescription()
-
-<span class="ex" data-tip="A Python variable, so both nodes use exactly the same remap: no typo can break the connection.">    remap_number_topic = ("number", "my_number")</span>
-
-    number_publisher_node = Node(
-        package="my_py_pkg",
-        executable="number_publisher",
-<span class="ex" data-tip="Same as <code>-r __node:=my_number_publisher</code>. <code>ros2 node list</code> now shows <code>/my_number_publisher</code>.">        name="my_number_publisher",</span>
-<span class="ex" data-tip="A list of (old, new) pairs: same as <code>-r number:=my_number</code>.">        remappings=[remap_number_topic],</span>
-<span class="ex" data-tip="A list containing one dictionary: same as <code>-p number_to_publish:=4 -p publish_frequency:=5.0</code>. Types still matter: <code>5.0</code>, not <code>5</code>.">        parameters=[{"number_to_publish": 4,
-                     "publish_frequency": 5.0}],</span>
-    )
-
-    number_counter_node = Node(
-        package="my_py_pkg",
-        executable="number_counter",
-        name="my_number_counter",
-<span class="ex" data-tip="The counter <em>subscribes</em> to <code>number</code>, so it needs the same remap, or it listens on an empty topic. It also publishes <code>number_count</code>, which we rename too.">        remappings=[remap_number_topic,
-                    ("number_count", "my_number_count")],</span>
-    )
-
-    ld.add_action(number_publisher_node)
-    ld.add_action(number_counter_node)
-    return ld</code></pre></div>
-  </div>
-
-  <div class="step" id="s2-2">
-    <div class="step-h"><span class="step-n">2</span><span class="step-t">Launch and verify (no rebuild: symlink-install)</span></div>
-    <div class="cmd"><div class="cmd-h">💻 Terminals 1 &amp; 2</div><pre><code>ros2 launch my_robot_bringup number_app.launch.py
-ros2 node list
-ros2 topic list
-ros2 topic hz /my_number
-ros2 param get /my_number_publisher number_to_publish</code></pre></div>
-    <div class="out"><div class="out-h">✅ You should see</div><pre>/my_number_counter
-/my_number_publisher
-...
-/my_number
-/my_number_count
-...
-average rate: 5.000
-...
-Integer value is: 4</pre></div>
-  </div>
-
-  <div class="step" id="s2-3">
-    <div class="step-h"><span class="step-n">3</span><span class="step-t">Move the parameters into a YAML file, installed with the package</span></div>
-    <p>In Lecture 5 your YAML files lived in <code>~/ros2_ws/params</code>, so they only worked on your laptop. Real packages keep them in a <code>config/</code> folder and install it, exactly like <code>launch/</code>.</p>
-    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>mkdir ~/ros2_ws/src/my_robot_bringup/config
-touch ~/ros2_ws/src/my_robot_bringup/config/number_app.yaml</code></pre></div>
-    <div class="cmd file"><div class="cmd-h">📄 my_robot_bringup/config/number_app.yaml</div><pre><code><span class="hl">/my_number_publisher:</span>       # the NEW node name, from name=
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Write the YAML file</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_robot_bringup/config/number_app.yaml</div><pre><code>/my_number_publisher:
   ros__parameters:
     number_to_publish: 7
     publish_frequency: 4.0</code></pre></div>
-    <div class="cmd file"><div class="cmd-h">📄 my_robot_bringup/CMakeLists.txt</div><pre><code>install(DIRECTORY
-  launch
-<span class="hl">  config</span>
-  DESTINATION share/${PROJECT_NAME}
-)</code></pre></div>
-    <div class="cmd file" data-widget="explain"><div class="cmd-h">📄 my_robot_bringup/launch/number_app.launch.py (new parts)</div><pre><code><span class="ex" data-tip="<code>get_package_share_directory</code> finds <code>install/my_robot_bringup/share/my_robot_bringup</code> on <em>any</em> computer. Never write <code>/home/yourname/…</code> in a launch file.">import os
-from ament_index_python.packages import get_package_share_directory</span>
+    <div class="box warn"><div class="box-title">⚠️ The key is the node's final name</div><p>We rename the node to <code>my_number_publisher</code>, so the key is <code>/my_number_publisher:</code>. A wrong key gives no error; the node just keeps its defaults.</p></div>
+  </div>
+
+  <div class="step" id="s2-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Update the launch file</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_robot_bringup/launch/number_app.launch.py</div><pre><code><span class="hl">import os</span>
+<span class="hl">from ament_index_python.packages import get_package_share_directory</span>
 from launch import LaunchDescription
 from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    ld = LaunchDescription()
-<span class="ex" data-tip="Build the full path: share directory + <code>config</code> + file name.">    param_config = os.path.join(
-        get_package_share_directory("my_robot_bringup"), "config", "number_app.yaml")</span>
+<span class="hl">    config = os.path.join(</span>
+<span class="hl">        get_package_share_directory("my_robot_bringup"), "config", "number_app.yaml")</span>
+<span class="hl">    remap_number = ("number", "my_number")</span>
 
-    number_publisher_node = Node(
+    number_publisher = Node(
         package="my_py_pkg",
         executable="number_publisher",
-        name="my_number_publisher",
-        remappings=[("number", "my_number")],
-<span class="ex" data-tip="A path in the list instead of a dictionary: same as <code>--params-file</code>. You may combine both: <code>[param_config, {&quot;publish_frequency&quot;: 1.0}]</code>; later entries win.">        parameters=[param_config],</span>
+<span class="hl">        name="my_number_publisher",</span>
+<span class="hl">        remappings=[remap_number],</span>
+<span class="hl">        parameters=[config],</span>
     )
-    ...</code></pre></div>
-    <div class="cmd"><div class="cmd-h">💻 Terminal (new folder → build once)</div><pre><code>cd ~/ros2_ws &amp;&amp; colcon build --packages-select my_robot_bringup --symlink-install &amp;&amp; source ~/.bashrc
+    number_counter = Node(
+        package="my_py_pkg",
+        executable="number_counter",
+<span class="hl">        name="my_number_counter",</span>
+<span class="hl">        remappings=[remap_number],</span>
+    )
+    return LaunchDescription([number_publisher, number_counter])</code></pre></div>
+    <ul>
+      <li>Both nodes use the <strong>same</strong> remap, otherwise they stop talking.</li>
+      <li><code>get_package_share_directory</code> finds the installed YAML on any computer. Never write <code>/home/yourname/…</code>.</li>
+      <li>Inline values also work: <code>parameters=[{"number_to_publish": 4}]</code>. In a list, later entries win.</li>
+    </ul>
+  </div>
+
+  <div class="step" id="s2-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Build (new YAML file) and verify</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminals 1 &amp; 2</div><pre><code>cd ~/ros2_ws &amp;&amp; colcon build --packages-select my_robot_bringup --symlink-install &amp;&amp; source ~/.bashrc
 ros2 launch my_robot_bringup number_app.launch.py
-ros2 topic echo /my_number          # data: 7</code></pre></div>
-    <div class="box warn"><div class="box-title">⚠️ The YAML key is the node's <em>final</em> name</div>
-    <p>You renamed the node with <code>name="my_number_publisher"</code>, so the YAML block must be <code>/my_number_publisher:</code>. With the old key <code>/number_publisher:</code> the file loads without any error and the node silently uses its defaults. To match <em>every</em> node, use the wildcard <code>/**:</code> as the key; you'll need it with namespaces in Lab 4.</p></div>
+ros2 node list
+ros2 topic echo /my_number</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>/my_number_counter
+/my_number_publisher
+data: 7</pre></div>
   </div>
 </div>
 
-
 <!-- ============================================================ -->
-<h2 id="lab3"><span class="num">L3</span>Lab 3 — Launch arguments &amp; conditions</h2>
+<h2 id="lab3"><span class="num">L3</span>Lab 3 — Arguments + namespaces</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB 3 · 25 min</span><h3>Choose the settings when you type the command</h3></div>
-  <p class="lab-goal">Goal: <code>ros2 launch my_robot_bringup number_app_args.launch.py number:=9 frequency:=3.0 graph:=true</code> publishes 9, three times per second, and also opens <code>rqt_graph</code>. With no arguments it uses sensible defaults.</p>
+  <div class="lab-h"><span class="badge">LAB 3 · 20 min</span><h3>Choose values at the command line; run two robots</h3></div>
+  <p class="lab-goal">Goal: <code>number:=9</code> changes the app without editing the file; then two copies run side by side.</p>
 
   <div class="step" id="s3-1">
-    <div class="step-h"><span class="step-n">1</span><span class="step-t">Why arguments?</span></div>
-    <p>In Lab 2 the values were written <em>inside</em> the launch file. A self-driving car's launch file must work for the simulator <em>and</em> the real car, for the city <em>and</em> the motorway, without being edited. <strong>Launch arguments</strong> are the parameters of a launch file: <code>name:=value</code> after the file name, exactly like <code>model:=…</code> in Lecture 9.</p>
-    <div class="table-wrap"><table>
-      <tr><th></th><th>Parameter (Lecture 5)</th><th>Launch argument (today)</th></tr>
-      <tr><td>Belongs to</td><td>one <strong>node</strong></td><td>one <strong>launch file</strong></td></tr>
-      <tr><td>Set with</td><td><code>-p name:=value</code></td><td><code>ros2 launch pkg file.launch.py name:=value</code></td></tr>
-      <tr><td>Declared with</td><td><code>declare_parameter</code></td><td><code>DeclareLaunchArgument</code></td></tr>
-      <tr><td>Read with</td><td><code>get_parameter().value</code></td><td><code>LaunchConfiguration("name")</code></td></tr>
-      <tr><td>Typical use</td><td>change a node's behaviour</td><td>pass values on to parameters, choose which nodes start</td></tr>
-    </table></div>
-  </div>
-
-  <div class="step" id="s3-2">
-    <div class="step-h"><span class="step-n">2</span><span class="step-t">Write a launch file with three arguments (click the highlighted parts)</span></div>
-    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>touch ~/ros2_ws/src/my_robot_bringup/launch/number_app_args.launch.py</code></pre></div>
-    <div class="cmd file" data-widget="explain"><div class="cmd-h">📄 my_robot_bringup/launch/number_app_args.launch.py</div><pre><code>from launch import LaunchDescription
-<span class="ex" data-tip="Three new imports: <code>DeclareLaunchArgument</code> (actions), <code>IfCondition</code> (conditions) and <code>LaunchConfiguration</code> (substitutions).">from launch.actions import DeclareLaunchArgument
-from launch.conditions import IfCondition
-from launch.substitutions import LaunchConfiguration</span>
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">A launch argument</span></div>
+    <p>🚗 Real use: one launch file for the simulator <em>and</em> the real car: <code>use_sim:=true</code> or <code>use_sim:=false</code>.</p>
+    <div class="cmd file"><div class="cmd-h">📄 my_robot_bringup/launch/number_app_args.launch.py</div><pre><code>from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
 
 def generate_launch_description():
-<span class="ex" data-tip="Declares the argument <code>number</code>. Values on the command line are always <b>text</b>, so the default is the string <code>&quot;2&quot;</code>. The description is shown by <code>--show-args</code>.">    number_arg = DeclareLaunchArgument(
-        "number", default_value="2",
-        description="The number to publish")</span>
-    frequency_arg = DeclareLaunchArgument(
-        "frequency", default_value="1.0",
-        description="Messages per second (a float: 2.0, not 2)")
-    graph_arg = DeclareLaunchArgument(
-        "graph", default_value="false",
-        description="Also open rqt_graph (true/false)")
+    number = LaunchConfiguration("number")
 
-    number_publisher_node = Node(
-        package="my_py_pkg",
-        executable="number_publisher",
-<span class="ex" data-tip="<code>LaunchConfiguration(&quot;number&quot;)</code> is a <b>placeholder</b> (a <em>substitution</em>): it is replaced by the argument's value when the launch starts. The text <code>&quot;9&quot;</code> is then read like YAML, so it becomes the integer 9.">        parameters=[{"number_to_publish": LaunchConfiguration("number"),
-                     "publish_frequency": LaunchConfiguration("frequency")}],</span>
-    )
-
-    number_counter_node = Node(package="my_py_pkg", executable="number_counter")
-
-<span class="ex" data-tip="A <b>condition</b>: this node is started only if the argument is <code>true</code> (or <code>1</code>). <code>UnlessCondition</code> does the opposite. You cannot write a Python <code>if</code> here, because the value isn't known yet when this function runs.">    rqt_graph_node = Node(
-        package="rqt_graph",
-        executable="rqt_graph",
-        condition=IfCondition(LaunchConfiguration("graph")),
-    )</span>
-
-<span class="ex" data-tip="A <code>LaunchDescription</code> can also be built from a list. The arguments must be in it too, or <code>--show-args</code> won't list them.">    return LaunchDescription([
-        number_arg, frequency_arg, graph_arg,
-        number_publisher_node, number_counter_node, rqt_graph_node,
-    ])</span></code></pre></div>
-    <div class="cmd file"><div class="cmd-h">📄 my_robot_bringup/package.xml</div><pre><code>  &lt;exec_depend&gt;my_py_pkg&lt;/exec_depend&gt;
-<span class="hl">  &lt;exec_depend&gt;rqt_graph&lt;/exec_depend&gt;</span></code></pre></div>
-  </div>
-
-  <div class="step" id="s3-3">
-    <div class="step-h"><span class="step-n">3</span><span class="step-t">Build once, then try every argument</span></div>
-    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws &amp;&amp; colcon build --packages-select my_robot_bringup --symlink-install &amp;&amp; source ~/.bashrc
-ros2 launch my_robot_bringup number_app_args.launch.py --show-args</code></pre></div>
-    <div class="out"><div class="out-h">✅ You should see</div><pre>Arguments (pass arguments as '&lt;name&gt;:=&lt;value&gt;'):
-
-    'number':
-        The number to publish
-        (default: '2')
-
-    'frequency':
-        Messages per second (a float: 2.0, not 2)
-        (default: '1.0')
-
-    'graph':
-        Also open rqt_graph (true/false)
-        (default: 'false')</pre></div>
-    <div class="cmd"><div class="cmd-h">💻 Terminal 1, then Terminal 2</div><pre><code>ros2 launch my_robot_bringup number_app_args.launch.py number:=9 frequency:=3.0 graph:=true
-ros2 topic hz /number          # ≈ 3
-ros2 topic echo /number        # data: 9</code></pre></div>
-    <p>Now break it on purpose: <code>frequency:=3</code>. The text <code>3</code> is read as an <strong>integer</strong>, but the node declared a float, so it stops with <code>InvalidParameterTypeException</code>. Same rule as Lecture 5: write <code>3.0</code>.</p>
-  </div>
-
-  <div class="step" id="s3-4">
-    <div class="step-h"><span class="step-n">4</span><span class="step-t">Two patterns every robot launch file uses</span></div>
-    <p><strong>Pattern 1: <code>use_sim_time</code>.</strong> In simulation, every node must follow Gazebo's clock instead of the computer's. One argument passes the same value to every node. You'll see this in every LIMO launch file from Lecture 8.</p>
-    <div class="cmd file"><div class="cmd-h">📄 pattern: one argument, every node</div><pre><code>use_sim_time = LaunchConfiguration("use_sim_time")
-
-DeclareLaunchArgument("use_sim_time", default_value="false"),
-Node(package="robot_state_publisher", executable="robot_state_publisher",
-     parameters=[{"use_sim_time": use_sim_time}]),
-Node(package="slam_toolbox", executable="async_slam_toolbox_node",
-     parameters=[{"use_sim_time": use_sim_time}]),</code></pre></div>
-    <p><strong>Pattern 2: choose the YAML file.</strong> The city/motorway car from Lecture 5, chosen at launch: <code>ros2 launch my_car cruise.launch.py profile:=motorway</code>.</p>
-    <div class="cmd file"><div class="cmd-h">📄 pattern: a file name built from an argument</div><pre><code>from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
-from launch_ros.substitutions import FindPackageShare
-
-profile = LaunchConfiguration("profile")         # city | motorway | track
-params_file = PathJoinSubstitution([
-    FindPackageShare("my_car"), "config", [profile, ".yaml"]])   # …/config/motorway.yaml
-
-DeclareLaunchArgument("profile", default_value="city"),
-Node(package="my_car", executable="adaptive_cruise", parameters=[params_file]),</code></pre></div>
-    <div class="box tip"><div class="box-title">💡 Conditions with a calculation</div><p><code>IfCondition(PythonExpression([LaunchConfiguration("number"), " &gt; 5"]))</code> starts a node only if the number is bigger than 5. <code>PythonExpression</code> joins the pieces into Python code and evaluates it at launch time. Use it sparingly: simple true/false arguments are easier to read.</p></div>
-  </div>
-</div>
-
-<!-- ============================================================ -->
-<h2 id="lab4"><span class="num">L4</span>Lab 4 — Namespaces: many robots at once</h2>
-<div class="lab">
-  <div class="lab-h"><span class="badge">LAB 4 · 25 min</span><h3>Two robots, one launch file, no clashes</h3></div>
-  <p class="lab-goal">Goal: two copies of the number app run at the same time, as <code>/robot1/…</code> and <code>/robot2/…</code>, without seeing each other. Then two turtlesim windows, where one turtle copies the other.</p>
-
-  <div class="step" id="s4-1">
-    <div class="step-h"><span class="step-n">1</span><span class="step-t">The idea: a namespace is a folder for names</span></div>
-    <p>Start <code>number_publisher</code> twice and both publish on <code>/number</code>: the counters can't tell the robots apart. A <strong>namespace</strong> puts a prefix in front of every <em>relative</em> name in a node: its topics, its services, and the node's own name.</p>
-    <div class="addr"><span class="a1">/robot1</span><i>+</i><span class="a2">number</span><i>=</i><span class="a3">/robot1/number</span></div>
+    return LaunchDescription([
+        DeclareLaunchArgument("number", default_value="2"),
+        Node(package="my_py_pkg", executable="number_publisher",
+             parameters=[{"number_to_publish": number}]),
+        Node(package="my_py_pkg", executable="number_counter"),
+    ])</code></pre></div>
     <div class="table-wrap"><table>
-      <tr><th>In the code</th><th>Kind</th><th>Namespace <code>robot1</code> makes it</th><th>Self-driving example</th></tr>
-      <tr><td><code>"number"</code></td><td>relative</td><td><code>/robot1/number</code></td><td><code>"scan"</code> → <code>/car1/scan</code></td></tr>
-      <tr><td><code>"/number"</code></td><td>absolute (starts with <code>/</code>)</td><td><code>/number</code>: <strong>unchanged!</strong></td><td><code>"/traffic_lights"</code>: shared by all cars</td></tr>
-      <tr><td><code>"~/status"</code></td><td>private (<code>~</code> = the node)</td><td><code>/robot1/number_publisher/status</code></td><td><code>/car1/lidar_driver/status</code></td></tr>
-      <tr><td>node <code>number_publisher</code></td><td>node name</td><td><code>/robot1/number_publisher</code></td><td><code>/car1/planner</code></td></tr>
+      <tr><th>Piece</th><th>Job</th></tr>
+      <tr><td><code>DeclareLaunchArgument</code></td><td>declares <code>name:=value</code> and its default</td></tr>
+      <tr><td><code>LaunchConfiguration</code></td><td>reads the value when the launch starts</td></tr>
     </table></div>
-    <div class="box warn"><div class="box-title">⚠️ Write relative names in your nodes</div><p>Since Lecture 3 you wrote <code>create_publisher(Int64, "number", 10)</code>, without a <code>/</code>. That is exactly why your nodes can be put in a namespace. A node that publishes on <code>"/number"</code> ignores namespaces and every robot would publish on the same topic.</p></div>
-    <div class="cmd"><div class="cmd-h">💻 Try it by hand first: Terminals 1, 2, 3</div><pre><code>ros2 run my_py_pkg number_publisher --ros-args -r __ns:=/robot1
-ros2 run my_py_pkg number_publisher --ros-args -r __ns:=/robot2 -p number_to_publish:=5
-ros2 node list &amp;&amp; ros2 topic list</code></pre></div>
-    <div class="out"><div class="out-h">✅ You should see</div><pre>/robot1/number_publisher
-/robot2/number_publisher
-/parameter_events
-/robot1/number
-/robot2/number
-/rosout</pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal (new file → build once)</div><pre><code>cd ~/ros2_ws &amp;&amp; colcon build --packages-select my_robot_bringup --symlink-install &amp;&amp; source ~/.bashrc
+ros2 launch my_robot_bringup number_app_args.launch.py --show-args
+ros2 launch my_robot_bringup number_app_args.launch.py number:=9
+ros2 topic echo /number             # data: 9</code></pre></div>
   </div>
 
-  <div class="step" id="s4-2">
-    <div class="step-h"><span class="step-n">2</span><span class="step-t">The same in a launch file</span></div>
+  <div class="step" id="s3-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Namespaces: two robots, one file</span></div>
+    <div class="addr"><span class="a1">/robot1</span><i>+</i><span class="a2">number</span><i>=</i><span class="a3">/robot1/number</span></div>
     <div class="cmd file"><div class="cmd-h">📄 my_robot_bringup/launch/two_robots.launch.py</div><pre><code>from launch import LaunchDescription
 from launch_ros.actions import Node
 
@@ -854,691 +524,771 @@ def generate_launch_description():
     ld = LaunchDescription()
     for ns, number in [("robot1", 1), ("robot2", 2)]:
         ld.add_action(Node(package="my_py_pkg", executable="number_publisher",
-<span class="hl">                           namespace=ns,</span>
+                           <span class="hl-i">namespace=ns</span>,
                            parameters=[{"number_to_publish": number}]))
         ld.add_action(Node(package="my_py_pkg", executable="number_counter",
-<span class="hl">                           namespace=ns</span>))
+                           <span class="hl-i">namespace=ns</span>))
     return ld</code></pre></div>
-    <div class="cmd"><div class="cmd-h">💻 Terminals 1 &amp; 2 (new file → build once)</div><pre><code>cd ~/ros2_ws &amp;&amp; colcon build --packages-select my_robot_bringup --symlink-install &amp;&amp; source ~/.bashrc
-ros2 launch my_robot_bringup two_robots.launch.py
-ros2 topic echo /robot1/number_count     # counts in 1s
-ros2 topic echo /robot2/number_count     # counts in 2s
-ros2 service call /robot2/reset_counter example_interfaces/srv/SetBool "{data: true}"
-rqt_graph</code></pre></div>
-    <div class="mermaid">
-flowchart LR
-  subgraph R1["/robot1"]
-    A1(["number_publisher"]) -- "/robot1/number" --> B1(["number_counter"])
-  end
-  subgraph R2["/robot2"]
-    A2(["number_publisher"]) -- "/robot2/number" --> B2(["number_counter"])
-  end
-</div>
-    <p>Two separate islands in <code>rqt_graph</code>, and the Lecture 4 service <code>reset_counter</code> exists twice: you reset only robot 2. No line of node code changed.</p>
-  </div>
-
-  <div class="step" id="s4-3">
-    <div class="step-h"><span class="step-n">3</span><span class="step-t">A whole robot in a namespace: <code>GroupAction</code> + <code>PushRosNamespace</code></span></div>
-    <p>Writing <code>namespace=</code> on every node of a car is repetitive and easy to forget. Group the nodes and push the namespace once:</p>
-    <div class="cmd file" data-widget="explain"><div class="cmd-h">📄 my_robot_bringup/launch/two_robots.launch.py (version 2)</div><pre><code>from launch import LaunchDescription
-from launch.actions import GroupAction
-from launch_ros.actions import Node, PushRosNamespace
-
-
-<span class="ex" data-tip="An ordinary Python function that returns one robot. A launch file is Python: use functions and loops.">def robot(ns, number):</span>
-<span class="ex" data-tip="A <code>GroupAction</code> is a box of actions. <code>PushRosNamespace</code> applies to everything after it <em>inside the box</em>, including included launch files (Lab 5), and nothing outside.">    return GroupAction([
-        PushRosNamespace(ns),</span>
-        Node(package="my_py_pkg", executable="number_publisher",
-             parameters=[{"number_to_publish": number}]),
-        Node(package="my_py_pkg", executable="number_counter"),
-    ])
-
-
-def generate_launch_description():
-<span class="ex" data-tip="A third robot is one more line. This is how fleets of warehouse robots are started.">    return LaunchDescription([robot("robot1", 1), robot("robot2", 2), robot("robot3", 3)])</span></code></pre></div>
-  </div>
-
-  <div class="step" id="s4-4">
-    <div class="step-h"><span class="step-n">4</span><span class="step-t">Namespaces + YAML: the <code>/**</code> wildcard</span></div>
-    <p>With a namespace, the node's full name is <code>/robot1/number_publisher</code>, so a YAML key <code>/number_publisher:</code> no longer matches. Either write the full name, or match any namespace with <code>/**</code>:</p>
-    <div class="cmd file"><div class="cmd-h">📄 my_robot_bringup/config/fleet.yaml</div><pre><code>/**/number_publisher:          # this node, in any namespace
-  ros__parameters:
-    publish_frequency: 2.0
-/robot3/number_publisher:      # only robot 3
-  ros__parameters:
-    number_to_publish: 30
-/**:                           # every node
-  ros__parameters:
-    use_sim_time: false</code></pre></div>
-  </div>
-
-  <div class="step" id="s4-5">
-    <div class="step-h"><span class="step-n">5</span><span class="step-t">The classic: two turtles, one copies the other</span></div>
-    <p>From the official ROS 2 tutorial: two turtlesims in their own namespaces, and turtlesim's <code>mimic</code> node, which reads one turtle's pose and sends velocity commands to the other. Only remaps connect them.</p>
-    <div class="cmd file"><div class="cmd-h">📄 my_robot_bringup/launch/turtlesim_mimic.launch.py</div><pre><code>from launch import LaunchDescription
-from launch_ros.actions import Node
-
-
-def generate_launch_description():
-    return LaunchDescription([
-        Node(package="turtlesim", executable="turtlesim_node",
-             namespace="turtlesim1", name="sim"),
-        Node(package="turtlesim", executable="turtlesim_node",
-             namespace="turtlesim2", name="sim"),
-        Node(package="turtlesim", executable="mimic", name="mimic",
-             remappings=[("/input/pose", "/turtlesim1/turtle1/pose"),
-                         ("/output/cmd_vel", "/turtlesim2/turtle1/cmd_vel")]),
-    ])</code></pre></div>
-    <div class="cmd"><div class="cmd-h">💻 Terminals 1 &amp; 2 (add <code>&lt;exec_depend&gt;turtlesim&lt;/exec_depend&gt;</code>, build once)</div><pre><code>ros2 launch my_robot_bringup turtlesim_mimic.launch.py
-ros2 topic pub -r 1 /turtlesim1/turtle1/cmd_vel geometry_msgs/msg/Twist \
-  "{linear: {x: 2.0}, angular: {z: -1.8}}"</code></pre></div>
-    <p>You drive only turtle 1, and both turtles draw the same circle. Both windows hold a node called <code>sim</code>: allowed, because their full names differ (<code>/turtlesim1/sim</code>, <code>/turtlesim2/sim</code>). This is <strong>platooning</strong>, the self-driving truck convoy idea, in two windows.</p>
+    <div class="cmd"><div class="cmd-h">💻 Terminals 1 &amp; 2 (build once)</div><pre><code>ros2 launch my_robot_bringup two_robots.launch.py
+ros2 topic list                     # /robot1/number, /robot2/number, ...
+ros2 topic echo /robot2/number_count</code></pre></div>
+    <p>🚗 Same idea for a fleet: <code>/car1/scan</code>, <code>/car2/scan</code> · <code>/car1/cmd_vel</code>, <code>/car2/cmd_vel</code>. One launch file, many vehicles.</p>
+    <div class="box warn"><div class="box-title">⚠️ Only relative names get the namespace</div><p><code>"number"</code> → <code>/robot1/number</code>. <code>"/number"</code> stays <code>/number</code>. Write topic names without a leading <code>/</code>.</p></div>
   </div>
 </div>
+
+<p class="nextup">☕ <strong>Break, 10 minutes.</strong> Next: you use all of this, plus Lectures 2–5, in one project.</p>
 
 <!-- ============================================================ -->
-<h2 id="lab5"><span class="num">L5</span>Lab 5 — Include launch files</h2>
-<div class="lab">
-  <div class="lab-h"><span class="badge">LAB 5 · 15 min</span><h3>Big launch files are made of small ones</h3></div>
-  <p class="lab-goal">Goal: <code>fleet.launch.py</code> reuses <code>number_app_args.launch.py</code> from Lab 3 for two robots, with different arguments, and also includes turtlesim's own launch file.</p>
+<h2 id="project"><span class="num">6.1</span>Project brief: Catch Them All 🐢</h2>
+<p>Everything comes together: a hunter turtle that <strong>senses</strong> (pose + list of turtles), <strong>thinks</strong> (which one, how to steer) and <strong>acts</strong> (velocity commands, catch request). No keyboard.</p>
 
-  <div class="step" id="s5-1">
-    <div class="step-h"><span class="step-n">1</span><span class="step-t">Include your own launch file, twice, in two namespaces</span></div>
-    <div class="cmd file" data-widget="explain"><div class="cmd-h">📄 my_robot_bringup/launch/fleet.launch.py</div><pre><code>from launch import LaunchDescription
-from launch.actions import GroupAction, IncludeLaunchDescription
-from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import PathJoinSubstitution
-from launch_ros.actions import PushRosNamespace
-from launch_ros.substitutions import FindPackageShare
-
-
-def generate_launch_description():
-<span class="ex" data-tip="<code>FindPackageShare</code> is the substitution version of <code>get_package_share_directory</code>; <code>PathJoinSubstitution</code> joins the pieces with <code>/</code>. Result: <code>…/share/my_robot_bringup/launch/number_app_args.launch.py</code>.">    number_app = PathJoinSubstitution([
-        FindPackageShare("my_robot_bringup"), "launch", "number_app_args.launch.py"])</span>
-
-    def robot(ns, number):
-        return GroupAction([
-            PushRosNamespace(ns),
-<span class="ex" data-tip="Starts everything in that file, as if you had typed its <code>ros2 launch</code> command. <code>PythonLaunchDescriptionSource</code> says it's a Python launch file (XML and YAML have their own sources).">            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource([number_app]),</span>
-<span class="ex" data-tip="The same as <code>number:=… frequency:=2.0</code> on the command line. Keys are argument names; values must be <b>strings</b>, hence <code>str(number)</code>.">                launch_arguments={"number": str(number),
-                                  "frequency": "2.0"}.items(),</span>
-            ),
-        ])
-
-    return LaunchDescription([robot("robot1", 1), robot("robot2", 2)])</code></pre></div>
-    <div class="cmd"><div class="cmd-h">💻 Terminals 1 &amp; 2 (new file → build once)</div><pre><code>ros2 launch my_robot_bringup fleet.launch.py
-ros2 node list
-ros2 topic echo /robot2/number</code></pre></div>
-    <div class="out"><div class="out-h">✅ You should see</div><pre>/robot1/number_counter
-/robot1/number_publisher
-/robot2/number_counter
-/robot2/number_publisher
-...
-data: 2</pre></div>
-  </div>
-
-  <div class="step" id="s5-2">
-    <div class="step-h"><span class="step-n">2</span><span class="step-t">Include a launch file from another package</span></div>
-    <p>Turtlesim ships its own <code>multisim.launch.py</code> (two turtlesims in namespaces). Add it to the fleet with three lines:</p>
-    <div class="cmd file"><div class="cmd-h">📄 fleet.launch.py (add to the list)</div><pre><code>        IncludeLaunchDescription(PythonLaunchDescriptionSource([
-            PathJoinSubstitution([FindPackageShare("turtlesim"), "launch", "multisim.launch.py"])])),</code></pre></div>
-    <p>This is how the LIMO simulation launch file starts Gazebo (it includes Gazebo's launch file), and how <code>nav2_bringup</code> includes localization and navigation. In <code>--print</code> output you can see the whole tree.</p>
-    <div class="mermaid">
-flowchart TD
-  F["📄 fleet.launch.py"] --> G1["GroupAction /robot1"] --> I1["📄 number_app_args.launch.py<br/>number:=1"]
-  F --> G2["GroupAction /robot2"] --> I2["📄 number_app_args.launch.py<br/>number:=2"]
-  F --> M["📄 turtlesim/multisim.launch.py"]
-  I1 --> N1(["/robot1/number_publisher"]) & N2(["/robot1/number_counter"])
-  I2 --> N3(["/robot2/number_publisher"]) & N4(["/robot2/number_counter"])
-  M --> T1(["/turtlesim1/turtlesim"]) & T2(["/turtlesim2/turtlesim"])
-</div>
-  </div>
-</div>
-
-<!-- ============================================================ -->
-<h2 id="lab6"><span class="num">L6</span>Lab 6 — Robust launch: output, respawn, timers, events</h2>
-<div class="lab">
-  <div class="lab-h"><span class="badge">LAB 6 · 25 min</span><h3>A launch file that survives crashes and starts things in order</h3></div>
-  <p class="lab-goal">Goal: one launch file where the counter starts 3 s late, restarts itself when killed, a second turtle is spawned as soon as turtlesim is up, and closing the turtlesim window stops everything.</p>
-
-  <div class="step" id="s6-1">
-    <div class="step-h"><span class="step-n">1</span><span class="step-t">The robust launch file (click the highlighted parts)</span></div>
-    <div class="cmd file" data-widget="explain"><div class="cmd-h">📄 my_robot_bringup/launch/robust_app.launch.py</div><pre><code>from launch import LaunchDescription
-from launch.actions import (EmitEvent, ExecuteProcess, LogInfo,
-                            RegisterEventHandler, TimerAction)
-from launch.event_handlers import OnProcessExit, OnProcessStart
-from launch.events import Shutdown
-from launch_ros.actions import Node
-
-
-def generate_launch_description():
-    turtlesim_node = Node(package="turtlesim", executable="turtlesim_node")
-
-<span class="ex" data-tip="<code>ExecuteProcess</code> runs <em>any</em> command, not only ROS nodes: here the Lecture 4 service call that spawns a turtle. You could also start <code>ros2 bag record</code> (Lecture 7) this way.">    spawn_turtle2 = ExecuteProcess(
-        cmd=["ros2", "service", "call", "/spawn", "turtlesim/srv/Spawn",
-             "{x: 2.0, y: 2.0, theta: 0.0, name: 'turtle2'}"],
-        output="screen")</span>
-
-<span class="ex" data-tip="<code>output=&quot;screen&quot;</code> shows everything the node prints, including Python <code>print()</code>. Without it you only see the logger messages; the rest goes to the log file in <code>~/.ros/log</code>.">    number_publisher_node = Node(package="my_py_pkg", executable="number_publisher",
-                                 output="screen")</span>
-<span class="ex" data-tip="If this process dies for any reason, the launch system waits <code>respawn_delay</code> seconds and starts it again. Real robots use this for drivers that can crash, like a USB camera that is unplugged and plugged back.">    number_counter_node = Node(package="my_py_pkg", executable="number_counter",
-                               output="screen", respawn=True, respawn_delay=2.0)</span>
-
-    return LaunchDescription([
-        turtlesim_node,
-        number_publisher_node,
-<span class="ex" data-tip="Start the actions in the list only after 3 seconds. Typical use: give the sensor drivers time to start before the nodes that need their data.">        TimerAction(period=3.0, actions=[number_counter_node]),</span>
-<span class="ex" data-tip="An <b>event handler</b>: when the turtlesim <em>process</em> has started, run <code>spawn_turtle2</code>. <code>ros2 service call</code> then waits until the <code>/spawn</code> service is ready.">        RegisterEventHandler(OnProcessStart(
-            target_action=turtlesim_node, on_start=[spawn_turtle2])),</span>
-<span class="ex" data-tip="When the turtlesim process ends (you closed the window), print a message and shut down the <em>whole</em> launch. Without this, the other nodes keep running without their simulator.">        RegisterEventHandler(OnProcessExit(
-            target_action=turtlesim_node,
-            on_exit=[LogInfo(msg="turtlesim closed: stopping everything"),
-                     EmitEvent(event=Shutdown(reason="turtlesim window closed"))])),</span>
-    ])</code></pre></div>
-  </div>
-
-  <div class="step" id="s6-2">
-    <div class="step-h"><span class="step-n">2</span><span class="step-t">Test every feature</span></div>
-    <div class="cmd"><div class="cmd-h">💻 Terminal 1 (new file → build once)</div><pre><code>cd ~/ros2_ws &amp;&amp; colcon build --packages-select my_robot_bringup --symlink-install &amp;&amp; source ~/.bashrc
-ros2 launch my_robot_bringup robust_app.launch.py</code></pre></div>
-    <ol>
-      <li><strong>Timer:</strong> watch the log: <code>number_counter-…: process started</code> appears about 3 s after the others.</li>
-      <li><strong>Event on start:</strong> a second turtle appears at (2, 2).</li>
-      <li><strong>Respawn:</strong> in Terminal 2, kill the counter: <code>pkill -f number_counter</code>. Terminal 1 shows <code>process has died … exit code -15</code>, then 2 s later <code>process started with pid […]</code> with a new pid. The count restarts from 0: a restarted node has lost its memory.</li>
-      <li><strong>Event on exit:</strong> close the turtlesim window. Everything stops with <code>turtlesim closed: stopping everything</code>.</li>
-    </ol>
-    <div class="out"><div class="out-h">✅ You should see (respawn)</div><pre>[ERROR] [number_counter-3]: process has died [pid 6150, exit code -15, cmd '…/number_counter --ros-args'].
-[INFO] [number_counter-3]: process started with pid [6188]</pre></div>
-    <div class="box warn"><div class="box-title">⚠️ Respawn is a safety net, not a fix</div><p>A node that keeps crashing will be restarted forever. Read the error in the log and fix the cause. On a car, a perception node that restarts loses a few seconds of detections, so the planner must handle "no data" safely (the simulator in 6.0 brakes).</p></div>
-  </div>
-
-  <div class="step" id="s6-3">
-    <div class="step-h"><span class="step-n">3</span><span class="step-t">Log level from the launch file</span></div>
-    <p>Show <code>debug</code> messages of one node only (more about levels in section 6.4):</p>
-    <div class="cmd file"><div class="cmd-h">📄 any launch file</div><pre><code>Node(package="my_py_pkg", executable="number_counter",
-     arguments=["--ros-args", "--log-level", "debug"])</code></pre></div>
-  </div>
-</div>
-
-<!-- ============================================================ -->
-<h2 id="formats"><span class="num">6.2</span>XML and YAML launch files</h2>
-<p>ROS 2 understands launch files in three languages. They do the same job. Python is the most powerful (loops, functions, any logic); <strong>XML</strong> is shorter for simple files and is used by large projects like Autoware; <strong>YAML</strong> is the most compact. You will meet all three in other people's packages, so learn to read them.</p>
-<div class="grid2">
-  <div class="cmd file"><div class="cmd-h">📄 launch/number_app.launch.xml</div><pre><code>&lt;launch&gt;
-  &lt;arg name="number" default="2"/&gt;
-
-  &lt;node pkg="my_py_pkg" exec="number_publisher"
-        name="my_number_publisher"&gt;
-    &lt;param name="number_to_publish" value="$(var number)"/&gt;
-    &lt;remap from="number" to="my_number"/&gt;
-  &lt;/node&gt;
-
-  &lt;node pkg="my_py_pkg" exec="number_counter"
-        name="my_number_counter"&gt;
-    &lt;remap from="number" to="my_number"/&gt;
-  &lt;/node&gt;
-&lt;/launch&gt;</code></pre></div>
-  <div class="cmd file"><div class="cmd-h">📄 launch/number_app.launch.yaml</div><pre><code>launch:
-- arg:
-    name: "number"
-    default: "2"
-- node:
-    pkg: "my_py_pkg"
-    exec: "number_publisher"
-    name: "my_number_publisher"
-    param:
-    - name: "number_to_publish"
-      value: "$(var number)"
-    remap:
-    - from: "number"
-      to: "my_number"
-- node:
-    pkg: "my_py_pkg"
-    exec: "number_counter"
-    name: "my_number_counter"
-    remap:
-    - from: "number"
-      to: "my_number"</code></pre></div>
-</div>
-<div class="cmd"><div class="cmd-h">💻 Same install rule, same command (new files → build once)</div><pre><code>ros2 launch my_robot_bringup number_app.launch.xml number:=5
-ros2 launch my_robot_bringup number_app.launch.yaml number:=6</code></pre></div>
-<div class="table-wrap"><table>
-  <tr><th>Python</th><th>XML</th><th>YAML</th></tr>
-  <tr><td><code>Node(package=…, executable=…)</code></td><td><code>&lt;node pkg="…" exec="…"/&gt;</code></td><td><code>- node: {pkg: …, exec: …}</code></td></tr>
-  <tr><td><code>DeclareLaunchArgument("n", default_value="2")</code></td><td><code>&lt;arg name="n" default="2"/&gt;</code></td><td><code>- arg: {name: "n", default: "2"}</code></td></tr>
-  <tr><td><code>LaunchConfiguration("n")</code></td><td colspan="2"><code>$(var n)</code></td></tr>
-  <tr><td><code>FindPackageShare("pkg")</code></td><td colspan="2"><code>$(find-pkg-share pkg)</code></td></tr>
-  <tr><td><code>parameters=[path]</code></td><td><code>&lt;param from="$(find-pkg-share pkg)/config/a.yaml"/&gt;</code></td><td><code>param: [{from: "…/a.yaml"}]</code></td></tr>
-  <tr><td><code>GroupAction([PushRosNamespace("r1"), …])</code></td><td><code>&lt;group&gt;&lt;push-ros-namespace namespace="r1"/&gt;…&lt;/group&gt;</code></td><td><code>- group: {…}</code></td></tr>
-  <tr><td><code>IncludeLaunchDescription(…)</code></td><td><code>&lt;include file="$(find-pkg-share turtlesim)/launch/multisim.launch.py"/&gt;</code></td><td><code>- include: {file: "…"}</code></td></tr>
-  <tr><td><code>condition=IfCondition(…)</code></td><td><code>if="$(var graph)"</code></td><td><code>if: "$(var graph)"</code></td></tr>
-</table></div>
-<div class="box idea"><div class="box-title">💡 Which one should I write?</div><p>In this course: <strong>Python</strong>, because you can use loops (the radio's five stations) and functions (one robot per namespace). An XML file can include a Python one and the other way round (<code>XMLLaunchDescriptionSource</code> from <code>launch_xml.launch_description_sources</code>, or <code>AnyLaunchDescriptionSource</code> for any format), so teams mix them freely.</p></div>
-
-
-<!-- ============================================================ -->
-<h2 id="activity"><span class="num">6.3</span>Your turn: radio, LED system, speed zones</h2>
-<div class="activity">
-  <div class="lvl">Activity 6.1 · Core · 30 min</div>
-  <h3>The radio network</h3>
-<figure class="figure-card"><img src="images/figures/fig3_10.png" alt="The radio activity: 5 renamed stations and one smartphone on /robot_news." loading="lazy"><figcaption>The radio activity: 5 renamed stations and one smartphone on /robot_news.</figcaption></figure>
-  <p>Write <code>radio.launch.py</code> that starts <strong>5 robot_news_station nodes</strong> and <strong>1 smartphone</strong>. Robot names: <code>Giskard, BB8, Daneel, Jander, C3PO</code>. Each station has a different node name and publishes "Hi, this is &lt;name&gt; …" (its <code>robot_name</code> parameter from Lecture 5). The smartphone receives all of them. You don't change any node, you only write one launch file.</p>
-  <div class="mermaid">
-flowchart LR
-  S1(["robot_news_station_giskard"]) --> T[["/robot_news"]]
-  S2(["robot_news_station_bb8"]) --> T
-  S3(["robot_news_station_daneel"]) --> T
-  S4(["robot_news_station_jander"]) --> T
-  S5(["robot_news_station_c3po"]) --> T
-  T --> P(["smartphone"])
-  </div>
-  <details class="hint"><summary>Hint</summary><div class="inner">A launch file is Python, so use a <code>for</code> loop over the names and <code>ld.add_action(...)</code> each Node. New launch file means you must rebuild once.</div></details>
-  <details class="solution"><summary>Solution</summary><div class="inner">
-  <div class="cmd file"><div class="cmd-h">📄 my_robot_bringup/launch/radio.launch.py</div><pre><code>from launch import LaunchDescription
-from launch_ros.actions import Node
-
-
-def generate_launch_description():
-    ld = LaunchDescription()
-    robot_names = ["Giskard", "BB8", "Daneel", "Jander", "C3PO"]
-
-    for name in robot_names:
-        ld.add_action(Node(
-            package="my_py_pkg",
-            executable="robot_news_station",
-            name="robot_news_station_" + name.lower(),
-            parameters=[{"robot_name": name}],
-        ))
-
-    ld.add_action(Node(package="my_py_pkg", executable="smartphone"))
-    return ld</code></pre></div>
-  <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws &amp;&amp; colcon build --packages-select my_robot_bringup --symlink-install &amp;&amp; source ~/.bashrc
-ros2 launch my_robot_bringup radio.launch.py
-rqt_graph      # second terminal: compare with the diagram above</code></pre></div>
-  </div></details>
-</div>
-
-<div class="activity">
-  <div class="lvl">Activity 6.2 · Core · 20 min</div>
-  <h3>One command for the battery + LED system</h3>
-  <p>In Lecture 5 (Activity 5.2) you started <code>led_panel</code> and <code>battery</code> in two terminals, each with <code>--params-file ~/ros2_ws/params/led_system.yaml</code>. Write <code>led_system.launch.py</code> that starts both with that file, from one command. Move the YAML file into <code>my_robot_bringup/config/</code> so it is installed with the package (Lab 2, step 3).</p>
-  <details class="hint"><summary>Hint</summary><div class="inner">Copy the file into <code>config/</code> (already installed since Lab 2). In the launch file, find it with <code>get_package_share_directory("my_robot_bringup")</code> and pass the path: <code>parameters=[param_file]</code>.</div></details>
-  <details class="solution"><summary>Solution</summary><div class="inner">
-  <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cp ~/ros2_ws/params/led_system.yaml ~/ros2_ws/src/my_robot_bringup/config/</code></pre></div>
-  <div class="cmd file"><div class="cmd-h">📄 my_robot_bringup/launch/led_system.launch.py</div><pre><code>import os
-from ament_index_python.packages import get_package_share_directory
-from launch import LaunchDescription
-from launch_ros.actions import Node
-
-
-def generate_launch_description():
-    param_file = os.path.join(
-        get_package_share_directory("my_robot_bringup"), "config", "led_system.yaml")
-
-    return LaunchDescription([
-        Node(package="my_py_pkg", executable="led_panel", parameters=[param_file]),
-        Node(package="my_py_pkg", executable="battery", parameters=[param_file]),
-    ])</code></pre></div>
-  <div class="cmd"><div class="cmd-h">💻 Terminals 1 &amp; 2</div><pre><code>cd ~/ros2_ws &amp;&amp; colcon build --packages-select my_robot_bringup --symlink-install &amp;&amp; source ~/.bashrc
-ros2 launch my_robot_bringup led_system.launch.py
-ros2 topic echo /led_states</code></pre></div>
-  <p>Each node takes its own block from the shared file (<code>/led_panel:</code>, <code>/battery:</code>), exactly as in Lecture 5. Nav2 on the LIMO (Lecture 13) is started the same way: one launch file, one big YAML file.</p>
-  </div></details>
-</div>
-
-<div class="activity">
-  <div class="lvl">Challenge 6.3 · Stretch · self-driving</div>
-  <h3>Speed zones: school, city, motorway</h3>
-  <p>Reuse the <code>speed_limiter</code> from Lecture 5 (Challenge 5.3). Write <code>speed_zone.launch.py</code> with one argument <code>zone</code> (<code>school</code>, <code>city</code> or <code>motorway</code>, default <code>school</code>) that starts turtlesim and the speed limiter with the YAML file <code>config/zone_&lt;zone&gt;.yaml</code>. School: <code>max_speed</code> 0.5, city: 1.5, motorway: 4.0. Drive with the keyboard through the limiter.</p>
-  <details class="hint"><summary>Hint</summary><div class="inner">Lab 3, step 4, pattern 2: <code>PathJoinSubstitution([FindPackageShare("my_robot_bringup"), "config", ["zone_", zone, ".yaml"]])</code>. The teleop needs the keyboard, so run it in its own terminal and remap its output to <code>cmd_vel_raw</code>.</div></details>
-  <details class="solution"><summary>Solution</summary><div class="inner">
-  <div class="cmd file"><div class="cmd-h">📄 my_robot_bringup/config/zone_school.yaml (city: 1.5, motorway: 4.0)</div><pre><code>/speed_limiter:
-  ros__parameters:
-    max_speed: 0.5
-    max_turn: 1.0</code></pre></div>
-  <div class="cmd file"><div class="cmd-h">📄 my_robot_bringup/launch/speed_zone.launch.py</div><pre><code>from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
-from launch_ros.actions import Node
-from launch_ros.substitutions import FindPackageShare
-
-
-def generate_launch_description():
-    zone = LaunchConfiguration("zone")
-    zone_file = PathJoinSubstitution([
-        FindPackageShare("my_robot_bringup"), "config", ["zone_", zone, ".yaml"]])
-
-    return LaunchDescription([
-        DeclareLaunchArgument("zone", default_value="school",
-                              description="school | city | motorway"),
-        Node(package="turtlesim", executable="turtlesim_node"),
-        Node(package="my_py_pkg", executable="speed_limiter", parameters=[zone_file]),
-    ])</code></pre></div>
-  <div class="cmd"><div class="cmd-h">💻 Terminals 1 &amp; 2</div><pre><code>ros2 launch my_robot_bringup speed_zone.launch.py zone:=motorway
-ros2 run turtlesim turtle_teleop_key --ros-args -r turtle1/cmd_vel:=cmd_vel_raw</code></pre></div>
-  <p>Launch again with <code>zone:=school</code>: the same key now crawls. Because the limiter has a parameter callback, <code>ros2 param set /speed_limiter max_speed 0.2</code> still works live: the launch file sets the start values, the callback handles changes.</p>
-  </div></details>
-</div>
-
-<div class="activity">
-  <div class="lvl">Mini-project 6.4 · Homework</div>
-  <h3>The cylinder calculator</h3>
-<figure class="figure-card"><img src="images/figures/fig3_11.png" alt="The cylinder project: radius and height in, volume and surface area out." loading="lazy"><figcaption>The cylinder project: radius and height in, volume and surface area out.</figcaption></figure>
-  <p>Build a 3-node system that calculates the <strong>volume</strong> and <strong>surface area</strong> of a cylinder:</p>
-  <p style="text-align:center"><code>Volume = π · r² · h</code> &nbsp;&nbsp; <code>Surface area = 2 · π · r · (r + h)</code></p>
-  <div class="mermaid">
-flowchart LR
-  I(["cylinder_input<br/>(asks the user)"]) --> R[["/radius"]] & H[["/height"]]
-  R --> SQ(["radius_squarer"]) --> R2[["/radius_squared"]]
-  R --> C(["cylinder_calc"])
-  H --> C
-  R2 --> C
-  C --> CY[["/cylinder<br/>Cylinder.msg"]]
-  </div>
+<div class="lstep dsg" id="d2"><span class="n">1</span><h3>Requirements</h3></div>
+<div class="box note"><div class="box-title">📋 The brief</div>
   <ol>
-    <li><code>cylinder_input</code>: asks the user for r and h (Python <code>input()</code>), then publishes them as <code>std_msgs/msg/Float64</code> on <code>/radius</code> and <code>/height</code> every 0.1 s.</li>
-    <li><code>radius_squarer</code>: subscribes to <code>/radius</code> and publishes r² on <code>/radius_squared</code>.</li>
-    <li><code>cylinder_calc</code>: subscribes to all three topics. When it has all three values, it publishes a custom <code>my_robot_interfaces/msg/Cylinder</code> (<code>float64 volume</code>, <code>float64 surface_area</code>) on <code>/cylinder</code>.</li>
-    <li>A launch file <code>cylinder.launch.py</code> that starts <code>radius_squarer</code> and <code>cylinder_calc</code>. Run <code>cylinder_input</code> in its own terminal, because it needs the keyboard. Bonus: an argument <code>ns</code> that puts both nodes in a namespace.</li>
+    <li>New turtles appear at <strong>random places</strong>, at a <strong>configurable rate</strong>.</li>
+    <li><code>turtle1</code> drives to one of them <strong>by itself</strong>.</li>
+    <li>When close, that turtle is <strong>caught</strong>: removed from the window and the list.</li>
+    <li>Optionally chase the <strong>closest</strong> one first.</li>
+    <li>Start everything with <strong>one launch file</strong>; settings in <strong>YAML</strong>.</li>
   </ol>
-  <details class="solution"><summary>Solution: cylinder_calc.py (the other two nodes follow patterns you already know)</summary><div class="inner">
-  <div class="cmd file"><div class="cmd-h">📄 my_py_pkg/my_py_pkg/cylinder_calc.py</div><pre><code>#!/usr/bin/env python3
-from math import pi
+</div>
+<div class="table-wrap"><table class="vs">
+  <tr><th></th><th>🐢 Catch Them All</th><th>🚕 Robotaxi</th><th>📦 Warehouse robot</th><th>🤖 LIMO (Lecture 8)</th></tr>
+  <tr><td>Sense: where am I?</td><td><code>/turtle1/pose</code></td><td>GPS + LiDAR</td><td>LiDAR, floor markers</td><td><code>/odom</code></td></tr>
+  <tr><td>Sense: what's out there?</td><td><code>/alive_turtles</code></td><td>ride requests</td><td>orders to pick</td><td>a goal you choose</td></tr>
+  <tr><td>Think: which first?</td><td>closest turtle</td><td>nearest passenger</td><td>shortest route</td><td>one goal at a time</td></tr>
+  <tr><td>Act</td><td><code>Twist</code> on <code>cmd_vel</code></td><td>steering, throttle, brake</td><td>wheel speeds</td><td><code>Twist</code> on <code>/cmd_vel</code></td></tr>
+  <tr><td>"Done"</td><td><code>/catch_turtle</code></td><td>passenger picked up</td><td>item picked</td><td>goal reached</td></tr>
+</table></div>
+<div class="box idea"><div class="box-title">👥 Pair task · 5 min</div><p>Before you look at step 2: how many nodes? What does each one publish, subscribe, serve and call? Sketch it on paper.</p></div>
+
+<div class="lstep dsg" id="d3"><span class="n">2</span><h3>The graph</h3></div>
+<div class="mermaid">
+flowchart LR
+  TS(["🐢 turtlesim_node<br/>(exists)"])
+  SP(["🐣 turtle_spawner<br/>(you write)"])
+  CT(["🧠 turtle_controller<br/>(you write)"])
+  TS -- "/turtle1/pose<br/>turtlesim/Pose" --> CT
+  CT -- "/turtle1/cmd_vel<br/>geometry_msgs/Twist" --> TS
+  SP -- "/alive_turtles<br/>TurtleArray" --> CT
+  SP -. "/spawn client" .-> TS
+  SP -. "/kill client" .-> TS
+  CT -. "/catch_turtle client<br/>CatchTurtle" .-> SP
+</div>
+<div class="table-wrap"><table>
+  <tr><th>Node</th><th>Publishes</th><th>Subscribes</th><th>Serves</th><th>Calls</th></tr>
+  <tr><td><code>turtle_spawner</code></td><td><code>/alive_turtles</code></td><td>–</td><td><code>/catch_turtle</code></td><td><code>/spawn</code>, <code>/kill</code></td></tr>
+  <tr><td><code>turtle_controller</code></td><td><code>/turtle1/cmd_vel</code></td><td><code>/turtle1/pose</code>, <code>/alive_turtles</code></td><td>–</td><td><code>/catch_turtle</code></td></tr>
+</table></div>
+<div class="box idea"><div class="box-title">💡 One owner per data</div><p>The spawner owns the list, so only the spawner calls <code>/kill</code>. The controller only <em>asks</em> via <code>/catch_turtle</code>.</p></div>
+
+<div class="lstep dsg" id="d4"><span class="n">3</span><h3>The interfaces (Lecture 5)</h3></div>
+<div class="grid2">
+  <div class="cmd file"><div class="cmd-h">📄 my_robot_interfaces/msg/Turtle.msg</div><pre><code>string name
+float64 x
+float64 y
+float64 theta</code></pre></div>
+  <div class="cmd file"><div class="cmd-h">📄 my_robot_interfaces/msg/TurtleArray.msg</div><pre><code>Turtle[] turtles</code></pre></div>
+</div>
+<div class="cmd file"><div class="cmd-h">📄 my_robot_interfaces/srv/CatchTurtle.srv</div><pre><code>string name
+---
+bool success</code></pre></div>
+
+<div class="lstep dsg" id="d5"><span class="n">4</span><h3>Six milestones: always have something that runs</h3></div>
+<div class="mstones">
+  <a href="#m1"><span class="ic">🎯</span><b>M1 · 15 min</b><span>Go to a fixed point</span><i>stops at (8, 4)</i></a>
+  <a href="#m2"><span class="ic">🐣</span><b>M2 · 10 min</b><span>Spawn turtles</span><i>one per second</i></a>
+  <a href="#m3"><span class="ic">📋</span><b>M3 · 15 min</b><span>Share the list</span><i>hunter drives to turtle2</i></a>
+  <a href="#m4"><span class="ic">🎣</span><b>M4 · 15 min</b><span>Catch with a service</span><i>turtles disappear</i></a>
+  <a href="#m5"><span class="ic">🧭</span><b>M5 · 5 min</b><span>Closest first</span><i>more catches/min</i></a>
+  <a href="#m6"><span class="ic">🚀</span><b>M6 · 10 min</b><span>Params + launch</span><i>one command</i></a>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="control"><span class="num">6.2</span>The go-to-goal controller</h2>
+
+<div class="lstep ctl" id="c1"><span class="n">1</span><h3>Picture it: turn, drive, arrive</h3></div>
+<figure class="helpdesk ggfig">
+<svg viewBox="0 0 680 300" role="img" aria-label="Animated: in a blue turtlesim world, the green hunter turtle turns towards the yellow target, then drives along the distance line and stops on the target. On the right, the seven lines of the controller.">
+  <rect class="gw" x="20" y="16" width="330" height="236" rx="10"/>
+  <line class="gg" x1="86" y1="16" x2="86" y2="252"/><line class="gg" x1="152" y1="16" x2="152" y2="252"/><line class="gg" x1="218" y1="16" x2="218" y2="252"/><line class="gg" x1="284" y1="16" x2="284" y2="252"/>
+  <line class="gg" x1="20" y1="75" x2="350" y2="75"/><line class="gg" x1="20" y1="134" x2="350" y2="134"/><line class="gg" x1="20" y1="193" x2="350" y2="193"/>
+  <line class="dx" x1="70" y1="226" x2="284" y2="226"/>
+  <line class="dx" x1="284" y1="226" x2="284" y2="82"/>
+  <line class="dist" x1="70" y1="226" x2="284" y2="82"/>
+  <path class="arc" d="M112 226 A42 42 0 0 0 104.8 202.5"/>
+  <text class="gt" x="177" y="244">dist_x</text>
+  <text class="gt" x="314" y="158">dist_y</text>
+  <text class="gt" x="160" y="146" style="fill:#ffd166">distance</text>
+  <text class="gt" x="150" y="214" style="fill:#ff8fab">goal_theta</text>
+  <circle class="goal" cx="284" cy="82" r="11"/><text class="gt" x="284" y="58">target (x, y)</text>
+  <g class="bot"><g class="botr" style="transform-box:view-box; transform-origin:70px 226px">
+    <line class="head" x1="70" y1="226" x2="122" y2="226"/>
+    <ellipse class="me" cx="70" cy="226" rx="14" ry="11"/><circle class="me" cx="86" cy="226" r="5"/>
+  </g></g>
+  <text class="eq" x="372" y="40">1  dist_x = target.x − pose.x</text>
+  <text class="eq" x="372" y="66">2  dist_y = target.y − pose.y</text>
+  <text class="eq" x="372" y="92"><tspan class="y">3  distance = √(dist_x² + dist_y²)</tspan></text>
+  <text class="eq" x="372" y="118"><tspan class="p">4  goal_theta = atan2(dist_y, dist_x)</tspan></text>
+  <text class="eq" x="372" y="144">5  diff = goal_theta − pose.theta</text>
+  <text class="eq" x="372" y="170">   (wrap diff into [−π, π])</text>
+  <text class="eq" x="372" y="196"><tspan class="g">6  linear.x  = 2 · distance</tspan></text>
+  <text class="eq" x="372" y="222"><tspan class="g">7  angular.z = 6 · diff</tspan></text>
+  <g class="hd-stage phase ph1"><rect x="14" y="264" width="206" height="28" rx="14"/><text x="117" y="283">① big diff: turn first</text></g>
+  <g class="hd-stage phase ph2"><rect x="237" y="264" width="206" height="28" rx="14"/><text x="340" y="283">② drive, slowing down</text></g>
+  <g class="hd-stage phase ph3"><rect x="460" y="264" width="206" height="28" rx="14"/><text x="563" y="283">③ distance &lt; 0.5: catch</text></g>
+</svg>
+</figure>
+<div class="box note"><div class="box-title">📌 P-controller: command = gain × error</div><p>Example: turtle (2, 2), θ = 0, target (5, 6) → <code>distance = 5</code>, <code>goal_theta = 0.93 rad</code>, <code>linear.x = 10</code>, <code>angular.z = 5.6</code>.</p></div>
+
+<div class="lstep ctl" id="c2"><span class="n">2</span><h3>The angle trap: always turn the short way</h3></div>
+<div class="wrapline">
+  <div><svg viewBox="0 0 260 175" role="img" aria-label="Without wrapping: heading 170 degrees, goal minus 170 degrees; a long red arc of 340 degrees.">
+    <circle class="rim" cx="165" cy="88" r="60"/>
+    <path class="bad" d="M105.9 77.6 A60 60 0 1 1 105.9 98.4"/>
+    <line class="hd" x1="165" y1="88" x2="105.9" y2="77.6"/><line class="gl" x1="165" y1="88" x2="105.9" y2="98.4"/>
+    <text x="96" y="70" style="text-anchor:end">heading 170°</text><text x="96" y="114" style="text-anchor:end">goal −170°</text>
+    <text x="130" y="22" style="fill:var(--danger)">diff = −340°: the long way 😵</text>
+    <text x="130" y="170">without wrapping</text>
+  </svg></div>
+  <div><svg viewBox="0 0 260 175" role="img" aria-label="With wrapping: a short green arc of 20 degrees.">
+    <circle class="rim" cx="165" cy="88" r="60"/>
+    <path class="good" d="M105.9 77.6 A60 60 0 0 0 105.9 98.4"/>
+    <line class="hd" x1="165" y1="88" x2="105.9" y2="77.6"/><line class="gl" x1="165" y1="88" x2="105.9" y2="98.4"/>
+    <text x="96" y="70" style="text-anchor:end">heading 170°</text><text x="96" y="114" style="text-anchor:end">goal −170°</text>
+    <text x="130" y="22" style="fill:var(--accent2)">diff = −340° + 360° = +20° 🙂</text>
+    <text x="130" y="170">with wrapping</text>
+  </svg></div>
+</div>
+<div class="cmd file"><div class="cmd-h">📄 wrap an angle into [−π, π]</div><pre><code>if diff &gt; math.pi:
+    diff -= 2 * math.pi
+elif diff &lt; -math.pi:
+    diff += 2 * math.pi</code></pre></div>
+
+<div class="lstep ctl" id="c3"><span class="n">3</span><h3>Try it: change the gains, switch wrapping off, spawn turtles</h3></div>
+<div data-widget="gotogoal"></div>
+
+<!-- ============================================================ -->
+<h2 id="m1"><span class="num">M1</span>Milestone 1 — Go to a fixed point</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">MILESTONE 1 · 15 min</span><h3>turtle_controller v1</h3></div>
+  <p class="lab-goal">Test: the hunter drives to (8, 4) and stops.</p>
+
+  <div class="step" id="m1-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Create the project package</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws/src
+ros2 pkg create turtlesim_catch_them_all --build-type ament_python \
+  --dependencies rclpy turtlesim geometry_msgs my_robot_interfaces
+touch turtlesim_catch_them_all/turtlesim_catch_them_all/turtle_controller.py</code></pre></div>
+  </div>
+
+  <div class="step" id="m1-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Write the controller (click the highlighted parts)</span></div>
+    <div class="cmd file" data-widget="explain"><div class="cmd-h">📄 turtlesim_catch_them_all/turtle_controller.py</div><pre><code>#!/usr/bin/env python3
+import math
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Float64
-from my_robot_interfaces.msg import Cylinder
+from turtlesim.msg import Pose
+from geometry_msgs.msg import Twist
 
 
-class CylinderCalcNode(Node):
+class TurtleControllerNode(Node):
     def __init__(self):
-        super().__init__("cylinder_calc")
-        self.radius_ = None
-        self.radius_squared_ = None
-        self.height_ = None
-        self.create_subscription(Float64, "radius", self.callback_radius, 10)
-        self.create_subscription(Float64, "radius_squared", self.callback_radius_squared, 10)
-        self.create_subscription(Float64, "height", self.callback_height, 10)
-        self.cylinder_pub_ = self.create_publisher(Cylinder, "cylinder", 10)
+        super().__init__("turtle_controller")
+<span class="ex" data-tip="Fixed target for now. From M3 it comes from <code>/alive_turtles</code>.">        self.target_x_ = 8.0
+        self.target_y_ = 4.0</span>
+        self.pose_ = None
+        self.cmd_vel_publisher_ = self.create_publisher(Twist, "turtle1/cmd_vel", 10)
+        self.pose_subscriber_ = self.create_subscription(
+            Pose, "turtle1/pose", self.callback_turtle_pose, 10)
+<span class="ex" data-tip="The control loop: 100 Hz.">        self.control_loop_timer_ = self.create_timer(0.01, self.control_loop)</span>
 
-    def callback_radius(self, msg):
-        self.radius_ = msg.data
-        self.calculate()
+<span class="ex" data-tip="<b>Sense</b>: only store. Decide in the timer.">    def callback_turtle_pose(self, msg):
+        self.pose_ = msg</span>
 
-    def callback_radius_squared(self, msg):
-        self.radius_squared_ = msg.data
-        self.calculate()
+    def control_loop(self):
+        if self.pose_ is None:
+            return
+        dist_x = self.target_x_ - self.pose_.x
+        dist_y = self.target_y_ - self.pose_.y
+        distance = math.sqrt(dist_x * dist_x + dist_y * dist_y)
 
-    def callback_height(self, msg):
-        self.height_ = msg.data
-        self.calculate()
-
-    def calculate(self):
-        if None in (self.radius_, self.radius_squared_, self.height_):
-            return                                   # wait until we have all three
-        msg = Cylinder()
-        msg.volume = pi * self.radius_squared_ * self.height_
-        msg.surface_area = 2 * pi * (self.radius_ * self.height_ + self.radius_squared_)
-        self.cylinder_pub_.publish(msg)
+        msg = Twist()
+        if distance &gt; 0.5:
+            msg.linear.x = 2 * distance
+            goal_theta = math.atan2(dist_y, dist_x)
+            diff = goal_theta - self.pose_.theta
+<span class="ex" data-tip="The angle trap: turn the short way.">            if diff &gt; math.pi:
+                diff -= 2 * math.pi
+            elif diff &lt; -math.pi:
+                diff += 2 * math.pi</span>
+            msg.angular.z = 6 * diff
+        else:
+<span class="ex" data-tip="Close enough: stop.">            msg.linear.x = 0.0
+            msg.angular.z = 0.0</span>
+<span class="ex" data-tip="<b>Act</b>: one command per loop.">        self.cmd_vel_publisher_.publish(msg)</span>
 
 
 def main(args=None):
     rclpy.init(args=args)
-    rclpy.spin(CylinderCalcNode())
+    rclpy.spin(TurtleControllerNode())
     rclpy.shutdown()
 
 
 if __name__ == "__main__":
     main()</code></pre></div>
-  <p>Remember: add <code>"msg/Cylinder.msg"</code> to the interfaces CMakeLists, add <code>&lt;depend&gt;std_msgs&lt;/depend&gt;</code> to <code>my_py_pkg/package.xml</code>, and register three executables. Check: with r = 2 and h = 5 you should get volume ≈ 62.83 and surface area ≈ 87.96.</p>
-  </div></details>
+  </div>
+
+  <div class="step" id="m1-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Register, build, run</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 setup.py → console_scripts</div><pre><code>"turtle_controller = turtlesim_catch_them_all.turtle_controller:main",</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminals 1 &amp; 2</div><pre><code>cd ~/ros2_ws &amp;&amp; colcon build --packages-select turtlesim_catch_them_all --symlink-install &amp;&amp; source ~/.bashrc
+ros2 run turtlesim turtlesim_node
+ros2 run turtlesim_catch_them_all turtle_controller</code></pre></div>
+    <p>✅ The turtle turns, drives to (8, 4), stops. <strong>Try:</strong> gains 0.5 / 1, then 5 / 20. Target (1, 5): does it turn the short way?</p>
+  </div>
 </div>
 
 <!-- ============================================================ -->
-<h2 id="toolkit"><span class="num">6.4</span>The ROS 2 toolkit you were missing</h2>
-<p>You can now build and start a complete ROS 2 application. Five things are still missing before you put it on a real robot over Wi-Fi in Part B: <strong>how reliably</strong> messages travel (QoS), <strong>which robots</strong> can hear each other (domains), <strong>what your nodes are saying</strong> (log levels), <strong>how to diagnose</strong> a broken setup, and two node types you'll meet in Nav2.</p>
-<nav class="lpath tk" aria-label="Steps in this section"><a href="#tk1"><b>1</b>QoS</a><a href="#tk2"><b>2</b>Domains</a><a href="#tk3"><b>3</b>Log levels</a><a href="#tk4"><b>4</b>Debug kit</a><a href="#tk5"><b>5</b>Look ahead</a><a href="#tk6"><b>6</b>Remember it</a></nav>
-
-<div class="lstep tk" id="tk1"><span class="n">1</span><h3>QoS: how carefully is each message delivered?</h3></div>
-<div class="grid2">
-  <div class="analogy"><div class="emoji">📻</div><div>
-    <p><strong>Reliability: live radio or registered mail?</strong> A LiDAR sends 10 scans a second. If one is lost over Wi-Fi, resending it is pointless: the next one is already newer. That's <strong>best effort</strong>, like live radio. A "stop the car" command must arrive, even late: <strong>reliable</strong>, like registered mail that is re-sent until signed for.</p>
-  </div></div>
-  <div class="analogy"><div class="emoji">📌</div><div>
-    <p><strong>Durability: a shout or a notice board?</strong> A map is published <em>once</em>. A node that starts later would miss a shout (<strong>volatile</strong>). With <strong>transient_local</strong> the publisher keeps the last message pinned on a notice board, and late joiners read it straight away.</p>
-  </div></div>
-</div>
-<div class="box note">
-  <div class="box-title">📌 The rules of QoS (Quality of Service)</div>
-  <ul>
-    <li>Every publisher and subscriber has a <strong>QoS profile</strong>: <em>history</em> (keep the last N), <em>depth</em> (N), <em>reliability</em>, <em>durability</em> (and a few advanced ones: deadline, lifespan, liveliness).</li>
-    <li>The <code>10</code> you have written since Lecture 3 in <code>create_publisher(Int64, "number", 10)</code> <strong>is</strong> a QoS profile: keep the last 10, reliable, volatile.</li>
-    <li>The publisher <em>offers</em>, the subscriber <em>requests</em>. If the request is stricter than the offer, they <strong>don't connect</strong>, with only a warning.</li>
-  </ul>
-</div>
-<div class="table-wrap"><table class="vs">
-  <tr><th>Publisher offers</th><th>Subscriber requests</th><th>Result</th><th>Self-driving example</th></tr>
-  <tr><td>reliable</td><td>reliable</td><td>✔ connected, lost messages re-sent</td><td><code>/emergency_stop</code></td></tr>
-  <tr><td>reliable</td><td>best_effort</td><td>✔ connected, works as best effort</td><td>a dashboard that only wants the latest speed</td></tr>
-  <tr><td>best_effort</td><td>best_effort</td><td>✔ connected, losses are not re-sent</td><td><code>/camera/image_raw</code>, <code>/scan</code></td></tr>
-  <tr><td>best_effort</td><td>reliable</td><td>✖ <strong>no connection</strong></td><td>RViz showing no LiDAR points (Lecture 9 tip!)</td></tr>
-  <tr><td>transient_local</td><td>volatile or transient_local</td><td>✔ (only transient_local subscribers get old messages)</td><td><code>/map</code>, the robot description</td></tr>
-  <tr><td>volatile</td><td>transient_local</td><td>✖ <strong>no connection</strong></td><td></td></tr>
-</table></div>
-<div data-widget="qos"></div>
-<div class="cmd file" data-widget="explain"><div class="cmd-h">📄 QoS in Python</div><pre><code><span class="ex" data-tip="Everything lives in <code>rclpy.qos</code>. <code>qos_profile_sensor_data</code> is a ready-made profile: best effort, volatile, keep last 5.">from rclpy.qos import (QoSProfile, ReliabilityPolicy, DurabilityPolicy,
-                       qos_profile_sensor_data)</span>
-
-<span class="ex" data-tip="For sensor topics: drivers like the LIMO's LiDAR publish best effort, so a <em>reliable</em> subscriber would get nothing. Use the sensor-data profile.">self.create_subscription(LaserScan, "scan", self.callback_scan, qos_profile_sensor_data)</span>
-
-<span class="ex" data-tip="A map is published once. A <code>TRANSIENT_LOCAL</code> subscriber still gets it, even if it starts later. <code>map_server</code> in Nav2 publishes exactly like this.">map_qos = QoSProfile(depth=1,
-                     reliability=ReliabilityPolicy.RELIABLE,
-                     durability=DurabilityPolicy.TRANSIENT_LOCAL)
-self.create_subscription(OccupancyGrid, "map", self.callback_map, map_qos)</span></code></pre></div>
-
-<div class="lstep tk" id="tk2"><span class="n">2</span><h3>Domains: which robots can hear each other?</h3></div>
-<div class="analogy"><div class="emoji">🏢</div><div>
-  <p><strong>ROS 2 finds every node on the same network automatically</strong> (the DDS "discovery"). Great for one robot; dangerous in a lab with 15 LIMOs on one Wi-Fi: your <code>ros2 topic pub /cmd_vel</code> would drive <em>every</em> robot. <code>ROS_DOMAIN_ID</code> gives each team its own <strong>building</strong>; namespaces (Lab 4) are <strong>rooms</strong> inside one building.</p>
-</div></div>
-<div class="table-wrap"><table>
-  <tr><th>Setting</th><th>What it does</th><th>When</th></tr>
-  <tr><td><code>export ROS_DOMAIN_ID=7</code></td><td>Only nodes with the same number see each other. Use 0–101.</td><td>Every team in the lab: the number on your LIMO's label (Lecture 14).</td></tr>
-  <tr><td><code>export ROS_LOCALHOST_ONLY=1</code></td><td>Nodes talk only inside this computer.</td><td>Working alone on a shared network, or at home with simulation.</td></tr>
-  <tr><td>Same domain + namespaces</td><td>Robots see each other, but their names don't clash.</td><td>A fleet that must share data: <code>/car1/pose</code>, <code>/car2/pose</code>.</td></tr>
-  <tr><td>Different domains</td><td>Completely separate ROS worlds.</td><td>Separate teams, separate robots.</td></tr>
-</table></div>
-<div class="box warn"><div class="box-title">⚠️ Same value in every terminal</div><p>Put the <code>export</code> in <code>~/.bashrc</code> and open new terminals. One terminal on domain 0 and another on 7 is the classic "<code>ros2 topic list</code> shows nothing" mystery.</p></div>
-
-<div class="lstep tk" id="tk3"><span class="n">3</span><h3>Log levels: make your nodes talk to you, at the right volume</h3></div>
-<p>Since Lecture 2 you have used <code>self.get_logger().info(…)</code>. There are five levels. Each node shows its level <strong>and everything more serious</strong>; the default is INFO.</p>
-<div class="table-wrap"><table>
-  <tr><th>Level</th><th>Python</th><th>Self-driving car example</th></tr>
-  <tr><td>🔍 DEBUG</td><td><code>self.get_logger().debug(…)</code></td><td>"frame 1532: 4 objects, 12 ms" (every frame; hidden by default)</td></tr>
-  <tr><td>ℹ️ INFO</td><td><code>.info(…)</code></td><td>"Perception started, model loaded"</td></tr>
-  <tr><td>⚠️ WARN</td><td><code>.warn(…)</code></td><td>"LiDAR data 200 ms late"</td></tr>
-  <tr><td>❌ ERROR</td><td><code>.error(…)</code></td><td>"Camera disconnected"</td></tr>
-  <tr><td>💀 FATAL</td><td><code>.fatal(…)</code></td><td>"Both sensors lost: emergency stop"</td></tr>
-</table></div>
-<div class="cmd file"><div class="cmd-h">📄 Useful logging tricks</div><pre><code>self.get_logger().warn("Battery low", throttle_duration_sec=5.0)   # at most once every 5 s
-self.get_logger().info("First scan received", once=True)          # only the first time</code></pre></div>
-<div class="cmd"><div class="cmd-h">💻 Choose the level when you start a node</div><pre><code>ros2 run my_py_pkg number_counter --ros-args --log-level debug                  # all loggers
-ros2 run my_py_pkg number_counter --ros-args --log-level number_counter:=debug   # one logger
-ros2 run rqt_console rqt_console      # every node's messages in one window, filter by level
-ros2 topic echo /rosout               # the topic all of them are published on</code></pre></div>
-
-<div class="lstep tk" id="tk4"><span class="n">4</span><h3>Your debug kit: symptom → tool</h3></div>
-<div class="table-wrap"><table class="fix">
-  <tr><th>Symptom</th><th>First tool</th><th>What it tells you</th></tr>
-  <tr><td>"Is my ROS 2 installation and network OK?"</td><td><code>ros2 doctor</code> · <code>ros2 doctor --report</code></td><td>Checks the setup, network and running topics; the report lists versions, domain id, middleware.</td></tr>
-  <tr><td>A topic exists but nothing arrives</td><td><code>ros2 topic info -v /scan</code></td><td>Every publisher and subscriber with its type <strong>and QoS</strong>: spot a reliability mismatch.</td></tr>
-  <tr><td>What does this node publish, subscribe, serve?</td><td><code>ros2 node info /planner</code></td><td>All its topics, services, actions in one list.</td></tr>
-  <tr><td>"executable not found"</td><td><code>ros2 pkg executables my_py_pkg</code></td><td>The exact names registered in <code>setup.py</code>.</td></tr>
-  <tr><td>Who is connected to whom?</td><td><code>rqt_graph</code></td><td>The node graph; remap mistakes are obvious.</td></tr>
-  <tr><td>Too many messages to read</td><td><code>rqt_console</code></td><td>Filter by node and level.</td></tr>
-  <tr><td>Build the bringup and everything it needs</td><td><code>colcon build --packages-up-to my_robot_bringup</code></td><td>Builds the package and all its dependencies, in order.</td></tr>
-  <tr><td>A package from GitHub won't build: missing dependencies</td><td><code>rosdep install --from-paths src -y --ignore-src</code></td><td>Installs every dependency listed in the <code>package.xml</code> files.</td></tr>
-</table></div>
-
-<div class="lstep tk" id="tk5"><span class="n">5</span><h3>Look ahead: two node types you'll meet in Nav2</h3></div>
-<div class="trio">
-  <div class="t-tk"><div class="big">🔄</div><b>Lifecycle (managed) nodes</b><div class="say">a node with an on/off switch</div><ul><li>States: <em>unconfigured → inactive → active</em></li><li>Start drivers in a known order; reset without restarting</li><li><code>ros2 lifecycle get /map_server</code></li><li>Every Nav2 server is one (Lecture 13)</li></ul></div>
-  <div class="t-lch"><div class="big">🧩</div><b>Components (composition)</b><div class="say">many nodes in one process</div><ul><li>Same nodes, loaded into a <em>container</em></li><li>Messages passed without copying: great for camera images</li><li><code>ros2 component list</code></li><li><code>ComposableNodeContainer</code> in launch files</li></ul></div>
-  <div class="t-arg"><div class="big">🎥</div><b>ros2 bag</b><div class="say">record and replay topics</div><ul><li>Record a drive, debug it at your desk</li><li>Self-driving teams test on recorded data every day</li><li>From a launch file: <code>ExecuteProcess(cmd=["ros2", "bag", "record", "-a"])</code></li><li>Hands-on in Lecture 7</li></ul></div>
-</div>
-<div class="mermaid">
-stateDiagram-v2
-  direction LR
-  [*] --> Unconfigured
-  Unconfigured --> Inactive: configure
-  Inactive --> Active: activate
-  Active --> Inactive: deactivate
-  Inactive --> Unconfigured: cleanup
-  Active --> Finalized: shutdown
-  Inactive --> Finalized: shutdown
-  Unconfigured --> Finalized: shutdown
-</div>
-
-<div class="lstep tk" id="tk6"><span class="n">6</span><h3>Remember it</h3></div>
-<div class="flip-grid" data-widget="flip"><div class="flip"><div class="flip-in"><div class="flip-front">QoS<small>tap to flip</small></div><div class="flip-back">Quality of Service: history, depth, reliability, durability of a publisher or subscriber.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">best_effort<small>tap to flip</small></div><div class="flip-back">Lost messages are not re-sent. For fast sensor data.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">transient_local<small>tap to flip</small></div><div class="flip-back">Late subscribers still get the last message(s). For maps.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Incompatible QoS<small>tap to flip</small></div><div class="flip-back">Subscriber asks for more than the publisher offers: no connection, only a warning.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">ROS_DOMAIN_ID<small>tap to flip</small></div><div class="flip-back">Only nodes with the same number see each other (0–101).</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">--log-level debug<small>tap to flip</small></div><div class="flip-back">Show debug messages too. Levels: DEBUG, INFO, WARN, ERROR, FATAL.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">ros2 doctor<small>tap to flip</small></div><div class="flip-back">Checks your ROS 2 setup and network.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Lifecycle node<small>tap to flip</small></div><div class="flip-back">A node with states: unconfigured, inactive, active. Nav2 uses them.</div></div></div></div>
-
-<!-- ============================================================ -->
-<h2 id="lab7"><span class="num">L7</span>Lab 7 — QoS, domains, logs, doctor</h2>
+<h2 id="m2"><span class="num">M2</span>Milestone 2 — Spawn a turtle every second</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB 7 · 20 min</span><h3>Break it on purpose, then find out why</h3></div>
-  <p class="lab-goal">Goal: see an incompatible-QoS warning, receive a "pinned" message late, hide nodes from each other with a domain, and turn debug messages on and off.</p>
+  <div class="lab-h"><span class="badge">MILESTONE 2 · 10 min</span><h3>turtle_spawner v1: a Lecture 4 client on a timer</h3></div>
+  <p class="lab-goal">Test: a new turtle appears every second.</p>
+  <div class="step" id="m2-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Write the spawner (click the highlighted parts)</span></div>
+    <div class="cmd file" data-widget="explain"><div class="cmd-h">📄 turtlesim_catch_them_all/turtle_spawner.py</div><pre><code>#!/usr/bin/env python3
+from functools import partial
+import math
+import random
+import rclpy
+from rclpy.node import Node
+from turtlesim.srv import Spawn
 
-  <div class="step" id="s7-1">
-    <div class="step-h"><span class="step-n">1</span><span class="step-t">A QoS mismatch, from the terminal</span></div>
-    <div class="cmd"><div class="cmd-h">💻 Terminal 1: a "LiDAR" that publishes best effort</div><pre><code>ros2 topic pub -r 2 --qos-reliability best_effort /fake_scan std_msgs/msg/String "{data: 'scan'}"</code></pre></div>
-    <div class="cmd"><div class="cmd-h">💻 Terminal 2: a reliable subscriber</div><pre><code>ros2 topic echo --qos-reliability reliable /fake_scan</code></pre></div>
-    <div class="out"><div class="out-h">✅ You should see</div><pre>[WARN] [ros2cli_…]: New publisher discovered on topic '/fake_scan', offering incompatible QoS. No messages will be received from it. Last incompatible policy: RELIABILITY</pre></div>
-    <div class="cmd"><div class="cmd-h">💻 Terminal 2: fix it, then inspect</div><pre><code>ros2 topic echo --qos-reliability best_effort /fake_scan
-ros2 topic info -v /fake_scan        # shows Reliability: BEST_EFFORT on the publisher</code></pre></div>
-  </div>
 
-  <div class="step" id="s7-2">
-    <div class="step-h"><span class="step-n">2</span><span class="step-t">A message pinned for late joiners (transient_local)</span></div>
-    <div class="cmd"><div class="cmd-h">💻 Terminal 1: a "map" published every 20 s</div><pre><code>ros2 topic pub -r 0.05 --qos-reliability reliable --qos-durability transient_local \
-  /fake_map std_msgs/msg/String "{data: 'the map'}"</code></pre></div>
-    <div class="cmd"><div class="cmd-h">💻 Terminal 2: join late, twice</div><pre><code>ros2 topic echo --qos-durability transient_local --qos-reliability reliable /fake_map   # instant
-ros2 topic echo --qos-durability volatile --qos-reliability reliable /fake_map          # waits up to 20 s</code></pre></div>
-    <p>The first echo prints <code>data: the map</code> immediately; the second has to wait for the next publication. That is why RViz shows the map at once in Lecture 12.</p>
-  </div>
+class TurtleSpawnerNode(Node):
+    def __init__(self):
+        super().__init__("turtle_spawner")
+        self.turtle_name_prefix_ = "turtle"
+<span class="ex" data-tip="<code>turtle1</code> exists already: start at 1 so the first new one is turtle2.">        self.turtle_counter_ = 1</span>
+        self.spawn_client_ = self.create_client(Spawn, "spawn")
+        self.spawn_timer_ = self.create_timer(1.0, self.spawn_new_turtle)
 
-  <div class="step" id="s7-3">
-    <div class="step-h"><span class="step-n">3</span><span class="step-t">Domains: hide two nodes from each other</span></div>
-    <div class="cmd"><div class="cmd-h">💻 Terminal 1</div><pre><code>export ROS_DOMAIN_ID=5
-ros2 run demo_nodes_py talker</code></pre></div>
-    <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>ros2 run demo_nodes_py listener      # domain 0: hears nothing
-# Ctrl+C, then:
-export ROS_DOMAIN_ID=5
-ros2 run demo_nodes_py listener      # I heard: [Hello World: …]</code></pre></div>
-    <p>Bonus with your neighbour (same Wi-Fi, VM network in bridged mode): both use the same domain and run talker / listener on two laptops. Then pick different numbers.</p>
-  </div>
+    def spawn_new_turtle(self):
+<span class="ex" data-tip="Never block in a timer: if turtlesim isn't up, try next time.">        if not self.spawn_client_.service_is_ready():
+            self.get_logger().warn("Waiting for turtlesim /spawn ...")
+            return</span>
+        self.turtle_counter_ += 1
+        name = self.turtle_name_prefix_ + str(self.turtle_counter_)
+        x = random.uniform(0.5, 10.5)
+        y = random.uniform(0.5, 10.5)
+        theta = random.uniform(0.0, 2 * math.pi)
+        request = Spawn.Request()
+        request.x, request.y, request.theta, request.name = x, y, theta, name
+<span class="ex" data-tip="Async call. <code>partial</code> passes x, y, theta to the callback: the response only holds the name, and M3 needs the position.">        future = self.spawn_client_.call_async(request)
+        future.add_done_callback(partial(self.callback_spawn, x=x, y=y, theta=theta))</span>
 
-  <div class="step" id="s7-4">
-    <div class="step-h"><span class="step-n">4</span><span class="step-t">Log levels and rqt_console</span></div>
-    <p>Add two lines to the counter's callback in <code>number_counter.py</code>:</p>
-    <div class="cmd file"><div class="cmd-h">📄 number_counter.py (in callback_number)</div><pre><code><span class="hl">        self.get_logger().debug("Counter is now " + str(self.counter_))</span>
-<span class="hl">        if self.counter_ &gt; 20:</span>
-<span class="hl">            self.get_logger().warn("Counter above 20!", throttle_duration_sec=3.0)</span></code></pre></div>
-    <div class="cmd"><div class="cmd-h">💻 Terminals 1, 2, 3</div><pre><code>ros2 launch my_robot_bringup number_app_args.launch.py frequency:=5.0
-ros2 run my_py_pkg number_counter --ros-args -r __node:=debug_counter --log-level debug
-ros2 run rqt_console rqt_console</code></pre></div>
-    <p>The launched counter shows only the warning, once every 3 s; the second counter also shows every debug line. In <code>rqt_console</code>, untick <em>Debug</em> and filter by node.</p>
-  </div>
+    def callback_spawn(self, future, x, y, theta):
+        try:
+            response = future.result()
+            if response.name != "":
+                self.get_logger().info("Turtle " + response.name + " is now alive")
+        except Exception as e:
+            self.get_logger().error(f"Service call failed {e!r}")
 
-  <div class="step" id="s7-5">
-    <div class="step-h"><span class="step-n">5</span><span class="step-t">ros2 doctor</span></div>
-    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>ros2 doctor
-ros2 doctor --report | less        # distro, middleware, ROS_DOMAIN_ID, network, topics</code></pre></div>
-    <p>Run this <em>first</em> whenever "nothing works" on a new computer or robot, and paste its report when you ask for help.</p>
+
+def main(args=None):
+    rclpy.init(args=args)
+    rclpy.spin(TurtleSpawnerNode())
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Add to setup.py, build, run (turtlesim still running)</div><pre><code>#  "turtle_spawner = turtlesim_catch_them_all.turtle_spawner:main",
+cd ~/ros2_ws &amp;&amp; colcon build --packages-select turtlesim_catch_them_all --symlink-install &amp;&amp; source ~/.bashrc
+ros2 run turtlesim_catch_them_all turtle_spawner</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>[INFO] [...] [turtle_spawner]: Turtle turtle2 is now alive
+[INFO] [...] [turtle_spawner]: Turtle turtle3 is now alive</pre></div>
   </div>
 </div>
 
+<!-- ============================================================ -->
+<h2 id="m3"><span class="num">M3</span>Milestone 3 — Share the list, chase the first turtle</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">MILESTONE 3 · 15 min</span><h3>/alive_turtles with your custom message</h3></div>
+  <p class="lab-goal">Test: the hunter drives to the first spawned turtle.</p>
 
-<h3>🏅 Level up: choose your challenge</h3>
-<div class="levels"><div class="lv bronze"><b>🥉 Bronze: everyone</b><span>Labs 1–3 and Activity 6.1 (radio, checked in <code>rqt_graph</code>) and Activity 6.2 (the LED system from one command).</span></div><div class="lv silver"><b>🥈 Silver: confident</b><span>Labs 4–6 (two robots, includes, respawn), Challenge 6.3 (speed zones) and Lab 7 (QoS mismatch found with <code>ros2 topic info -v</code>).</span></div><div class="lv gold"><b>🥇 Gold: future expert</b><span>Build the 6.0 simulator for real: <code>car.launch.py</code> with arguments <code>use_sim</code>, <code>rviz</code> and <code>namespace</code>, your own nodes as stand-ins (for example <code>hw_status_publisher</code> renamed to <code>lidar_driver</code>), <code>respawn=True</code> on "perception", a <code>TimerAction</code> on "planner", and an <code>OnProcessExit</code> that shuts everything down when turtlesim (the "simulator") closes. Then launch it twice, as <code>car1</code> and <code>car2</code>, from one <code>fleet.launch.py</code>.</span></div></div>
+  <div class="step" id="m3-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Build the interfaces (all three now, M4 needs the .srv)</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_robot_interfaces/CMakeLists.txt</div><pre><code>rosidl_generate_interfaces(${PROJECT_NAME}
+  ...
+<span class="hl">  "msg/Turtle.msg"</span>
+<span class="hl">  "msg/TurtleArray.msg"</span>
+<span class="hl">  "srv/CatchTurtle.srv"</span>
+)</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws &amp;&amp; colcon build --packages-select my_robot_interfaces &amp;&amp; source ~/.bashrc
+ros2 interface show my_robot_interfaces/msg/TurtleArray</code></pre></div>
+  </div>
 
-<div class="kc" data-widget="kc"><div class="kc-head"><span class="sim-tag">✅ Knowledge check</span><b>Lecture 6 check: 10 questions</b></div><div class="kc-q" data-a="1"><p>Which function must every Python launch file contain?</p><div class="kc-opts"><button><code>main()</code></button><button><code>generate_launch_description()</code></button><button><code>launch()</code></button><button><code>LaunchDescription()</code></button></div><div class="kc-why"><code>ros2 launch</code> calls exactly this function and starts what it returns.</div></div><div class="kc-q" data-a="1"><p>You created <code>launch/radio.launch.py</code>, but <code>ros2 launch</code> says the file was not found. Most likely?</p><div class="kc-opts"><button>Launch files must be XML</button><button>No <code>install(DIRECTORY launch …)</code>, or no rebuild after adding the file</button><button>The file needs <code>chmod +x</code></button><button>You must restart the computer</button></div><div class="kc-why">A new file is installed only by a build; <code>--symlink-install</code> spares you rebuilds for <em>edits</em> only.</div></div><div class="kc-q" data-a="0"><p>In a launch file, how do you do <code>-r __node:=station_x</code>?</p><div class="kc-opts"><button><code>name="station_x"</code></button><button><code>rename="station_x"</code></button><button><code>namespace="station_x"</code></button><button>It is not possible</button></div><div class="kc-why"><code>name=</code> renames the node; <code>namespace=</code> adds a prefix.</div></div><div class="kc-q" data-a="2"><p>You run <code>ros2 launch my_robot_bringup number_app_args.launch.py frequency:=3</code> and the node stops with <code>InvalidParameterTypeException</code>. Why?</p><div class="kc-opts"><button>Arguments can't be numbers</button><button>The argument was not declared</button><button><code>3</code> is read as an integer, but the parameter is a float</button><button>The frequency is too high</button></div><div class="kc-why">Same rule as Lecture 5: write <code>frequency:=3.0</code>.</div></div><div class="kc-q" data-a="3"><p>Why can't you write <code>if LaunchConfiguration("graph") == "true":</code> in a launch file?</p><div class="kc-opts"><button>Python has no <code>if</code></button><button>It is too slow</button><button>Launch files can't have conditions</button><button>The value is only known when the launch runs; use <code>condition=IfCondition(…)</code></button></div><div class="kc-why"><code>LaunchConfiguration</code> is a placeholder (a substitution), not the value.</div></div><div class="kc-q" data-a="1"><p>A node publishes on <code>"/cmd_vel"</code> and is started with <code>namespace="car2"</code>. Which topic does it use?</p><div class="kc-opts"><button><code>/car2/cmd_vel</code></button><button><code>/cmd_vel</code>: absolute names ignore the namespace</button><button><code>/car2</code></button><button>It fails to start</button></div><div class="kc-why">Only relative names (no leading <code>/</code>) get the namespace. Write <code>"cmd_vel"</code>.</div></div><div class="kc-q" data-a="0"><p>What does <code>respawn=True</code> do?</p><div class="kc-opts"><button>Restarts the process if it dies</button><button>Starts two copies</button><button>Restarts the whole launch file</button><button>Saves the node's memory</button></div><div class="kc-why">After <code>respawn_delay</code> seconds, with a new pid and fresh variables.</div></div><div class="kc-q" data-a="2"><p>The LiDAR publishes <code>/scan</code> best effort. Your subscriber uses the default <code>10</code> (reliable). What happens?</p><div class="kc-opts"><button>It works, more slowly</button><button>It receives every other message</button><button>No connection, only an incompatible-QoS warning</button><button>The LiDAR switches to reliable</button></div><div class="kc-why">A reliable request can't be served by a best-effort offer. Use <code>qos_profile_sensor_data</code>.</div></div><div class="kc-q" data-a="1"><p>Two teams' LIMOs react to each other's <code>/cmd_vel</code>. The quickest fix?</p><div class="kc-opts"><button>Rename every node</button><button>A different <code>ROS_DOMAIN_ID</code> per team, in every terminal</button><button>Use services instead</button><button>Turn Wi-Fi off</button></div><div class="kc-why">Each domain is a separate ROS world.</div></div><div class="kc-q" data-a="3"><p>Your node's <code>debug</code> messages never appear. Why?</p><div class="kc-opts"><button>Python can't log debug</button><button>They go to <code>/rosout</code> only</button><button>You need <code>output="screen"</code></button><button>The default level is INFO; start with <code>--ros-args --log-level debug</code></button></div><div class="kc-why">Each node shows its level and everything more serious.</div></div></div>
+  <div class="step" id="m3-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Spawner: keep the list and publish it</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 turtle_spawner.py (changes)</div><pre><code><span class="hl">from my_robot_interfaces.msg import Turtle, TurtleArray</span>
+...
+        # in __init__
+<span class="hl">        self.alive_turtles_ = []</span>
+<span class="hl">        self.alive_turtles_publisher_ = self.create_publisher(TurtleArray, "alive_turtles", 10)</span>
 
-<h2 id="errors"><span class="num">6.5</span>When things go wrong</h2>
-<div class="table-wrap"><table class="fix">
-  <tr><th>You see…</th><th>Why</th><th>Fix</th></tr>
-  <tr><td><code>file 'x.launch.py' was not found in the share directory of package 'my_robot_bringup'</code></td><td>The launch folder isn't installed, or the package wasn't rebuilt after adding the file.</td><td>Check <code>install(DIRECTORY launch …)</code>; rebuild; source.</td></tr>
-  <tr><td><code>Package 'my_robot_bringup' not found</code></td><td>Not built, or this terminal isn't sourced.</td><td><code>colcon build</code>, then <code>source ~/.bashrc</code>.</td></tr>
-  <tr><td><code>executable 'X' not found on the libexec directory</code></td><td>A typo in <code>executable=</code>, or it's not in <code>setup.py</code>.</td><td><code>ros2 pkg executables my_py_pkg</code>; copy the exact name.</td></tr>
-  <tr><td><code>Caught exception when trying to load file of format [py]: …</code></td><td>A Python error in the launch file (missing import, typo, missing comma).</td><td>Read the last line of the message; it names the error and line.</td></tr>
-  <tr><td>Nodes start but don't talk</td><td>A remap on one node only, or two namespaces.</td><td><code>rqt_graph</code>; remap every node that uses the topic.</td></tr>
-  <tr><td><code>InvalidParameterTypeException</code> after a launch argument</td><td><code>frequency:=3</code> became an integer.</td><td>Pass <code>3.0</code>, or use a float default.</td></tr>
-  <tr><td><code>Included launch description missing required argument 'x'</code></td><td>An argument without a default, not passed in <code>launch_arguments</code> or on the command line.</td><td>Give it a <code>default_value</code>, or pass it.</td></tr>
-  <tr><td>YAML parameters ignored inside a namespace</td><td>The YAML key is <code>/node</code>, but the node is now <code>/robot1/node</code>.</td><td>Use <code>/robot1/node:</code> or <code>/**/node:</code>.</td></tr>
-  <tr><td>A node keeps restarting forever</td><td><code>respawn=True</code> on a node that crashes at start.</td><td>Read the first <code>process has died</code> error; fix the cause.</td></tr>
-  <tr><td><code>offering incompatible QoS … Last incompatible policy: RELIABILITY</code></td><td>Best-effort publisher, reliable subscriber.</td><td>Subscriber: <code>qos_profile_sensor_data</code>. RViz: Reliability "Best Effort".</td></tr>
-  <tr><td><code>ros2 topic list</code> shows only <code>/parameter_events</code> and <code>/rosout</code></td><td>Different <code>ROS_DOMAIN_ID</code> or <code>ROS_LOCALHOST_ONLY</code> in the two terminals.</td><td><code>echo $ROS_DOMAIN_ID</code> in both; set it in <code>~/.bashrc</code>.</td></tr>
-</table></div>
+<span class="hl">    def publish_alive_turtles(self):</span>
+<span class="hl">        msg = TurtleArray()</span>
+<span class="hl">        msg.turtles = self.alive_turtles_</span>
+<span class="hl">        self.alive_turtles_publisher_.publish(msg)</span>
 
-<h2 id="exit"><span class="num">6.6</span>Exit ticket &amp; homework</h2>
-<p>Five quick questions (5 min), then today's commands and homework.</p>
-<div class="quiz">
-  <div class="q"><p>Write the <code>Node(...)</code> for <code>robot_news_station</code> named <code>station_x</code> with <code>robot_name = "X"</code>.</p><details><summary>Answer</summary><div class="inner"><code>Node(package="my_py_pkg", executable="robot_news_station", name="station_x", parameters=[{"robot_name": "X"}])</code></div></details></div>
-  <div class="q"><p>Which two lines in the bringup package make <code>ros2 launch</code> find your launch and YAML files?</p><details><summary>Answer</summary><div class="inner"><code>install(DIRECTORY launch config DESTINATION share/${PROJECT_NAME})</code> in <code>CMakeLists.txt</code>, and in the launch file <code>get_package_share_directory("my_robot_bringup")</code> (or <code>FindPackageShare</code>) to find them.</div></details></div>
-  <div class="q"><p>Declare a launch argument <code>use_sim_time</code> (default false) and pass it to a node.</p><details><summary>Answer</summary><div class="inner"><code>DeclareLaunchArgument("use_sim_time", default_value="false")</code> and <code>Node(…, parameters=[{"use_sim_time": LaunchConfiguration("use_sim_time")}])</code>.</div></details></div>
-  <div class="q"><p>The node publishes <code>"scan"</code>. With <code>PushRosNamespace("car1")</code>, what is the full topic name, and what is it with a publisher on <code>"/scan"</code>?</p><details><summary>Answer</summary><div class="inner"><code>/car1/scan</code>, and <code>/scan</code> (absolute names are not changed).</div></details></div>
-  <div class="q"><p>Which QoS settings suit (a) a camera stream, (b) a map published once, (c) an emergency stop?</p><details><summary>Answer</summary><div class="inner">(a) best effort, volatile (<code>qos_profile_sensor_data</code>). (b) reliable, transient_local. (c) reliable.</div></details></div>
+    def callback_spawn(self, future, x, y, theta):
+        ...
+            if response.name != "":
+                self.get_logger().info("Turtle " + response.name + " is now alive")
+<span class="hl">                new_turtle = Turtle()</span>
+<span class="hl">                new_turtle.name = response.name</span>
+<span class="hl">                new_turtle.x, new_turtle.y, new_turtle.theta = x, y, theta</span>
+<span class="hl">                self.alive_turtles_.append(new_turtle)</span>
+<span class="hl">                self.publish_alive_turtles()</span></code></pre></div>
+  </div>
+
+  <div class="step" id="m3-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Controller: target comes from <code>/alive_turtles</code></span></div>
+    <div class="cmd file"><div class="cmd-h">📄 turtle_controller.py (changes)</div><pre><code><span class="hl">from my_robot_interfaces.msg import TurtleArray</span>
+...
+        # in __init__: delete target_x_ / target_y_
+<span class="hl">        self.turtle_to_catch_ = None</span>
+<span class="hl">        self.alive_turtles_subscriber_ = self.create_subscription(</span>
+<span class="hl">            TurtleArray, "alive_turtles", self.callback_alive_turtles, 10)</span>
+
+<span class="hl">    def callback_alive_turtles(self, msg):</span>
+<span class="hl">        if len(msg.turtles) &gt; 0:</span>
+<span class="hl">            self.turtle_to_catch_ = msg.turtles[0]</span>
+
+    def control_loop(self):
+<span class="hl">        if self.pose_ is None or self.turtle_to_catch_ is None:</span>
+            return
+<span class="hl">        dist_x = self.turtle_to_catch_.x - self.pose_.x</span>
+<span class="hl">        dist_y = self.turtle_to_catch_.y - self.pose_.y</span>
+        ...   # rest unchanged</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Build all, then 3 terminals</div><pre><code>cd ~/ros2_ws &amp;&amp; colcon build --symlink-install &amp;&amp; source ~/.bashrc
+ros2 run turtlesim turtlesim_node
+ros2 run turtlesim_catch_them_all turtle_controller
+ros2 run turtlesim_catch_them_all turtle_spawner</code></pre></div>
+    <p>✅ turtle1 drives to turtle2 and stops on it (no catching yet). <code>ros2 topic echo /alive_turtles</code>: the list keeps growing.</p>
+  </div>
 </div>
 
-<h3>📋 Today's commands</h3>
-<div class="cheat">
-  <div><code>ros2 launch PKG FILE.launch.py name:=value</code><span>start an application with arguments</span></div>
-  <div><code>ros2 launch PKG FILE --show-args</code> · <code>--print</code><span>list arguments · show without starting</span></div>
-  <div><code>Node(package, executable, name, namespace, remappings, parameters)</code><span>the launch building block</span></div>
-  <div><code>install(DIRECTORY launch config DESTINATION share/${PROJECT_NAME})</code><span>bringup CMakeLists.txt</span></div>
-  <div><code>get_package_share_directory("pkg")</code> · <code>FindPackageShare("pkg")</code><span>find installed files</span></div>
-  <div><code>DeclareLaunchArgument</code> · <code>LaunchConfiguration</code><span>declare / use an argument</span></div>
-  <div><code>condition=IfCondition(…)</code> · <code>UnlessCondition</code><span>start only if…</span></div>
-  <div><code>GroupAction([PushRosNamespace("r1"), …])</code><span>a whole robot in a namespace</span></div>
-  <div><code>IncludeLaunchDescription(PythonLaunchDescriptionSource(path), launch_arguments=…)</code><span>reuse a launch file</span></div>
-  <div><code>respawn=True, respawn_delay=2.0</code> · <code>TimerAction</code> · <code>OnProcessExit</code><span>robust start-up</span></div>
-  <div><code>ExecuteProcess(cmd=[…])</code><span>run any command</span></div>
-  <div><code>qos_profile_sensor_data</code> · <code>ros2 topic info -v</code><span>QoS in code · inspect QoS</span></div>
-  <div><code>export ROS_DOMAIN_ID=7</code> · <code>ROS_LOCALHOST_ONLY=1</code><span>separate robots / stay local</span></div>
-  <div><code>--ros-args --log-level debug</code> · <code>rqt_console</code><span>log levels</span></div>
-  <div><code>ros2 doctor --report</code><span>check the whole setup</span></div>
+<!-- ============================================================ -->
+<h2 id="m4"><span class="num">M4</span>Milestone 4 — Catch it with a service</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">MILESTONE 4 · 15 min</span><h3>/catch_turtle: the controller asks, the spawner decides</h3></div>
+  <p class="lab-goal">Test: turtles disappear one after another.</p>
+
+  <div class="step" id="m4-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Spawner: serve <code>/catch_turtle</code>, call <code>/kill</code> (click the highlighted parts)</span></div>
+    <div class="cmd file" data-widget="explain"><div class="cmd-h">📄 turtle_spawner.py (changes)</div><pre><code><span class="hl">from turtlesim.srv import Spawn, Kill</span>
+<span class="hl">from my_robot_interfaces.srv import CatchTurtle</span>
+...
+        # in __init__
+<span class="ex" data-tip="One node: client of <code>/kill</code> and server of <code>/catch_turtle</code>.">        self.kill_client_ = self.create_client(Kill, "kill")
+        self.catch_turtle_service_ = self.create_service(
+            CatchTurtle, "catch_turtle", self.callback_catch_turtle)</span>
+
+    def callback_catch_turtle(self, request, response):
+<span class="ex" data-tip="Already gone? Refuse.">        if request.name not in [t.name for t in self.alive_turtles_]:
+            response.success = False
+            return response</span>
+<span class="ex" data-tip="Update and publish the list first, so the controller picks a new target at once.">        self.alive_turtles_ = [t for t in self.alive_turtles_ if t.name != request.name]
+        self.publish_alive_turtles()</span>
+<span class="ex" data-tip="Async: a server callback must return quickly.">        self.call_kill_server(request.name)</span>
+        response.success = True
+        return response
+
+    def call_kill_server(self, turtle_name):
+        request = Kill.Request()
+        request.name = turtle_name
+        future = self.kill_client_.call_async(request)
+        future.add_done_callback(partial(self.callback_kill, turtle_name=turtle_name))
+
+    def callback_kill(self, future, turtle_name):
+        try:
+            future.result()
+            self.get_logger().info("Turtle " + turtle_name + " caught")
+        except Exception as e:
+            self.get_logger().error(f"Kill failed {e!r}")</code></pre></div>
+  </div>
+
+  <div class="step" id="m4-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Controller: when close, ask for the catch</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 turtle_controller.py (changes)</div><pre><code><span class="hl">from functools import partial</span>
+<span class="hl">from my_robot_interfaces.srv import CatchTurtle</span>
+...
+        # in __init__
+<span class="hl">        self.catch_client_ = self.create_client(CatchTurtle, "catch_turtle")</span>
+
+    def control_loop(self):
+        ...
+        else:
+            msg.linear.x = 0.0
+            msg.angular.z = 0.0
+<span class="hl">            self.call_catch_turtle_server(self.turtle_to_catch_.name)</span>
+<span class="hl">            self.turtle_to_catch_ = None</span>
+        self.cmd_vel_publisher_.publish(msg)
+
+<span class="hl">    def call_catch_turtle_server(self, turtle_name):</span>
+<span class="hl">        if not self.catch_client_.service_is_ready():</span>
+<span class="hl">            self.get_logger().warn("catch_turtle service not available")</span>
+<span class="hl">            return</span>
+<span class="hl">        request = CatchTurtle.Request()</span>
+<span class="hl">        request.name = turtle_name</span>
+<span class="hl">        future = self.catch_client_.call_async(request)</span>
+<span class="hl">        future.add_done_callback(partial(self.callback_catch, turtle_name=turtle_name))</span>
+
+<span class="hl">    def callback_catch(self, future, turtle_name):</span>
+<span class="hl">        try:</span>
+<span class="hl">            if not future.result().success:</span>
+<span class="hl">                self.get_logger().warn("Turtle " + turtle_name + " could not be caught")</span>
+<span class="hl">        except Exception as e:</span>
+<span class="hl">            self.get_logger().error(f"Service call failed {e!r}")</span></code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Rebuild, then the same 3 terminals as M3</div><pre><code>cd ~/ros2_ws &amp;&amp; colcon build --symlink-install &amp;&amp; source ~/.bashrc</code></pre></div>
+    <p>✅ <strong>You have an autonomous system.</strong> Open <code>rqt_graph</code> and compare with your sketch.</p>
+  </div>
+
 </div>
+
+<!-- ============================================================ -->
+<h2 id="m5"><span class="num">M5</span>Milestone 5 — Chase the closest turtle</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">MILESTONE 5 · 5 min</span><h3>Find the minimum</h3></div>
+  <div class="step" id="m5-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Replace <code>callback_alive_turtles</code></span></div>
+    <div class="cmd file"><div class="cmd-h">📄 turtle_controller.py</div><pre><code>        # in __init__ (becomes a parameter in M6)
+<span class="hl">        self.catch_closest_turtle_first_ = True</span>
+
+    def callback_alive_turtles(self, msg):
+        if len(msg.turtles) == 0 or self.pose_ is None:
+            return
+        if self.catch_closest_turtle_first_:
+            closest_turtle = None
+            closest_distance = None
+            for turtle in msg.turtles:
+                dist_x = turtle.x - self.pose_.x
+                dist_y = turtle.y - self.pose_.y
+                distance = math.sqrt(dist_x * dist_x + dist_y * dist_y)
+                if closest_turtle is None or distance &lt; closest_distance:
+                    closest_turtle = turtle
+                    closest_distance = distance
+            self.turtle_to_catch_ = closest_turtle
+        else:
+            self.turtle_to_catch_ = msg.turtles[0]</code></pre></div>
+    <p>✅ Count catches in one minute, with and without it.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="m6"><span class="num">M6</span>Milestone 6 — Parameters, YAML + one launch file</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">MILESTONE 6 · 10 min</span><h3>Labs 1–3, applied to your project</h3></div>
+  <p class="lab-goal">Test: <code>ros2 launch my_robot_bringup catch_them_all.launch.py</code> starts the whole game; <code>closest:=false</code> changes the strategy.</p>
+
+  <div class="step" id="m6-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Fixed values → parameters</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 turtle_spawner.py → __init__</div><pre><code>        self.declare_parameter("spawn_frequency", 1.0)
+        self.declare_parameter("turtle_name_prefix", "turtle")
+        self.spawn_frequency_ = self.get_parameter("spawn_frequency").value
+        self.turtle_name_prefix_ = self.get_parameter("turtle_name_prefix").value
+        ...
+        self.spawn_timer_ = self.create_timer(1.0 / self.spawn_frequency_, self.spawn_new_turtle)</code></pre></div>
+    <div class="cmd file"><div class="cmd-h">📄 turtle_controller.py → __init__</div><pre><code>        self.declare_parameter("catch_closest_turtle_first", True)
+        self.catch_closest_turtle_first_ = self.get_parameter("catch_closest_turtle_first").value</code></pre></div>
+  </div>
+
+  <div class="step" id="m6-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">YAML file (Lab 2)</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_robot_bringup/config/catch_them_all.yaml</div><pre><code>/turtle_spawner:
+  ros__parameters:
+    spawn_frequency: 1.5
+    turtle_name_prefix: "my_turtle"
+/turtle_controller:
+  ros__parameters:
+    catch_closest_turtle_first: true</code></pre></div>
+  </div>
+
+  <div class="step" id="m6-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">The launch file with an argument (Lab 3)</span></div>
+    <div class="cmd file" data-widget="explain"><div class="cmd-h">📄 my_robot_bringup/launch/catch_them_all.launch.py</div><pre><code>import os
+from ament_index_python.packages import get_package_share_directory
+from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import Node
+
+
+def generate_launch_description():
+<span class="ex" data-tip="The installed YAML file (Lab 2).">    param_file = os.path.join(
+        get_package_share_directory("my_robot_bringup"), "config", "catch_them_all.yaml")</span>
+
+    return LaunchDescription([
+<span class="ex" data-tip="<code>closest:=false</code> on the command line (Lab 3).">        DeclareLaunchArgument("closest", default_value="true"),</span>
+        Node(package="turtlesim", executable="turtlesim_node"),
+        Node(package="turtlesim_catch_them_all", executable="turtle_spawner",
+             parameters=[param_file]),
+<span class="ex" data-tip="YAML first, then a dict: the argument wins (later entries win).">        Node(package="turtlesim_catch_them_all", executable="turtle_controller",
+             parameters=[param_file,
+                         {"catch_closest_turtle_first": LaunchConfiguration("closest")}]),</span>
+    ])</code></pre></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_robot_bringup/package.xml (add)</div><pre><code>  &lt;exec_depend&gt;turtlesim_catch_them_all&lt;/exec_depend&gt;</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws &amp;&amp; colcon build --symlink-install &amp;&amp; source ~/.bashrc
+ros2 launch my_robot_bringup catch_them_all.launch.py
+ros2 launch my_robot_bringup catch_them_all.launch.py closest:=false</code></pre></div>
+    <p>✅ One command, three nodes, turtles named <code>my_turtle2</code>, <code>my_turtle3</code>, … at 1.5 per second. 🎉</p>
+  </div>
+</div>
+
+<details class="box">
+  <summary>📦 Complete final files (check your work)</summary>
+  <div class="inner">
+  <div class="cmd file"><div class="cmd-h">📄 turtle_controller.py (final)</div><pre><code>#!/usr/bin/env python3
+from functools import partial
+import math
+import rclpy
+from rclpy.node import Node
+from turtlesim.msg import Pose
+from geometry_msgs.msg import Twist
+from my_robot_interfaces.msg import TurtleArray
+from my_robot_interfaces.srv import CatchTurtle
+
+
+class TurtleControllerNode(Node):
+    def __init__(self):
+        super().__init__("turtle_controller")
+        self.declare_parameter("catch_closest_turtle_first", True)
+        self.catch_closest_turtle_first_ = self.get_parameter("catch_closest_turtle_first").value
+        self.turtle_to_catch_ = None
+        self.pose_ = None
+        self.cmd_vel_publisher_ = self.create_publisher(Twist, "turtle1/cmd_vel", 10)
+        self.pose_subscriber_ = self.create_subscription(
+            Pose, "turtle1/pose", self.callback_turtle_pose, 10)
+        self.alive_turtles_subscriber_ = self.create_subscription(
+            TurtleArray, "alive_turtles", self.callback_alive_turtles, 10)
+        self.catch_client_ = self.create_client(CatchTurtle, "catch_turtle")
+        self.control_loop_timer_ = self.create_timer(0.01, self.control_loop)
+
+    def callback_turtle_pose(self, msg):
+        self.pose_ = msg
+
+    def callback_alive_turtles(self, msg):
+        if len(msg.turtles) == 0 or self.pose_ is None:
+            return
+        if self.catch_closest_turtle_first_:
+            closest_turtle = None
+            closest_distance = None
+            for turtle in msg.turtles:
+                dist_x = turtle.x - self.pose_.x
+                dist_y = turtle.y - self.pose_.y
+                distance = math.sqrt(dist_x * dist_x + dist_y * dist_y)
+                if closest_turtle is None or distance &lt; closest_distance:
+                    closest_turtle = turtle
+                    closest_distance = distance
+            self.turtle_to_catch_ = closest_turtle
+        else:
+            self.turtle_to_catch_ = msg.turtles[0]
+
+    def control_loop(self):
+        if self.pose_ is None or self.turtle_to_catch_ is None:
+            return
+        dist_x = self.turtle_to_catch_.x - self.pose_.x
+        dist_y = self.turtle_to_catch_.y - self.pose_.y
+        distance = math.sqrt(dist_x * dist_x + dist_y * dist_y)
+
+        msg = Twist()
+        if distance &gt; 0.5:
+            msg.linear.x = 2 * distance
+            goal_theta = math.atan2(dist_y, dist_x)
+            diff = goal_theta - self.pose_.theta
+            if diff &gt; math.pi:
+                diff -= 2 * math.pi
+            elif diff &lt; -math.pi:
+                diff += 2 * math.pi
+            msg.angular.z = 6 * diff
+        else:
+            msg.linear.x = 0.0
+            msg.angular.z = 0.0
+            self.call_catch_turtle_server(self.turtle_to_catch_.name)
+            self.turtle_to_catch_ = None
+        self.cmd_vel_publisher_.publish(msg)
+
+    def call_catch_turtle_server(self, turtle_name):
+        if not self.catch_client_.service_is_ready():
+            self.get_logger().warn("catch_turtle service not available")
+            return
+        request = CatchTurtle.Request()
+        request.name = turtle_name
+        future = self.catch_client_.call_async(request)
+        future.add_done_callback(partial(self.callback_catch, turtle_name=turtle_name))
+
+    def callback_catch(self, future, turtle_name):
+        try:
+            if not future.result().success:
+                self.get_logger().warn("Turtle " + turtle_name + " could not be caught")
+        except Exception as e:
+            self.get_logger().error(f"Service call failed {e!r}")
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    rclpy.spin(TurtleControllerNode())
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+  <div class="cmd file"><div class="cmd-h">📄 turtle_spawner.py (final)</div><pre><code>#!/usr/bin/env python3
+from functools import partial
+import math
+import random
+import rclpy
+from rclpy.node import Node
+from turtlesim.srv import Spawn, Kill
+from my_robot_interfaces.msg import Turtle, TurtleArray
+from my_robot_interfaces.srv import CatchTurtle
+
+
+class TurtleSpawnerNode(Node):
+    def __init__(self):
+        super().__init__("turtle_spawner")
+        self.declare_parameter("spawn_frequency", 1.0)
+        self.declare_parameter("turtle_name_prefix", "turtle")
+        self.spawn_frequency_ = self.get_parameter("spawn_frequency").value
+        self.turtle_name_prefix_ = self.get_parameter("turtle_name_prefix").value
+        self.turtle_counter_ = 1
+        self.alive_turtles_ = []
+        self.spawn_client_ = self.create_client(Spawn, "spawn")
+        self.kill_client_ = self.create_client(Kill, "kill")
+        self.alive_turtles_publisher_ = self.create_publisher(TurtleArray, "alive_turtles", 10)
+        self.catch_turtle_service_ = self.create_service(
+            CatchTurtle, "catch_turtle", self.callback_catch_turtle)
+        self.spawn_timer_ = self.create_timer(1.0 / self.spawn_frequency_, self.spawn_new_turtle)
+
+    def callback_catch_turtle(self, request, response):
+        if request.name not in [t.name for t in self.alive_turtles_]:
+            response.success = False
+            return response
+        self.alive_turtles_ = [t for t in self.alive_turtles_ if t.name != request.name]
+        self.publish_alive_turtles()
+        self.call_kill_server(request.name)
+        response.success = True
+        return response
+
+    def publish_alive_turtles(self):
+        msg = TurtleArray()
+        msg.turtles = self.alive_turtles_
+        self.alive_turtles_publisher_.publish(msg)
+
+    def spawn_new_turtle(self):
+        if not self.spawn_client_.service_is_ready():
+            self.get_logger().warn("Waiting for turtlesim /spawn ...")
+            return
+        self.turtle_counter_ += 1
+        name = self.turtle_name_prefix_ + str(self.turtle_counter_)
+        x = random.uniform(0.5, 10.5)
+        y = random.uniform(0.5, 10.5)
+        theta = random.uniform(0.0, 2 * math.pi)
+        request = Spawn.Request()
+        request.x, request.y, request.theta, request.name = x, y, theta, name
+        future = self.spawn_client_.call_async(request)
+        future.add_done_callback(partial(self.callback_spawn, x=x, y=y, theta=theta))
+
+    def callback_spawn(self, future, x, y, theta):
+        try:
+            response = future.result()
+            if response.name != "":
+                self.get_logger().info("Turtle " + response.name + " is now alive")
+                new_turtle = Turtle()
+                new_turtle.name = response.name
+                new_turtle.x, new_turtle.y, new_turtle.theta = x, y, theta
+                self.alive_turtles_.append(new_turtle)
+                self.publish_alive_turtles()
+        except Exception as e:
+            self.get_logger().error(f"Service call failed {e!r}")
+
+    def call_kill_server(self, turtle_name):
+        request = Kill.Request()
+        request.name = turtle_name
+        future = self.kill_client_.call_async(request)
+        future.add_done_callback(partial(self.callback_kill, turtle_name=turtle_name))
+
+    def callback_kill(self, future, turtle_name):
+        try:
+            future.result()
+            self.get_logger().info("Turtle " + turtle_name + " caught")
+        except Exception as e:
+            self.get_logger().error(f"Kill failed {e!r}")
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    rclpy.spin(TurtleSpawnerNode())
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()</code></pre></div>
+  </div>
+</details>
+
+<!-- ============================================================ -->
+<h2 id="test"><span class="num">Test</span>Inspect, catch by hand, record</h2>
+<div class="lab">
+  <div class="lab-h"><span class="badge">TEST · 10 min</span><h3>Prove it works with the tools from Part A</h3></div>
+  <p class="lab-goal">Keep the launch from M6 running. Terminal 2:</p>
+
+  <div class="step" id="t-1">
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Inspect</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>rqt_graph                                  # matches 6.1 step 2?
+ros2 topic echo /alive_turtles --once
+ros2 node info /turtle_spawner</code></pre></div>
+  </div>
+
+  <div class="step" id="t-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Be the controller: catch a turtle by hand (twice)</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2 (pick a name from the list)</div><pre><code>ros2 service call /catch_turtle my_robot_interfaces/srv/CatchTurtle "{name: 'my_turtle5'}"
+ros2 service call /catch_turtle my_robot_interfaces/srv/CatchTurtle "{name: 'my_turtle5'}"</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>... CatchTurtle_Response(success=True)
+... CatchTurtle_Response(success=False)</pre></div>
+  </div>
+
+  <div class="step" id="t-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Record 20 s of the game, replay the hunter's moves</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>ros2 bag record /turtle1/cmd_vel /turtle1/pose /alive_turtles -o catch_run   # Ctrl+C after ~20 s
+ros2 bag info catch_run</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Stop the launch. Fresh turtlesim, replay only the commands</div><pre><code>ros2 run turtlesim turtlesim_node
+ros2 bag play catch_run --topics /turtle1/cmd_vel</code></pre></div>
+    <p>✅ turtle1 repeats the same path, hunting turtles that aren't there.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="exit"><span class="num">6.3</span>Check &amp; homework</h2>
+<div class="kc" data-widget="kc"><div class="kc-head"><span class="sim-tag">✅ Knowledge check</span><b>Lecture 6: 5 questions</b></div><div class="kc-q" data-a="1"><p>Which function must every Python launch file contain?</p><div class="kc-opts"><button><code>main()</code></button><button><code>generate_launch_description()</code></button><button><code>launch()</code></button><button><code>start()</code></button></div><div class="kc-why"><code>ros2 launch</code> calls exactly this function.</div></div><div class="kc-q" data-a="1"><p>A new launch file is "not found". Most likely?</p><div class="kc-opts"><button>It must be XML</button><button>Not installed or not rebuilt</button><button>It needs <code>chmod +x</code></button><button>Wrong Python version</button></div><div class="kc-why">Check <code>install(DIRECTORY launch config …)</code>, rebuild, source.</div></div><div class="kc-q" data-a="1"><p>Heading 170°, goal −170°, no angle wrap. What does the hunter do?</p><div class="kc-opts"><button>Turns 20° left</button><button>Turns 340° the long way</button><button>Drives backwards</button><button>Stops</button></div><div class="kc-why">Wrapping adds 360°: +20°.</div></div><div class="kc-q" data-a="2"><p>Why does the controller call <code>/catch_turtle</code>, not <code>/kill</code>?</p><div class="kc-opts"><button><code>/kill</code> is slower</button><button>Only C++ can call <code>/kill</code></button><button>The spawner owns the list and must keep it correct</button><button>No reason</button></div><div class="kc-why">One owner per piece of data.</div></div><div class="kc-q" data-a="1"><p><code>catch_them_all.launch.py closest:=false</code>: what changes?</p><div class="kc-opts"><button>Nothing: the YAML says true</button><button>The controller chases the first turtle: the dict after the YAML wins</button><button>An error</button><button>The spawner stops</button></div><div class="kc-why">Later entries in <code>parameters=[…]</code> win.</div></div></div>
 
 <div class="box note">
   <div class="box-title">🏠 Homework</div>
   <ol>
-    <li>Finish Activities 6.1 and 6.2, and Mini-project 6.4 (cylinder) with its launch file.</li>
-    <li>Add <code>export ROS_DOMAIN_ID=&lt;your team number&gt;</code> to <code>~/.bashrc</code> (ask for your number) and check it with <code>ros2 doctor --report</code>.</li>
-    <li>Preview Lecture 7 (Catch Them All): it ends with one launch file that starts turtlesim, a spawner and a controller, all configured by parameters. Draw its node graph on paper before class.</li>
-    <li>Make sure <code>Turtle.msg</code> and <code>TurtleArray.msg</code> (Lecture 5 homework) are built.</li>
+    <li>Finish M1–M6. Submit: an <code>rqt_graph</code> screenshot, the <code>catch_run</code> bag, and your code.</li>
+    <li>Challenge: make <code>kp_linear</code>, <code>kp_angular</code> and <code>catch_distance</code> parameters and change them live with <code>ros2 param set</code> (parameter callback, Lecture 5).</li>
+    <li>Preview Lecture 8: <code>ros2 launch limo_gazebosim limo_gazebo_diff.launch.py</code>, then <code>ros2 topic echo /odom --once</code>.</li>
   </ol>
-</div>
-
-<div class="box">
-  <div class="box-title">📚 Read more</div>
-  <ul>
-    <li><a href="https://docs.ros.org/en/humble/Tutorials/Intermediate/Launch/Creating-Launch-Files.html">ROS 2 Humble docs: Creating a launch file</a> (the turtlesim mimic example from Lab 4)</li>
-    <li><a href="https://docs.ros.org/en/humble/Tutorials/Intermediate/Launch/Launch-system.html">Integrating launch files into ROS 2 packages</a></li>
-    <li><a href="https://docs.ros.org/en/humble/Tutorials/Intermediate/Launch/Using-Substitutions.html">Using substitutions</a> (arguments, <code>LaunchConfiguration</code>, <code>PythonExpression</code>)</li>
-    <li><a href="https://docs.ros.org/en/humble/Tutorials/Intermediate/Launch/Using-Event-Handlers.html">Using event handlers</a> (<code>OnProcessStart</code>, <code>OnProcessExit</code>)</li>
-    <li><a href="https://docs.ros.org/en/humble/Tutorials/Intermediate/Launch/Using-ROS2-Launch-For-Large-Projects.html">Managing large projects</a> (includes, namespaces, YAML in launch)</li>
-    <li><a href="https://docs.ros.org/en/humble/How-To-Guides/Launch-file-different-formats.html">Launch files in Python, XML and YAML</a></li>
-    <li><a href="https://docs.ros.org/en/humble/Concepts/Intermediate/About-Quality-of-Service-Settings.html">About Quality of Service settings</a></li>
-    <li><a href="https://docs.ros.org/en/humble/Concepts/Intermediate/About-Domain-ID.html">The ROS_DOMAIN_ID</a></li>
-    <li><a href="https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Using-Rqt-Console/Using-Rqt-Console.html">Using rqt_console to view logs</a> · <a href="https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries/Getting-Started-With-Ros2doctor.html">Using ros2doctor</a></li>
-    <li><a href="https://docs.ros.org/en/humble/Tutorials/Demos/Managed-Nodes.html">Managed (lifecycle) nodes</a> · <a href="https://docs.ros.org/en/humble/Concepts/Intermediate/About-Composition.html">About composition</a></li>
-    <li><a href="https://github.com/autowarefoundation/autoware_launch">Autoware's launch package on GitHub</a>: how a real self-driving car is started</li>
-  </ul>
 </div>
 
 <div class="footer-nav">
   <a href="L05-custom-interfaces.html">← Lecture 5: Interfaces &amp; Parameters</a>
   <a href="index.html#lectures">All lectures</a>
-  <a href="L07-catch-them-all.html">Lecture 7: Catch Them All →</a>
+  <a href="L08-drive-limo.html">Lecture 8: Drive the LIMO →</a>
 </div>
 </div>
 <script src="lab.js"></script>

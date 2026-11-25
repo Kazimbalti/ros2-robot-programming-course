@@ -33,9 +33,9 @@
     <div class="chip">⏱ 3 h · 20 min teach · 2 h 40 min hands-on</div>
     <div class="chip">🤖 AgileX LIMO · Gazebo · ~/limo_ws</div>
     <div class="chip">🐍 Python · ROS 2 Humble</div>
-    <div class="chip">Before this: Lecture 7</div>
+    <div class="chip">Before this: Lecture 6</div>
   </div>
-  <div class="skill-path" aria-label="Course path"><a class="done" href="01-installation-vmware-ros2-limo-intro.html">L1 · Install</a><a class="done" href="L02-first-node.html">L2 · Nodes</a><a class="done" href="L03-topics.html">L3 · Topics</a><a class="done" href="L04-services.html">L4 · Services &amp; Actions</a><a class="done" href="L05-custom-interfaces.html">L5 · Interfaces &amp; Params</a><a class="done" href="L06-parameters-launch.html">L6 · Launch</a><a class="done" href="L07-catch-them-all.html">L7 · Project</a><a class="now" href="L08-drive-limo.html">L8 · Drive</a><a class="" href="L09-limo-urdf-tf-rviz.html">L9 · URDF/TF</a><a class="" href="L10-limo-lidar-imu.html">L10 · LiDAR/IMU</a><a class="" href="L11-limo-camera-vision.html">L11 · Vision</a><a class="" href="L12-limo-slam-localization.html">L12 · SLAM</a><a class="" href="L13-limo-nav2.html">L13 · Nav2</a><a class="" href="L14-real-limo-mission.html">L14 · Real LIMO</a><a href="projects.html">+ Projects</a></div>
+  <div class="skill-path" aria-label="Course path"><a class="done" href="01-installation-vmware-ros2-limo-intro.html">L1 · Install</a><a class="done" href="L02-first-node.html">L2 · Nodes</a><a class="done" href="L03-topics.html">L3 · Topics</a><a class="done" href="L04-services.html">L4 · Services &amp; Actions</a><a class="done" href="L05-custom-interfaces.html">L5 · Interfaces &amp; Params</a><a class="done" href="L06-parameters-launch.html">L6 · Launch + Project</a><a class="now" href="L08-drive-limo.html">L8 · Drive</a><a class="" href="L09-limo-urdf-tf-rviz.html">L9 · URDF/TF</a><a class="" href="L10-limo-lidar-imu.html">L10 · LiDAR/IMU</a><a class="" href="L11-limo-camera-vision.html">L11 · Vision</a><a class="" href="L12-limo-slam-localization.html">L12 · SLAM</a><a class="" href="L13-limo-nav2.html">L13 · Nav2</a><a class="" href="L14-real-limo-mission.html">L14 · Real LIMO</a><a href="projects.html">+ Projects</a></div>
 </div>
 
 <div class="grid2">
@@ -70,7 +70,7 @@
   <div class="inner">
   <div class="table-wrap"><table>
     <tr><th>Time</th><th>Activity</th><th>Type</th></tr>
-    <tr><td>0:00–0:10</td><td>Warm-up: recall the go-to-goal maths from Lecture 7</td><td><span class="tag check">Check</span></td></tr>
+    <tr><td>0:00–0:10</td><td>Warm-up: recall the go-to-goal maths from Lecture 6</td><td><span class="tag check">Check</span></td></tr>
     <tr><td>0:10–0:30</td><td>Turtle → LIMO mapping table; safety (watchdog, speed limits); sim time</td><td><span class="tag teach">Teach</span></td></tr>
     <tr><td>0:30–1:00</td><td>Labs 1–2 — launch, explore, drive</td><td><span class="tag do">Do</span></td></tr>
     <tr><td>1:00–1:35</td><td>Lab 3 — drive_square (open loop)</td><td><span class="tag do">Do</span></td></tr>
@@ -317,7 +317,7 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard</code></pre></div>
 
 <h2 id="lab5"><span class="num">L5</span>Lab 5 — Go-to-goal on the LIMO (closed loop)</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB 5 · 40 min</span><h3>Your Lecture 7 controller, now in metres</h3></div>
+  <div class="lab-h"><span class="badge">LAB 5 · 40 min</span><h3>Your Lecture 6 controller, now in metres</h3></div>
   <p class="lab-goal">It is the same idea as the turtle controller, with three safety upgrades for a real robot: <strong>speed limits</strong>, <strong>turn first if the heading is badly off</strong>, and a <strong>tighter stop distance</strong> (5 cm).</p>
   <div class="step" id="d5-1">
     <div class="step-h"><span class="step-n">1</span><span class="step-t">Write <code>go_to_goal.py</code></span></div>
@@ -390,7 +390,7 @@ def main(args=None):
 if __name__ == "__main__":
     main()</code></pre></div>
     <div class="box tip"><div class="box-title">💡 A shorter angle wrap</div>
-    <p><code>atan2(sin(d), cos(d))</code> gives the same result as the <code>if diff &gt; π …</code> block from Lecture 7, in one line.</p></div>
+    <p><code>atan2(sin(d), cos(d))</code> gives the same result as the <code>if diff &gt; π …</code> block from Lecture 6, in one line.</p></div>
   </div>
   <div class="step" id="d5-2">
     <div class="step-h"><span class="step-n">2</span><span class="step-t">Run it to a few goals</span></div>
@@ -476,7 +476,7 @@ ros2 run limo_lab go_to_goal --ros-args -p goal_x:=1.0 -p goal_y:=0.5 -p use_sim
 </div>
 
 <div class="footer-nav">
-  <a href="L07-catch-them-all.html">← Lecture 7: Catch Them All</a>
+  <a href="L06-parameters-launch.html">← Lecture 6: Launch Files + Catch Them All</a>
   <a href="index.html#lectures">All lectures</a>
   <a href="L09-limo-urdf-tf-rviz.html">Lecture 9: URDF, TF &amp; RViz →</a>
 </div>

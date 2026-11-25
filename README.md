@@ -15,7 +15,7 @@ Systems, University of Lahore, Pakistan.
 
 | Part | Lectures | Files |
 |---|---|---|
-| Part A — ROS 2 Bootcamp (turtlesim) | 1 Install · 2 Nodes · 3 Topics · 4 Services · 5 Interfaces & Parameters · 6 Launch & Toolkit · 7 Catch Them All | `01-…html`, `L02-…html` … `L07-…html` |
+| Part A — ROS 2 Bootcamp (turtlesim) | 1 Install · 2 Nodes · 3 Topics · 4 Services · 5 Interfaces & Parameters · 6 Launch Files + Project: Catch Them All | `01-…html`, `L02-…html` … `L06-…html` |
 | Part B — ROS 2 on the AgileX LIMO | 8 Drive · 9 URDF/TF/RViz · 10 LiDAR & IMU · 11 Camera & Vision · 12 SLAM & AMCL · 13 Nav2 & Actions · 14 Real LIMO & final mission | `L08-…html` … `L14-…html` |
 | Projects — Build Your Own Robot "Forge" | P1 Motors, power & compute · P2 Driver, URDF & sensors · P3 Simulation, 3D print & review | `projects.html`, `12-diy-…`, `13-diy-…`, `14-diy-…` |
 | Extended reference notes | the original long-form lectures 02–11 | `02-…html` … `11-…html` |

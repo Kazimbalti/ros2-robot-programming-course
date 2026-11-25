@@ -35,7 +35,7 @@
     <div class="chip">🐍 Your limo_lab package</div>
     <div class="chip">Before this: Lectures 8–13</div>
   </div>
-  <div class="skill-path" aria-label="Course path"><a class="done" href="01-installation-vmware-ros2-limo-intro.html">L1 · Install</a><a class="done" href="L02-first-node.html">L2 · Nodes</a><a class="done" href="L03-topics.html">L3 · Topics</a><a class="done" href="L04-services.html">L4 · Services &amp; Actions</a><a class="done" href="L05-custom-interfaces.html">L5 · Interfaces &amp; Params</a><a class="done" href="L06-parameters-launch.html">L6 · Launch</a><a class="done" href="L07-catch-them-all.html">L7 · Project</a><a class="done" href="L08-drive-limo.html">L8 · Drive</a><a class="done" href="L09-limo-urdf-tf-rviz.html">L9 · URDF/TF</a><a class="done" href="L10-limo-lidar-imu.html">L10 · LiDAR/IMU</a><a class="done" href="L11-limo-camera-vision.html">L11 · Vision</a><a class="done" href="L12-limo-slam-localization.html">L12 · SLAM</a><a class="done" href="L13-limo-nav2.html">L13 · Nav2</a><a class="now" href="L14-real-limo-mission.html">L14 · Real LIMO</a><a href="projects.html">+ Projects</a></div>
+  <div class="skill-path" aria-label="Course path"><a class="done" href="01-installation-vmware-ros2-limo-intro.html">L1 · Install</a><a class="done" href="L02-first-node.html">L2 · Nodes</a><a class="done" href="L03-topics.html">L3 · Topics</a><a class="done" href="L04-services.html">L4 · Services &amp; Actions</a><a class="done" href="L05-custom-interfaces.html">L5 · Interfaces &amp; Params</a><a class="done" href="L06-parameters-launch.html">L6 · Launch + Project</a><a class="done" href="L08-drive-limo.html">L8 · Drive</a><a class="done" href="L09-limo-urdf-tf-rviz.html">L9 · URDF/TF</a><a class="done" href="L10-limo-lidar-imu.html">L10 · LiDAR/IMU</a><a class="done" href="L11-limo-camera-vision.html">L11 · Vision</a><a class="done" href="L12-limo-slam-localization.html">L12 · SLAM</a><a class="done" href="L13-limo-nav2.html">L13 · Nav2</a><a class="now" href="L14-real-limo-mission.html">L14 · Real LIMO</a><a href="projects.html">+ Projects</a></div>
 </div>
 
 <div class="grid2">
@@ -252,7 +252,7 @@ flowchart LR
     <tr><td>Find and approach red</td><td>Lecture 11 (<code>color_tracker</code> + <code>red_follower</code>, depth distance)</td></tr>
     <tr><td>Never crash</td><td>Lecture 10 (LiDAR front-sector check)</td></tr>
     <tr><td>Status topic, parameters for waypoints, one launch file</td><td>Lectures 3, 6</td></tr>
-    <tr><td>Evidence</td><td>Lecture 7 (ros2 bag), Lecture 9 (RViz)</td></tr>
+    <tr><td>Evidence</td><td>Lecture 6 (ros2 bag), Lecture 9 (RViz)</td></tr>
   </table></div>
   <details class="hint"><summary>Hint: a clean structure</summary><div class="inner">
   <p>One <code>mission_manager.py</code> node (it uses a BasicNavigator) runs the steps in order. For Station C: after <code>goToPose(C)</code> succeeds, it hands control to your red-follower logic (subscribe to <code>/red_target</code>, publish <code>/cmd_vel</code>) until the blob area is big enough, then calls <code>goToPose(Home)</code>. A launch file <code>mission.launch.py</code> starts <code>color_tracker</code> (with <code>show_window: False</code>) and <code>mission_manager</code>, with waypoints as parameters.</p>
