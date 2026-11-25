@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lecture 7 — Project: Catch Them All</title>
-<meta name="description" content="Hands-on Lecture 7: the Part A capstone. Build the turtlesim 'Catch Them All' project step by step with topics, services, custom interfaces, parameters and a launch file, then record and replay it with ROS 2 bags.">
+<meta name="description" content="Hands-on Lecture 7, the Part A capstone: design and build the turtlesim Catch Them All project as a sense-think-act system: a go-to-goal P-controller, a spawner with service clients, custom messages and a custom service, closest-target choice, parameters, a YAML file and a launch file, then inspect, record and replay it with ros2 bag. Self-driving car and robotaxi examples throughout.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
@@ -13,6 +13,235 @@
 <link rel="stylesheet" href="widgets.css">
 <link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="projector.css">
+<style>
+  /* Lecture 4 style: the three-way comparison cards */
+  .trio{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:18px 0 22px;}
+  .trio > div{background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:16px 16px 12px; position:relative; overflow:hidden;}
+  .trio > div::before{content:""; position:absolute; top:0; left:0; right:0; height:5px;}
+  .trio .t-topic::before{background:var(--accent);} .trio .t-srv::before{background:var(--gold);} .trio .t-act::before{background:var(--accent2);}
+  .trio .big{font-size:2.1em; line-height:1.1;}
+  .trio b{display:block; font-size:1.08em; margin:6px 0 2px; color:var(--text);}
+  .trio .say{font-style:italic; color:var(--muted); font-size:.92em; margin-bottom:8px;}
+  .trio ul{font-size:.92em; padding-inline-start:18px; margin:0;}
+  @media (max-width:760px){ .trio{grid-template-columns:1fr;} }
+  .vs td:first-child{font-weight:700; white-space:nowrap;}
+  .credit{font-size:.8em; color:var(--muted); margin-top:-6px;}
+
+  /* Lecture 4 style: light cover so every word is readable on screens and projectors */
+  html body .cover{background:linear-gradient(135deg,#eaf3ff 0%,#dde9f8 55%,#e8edf4 100%) !important; border:1px solid #c9d8ee; box-shadow:0 24px 50px -36px rgba(30,60,120,.45) !important;}
+  html body .cover::before{background:none !important;}
+  .cover::after{background-image:linear-gradient(rgba(30,60,120,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(30,60,120,.05) 1px,transparent 1px);}
+  html body .cover h1{color:#14213d;}
+  html body .cover .subtitle{color:#2b3550 !important;}
+  html body .cover .subtitle strong{color:#0b1530;}
+  html body .cover .kicker{color:#1e3a8a; background:rgba(255,255,255,.75); border-color:#c3d3ea;}
+  html body .cover .chip{color:#1f2a44; background:rgba(255,255,255,.75); border-color:#c3d3ea;}
+  html body .cover .skill-path a{color:#1e3a8a; background:rgba(255,255,255,.65); border-color:#c3d3ea;}
+  html body .cover .skill-path a.done{color:#065f46; background:#d1fae5; border-color:#86e0bb;}
+  html body .cover .skill-path a.now{color:#fff; background:#2563eb; border-color:#2563eb;}
+  html body .cover .cover-art{filter:drop-shadow(0 14px 18px rgba(30,60,120,.25));}
+  html[data-theme="dark"] body .cover{background:linear-gradient(135deg,#2a3142 0%,#323a4f 100%) !important; border-color:#3d465d;}
+  html[data-theme="dark"] .cover::after{background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);}
+  html[data-theme="dark"] body .cover h1{color:#f3f5fb;}
+  html[data-theme="dark"] body .cover .subtitle{color:#d9deea !important;}
+  html[data-theme="dark"] body .cover .subtitle strong{color:#fff;}
+  html[data-theme="dark"] body .cover .kicker, html[data-theme="dark"] body .cover .chip, html[data-theme="dark"] body .cover .skill-path a{color:#e6e9f2; background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.18);}
+  html[data-theme="dark"] body .cover .skill-path a.done{color:#a7f3d0; background:rgba(52,211,153,.18); border-color:rgba(52,211,153,.45);}
+  html[data-theme="dark"] body .cover .skill-path a.now{color:#1e293b; background:#fff; border-color:#fff;}
+
+  /* Lecture 4 style: light grey code windows and logs, matching the cover */
+  html body .cmd{border:1px solid #d3dce8; box-shadow:0 14px 30px -26px rgba(30,60,120,.45) !important;}
+  html body .cmd-h{background:linear-gradient(90deg,#dfe8f4,#e7edf5) !important; color:#1e3a8a; border-bottom:1px solid #d3dce8;}
+  html body .cmd.file .cmd-h{background:linear-gradient(90deg,#e6e2f3,#ece9f5) !important; color:#4c1d95;}
+  html body pre{background:#f1f4f8; color:#1f2937;}
+  html body .copy-btn{background:#fff; border-color:#c3d0e2; color:#1e3a8a;}
+  html body .copy-btn:hover{background:#eaf1fb;}
+  html body .cm{color:#64748b;} html body .kw{color:#7c3aed;} html body .st{color:#15803d;}
+  html body .hl{background:rgba(250,204,21,.28);}
+  .hl-i{background:rgba(250,204,21,.4); border-radius:3px; padding:0 1px;}
+  html body .sim-log{background:#f1f4f8; color:#1f2937; border:1px solid #d3dce8;}
+  html[data-theme="dark"] body .cmd{border-color:#3d465d;}
+  html[data-theme="dark"] body .cmd-h{background:linear-gradient(90deg,#323a4f,#384157) !important; color:#dbe4ff; border-bottom-color:#3d465d;}
+  html[data-theme="dark"] body .cmd.file .cmd-h{background:linear-gradient(90deg,#3a3552,#413b5c) !important; color:#e4d8ff;}
+  html[data-theme="dark"] body pre{background:#2a3142; color:#e6e9f2;}
+  html[data-theme="dark"] body .copy-btn{background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.2); color:#e6e9f2;}
+  html[data-theme="dark"] body .cm{color:#9aa4bf;} html[data-theme="dark"] body .kw{color:#c4b5fd;} html[data-theme="dark"] body .st{color:#86efac;}
+  html[data-theme="dark"] body .hl{background:rgba(250,204,21,.18);}
+  html[data-theme="dark"] .hl-i{background:rgba(250,204,21,.3);}
+  html[data-theme="dark"] body .sim-log{background:#2a3142; color:#e6e9f2; border-color:#3d465d;}
+
+  /* Lecture 4 style: animated help-desk picture (services, step 1) */
+  .helpdesk{margin:18px 0 6px; background:linear-gradient(180deg,#eef4fc,#f6f8fb); border:1px solid #d3dce8; border-radius:20px; padding:14px 10px 6px;}
+  html[data-theme="dark"] .helpdesk{background:linear-gradient(180deg,#2a3142,#262c3b); border-color:#3d465d;}
+  .helpdesk svg{display:block; width:100%; height:auto; max-width:720px; margin:0 auto;}
+  .helpdesk text{font-family:Inter, sans-serif; font-weight:700; text-anchor:middle; fill:var(--text); font-size:13px;}
+  .helpdesk .hd-floor{fill:var(--border);}
+  .helpdesk .hd-line{stroke:var(--text); stroke-width:2.5; stroke-linecap:round;}
+  .helpdesk .hd-tip{fill:var(--gold);} .helpdesk .hd-tip.s{fill:var(--danger);}
+  .helpdesk .hd-c-head,.helpdesk .hd-c-body{fill:var(--accent);} .helpdesk .hd-c-body{opacity:.85;}
+  .helpdesk .hd-s-head,.helpdesk .hd-s-body{fill:var(--accent2);}
+  .helpdesk .hd-eye{fill:#fff;} .helpdesk .hd-pupil{fill:#1f2937;}
+  .helpdesk .hd-smile{fill:none; stroke:#fff; stroke-width:2.4; stroke-linecap:round;}
+  .helpdesk .hd-screen{fill:#fff; opacity:.9;} .helpdesk .hd-mono{font-family:'JetBrains Mono', monospace; font-size:13px; fill:var(--accent);}
+  .helpdesk .hd-dark{fill:var(--text);}
+  .helpdesk .hd-name{font-size:14px; font-weight:800;}
+  .helpdesk .hd-code{font-family:'JetBrains Mono', monospace; font-size:11.5px; font-weight:600; fill:var(--muted);}
+  .helpdesk .hd-sign{fill:var(--gold);} .helpdesk .hd-sign-t{fill:#fff; font-family:'JetBrains Mono', monospace; font-size:14px;}
+  .helpdesk .hd-desk-top{fill:#a0703c;} .helpdesk .hd-desk{fill:#c8935a;} .helpdesk .hd-desk-t{fill:#fff; font-size:12px; letter-spacing:2px;}
+  .helpdesk .hd-bell{fill:var(--gold);}
+  .helpdesk .hd-path{stroke:var(--muted); stroke-width:2; stroke-dasharray:6 6; opacity:.5;}
+  .helpdesk .hd-env rect{stroke:#fff; stroke-width:1.5;} .helpdesk .hd-env path{fill:none; stroke:#fff; stroke-width:1.5; opacity:.8;}
+  .helpdesk .hd-env text{fill:#fff; font-size:12px;}
+  .helpdesk .hd-req rect{fill:var(--gold);} .helpdesk .hd-res rect{fill:var(--accent2);}
+  .helpdesk .hd-think rect{fill:var(--panel); stroke:var(--accent2); stroke-width:2;} .helpdesk .hd-think text{fill:var(--accent2);}
+  .helpdesk .hd-done rect{fill:var(--accent2);} .helpdesk .hd-done text{fill:#fff;}
+  .helpdesk .hd-stage rect{fill:var(--panel); stroke:var(--border); stroke-width:1.5;} .helpdesk .hd-stage text{font-size:12.5px; fill:var(--muted);}
+  .helpdesk .hd-gear{font-size:22px; transform-box:fill-box; transform-origin:center;}
+  /* step-by-step learning path inside 4.0, 4.1 and 4.3 */
+  .lpath{display:flex; flex-wrap:wrap; gap:8px; margin:4px 0 8px;}
+  .lpath a{display:inline-flex; align-items:center; gap:7px; padding:5px 13px 5px 5px; border-radius:99px; background:var(--panel); border:1px solid var(--border);
+    color:var(--text); text-decoration:none; font-weight:700; font-size:.82em; transition:transform .15s, border-color .15s;}
+  .lpath a:hover{transform:translateY(-2px); border-color:var(--accent);}
+  .lpath a b, .lstep .n{display:inline-flex; align-items:center; justify-content:center; border-radius:50%; color:#fff; font-weight:800;
+    background:linear-gradient(135deg,var(--accent),var(--purple));}
+  .lpath a b{width:24px; height:24px; font-size:.85em;}
+  .lpath.srv a b, .lstep.srv .n{background:linear-gradient(135deg,#d99a2b,var(--gold));}
+  .lpath.act a b, .lstep.act .n{background:linear-gradient(135deg,var(--accent2),#12b886);}
+  .lstep{display:flex; align-items:center; gap:12px; margin:40px 0 14px; padding-top:18px; border-top:1px dashed var(--border); scroll-margin-top:90px;}
+  .lstep .n{width:38px; height:38px; flex-shrink:0; font-size:1.05em; box-shadow:0 8px 16px -8px rgba(61,75,245,.55);}
+  .lstep h3{margin:0;}
+  .lstep h3 small{font-size:.65em; font-weight:700; color:var(--muted); margin-left:6px;}
+  .nextup{margin:26px 0 0; padding:14px 18px; border-radius:14px; background:var(--panel); border:1px solid var(--border); border-left:5px solid var(--accent2);}
+
+  /* route card on its own: two columns of links on wide screens */
+  @media (min-width:761px){ .toc.solo{columns:2; column-gap:32px;} .toc.solo h3{column-span:all;} .toc.solo a{break-inside:avoid;} }
+
+  /* Lecture 4 style: pictorial "at a glance" infographic */
+  .l4ig-grid{display:grid; grid-template-columns:1fr; gap:14px; margin-top:6px;}
+  .l4ig-card{margin:0; background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:14px 18px 10px; position:relative; overflow:hidden;
+    display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); grid-template-rows:auto 1fr; column-gap:22px;}
+  .l4ig-card svg{grid-column:1; grid-row:1 / span 2;}
+  .l4ig-card figcaption{grid-column:2; grid-row:1; align-self:end; margin-top:10px;}
+  .l4ig-card ul{grid-column:2; grid-row:2; align-self:start; margin-top:10px !important;}
+  .l4ig-card::before{content:""; position:absolute; top:0; left:0; right:0; height:5px;}
+  .l4ig-card.t-topic::before{background:var(--accent);} .l4ig-card.t-srv::before{background:var(--gold);} .l4ig-card.t-act::before{background:var(--accent2);}
+  .l4ig-card figcaption{display:grid; grid-template-columns:auto 1fr; column-gap:8px; align-items:center;}
+  .l4ig-card figcaption .ic{font-size:1.6em; grid-row:span 2;}
+  .l4ig-card figcaption b{font-size:1.1em; color:var(--text);}
+  .l4ig-card figcaption span:last-child{font-size:.85em; font-style:italic; color:var(--muted); line-height:1.35;}
+  .l4ig-card svg{display:block; width:100%; height:auto; margin:6px 0 2px;}
+  .l4ig-card ul{font-size:.86em; padding-inline-start:18px; margin:0;}
+  .l4ig-card li{margin-bottom:2px;}
+  .l4ig-foot{font-size:.9em; color:var(--muted); margin:12px 0 0; text-align:center;}
+  @media (max-width:760px){
+    .l4ig-card{display:block; padding:12px 12px 8px;}
+    .l4ig-card ul{margin-top:4px !important;}
+  }
+
+  .l4ig svg text{font-family:Inter, sans-serif; font-weight:700; font-size:11px; fill:var(--text); text-anchor:middle;}
+  .l4ig .lbl{font-size:10.5px; fill:var(--muted);}
+  .l4ig .ln{stroke:var(--muted); stroke-width:1.6; fill:none; stroke-dasharray:5 5; opacity:.55;}
+  .l4ig .ln.solid{stroke-dasharray:none; opacity:.8;}
+  .l4ig .arrhead{fill:var(--muted);}
+  .l4ig .arm{stroke:var(--text); stroke-width:2.4; stroke-linecap:round;}
+  .l4ig .rotor{fill:var(--muted); opacity:.7; transform-box:fill-box; transform-origin:center; animation:l4-rotor .18s linear infinite alternate;}
+  .l4ig .drone-body{fill:var(--accent);} .l4ig .lens{fill:var(--text);}
+  .l4ig .robot-body{fill:var(--accent2);} .l4ig .robot-top{fill:var(--text);} .l4ig .wheel{fill:var(--text);}
+  .l4ig .lap{fill:var(--muted);} .l4ig .scr{fill:var(--panel2);}
+  .l4ig .pill{stroke-width:1.5;} .l4ig .pill-t{font-family:'JetBrains Mono', monospace; font-size:10.5px;}
+  .l4ig .p-topic{fill:var(--panel2); stroke:var(--accent);} .l4ig .p-srv{fill:var(--panel2); stroke:var(--gold);}
+  .l4ig .pk text{fill:#fff; font-size:10.5px;}
+  .l4ig .pk-topic rect{fill:var(--accent);} .l4ig .pk-req rect{fill:var(--gold);} .l4ig .pk-res rect{fill:var(--accent2);}
+  .l4ig .msgbox{fill:var(--panel2); stroke:var(--border);}
+
+
+  /* ---------- Lecture 7 only ---------- */
+  .lpath.dsg a b, .lstep.dsg .n{background:linear-gradient(135deg,#a78bfa,var(--purple));}
+  .lpath.ctl a b, .lstep.ctl .n{background:linear-gradient(135deg,var(--accent2),#12b886);}
+  .trio .t-sense::before, .l4ig-card.t-sense::before{background:var(--accent);}
+  .trio .t-think::before, .l4ig-card.t-think::before{background:var(--purple);}
+  .trio .t-act::before, .l4ig-card.t-act::before{background:var(--accent2);}
+  .trio code{font-size:.9em;}
+  p code, li code, td code, .cheat code, .inner code, .lv code{overflow-wrap:anywhere;}
+  .step-t{min-width:0; overflow-wrap:anywhere;}
+
+  /* big-picture cards */
+  .l4ig .world{fill:#4556ff;} .l4ig .gridl{stroke:rgba(255,255,255,.14); stroke-width:1;}
+  .l4ig .hunter{fill:#3ee8a0;} .l4ig .prey{fill:#ffd166;}
+  .l4ig .wt{fill:#fff; font-size:9.5px;}
+  .l4ig .mono{font-family:'JetBrains Mono', monospace; font-size:10px;}
+  .l4ig .ray{fill:none; stroke:#fff; stroke-width:1.5; transform-box:fill-box; transform-origin:center; animation:l7-ray 1.8s linear infinite;}
+  .l4ig .ray.lag{animation-delay:-.9s;}
+  .l4ig .readout rect{fill:var(--panel2); stroke:var(--accent); stroke-width:1.5;}
+  .l4ig .rv1{animation:l7-a 4s steps(1) infinite;} .l4ig .rv2{animation:l7-b 4s steps(1) infinite;}
+  .l4ig .brain rect{fill:var(--panel2); stroke:var(--purple); stroke-width:2;}
+  .l4ig .opt rect{fill:var(--panel); stroke:var(--border); stroke-width:1.5;}
+  .l4ig .opt.o1 rect{animation:l7-pick1 6s infinite;} .l4ig .opt.o2 rect{animation:l7-pick2 6s infinite;}
+  .l4ig .hunt{animation:l7-hunt 6s ease-in-out infinite;}
+  .l4ig .eat{animation:l7-eat 6s infinite;}
+  .l4ig .wheelspin{transform-box:fill-box; transform-origin:center; animation:l7-spin 1s linear infinite;}
+  .l4ig .cmdv rect{fill:var(--accent2);} .l4ig .cmdv text{fill:#fff; font-size:10px;}
+  .l4ig .cmdmove{animation:l7-cmd 2.4s ease-in-out infinite;}
+  @keyframes l7-ray{0%{transform:scale(.3); opacity:.9} 100%{transform:scale(2.4); opacity:0}}
+  @keyframes l7-a{0%{opacity:1} 50%{opacity:0}} @keyframes l7-b{0%{opacity:0} 50%{opacity:1}}
+  @keyframes l7-pick1{0%,45%{stroke:var(--purple); stroke-width:3} 50%,100%{stroke:var(--border); stroke-width:1.5}}
+  @keyframes l7-pick2{0%,45%{stroke:var(--border); stroke-width:1.5} 50%,95%{stroke:var(--purple); stroke-width:3} 100%{stroke:var(--border)}}
+  @keyframes l7-hunt{0%{transform:translate(0,0)} 40%,50%{transform:translate(96px,-62px)} 90%,100%{transform:translate(0,0)}}
+  @keyframes l7-eat{0%,38%{opacity:1} 42%,92%{opacity:0} 100%{opacity:1}}
+  @keyframes l7-spin{to{transform:rotate(360deg)}}
+  @keyframes l7-cmd{0%{transform:translate(0,0); opacity:0} 15%{opacity:1} 80%{transform:translate(96px,0); opacity:1} 100%{transform:translate(96px,0); opacity:0}}
+  @media (prefers-reduced-motion:reduce){ .l4ig *{animation:none !important;} .l4ig .rv2{display:none;} }
+
+  /* go-to-goal picture (7.2 step 1) */
+  .ggfig svg{max-width:720px;}
+  .ggfig .gw{fill:#4556ff;} .ggfig .gg{stroke:rgba(255,255,255,.14); stroke-width:1;}
+  .ggfig .gt{fill:#fff; font-size:12px;}
+  .ggfig .dx{stroke:#fff; stroke-width:1.6; stroke-dasharray:5 5; opacity:.7;}
+  .ggfig .dist{stroke:#ffd166; stroke-width:3;}
+  .ggfig .arc{fill:none; stroke:#ff8fab; stroke-width:3;}
+  .ggfig .head{stroke:#3ee8a0; stroke-width:2.5; stroke-dasharray:4 3;}
+  .ggfig .me{fill:#3ee8a0;} .ggfig .goal{fill:#ffd166;}
+  .ggfig .phase rect{fill:var(--panel); stroke:var(--border); stroke-width:1.5;}
+  .ggfig .phase text{font-size:12.5px; fill:var(--muted);}
+  .ggfig .ph1 rect{animation:gg-p1 9s infinite;} .ggfig .ph2 rect{animation:gg-p2 9s infinite;} .ggfig .ph3 rect{animation:gg-p3 9s infinite;}
+  .ggfig .ph1 text{animation:gg-p1t 9s infinite;} .ggfig .ph2 text{animation:gg-p2t 9s infinite;} .ggfig .ph3 text{animation:gg-p3t 9s infinite;}
+  .ggfig .bot{animation:gg-bot 9s ease-in-out infinite;}
+  .ggfig .botr{transform-box:fill-box; transform-origin:center; animation:gg-rot 9s ease-in-out infinite;}
+  .ggfig .eq{font-family:'JetBrains Mono', monospace; font-size:12.5px; font-weight:600; text-anchor:start; fill:var(--text);}
+  .ggfig .eq .y{fill:#c99410;} .ggfig .eq .p{fill:#d6336c;} .ggfig .eq .g{fill:var(--accent2);}
+  html[data-theme="dark"] .ggfig .eq .y{fill:#ffd166;} html[data-theme="dark"] .ggfig .eq .p{fill:#ff8fab;}
+  @keyframes gg-rot{0%,8%{transform:rotate(0deg)} 30%,100%{transform:rotate(-34deg)}}
+  @keyframes gg-bot{0%,32%{transform:translate(0,0)} 78%,92%{transform:translate(214px,-144px)} 100%{transform:translate(0,0)}}
+  @keyframes gg-p1{0%,30%{fill:var(--danger); stroke:var(--danger)} 31%,100%{fill:var(--panel); stroke:var(--border)}}
+  @keyframes gg-p2{0%,30%{fill:var(--panel); stroke:var(--border)} 31%,76%{fill:var(--accent); stroke:var(--accent)} 77%,100%{fill:var(--panel); stroke:var(--border)}}
+  @keyframes gg-p3{0%,76%{fill:var(--panel); stroke:var(--border)} 77%,95%{fill:var(--accent2); stroke:var(--accent2)} 96%,100%{fill:var(--panel); stroke:var(--border)}}
+  @keyframes gg-p1t{0%,30%{fill:#fff} 31%,100%{fill:var(--muted)}}
+  @keyframes gg-p2t{0%,30%{fill:var(--muted)} 31%,76%{fill:#fff} 77%,100%{fill:var(--muted)}}
+  @keyframes gg-p3t{0%,76%{fill:var(--muted)} 77%,95%{fill:#fff} 96%,100%{fill:var(--muted)}}
+  @media (prefers-reduced-motion:reduce){ .ggfig *{animation:none !important;} }
+
+  /* angle-wrap number line (7.2 step 3) */
+  .wrapline{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin:14px 0;}
+  .wrapline > div{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:12px 14px;}
+  .wrapline svg{width:100%; height:auto; display:block;}
+  .wrapline text{font-family:Inter, sans-serif; font-weight:700; font-size:11px; fill:var(--text); text-anchor:middle;}
+  .wrapline .rim{fill:none; stroke:var(--border); stroke-width:10;}
+  .wrapline .bad{fill:none; stroke:var(--danger); stroke-width:5; stroke-linecap:round;}
+  .wrapline .good{fill:none; stroke:var(--accent2); stroke-width:5; stroke-linecap:round;}
+  .wrapline .hd{stroke:var(--text); stroke-width:2.5;} .wrapline .gl{stroke:#c99410; stroke-width:2.5;}
+  @media (max-width:760px){ .wrapline{grid-template-columns:1fr;} }
+
+  /* milestone timeline */
+  .mstones{display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px; margin:14px 0 18px; counter-reset:ms;}
+  .mstones a{display:block; text-decoration:none; color:var(--text); background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:10px 10px 8px; position:relative; transition:transform .15s, border-color .15s;}
+  .mstones a:hover{transform:translateY(-2px); border-color:var(--accent2);}
+  .mstones b{display:block; font-size:.78em; color:var(--accent2); letter-spacing:.5px;}
+  .mstones span{display:block; font-weight:700; font-size:.88em; margin:2px 0 4px;}
+  .mstones i{display:block; font-style:normal; font-size:.75em; color:var(--muted);}
+  .mstones .ic{font-size:1.4em;}
+  @media (max-width:900px){ .mstones{grid-template-columns:repeat(3,minmax(0,1fr));} }
+  @media (max-width:520px){ .mstones{grid-template-columns:repeat(2,minmax(0,1fr));} }
+</style>
 </head>
 <body>
 <button id="theme-toggle" aria-label="Toggle light/dark mode">🌙</button>
@@ -27,123 +256,319 @@
 <div class="cover">
     <div class="cover-art" aria-hidden="true">🐢</div>
   <div class="kicker">Part A · ROS 2 Bootcamp · Lecture 7 of 14 · Project</div>
-  <h1>Project: Catch Them All 🐢</h1>
-  <div class="subtitle">Everything from Part A in one game. A master turtle hunts down turtles that keep appearing at random places. You'll use topics, services, custom messages, parameters and a launch file together, and the go-to-goal controller you write today is the one you'll put on the LIMO next week.</div>
+  <h1>Project: Catch Them All — Your First Autonomous Robot System</h1>
+  <div class="subtitle">Six lectures of pieces, one game. A hunter turtle <strong>senses</strong> where it is and where the others are, <strong>decides</strong> which one to chase and how to steer, and <strong>acts</strong> by sending velocity commands, with nobody at the keyboard. It uses everything from Part A at once: <strong>topics</strong>, <strong>services</strong>, <strong>custom interfaces</strong>, <strong>parameters</strong>, a <strong>launch file</strong> and <strong>bags</strong>. The go-to-goal controller you write today is the one you put on the LIMO next week, and the same sense–think–act loop drives every self-driving car.</div>
   <div class="meta-row">
     <div class="chip">⏱ 3 h in class + finish at home</div>
     <div class="chip">🐍 Python · ROS 2 Humble</div>
-    <div class="chip">Before this: Lectures 2–6</div>
+    <div class="chip">Before this: Lectures 2–6 (and <code>Turtle.msg</code> from the Lecture 5 homework)</div>
   </div>
   <div class="skill-path" aria-label="Course path"><a class="done" href="01-installation-vmware-ros2-limo-intro.html">L1 · Install</a><a class="done" href="L02-first-node.html">L2 · Nodes</a><a class="done" href="L03-topics.html">L3 · Topics</a><a class="done" href="L04-services.html">L4 · Services &amp; Actions</a><a class="done" href="L05-custom-interfaces.html">L5 · Interfaces &amp; Params</a><a class="done" href="L06-parameters-launch.html">L6 · Launch</a><a class="now" href="L07-catch-them-all.html">L7 · Project</a><a class="" href="L08-drive-limo.html">L8 · Drive</a><a class="" href="L09-limo-urdf-tf-rviz.html">L9 · URDF/TF</a><a class="" href="L10-limo-lidar-imu.html">L10 · LiDAR/IMU</a><a class="" href="L11-limo-camera-vision.html">L11 · Vision</a><a class="" href="L12-limo-slam-localization.html">L12 · SLAM</a><a class="" href="L13-limo-nav2.html">L13 · Nav2</a><a class="" href="L14-real-limo-mission.html">L14 · Real LIMO</a><a href="projects.html">+ Projects</a></div>
 </div>
 
-<div class="grid2">
-  <div class="card">
-    <h3>🎯 By the end of today you can…</h3>
-    <ul class="outcomes">
-      <li>Break a robot task into nodes, topics and services before coding.</li>
-      <li>Write a <strong>go-to-goal controller</strong> (proportional control on distance and angle).</li>
-      <li>Combine a publisher, subscriber, service server and service client in one node.</li>
-      <li>Make the whole system configurable with parameters and start it with one launch file.</li>
-      <li>Record and replay robot data with <code>ros2 bag</code>.</li>
-    </ul>
-  </div>
-  <div class="card toc">
-    <h3>🗺️ Today's route (6 milestones)</h3>
-    <a href="#design"><span>7.1</span>Design the system first</a>
+  <div class="box tip"><div class="box-title">ℹ️ Taught in Lecture 6</div><p>In class, this project is now built in <a href="L06-parameters-launch.html#project">Lecture 6</a>, right after launch files. This page keeps the full notes, extra explanations and the challenges (crash-proof launch, two hunters, robotaxi) for practice and homework.</p></div>
+
+<div class="card toc solo">
+    <h3>🗺️ Today's route</h3>
+    <a href="#big"><span>7.0</span>The big picture</a>
+    <a href="#design"><span>7.1</span>Design the system, step by step</a>
+    <a href="#control"><span>7.2</span>The go-to-goal controller, step by step</a>
     <a href="#m1"><span>M1</span>Controller: go to a fixed point</a>
     <a href="#m2"><span>M2</span>Spawner: new turtles every second</a>
     <a href="#m3"><span>M3</span>Chase the first alive turtle</a>
-    <a href="#m4"><span>M4</span>Catch (kill) it with a service</a>
+    <a href="#m4"><span>M4</span>Catch it with a service</a>
     <a href="#m5"><span>M5</span>Chase the closest turtle</a>
-    <a href="#m6"><span>M6</span>Parameters + launch file</a>
-    <a href="#bags"><span>Lab</span>Record &amp; replay with ros2 bag</a>
-    <a href="#exit"><span>7.2</span>Exit ticket &amp; assessment rubric</a>
+    <a href="#m6"><span>M6</span>Parameters, YAML + launch file</a>
+    <a href="#bags"><span>Lab</span>Inspect, record &amp; replay</a>
+    <a href="#activity"><span>7.3</span>Your turn: challenges</a>
+    <a href="#errors"><span>7.4</span>When things go wrong</a>
+    <a href="#exit"><span>7.5</span>Exit ticket, rubric &amp; homework</a>
   </div>
+
+
+<h2 id="big"><span class="num">7.0</span>The big picture: sense, think, act</h2>
+<p>Every autonomous robot, from a vacuum cleaner to a self-driving car, repeats the same loop many times a second: <strong>sense</strong> the world, <strong>think</strong> about what to do, <strong>act</strong>. Today's game is that loop in its smallest form. Six small steps first, no code.</p>
+<nav class="lpath " aria-label="Steps in this section"><a href="#big1"><b>1</b>See it</a><a href="#big2"><b>2</b>A real robot</a><a href="#big3"><b>3</b>Watch it</a><a href="#big4"><b>4</b>Compare</a><a href="#big5"><b>5</b>Choose</a><a href="#big6"><b>6</b>Check yourself</a></nav>
+
+<div class="lstep " id="big1"><span class="n">1</span><h3>See it: the hunter senses, thinks and acts</h3></div>
+<div class="ig l4ig">
+<div class="l4ig-grid">
+  <figure class="l4ig-card t-sense">
+    <figcaption><span class="ic">👀</span><b>Sense</b><span>"Where am I? Where are the others?"</span></figcaption>
+    <svg viewBox="0 0 320 230" role="img" aria-label="A blue turtlesim world with a green hunter turtle sending out sensing waves and two yellow turtles. Two readouts show the hunter's pose (x, y, theta) changing over time, and the list of alive turtles.">
+      <rect class="world" x="10" y="20" width="150" height="150" rx="8"/>
+      <line class="gridl" x1="60" y1="20" x2="60" y2="170"/><line class="gridl" x1="110" y1="20" x2="110" y2="170"/><line class="gridl" x1="10" y1="70" x2="160" y2="70"/><line class="gridl" x1="10" y1="120" x2="160" y2="120"/>
+      <circle class="ray" cx="56" cy="126" r="12"/><circle class="ray lag" cx="56" cy="126" r="12"/>
+      <ellipse class="hunter" cx="56" cy="126" rx="11" ry="9"/><circle class="hunter" cx="69" cy="126" r="4"/>
+      <ellipse class="prey" cx="124" cy="54" rx="8" ry="6.5"/><text class="wt" x="124" y="40">turtle2</text>
+      <ellipse class="prey" cx="36" cy="48" rx="8" ry="6.5"/><text class="wt" x="36" y="34">turtle3</text>
+      <text class="wt" x="56" y="152">turtle1</text>
+      <g class="readout"><rect x="172" y="22" width="140" height="66" rx="10"/></g>
+      <text x="242" y="40">/turtle1/pose</text>
+      <text class="mono rv1" x="242" y="58">x: 3.1  y: 2.4</text><text class="mono rv2" x="242" y="58">x: 3.4  y: 2.6</text>
+      <text class="mono rv1" x="242" y="76">theta: 0.61</text><text class="mono rv2" x="242" y="76">theta: 0.65</text>
+      <g class="readout"><rect x="172" y="104" width="140" height="66" rx="10" style="stroke:var(--gold)"/></g>
+      <text x="242" y="122">/alive_turtles</text>
+      <text class="mono" x="242" y="140">turtle2 (7.9, 8.4)</text><text class="mono" x="242" y="158">turtle3 (1.8, 8.7)</text>
+      <text class="lbl" x="160" y="200">two subscriptions, ~60 messages per second</text>
+      <text class="lbl" x="160" y="218">the LIMO: /odom, /scan, /camera</text>
+    </svg>
+    <ul><li>Subscribe to <code>/turtle1/pose</code> (turtlesim)</li><li>Subscribe to <code>/alive_turtles</code> (your custom <code>TurtleArray</code>)</li><li>Callbacks only <strong>store</strong> the latest values</li></ul>
+  </figure>
+
+  <figure class="l4ig-card t-think">
+    <figcaption><span class="ic">🧠</span><b>Think</b><span>"Which one do I chase, and how do I steer?"</span></figcaption>
+    <svg viewBox="0 0 320 230" role="img" aria-label="The turtle_controller node weighs two options, turtle2 at distance 4.1 and turtle3 at distance 2.3, and picks the closer one. Below are the three go-to-goal formulas: distance, goal_theta with atan2, and the wrapped angle difference.">
+      <g class="brain"><rect x="10" y="12" width="300" height="38" rx="12"/></g>
+      <text x="160" y="36">🧠 turtle_controller: control loop, 100 Hz</text>
+      <g class="opt o1"><rect x="10" y="64" width="145" height="58" rx="10"/></g><text x="82" y="88">turtle2</text><text class="lbl" x="82" y="108">distance 4.1</text>
+      <g class="opt o2"><rect x="165" y="64" width="145" height="58" rx="10"/></g><text x="237" y="88">turtle3</text><text class="lbl" x="237" y="108">distance 2.3 ✔ closest</text>
+      <text class="mono" x="160" y="150">distance = √(dx² + dy²)</text>
+      <text class="mono" x="160" y="172">goal_theta = atan2(dy, dx)</text>
+      <text class="mono" x="160" y="194">diff = goal_theta − theta  (wrap!)</text>
+      <text class="lbl" x="160" y="220">a self-driving car: "which lane, which gap?"</text>
+    </svg>
+    <ul><li><strong>Choose a target</strong>: first, or closest (M5)</li><li><strong>Go-to-goal maths</strong>: distance and direction</li><li>Runs in a <strong>timer</strong>, not in the callbacks</li></ul>
+  </figure>
+
+  <figure class="l4ig-card t-act">
+    <figcaption><span class="ic">🦾</span><b>Act</b><span>"Drive there, then catch it."</span></figcaption>
+    <svg viewBox="0 0 320 230" role="img" aria-label="turtle_controller sends Twist velocity commands to turtlesim. In the world below, the green hunter drives up to a yellow turtle, which disappears when it is caught, then the scene repeats.">
+      <rect class="pill p-topic" x="8" y="10" width="124" height="26" rx="13" style="stroke:var(--purple)"/><text class="pill-t" x="70" y="27">turtle_controller</text>
+      <rect class="pill p-topic" x="226" y="10" width="86" height="26" rx="13"/><text class="pill-t" x="269" y="27">turtlesim</text>
+      <line class="ln" x1="132" y1="23" x2="226" y2="23"/>
+      <g class="cmdv cmdmove"><rect x="122" y="40" width="34" height="18" rx="5"/><text x="139" y="53">Twist</text></g>
+      <rect class="world" x="60" y="70" width="200" height="126" rx="8"/>
+      <ellipse class="prey eat" cx="196" cy="104" rx="9" ry="7"/>
+      <g class="hunt"><ellipse class="hunter" cx="100" cy="166" rx="11" ry="9"/><circle class="hunter" cx="112" cy="160" r="4"/></g>
+      <text class="wt eat" x="196" y="90">turtle3</text>
+      <text class="lbl" x="160" y="214">linear.x = 2·distance · angular.z = 6·diff</text>
+    </svg>
+    <ul><li>Publish <code>Twist</code> on <code>/turtle1/cmd_vel</code></li><li>Close enough? Call <code>/catch_turtle</code> (your custom service)</li><li>The LIMO: the same <code>Twist</code> on <code>/cmd_vel</code></li></ul>
+  </figure>
+</div>
+</div>
+
+<div class="lstep " id="big2"><span class="n">2</span><h3>A real robot: the same loop in a self-driving car</h3></div>
+<p>Replace "turtle" with "car" and the game is surprisingly close to a real robotaxi: a list of things to visit (passengers, parcels), a decision about which one first, and a controller that steers there.</p>
+<figure class="figure-card"><img src="images/self-driving-car-sensors.jpg" alt="A self-driving car with its sensors labelled: LIDAR and GPS on the roof, a camera behind the windscreen, radar at the front bumper, a computer inside the car and a wheel encoder on the rear wheel." loading="lazy"><figcaption>Lectures 4–6 showed the car's nodes, messages and launch file. Today you build a whole sense–think–act system yourself, on a small scale.</figcaption></figure>
+<div class="table-wrap"><table class="vs">
+  <tr><th></th><th>🐢 Catch Them All</th><th>🚕 Robotaxi</th><th>📦 Warehouse robot</th><th>🤖 LIMO (Lecture 8)</th></tr>
+  <tr><td>Sense: where am I?</td><td><code>/turtle1/pose</code></td><td>GPS + LiDAR localisation</td><td>floor markers, LiDAR</td><td><code>/odom</code></td></tr>
+  <tr><td>Sense: what's out there?</td><td><code>/alive_turtles</code></td><td>ride requests</td><td>orders to pick</td><td>a goal you choose</td></tr>
+  <tr><td>Think: which first?</td><td>closest turtle (M5)</td><td>dispatcher: nearest passenger</td><td>shortest route</td><td>one goal at a time</td></tr>
+  <tr><td>Think: how to get there?</td><td>go-to-goal P-control</td><td>planner + controller</td><td>path planner</td><td><strong>your</strong> go-to-goal</td></tr>
+  <tr><td>Act</td><td><code>Twist</code> on <code>cmd_vel</code></td><td>steering, throttle, brake</td><td>wheel speeds</td><td><code>Twist</code> on <code>/cmd_vel</code></td></tr>
+  <tr><td>"Done" message</td><td><code>/catch_turtle</code> service</td><td>"passenger picked up"</td><td>"item picked"</td><td>goal reached</td></tr>
+</table></div>
+<div class="box idea"><div class="box-title">💡 Why a game?</div>
+<p>Turtlesim has no physics, no noise and no crashes, so every bug you meet today is a <strong>software</strong> bug: wrong topic name, wrong type, a callback that never runs, an angle that isn't wrapped. Fix those here, where it's cheap. Next week the same code meets a real robot with wheels that slip.</p></div>
+
+<div class="lstep " id="big3"><span class="n">3</span><h3>Watch it: the game and the messages behind it</h3></div>
+<p>Left: what you see in turtlesim. Right: what ROS 2 is doing. Every turtle that appears costs a <code>/spawn</code> request and response, plus an <code>/alive_turtles</code> update; every catch costs a <code>/catch_turtle</code> call and a <code>/kill</code> call. By the end of today you will have written all of it.</p>
+<div data-widget="catchgraph"></div>
+
+<div class="lstep " id="big4"><span class="n">4</span><h3>Compare: every lecture of Part A has a job in the project</h3></div>
+<div class="table-wrap"><table class="vs">
+  <tr><th>Lecture</th><th>You learned…</th><th>…and here it is</th><th>Milestone</th></tr>
+  <tr><td>2 · Nodes</td><td>a node class, timers, logging</td><td><code>turtle_controller</code> and <code>turtle_spawner</code>, each with a timer</td><td>M1, M2</td></tr>
+  <tr><td>3 · Topics</td><td>publish, subscribe</td><td><code>/turtle1/pose</code>, <code>/turtle1/cmd_vel</code>, <code>/alive_turtles</code></td><td>M1, M3</td></tr>
+  <tr><td>4 · Services</td><td>async client, server, <code>partial</code></td><td>calling <code>/spawn</code> and <code>/kill</code>; serving <code>/catch_turtle</code></td><td>M2, M4</td></tr>
+  <tr><td>5 · Interfaces</td><td>your own .msg / .srv</td><td><code>Turtle.msg</code>, <code>TurtleArray.msg</code>, <code>CatchTurtle.srv</code></td><td>M3, M4</td></tr>
+  <tr><td>5 · Parameters</td><td><code>declare_parameter</code>, YAML</td><td><code>spawn_frequency</code>, <code>catch_closest_turtle_first</code></td><td>M6</td></tr>
+  <tr><td>6 · Launch</td><td>one command, arguments</td><td><code>catch_them_all.launch.py</code></td><td>M6</td></tr>
+  <tr><td>6 · Toolkit</td><td>rqt_graph, logs, <code>ros2 bag</code></td><td>inspect, record and replay a run</td><td>Lab</td></tr>
+</table></div>
+
+<div class="lstep " id="big5"><span class="n">5</span><h3>Choose: which ROS 2 tool for each part?</h3></div>
+<p>Before you read the design in 7.1, decide for yourself. Rule of thumb from Lectures 3–5: a <strong>stream</strong> of data is a topic, a <strong>question with an answer</strong> is a service, a <strong>setting</strong> is a parameter.</p>
+<div class="game" data-widget="sort" data-cats="📻 Topic|🛎️ Service|🎛️ Parameter"><div class="kc-head"><span class="sim-tag">🎮 Game</span><b>Which ROS 2 tool does each part of the project use?</b></div><ul><li data-cat="0">The hunter's position, 60 times a second</li><li data-cat="1">"Create a turtle at (3, 7)", answer: its name</li><li data-cat="2">How often new turtles appear</li><li data-cat="0">The list of turtles still alive</li><li data-cat="1">"I reached turtle5, remove it", answer: success</li><li data-cat="1">"Delete turtle5 from the window"</li><li data-cat="2">Chase the closest or the oldest turtle</li><li data-cat="0">Velocity commands for the hunter</li><li data-cat="2">The prefix of new turtles' names</li></ul></div>
+
+<div class="lstep " id="big6"><span class="n">6</span><h3>Check yourself <small>5 min</small></h3></div>
+<div class="quiz">
+  <div class="q"><p>In the simulator, how many messages does one caught turtle cost, from <code>/spawn</code> to its removal?</p><details><summary>Answer</summary><div class="inner">Spawn request + response + one <code>/alive_turtles</code>; later <code>/catch_turtle</code> request, <code>/kill</code> request + response, the <code>/catch_turtle</code> response and another <code>/alive_turtles</code>: about 8, plus the continuous pose and velocity streams.</div></details></div>
+  <div class="q"><p>Why is the list of alive turtles a <em>topic</em> and not a service?</p><details><summary>Answer</summary><div class="inner">It is shared state that changes over time and that anyone may want to follow (the controller, a scoreboard, a bag). Nobody needs to ask for it: it is published whenever it changes.</div></details></div>
+  <div class="q"><p>Which node owns the list of alive turtles, and why that one?</p><details><summary>Answer</summary><div class="inner">The spawner: it creates the turtles and asks turtlesim to kill them, so it always knows the truth. One owner per piece of data avoids two nodes disagreeing.</div></details></div>
+  <div class="q"><p>Which part changes when the turtle becomes a LIMO next week?</p><details><summary>Answer</summary><div class="inner">Only the sense and act topics: <code>/odom</code> instead of <code>/turtle1/pose</code> and <code>/cmd_vel</code> instead of <code>/turtle1/cmd_vel</code> (plus quaternions instead of theta). The thinking, the go-to-goal maths, stays.</div></details></div>
 </div>
 
 
-<div class="ig"><div class="ig-title"><span class="sim-tag">Infographic</span>Lecture 7 at a glance: six milestones to an autonomous system</div><div class="ig-flow"><div class="ig-step"><div class="ic">🗺️</div><b>Design</b><span>draw the node graph first</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🎯</div><b>M1 Controller</b><span>go to a fixed point</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🐣</div><b>M2 Spawner</b><span>call <code>/spawn</code> from a timer</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">📋</div><b>M3 Alive list</b><span>custom <code>TurtleArray</code> topic</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🎣</div><b>M4 Catch</b><span>custom <code>/catch_turtle</code> service</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🧠</div><b>M5 Closest</b><span>a smarter choice</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">🚀</div><b>M6 Launch</b><span>parameters + one command</span></div><div class="ig-arrow">→</div><div class="ig-step"><div class="ic">📼</div><b>Bag</b><span>record and replay</span></div></div></div>
-<details class="box teacher">
-  <summary>🧑‍🏫 Instructor lesson plan (click to open)</summary>
-  <div class="inner">
-  <div class="table-wrap"><table>
-    <tr><th>Time</th><th>Activity</th><th>Type</th></tr>
-    <tr><td>0:00–0:20</td><td>Design together on the board: which nodes, topics, services? Then reveal the diagram</td><td><span class="tag teach">Teach</span></td></tr>
-    <tr><td>0:20–0:35</td><td>The go-to-goal maths (distance, heading, angle wrap)</td><td><span class="tag teach">Teach</span></td></tr>
-    <tr><td>0:35–1:15</td><td>M1 + M2</td><td><span class="tag do">Do</span></td></tr>
-    <tr><td>1:15–1:25</td><td>Break</td><td></td></tr>
-    <tr><td>1:25–2:30</td><td>M3 + M4 (the core of the project)</td><td><span class="tag do">Do</span></td></tr>
-    <tr><td>2:30–2:50</td><td>ros2 bag lab (record a run, replay it)</td><td><span class="tag do">Do</span></td></tr>
-    <tr><td>2:50–3:00</td><td>M5 + M6 set as homework; explain the rubric</td><td><span class="tag check">Check</span></td></tr>
-  </table></div>
-  <p><strong>Suggestion.</strong> This project works well as a graded assessment (for example, before the midterm). The rubric is at the bottom of the page. Ask for a short screen recording plus the <code>ros2 bag</code> of a successful run as evidence.</p>
-  </div>
-</details>
+<h2 id="design"><span class="num">7.1</span>Design the system, step by step</h2>
+<p>Good robot engineers draw the graph <strong>before</strong> they write code. Changing a box on paper takes a second; changing three nodes takes an afternoon.</p>
+<nav class="lpath dsg" aria-label="Steps in this section"><a href="#d1"><b>1</b>Requirements</a><a href="#d2"><b>2</b>Draw the graph</a><a href="#d3"><b>3</b>The interfaces</a><a href="#d4"><b>4</b>Plan the milestones</a><a href="#d5"><b>5</b>Remember it</a></nav>
 
-<!-- ============================================================ -->
-<h2 id="design"><span class="num">7.1</span>Design the system first</h2>
-<p>Good robot engineers draw the graph <strong>before</strong> writing code. Take 5 minutes with a neighbour: which nodes do we need, and what does each one publish, subscribe, serve and call? Then compare with the design below.</p>
-<div class="box idea"><div class="box-title">🧩 The system design</div>
+<div class="lstep dsg" id="d1"><span class="n">1</span><h3>Requirements: what must the system do?</h3></div>
+<div class="box note">
+  <div class="box-title">📋 The brief (written like a real project ticket)</div>
+  <ol>
+    <li>New turtles appear at <strong>random places</strong>, at a <strong>configurable rate</strong>.</li>
+    <li>The master turtle, <code>turtle1</code>, drives to one of them <strong>by itself</strong>.</li>
+    <li>When it is close enough, that turtle is <strong>caught</strong>: it disappears from the window and from the list.</li>
+    <li>It then chases the next one; optionally the <strong>closest</strong> one first.</li>
+    <li>The whole game starts with <strong>one command</strong>, and its settings are changed <strong>without editing code</strong>.</li>
+  </ol>
+</div>
+<p><strong>Take 5 minutes with a neighbour:</strong> how many nodes? What does each one publish, subscribe to, serve and call? Draw it on paper, then open step 2.</p>
+
+<div class="lstep dsg" id="d2"><span class="n">2</span><h3>Draw the graph</h3></div>
 <div class="mermaid">
 flowchart LR
-  TS(["turtlesim_node"])
-  SP(["turtle_spawner"])
-  CT(["turtle_controller"])
+  TS(["🐢 turtlesim_node<br/>(exists)"])
+  SP(["🐣 turtle_spawner<br/>(you write)"])
+  CT(["🧠 turtle_controller<br/>(you write)"])
   TS -- "/turtle1/pose<br/>turtlesim/Pose" --> CT
-  CT -- "/turtle1/cmd_vel<br/>Twist" --> TS
+  CT -- "/turtle1/cmd_vel<br/>geometry_msgs/Twist" --> TS
   SP -- "/alive_turtles<br/>TurtleArray" --> CT
-  SP -. "/spawn (client)" .-> TS
-  SP -. "/kill (client)" .-> TS
-  CT -. "/catch_turtle (client)<br/>CatchTurtle" .-> SP
+  SP -. "/spawn client" .-> TS
+  SP -. "/kill client" .-> TS
+  CT -. "/catch_turtle client<br/>CatchTurtle" .-> SP
 </div>
 <div class="table-wrap"><table>
-  <tr><th>Node</th><th>Job</th><th>Uses</th></tr>
-  <tr><td><code>turtlesim_node</code></td><td>The simulator (already exists).</td><td>Offers <code>/spawn</code> and <code>/kill</code>; publishes <code>/turtle1/pose</code>; listens to <code>/turtle1/cmd_vel</code></td></tr>
-  <tr><td><code>turtle_spawner</code></td><td>Creates turtles at random places and keeps the list of alive turtles.</td><td>Client of <code>/spawn</code> &amp; <code>/kill</code>; publishes <code>/alive_turtles</code>; <strong>serves</strong> <code>/catch_turtle</code></td></tr>
-  <tr><td><code>turtle_controller</code></td><td>Drives turtle1 to a target and asks for it to be caught.</td><td>Subscribes to pose &amp; alive_turtles; publishes <code>cmd_vel</code>; client of <code>/catch_turtle</code></td></tr>
+  <tr><th>Node</th><th>Job</th><th>Publishes</th><th>Subscribes</th><th>Serves</th><th>Calls</th></tr>
+  <tr><td><code>turtlesim_node</code></td><td>The simulator (exists)</td><td><code>/turtle1/pose</code></td><td><code>/turtle1/cmd_vel</code></td><td><code>/spawn</code>, <code>/kill</code></td><td>–</td></tr>
+  <tr><td><code>turtle_spawner</code></td><td>Creates turtles; owns the list</td><td><code>/alive_turtles</code></td><td>–</td><td><code>/catch_turtle</code></td><td><code>/spawn</code>, <code>/kill</code></td></tr>
+  <tr><td><code>turtle_controller</code></td><td>Chooses a target, drives, asks to catch</td><td><code>/turtle1/cmd_vel</code></td><td><code>/turtle1/pose</code>, <code>/alive_turtles</code></td><td>–</td><td><code>/catch_turtle</code></td></tr>
 </table></div>
+<div class="box idea"><div class="box-title">💡 Two design choices worth discussing</div>
+<ul>
+  <li><strong>Why doesn't the controller call <code>/kill</code> itself?</strong> Then the spawner's list would be wrong. The node that <em>owns</em> the data (the spawner) must be the one that changes it. The controller only <em>asks</em>.</li>
+  <li><strong>Why two nodes and not one big one?</strong> Each can be tested alone (Milestones 1 and 2), replaced (a smarter controller), or reused (the spawner with a different hunter). Self-driving stacks split perception, planning and control for the same reasons.</li>
+</ul></div>
+
+<div class="lstep dsg" id="d3"><span class="n">3</span><h3>The interfaces: a Lecture 5 job</h3></div>
+<p>The standard <code>turtlesim/msg/Pose</code>, <code>geometry_msgs/msg/Twist</code>, <code>turtlesim/srv/Spawn</code> and <code>turtlesim/srv/Kill</code> already exist. Three things don't, so you design them:</p>
+<div class="grid2">
+  <div class="cmd file" data-widget="explain"><div class="cmd-h">📄 my_robot_interfaces/msg/Turtle.msg</div><pre><code><span class="ex" data-tip="The spawner chooses the name and gets it back from <code>/spawn</code>; the controller sends it back in <code>/catch_turtle</code>. The name is the turtle's ID.">string name</span>
+<span class="ex" data-tip="Where the turtle is, in turtlesim's 11 × 11 world. The controller needs x and y for the go-to-goal maths.">float64 x
+float64 y</span>
+float64 theta</code></pre></div>
+  <div class="cmd file" data-widget="explain"><div class="cmd-h">📄 my_robot_interfaces/msg/TurtleArray.msg</div><pre><code><span class="ex" data-tip="A list of your own message, inside another message (Lecture 5, Lab 3). In Python: <code>msg.turtles</code> is a list of <code>Turtle</code> objects.">Turtle[] turtles</span></code></pre></div>
+</div>
+<div class="cmd file" data-widget="explain"><div class="cmd-h">📄 my_robot_interfaces/srv/CatchTurtle.srv</div><pre><code><span class="ex" data-tip="Request: which turtle the controller reached.">string name</span>
+---
+<span class="ex" data-tip="Response: did the spawner accept it? In M4 you make it answer <code>False</code> for a turtle that's already gone.">bool success</span></code></pre></div>
+<div class="game" data-widget="sort" data-cats="📦 standard (reuse)|🧩 custom (you write)"><div class="kc-head"><span class="sim-tag">🎮 Game</span><b>Reuse or write it yourself?</b></div><ul><li data-cat="0"><code>turtlesim/msg/Pose</code></li><li data-cat="1"><code>TurtleArray.msg</code></li><li data-cat="0"><code>geometry_msgs/msg/Twist</code></li><li data-cat="1"><code>CatchTurtle.srv</code></li><li data-cat="0"><code>turtlesim/srv/Spawn</code></li><li data-cat="0"><code>turtlesim/srv/Kill</code></li><li data-cat="1"><code>Turtle.msg</code></li></ul></div>
+
+<div class="lstep dsg" id="d4"><span class="n">4</span><h3>Plan the milestones: always have something that runs</h3></div>
+<p>Never write all the code and run it at the end. Each milestone adds <strong>one</strong> feature to a system that already works, and ends with a test you can see.</p>
+<div class="mstones">
+  <a href="#m1"><span class="ic">🎯</span><b>M1 · 25 min</b><span>Go to a fixed point</span><i>test: the turtle stops at (8, 4)</i></a>
+  <a href="#m2"><span class="ic">🐣</span><b>M2 · 20 min</b><span>Spawn turtles</span><i>test: one appears every second</i></a>
+  <a href="#m3"><span class="ic">📋</span><b>M3 · 30 min</b><span>Share the list</span><i>test: the hunter drives to turtle2</i></a>
+  <a href="#m4"><span class="ic">🎣</span><b>M4 · 35 min</b><span>Catch with a service</span><i>test: turtles disappear</i></a>
+  <a href="#m5"><span class="ic">🧭</span><b>M5 · 15 min</b><span>Closest first</span><i>test: more catches per minute</i></a>
+  <a href="#m6"><span class="ic">🚀</span><b>M6 · 20 min</b><span>Parameters + launch</span><i>test: one command, a YAML file</i></a>
 </div>
 
-<h3>The go-to-goal maths (you'll reuse this on the LIMO)</h3>
-<div class="grid2">
-  <div class="figure" style="margin:0">
-    <svg viewBox="0 0 320 220" role="img" aria-label="Turtle at bottom left, target at top right; dx horizontal, dy vertical, distance is the hypotenuse, goal_theta the angle from the x axis" style="width:100%;max-width:340px;background:var(--panel);border:1px solid var(--border);border-radius:14px">
-      <line x1="40" y1="180" x2="270" y2="180" stroke="currentColor" stroke-dasharray="4 4" opacity=".5"/>
-      <line x1="270" y1="180" x2="270" y2="50" stroke="currentColor" stroke-dasharray="4 4" opacity=".5"/>
-      <line x1="40" y1="180" x2="270" y2="50" stroke="#3d4bf5" stroke-width="3"/>
-      <path d="M90 180 A50 50 0 0 0 83 156" fill="none" stroke="#c8862c" stroke-width="2.5"/>
-      <circle cx="40" cy="180" r="11" fill="#0e9e6e"/>
-      <text x="22" y="208" font-size="13" fill="currentColor">turtle (x, y)</text>
-      <circle cx="270" cy="50" r="10" fill="#d64a3c"/>
-      <text x="220" y="32" font-size="13" fill="currentColor">target</text>
-      <text x="140" y="200" font-size="13" fill="currentColor">dist_x</text>
-      <text x="278" y="120" font-size="13" fill="currentColor">dist_y</text>
-      <text x="120" y="105" font-size="13" fill="#3d4bf5" font-weight="700">distance</text>
-      <text x="96" y="164" font-size="12" fill="#c8862c" font-weight="700">goal_theta</text>
-    </svg>
-  </div>
-  <div>
-    <ol>
-      <li><code>dist_x = target.x − pose.x</code>, <code>dist_y = target.y − pose.y</code></li>
-      <li><code>distance = √(dist_x² + dist_y²)</code></li>
-      <li><code>goal_theta = atan2(dist_y, dist_x)</code>: the direction to the target</li>
-      <li><code>diff = goal_theta − pose.theta</code>, then wrap it into [−π, π] so the turtle turns the short way</li>
-      <li><strong>P-control:</strong> <code>linear.x = 2·distance</code>, <code>angular.z = 6·diff</code>. The further away, the faster; the more off-course, the harder it turns.</li>
-      <li>Stop when <code>distance &lt; 0.5</code>.</li>
-    </ol>
-  </div>
-</div>
+<div class="lstep dsg" id="d5"><span class="n">5</span><h3>Remember it: tap a card to check yourself</h3></div>
+<div class="flip-grid" data-widget="flip"><div class="flip"><div class="flip-in"><div class="flip-front">Sense–think–act<small>tap to flip</small></div><div class="flip-back">The loop every autonomous robot runs: read sensors, decide, send commands.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">turtle_spawner<small>tap to flip</small></div><div class="flip-back">Calls <code>/spawn</code> and <code>/kill</code>, owns and publishes <code>/alive_turtles</code>, serves <code>/catch_turtle</code>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">turtle_controller<small>tap to flip</small></div><div class="flip-back">Subscribes to pose + alive turtles, publishes <code>cmd_vel</code>, calls <code>/catch_turtle</code>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">TurtleArray<small>tap to flip</small></div><div class="flip-back"><code>Turtle[] turtles</code>: a custom message holding a list of custom messages.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">CatchTurtle.srv<small>tap to flip</small></div><div class="flip-back"><code>string name</code> <code>---</code> <code>bool success</code>.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">One owner per data<small>tap to flip</small></div><div class="flip-back">Only the spawner changes the list; others ask it with a service.</div></div></div></div>
 
 <!-- ============================================================ -->
+<h2 id="control"><span class="num">7.2</span>The go-to-goal controller, step by step</h2>
+<p>This is the brain of the hunter, and the most reused piece of code in the course: on the LIMO in Lecture 8, and inside every navigation stack in a more advanced form.</p>
+<nav class="lpath ctl" aria-label="Steps in this section"><a href="#c1"><b>1</b>Picture it</a><a href="#c2"><b>2</b>The maths</a><a href="#c3"><b>3</b>The angle trap</a><a href="#c4"><b>4</b>Try it</a><a href="#c5"><b>5</b>Tune it</a><a href="#c6"><b>6</b>Remember it</a></nav>
 
+<div class="lstep ctl" id="c1"><span class="n">1</span><h3>Picture it: turn, drive, arrive</h3></div>
+<div class="analogy"><div class="emoji">🚶</div><div>
+  <p><strong>You do this every day without thinking.</strong> To walk to a door, you look at it (<em>direction</em>), turn until it's in front of you (<em>angle error</em>), and walk, faster when it's far and slower as you get close (<em>distance</em>). Two numbers, recomputed all the time: <strong>how far</strong> and <strong>how much to turn</strong>.</p>
+</div></div>
+<figure class="helpdesk ggfig">
+<svg viewBox="0 0 680 300" role="img" aria-label="Animated: in a blue turtlesim world, the green hunter turtle at the bottom left first turns towards the yellow target at the top right, then drives along the yellow distance line and stops on the target. dist_x and dist_y are drawn as dashed lines, goal_theta as a pink arc. On the right, the seven lines of the controller are listed.">
+  <rect class="gw" x="20" y="16" width="330" height="236" rx="10"/>
+  <line class="gg" x1="86" y1="16" x2="86" y2="252"/><line class="gg" x1="152" y1="16" x2="152" y2="252"/><line class="gg" x1="218" y1="16" x2="218" y2="252"/><line class="gg" x1="284" y1="16" x2="284" y2="252"/>
+  <line class="gg" x1="20" y1="75" x2="350" y2="75"/><line class="gg" x1="20" y1="134" x2="350" y2="134"/><line class="gg" x1="20" y1="193" x2="350" y2="193"/>
+  <line class="dx" x1="70" y1="226" x2="284" y2="226"/>
+  <line class="dx" x1="284" y1="226" x2="284" y2="82"/>
+  <line class="dist" x1="70" y1="226" x2="284" y2="82"/>
+  <path class="arc" d="M112 226 A42 42 0 0 0 104.8 202.5"/>
+  <text class="gt" x="177" y="244">dist_x</text>
+  <text class="gt" x="314" y="158">dist_y</text>
+  <text class="gt" x="160" y="146" style="fill:#ffd166">distance</text>
+  <text class="gt" x="150" y="214" style="fill:#ff8fab">goal_theta</text>
+  <circle class="goal" cx="284" cy="82" r="11"/><text class="gt" x="284" y="58">target (x, y)</text>
+  <g class="bot"><g class="botr" style="transform-box:view-box; transform-origin:70px 226px">
+    <line class="head" x1="70" y1="226" x2="122" y2="226"/>
+    <ellipse class="me" cx="70" cy="226" rx="14" ry="11"/><circle class="me" cx="86" cy="226" r="5"/>
+  </g></g>
+
+  <text class="eq" x="372" y="40">1  dist_x = target.x − pose.x</text>
+  <text class="eq" x="372" y="66">2  dist_y = target.y − pose.y</text>
+  <text class="eq" x="372" y="92"><tspan class="y">3  distance = √(dist_x² + dist_y²)</tspan></text>
+  <text class="eq" x="372" y="118"><tspan class="p">4  goal_theta = atan2(dist_y, dist_x)</tspan></text>
+  <text class="eq" x="372" y="144">5  diff = goal_theta − pose.theta</text>
+  <text class="eq" x="372" y="170">   (wrap diff into [−π, π])</text>
+  <text class="eq" x="372" y="196"><tspan class="g">6  linear.x  = 2 · distance</tspan></text>
+  <text class="eq" x="372" y="222"><tspan class="g">7  angular.z = 6 · diff</tspan></text>
+
+  <g class="hd-stage phase ph1"><rect x="14" y="264" width="206" height="28" rx="14"/><text x="117" y="283">① big diff: turn first</text></g>
+  <g class="hd-stage phase ph2"><rect x="237" y="264" width="206" height="28" rx="14"/><text x="340" y="283">② drive, slowing down</text></g>
+  <g class="hd-stage phase ph3"><rect x="460" y="264" width="206" height="28" rx="14"/><text x="563" y="283">③ distance &lt; 0.5: catch</text></g>
+</svg>
+</figure>
+
+<div class="lstep ctl" id="c2"><span class="n">2</span><h3>The maths, line by line</h3></div>
+<div class="table-wrap"><table>
+  <tr><th>Line</th><th>In words</th><th>Example: turtle (2, 2), θ = 0; target (5, 6)</th></tr>
+  <tr><td>1–2</td><td>How far right and up is the target?</td><td><code>dist_x = 3</code>, <code>dist_y = 4</code></td></tr>
+  <tr><td>3</td><td>Pythagoras: the straight-line distance</td><td><code>distance = √(9 + 16) = 5</code></td></tr>
+  <tr><td>4</td><td>The direction to the target, measured from the x-axis. <code>atan2</code> (not <code>atan</code>) gets the quadrant right.</td><td><code>atan2(4, 3) = 0.93 rad</code> (53°)</td></tr>
+  <tr><td>5</td><td>How much the turtle must turn: where it should look minus where it looks</td><td><code>diff = 0.93 − 0 = 0.93 rad</code></td></tr>
+  <tr><td>6</td><td>Speed proportional to distance: fast when far, gentle near the end</td><td><code>linear.x = 2 · 5 = 10</code></td></tr>
+  <tr><td>7</td><td>Turn rate proportional to the angle error</td><td><code>angular.z = 6 · 0.93 = 5.6</code></td></tr>
+</table></div>
+<div class="box note"><div class="box-title">📌 This is a P-controller</div><p>"P" for <strong>proportional</strong>: the command is a gain times an error. Two errors (distance and angle), two gains (2 and 6). Cruise control, thermostats and drone stabilisers start with exactly this idea; better ones add I and D terms (a PID controller). In Lecture 8 you keep the P-controller and make it safe for a real robot.</p></div>
+
+<div class="lstep ctl" id="c3"><span class="n">3</span><h3>The angle trap: always turn the short way</h3></div>
+<p>The turtle looks at 170°, the target is at −170°. The real difference is only 20° to the left, but plain subtraction gives −340°: a full turn to the right. Wrapping <code>diff</code> into [−π, π] (−180° to 180°) fixes it.</p>
+<div class="wrapline">
+  <div><svg viewBox="0 0 260 175" role="img" aria-label="Without wrapping: the heading is at 170 degrees and the goal at minus 170 degrees; a long red arc of 340 degrees shows the turtle turning the long way round, to the right.">
+    <circle class="rim" cx="165" cy="88" r="60"/>
+    <path class="bad" d="M105.9 77.6 A60 60 0 1 1 105.9 98.4"/>
+    <line class="hd" x1="165" y1="88" x2="105.9" y2="77.6"/><line class="gl" x1="165" y1="88" x2="105.9" y2="98.4"/>
+    <text x="96" y="70" style="text-anchor:end">heading 170°</text><text x="96" y="114" style="text-anchor:end">goal −170°</text>
+    <text x="130" y="22" style="fill:var(--danger)">diff = −340°: the long way 😵</text>
+    <text x="130" y="170">without wrapping</text>
+  </svg></div>
+  <div><svg viewBox="0 0 260 175" role="img" aria-label="With wrapping: the same heading and goal; a short green arc of 20 degrees shows the turtle turning a little to the left.">
+    <circle class="rim" cx="165" cy="88" r="60"/>
+    <path class="good" d="M105.9 77.6 A60 60 0 0 0 105.9 98.4"/>
+    <line class="hd" x1="165" y1="88" x2="105.9" y2="77.6"/><line class="gl" x1="165" y1="88" x2="105.9" y2="98.4"/>
+    <text x="96" y="70" style="text-anchor:end">heading 170°</text><text x="96" y="114" style="text-anchor:end">goal −170°</text>
+    <text x="130" y="22" style="fill:var(--accent2)">diff = −340° + 360° = +20° 🙂</text>
+    <text x="130" y="170">with wrapping</text>
+  </svg></div>
+</div>
+<div class="cmd file"><div class="cmd-h">📄 two ways to wrap an angle</div><pre><code>if diff &gt; math.pi:            # the way used in this lecture: easy to read
+    diff -= 2 * math.pi
+elif diff &lt; -math.pi:
+    diff += 2 * math.pi
+
+diff = math.atan2(math.sin(diff), math.cos(diff))   # one line, always correct</code></pre></div>
+
+<div class="lstep ctl" id="c4"><span class="n">4</span><h3>Try it: the controller in your browser</h3></div>
 <div data-widget="gotogoal"></div>
 
-<div class="game" data-widget="sort" data-cats="📻 Topic|🛎️ Service|🎛️ Parameter"><div class="kc-head"><span class="sim-tag">🎮 Game</span><b>Which ROS 2 tool does each part of the project use?</b></div><ul><li data-cat="0"><code>/turtle1/pose</code></li><li data-cat="1"><code>/spawn</code></li><li data-cat="2"><code>spawn_frequency</code></li><li data-cat="0"><code>/alive_turtles</code></li><li data-cat="1"><code>/catch_turtle</code></li><li data-cat="1"><code>/kill</code></li><li data-cat="2"><code>catch_closest_turtle_first</code></li><li data-cat="0"><code>/turtle1/cmd_vel</code></li></ul></div>
+<div class="lstep ctl" id="c5"><span class="n">5</span><h3>Tune it: what the gains do</h3></div>
+<div class="table-wrap"><table class="vs">
+  <tr><th>Kp linear / Kp angular</th><th>What you see</th><th>Why</th></tr>
+  <tr><td>0.5 / 1</td><td>Slow, wide curves; may miss the target and circle it</td><td>Turns too slowly to point at the target before it arrives</td></tr>
+  <tr><td><strong>2 / 6</strong></td><td>Turns quickly, drives smoothly, stops on the target</td><td>Turning is much faster than driving: the turtle faces the target early</td></tr>
+  <tr><td>5 / 20</td><td>Very fast, jerky turns, overshoots on the real robot</td><td>Large commands; a real motor can't follow them instantly</td></tr>
+  <tr><td>5 / 2</td><td>Big loops around the target</td><td>Drives fast while still pointing the wrong way</td></tr>
+</table></div>
+<div class="box warn"><div class="box-title">⚠️ Turtlesim forgives, the LIMO doesn't</div><p><code>linear.x = 2 · distance</code> asks for 20 m/s when the target is 10 m away. Turtlesim obeys; a LIMO would be dangerous. In Lecture 8 you add <strong>speed limits</strong> with a <code>clamp()</code> and "turn first if the heading is badly off": the speed limiter idea from Lecture 5.</p></div>
 
+<div class="lstep ctl" id="c6"><span class="n">6</span><h3>Remember it</h3></div>
+<div class="flip-grid" data-widget="flip"><div class="flip"><div class="flip-in"><div class="flip-front">distance<small>tap to flip</small></div><div class="flip-back"><code>√(dist_x² + dist_y²)</code>: how far.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">atan2(dy, dx)<small>tap to flip</small></div><div class="flip-back">The direction to the target, in radians, correct in all four quadrants.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">diff<small>tap to flip</small></div><div class="flip-back"><code>goal_theta − theta</code>, wrapped into [−π, π].</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">P-control<small>tap to flip</small></div><div class="flip-back">Command = gain × error. Here 2 × distance and 6 × diff.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Store, then act<small>tap to flip</small></div><div class="flip-back">Callbacks store the latest data; a timer makes the decisions.</div></div></div><div class="flip"><div class="flip-in"><div class="flip-front">Stop condition<small>tap to flip</small></div><div class="flip-back"><code>distance &lt; 0.5</code>: close enough, stop and catch.</div></div></div></div>
+
+<p class="nextup">✅ You have the design and the maths. Now build it, one milestone at a time: each one ends with something you can see working.</p>
+
+
+<!-- ============================================================ -->
 <h2 id="m1"><span class="num">M1</span>Milestone 1 — Controller: go to a fixed point</h2>
 <div class="lab">
   <div class="lab-h"><span class="badge">MILESTONE 1 · 25 min</span><h3>turtle_controller v1</h3></div>
+  <p class="lab-goal">Goal: the hunter drives to (8, 4) by itself and stops there. No spawner yet: test the brain alone first.</p>
 
   <div class="step" id="m1-1">
     <div class="step-h"><span class="step-n">1</span><span class="step-t">Create the project package and explore the interfaces</span></div>
@@ -152,11 +577,18 @@ ros2 pkg create turtlesim_catch_them_all --build-type ament_python \
   --dependencies rclpy turtlesim geometry_msgs my_robot_interfaces
 ros2 interface show turtlesim/msg/Pose
 ros2 interface show geometry_msgs/msg/Twist</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see (Pose)</div><pre>float32 x
+float32 y
+float32 theta
+
+float32 linear_velocity
+float32 angular_velocity</pre></div>
+    <p>A project gets its own package. <code>--dependencies</code> writes the four <code>&lt;depend&gt;</code> lines in <code>package.xml</code> for you.</p>
   </div>
 
   <div class="step" id="m1-2">
-    <div class="step-h"><span class="step-n">2</span><span class="step-t">Write the controller</span></div>
-    <div class="cmd file"><div class="cmd-h">📄 turtlesim_catch_them_all/turtlesim_catch_them_all/turtle_controller.py</div><pre><code>#!/usr/bin/env python3
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Write the controller (click the highlighted parts)</span></div>
+    <div class="cmd file" data-widget="explain"><div class="cmd-h">📄 turtlesim_catch_them_all/turtlesim_catch_them_all/turtle_controller.py</div><pre><code>#!/usr/bin/env python3
 import math
 import rclpy
 from rclpy.node import Node
@@ -167,40 +599,40 @@ from geometry_msgs.msg import Twist
 class TurtleControllerNode(Node):
     def __init__(self):
         super().__init__("turtle_controller")
-        self.target_x_ = 8.0
-        self.target_y_ = 4.0
-        self.pose_ = None
-        self.cmd_vel_publisher_ = self.create_publisher(Twist, "turtle1/cmd_vel", 10)
+<span class="ex" data-tip="A fixed target for now. In M3 it comes from <code>/alive_turtles</code>.">        self.target_x_ = 8.0
+        self.target_y_ = 4.0</span>
+<span class="ex" data-tip="<code>None</code> until the first pose arrives. Never assume a message has arrived.">        self.pose_ = None</span>
+<span class="ex" data-tip="Relative names (no <code>/</code>): with a namespace this still works (Lecture 6).">        self.cmd_vel_publisher_ = self.create_publisher(Twist, "turtle1/cmd_vel", 10)
         self.pose_subscriber_ = self.create_subscription(
-            Pose, "turtle1/pose", self.callback_turtle_pose, 10)
-        self.control_loop_timer_ = self.create_timer(0.01, self.control_loop)
+            Pose, "turtle1/pose", self.callback_turtle_pose, 10)</span>
+<span class="ex" data-tip="The control loop: 100 times per second (every 0.01 s). This is the <b>think</b> step.">        self.control_loop_timer_ = self.create_timer(0.01, self.control_loop)</span>
 
-    def callback_turtle_pose(self, msg):
-        self.pose_ = msg                      # just remember the latest pose
+<span class="ex" data-tip="The <b>sense</b> step: only store. No maths, no publishing here.">    def callback_turtle_pose(self, msg):
+        self.pose_ = msg</span>
 
     def control_loop(self):
         if self.pose_ is None:                # no pose received yet
             return
 
-        dist_x = self.target_x_ - self.pose_.x
+<span class="ex" data-tip="Lines 1–3 of the maths: how far right, how far up, and the straight-line distance.">        dist_x = self.target_x_ - self.pose_.x
         dist_y = self.target_y_ - self.pose_.y
-        distance = math.sqrt(dist_x * dist_x + dist_y * dist_y)
+        distance = math.sqrt(dist_x * dist_x + dist_y * dist_y)</span>
 
         msg = Twist()
-        if distance > 0.5:
-            msg.linear.x = 2 * distance                       # position
-            goal_theta = math.atan2(dist_y, dist_x)           # orientation
+        if distance &gt; 0.5:
+<span class="ex" data-tip="P-control on distance: far → fast, near → slow.">            msg.linear.x = 2 * distance</span>
+<span class="ex" data-tip="Lines 4–5 and the angle trap from 7.2: direction to the target, angle error, wrapped so the turtle turns the short way.">            goal_theta = math.atan2(dist_y, dist_x)
             diff = goal_theta - self.pose_.theta
-            if diff > math.pi:
+            if diff &gt; math.pi:
                 diff -= 2 * math.pi
             elif diff &lt; -math.pi:
-                diff += 2 * math.pi
-            msg.angular.z = 6 * diff
+                diff += 2 * math.pi</span>
+<span class="ex" data-tip="P-control on the angle: the gain 6 makes turning much faster than driving.">            msg.angular.z = 6 * diff</span>
         else:
-            msg.linear.x = 0.0                                # target reached
-            msg.angular.z = 0.0
+<span class="ex" data-tip="Close enough: stop. Without this the turtle would circle the target forever.">            msg.linear.x = 0.0
+            msg.angular.z = 0.0</span>
 
-        self.cmd_vel_publisher_.publish(msg)
+<span class="ex" data-tip="The <b>act</b> step: one command per loop, also when stopped (zero velocity).">        self.cmd_vel_publisher_.publish(msg)</span>
 
 
 def main(args=None):
@@ -212,7 +644,7 @@ def main(args=None):
 if __name__ == "__main__":
     main()</code></pre></div>
     <div class="box idea"><div class="box-title">💡 The pattern: "store in the callback, act in the timer"</div>
-    <p>The pose callback only <em>saves</em> the latest pose. The timer (100 times per second) makes the decision. You will use this exact pattern on the LIMO with <code>/odom</code> instead of <code>/turtle1/pose</code>.</p></div>
+    <p>The pose callback only <em>saves</em> the latest pose. The timer makes the decision at a steady rate, whatever the sensor rate is. You'll use exactly this pattern on the LIMO with <code>/odom</code> instead of <code>/turtle1/pose</code>.</p></div>
   </div>
 
   <div class="step" id="m1-3">
@@ -221,7 +653,7 @@ if __name__ == "__main__":
     <div class="cmd"><div class="cmd-h">💻 Terminals 1 &amp; 2</div><pre><code>cd ~/ros2_ws &amp;&amp; colcon build --packages-select turtlesim_catch_them_all --symlink-install &amp;&amp; source ~/.bashrc
 ros2 run turtlesim turtlesim_node
 ros2 run turtlesim_catch_them_all turtle_controller</code></pre></div>
-    <p>✅ The turtle drives to (8, 4) and stops. <strong>Experiment:</strong> change the gains 2 and 6 (for example 0.5 and 1, then 5 and 20). What happens? This is called <em>tuning</em>.</p>
+    <p>✅ The turtle turns, drives to (8, 4) and stops. <strong>Experiment:</strong> change the gains 2 and 6 (0.5 and 1, then 5 and 20) and compare with the table in 7.2 step 5. Then try a target behind the turtle, (1, 5): does it turn the short way?</p>
   </div>
 </div>
 
@@ -229,9 +661,19 @@ ros2 run turtlesim_catch_them_all turtle_controller</code></pre></div>
 <h2 id="m2"><span class="num">M2</span>Milestone 2 — Spawner: new turtles every second</h2>
 <div class="lab">
   <div class="lab-h"><span class="badge">MILESTONE 2 · 20 min</span><h3>turtle_spawner v1</h3></div>
+  <p class="lab-goal">Goal: a node that calls turtlesim's <code>/spawn</code> service from a timer, exactly like the Lecture 4 client, so a new turtle appears every second.</p>
   <div class="step" id="m2-1">
-    <div class="step-h"><span class="step-n">1</span><span class="step-t">A node that calls <code>/spawn</code> from a timer</span></div>
-    <div class="cmd file"><div class="cmd-h">📄 turtlesim_catch_them_all/turtlesim_catch_them_all/turtle_spawner.py</div><pre><code>#!/usr/bin/env python3
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">A node that calls <code>/spawn</code> from a timer (click the highlighted parts)</span></div>
+    <div class="cmd"><div class="cmd-h">💻 Look at the service first</div><pre><code>ros2 service type /spawn
+ros2 interface show turtlesim/srv/Spawn</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>turtlesim/srv/Spawn
+float32 x
+float32 y
+float32 theta
+string name # Optional.  A unique name will be created and returned if this is empty
+---
+string name</pre></div>
+    <div class="cmd file" data-widget="explain"><div class="cmd-h">📄 turtlesim_catch_them_all/turtlesim_catch_them_all/turtle_spawner.py</div><pre><code>#!/usr/bin/env python3
 from functools import partial
 import math
 import random
@@ -244,24 +686,24 @@ class TurtleSpawnerNode(Node):
     def __init__(self):
         super().__init__("turtle_spawner")
         self.turtle_name_prefix_ = "turtle"
-        self.turtle_counter_ = 1              # turtle1 already exists, so start at turtle2
+<span class="ex" data-tip="<code>turtle1</code> already exists, and turtlesim refuses a second turtle with the same name. Starting at 1 and adding 1 before each spawn gives turtle2, turtle3, …">        self.turtle_counter_ = 1</span>
         self.spawn_client_ = self.create_client(Spawn, "spawn")
         self.spawn_timer_ = self.create_timer(1.0, self.spawn_new_turtle)
 
     def spawn_new_turtle(self):
-        if not self.spawn_client_.service_is_ready():
+<span class="ex" data-tip="Never block inside a timer (no <code>wait_for_service</code> loop here). If turtlesim isn't up yet, warn and try again next second.">        if not self.spawn_client_.service_is_ready():
             self.get_logger().warn("Waiting for turtlesim /spawn ...")
-            return
+            return</span>
         self.turtle_counter_ += 1
         name = self.turtle_name_prefix_ + str(self.turtle_counter_)
-        x = random.uniform(0.5, 10.5)
+<span class="ex" data-tip="The turtlesim window is 11 × 11 units. Stay 0.5 away from the walls.">        x = random.uniform(0.5, 10.5)
         y = random.uniform(0.5, 10.5)
-        theta = random.uniform(0.0, 2 * math.pi)
+        theta = random.uniform(0.0, 2 * math.pi)</span>
 
         request = Spawn.Request()
         request.x, request.y, request.theta, request.name = x, y, theta, name
-        future = self.spawn_client_.call_async(request)
-        future.add_done_callback(partial(self.callback_spawn, x=x, y=y, theta=theta))
+<span class="ex" data-tip="Lecture 4: an <b>asynchronous</b> call. <code>partial</code> passes x, y, theta to the callback, because the response only contains the name, and we'll need the position in M3.">        future = self.spawn_client_.call_async(request)
+        future.add_done_callback(partial(self.callback_spawn, x=x, y=y, theta=theta))</span>
 
     def callback_spawn(self, future, x, y, theta):
         try:
@@ -280,10 +722,13 @@ def main(args=None):
 
 if __name__ == "__main__":
     main()</code></pre></div>
-    <div class="cmd"><div class="cmd-h">💻 setup.py + run</div><pre><code>#  "turtle_spawner = turtlesim_catch_them_all.turtle_spawner:main",
+    <div class="cmd"><div class="cmd-h">💻 setup.py + run (turtlesim still running)</div><pre><code>#  "turtle_spawner = turtlesim_catch_them_all.turtle_spawner:main",
 cd ~/ros2_ws &amp;&amp; colcon build --packages-select turtlesim_catch_them_all --symlink-install &amp;&amp; source ~/.bashrc
 ros2 run turtlesim_catch_them_all turtle_spawner</code></pre></div>
-    <p>✅ A new turtle appears every second. Why does the counter start at 1? Change it to 0 and look at turtlesim's terminal. (turtlesim refuses a second <code>turtle1</code>.)</p>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>[INFO] [1730800000.101] [turtle_spawner]: Turtle turtle2 is now alive
+[INFO] [1730800001.100] [turtle_spawner]: Turtle turtle3 is now alive
+...</pre></div>
+    <p>Why does the counter start at 1? Change it to 0 and read turtlesim's terminal: <em>"A turtle named [turtle1] already exists"</em>.</p>
   </div>
 </div>
 
@@ -291,42 +736,48 @@ ros2 run turtlesim_catch_them_all turtle_spawner</code></pre></div>
 <h2 id="m3"><span class="num">M3</span>Milestone 3 — Chase the first alive turtle</h2>
 <div class="lab">
   <div class="lab-h"><span class="badge">MILESTONE 3 · 30 min</span><h3>Share the list of turtles with a custom message</h3></div>
+  <p class="lab-goal">Goal: the spawner publishes the list of alive turtles on <code>/alive_turtles</code>; the controller chases the first one in the list.</p>
 
   <div class="step" id="m3-1">
-    <div class="step-h"><span class="step-n">1</span><span class="step-t">Two messages (you may have them from Lecture 5 homework)</span></div>
-    <div class="cmd file"><div class="cmd-h">📄 my_robot_interfaces/msg/Turtle.msg</div><pre><code>string name
-float64 x
-float64 y
-float64 theta</code></pre></div>
-    <div class="cmd file"><div class="cmd-h">📄 my_robot_interfaces/msg/TurtleArray.msg</div><pre><code>Turtle[] turtles</code></pre></div>
-    <div class="cmd"><div class="cmd-h">💻 Add both to rosidl_generate_interfaces, then</div><pre><code>cd ~/ros2_ws &amp;&amp; colcon build --packages-select my_robot_interfaces &amp;&amp; source ~/.bashrc
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Two messages (you may have them from the Lecture 5 homework)</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_robot_interfaces/CMakeLists.txt</div><pre><code>rosidl_generate_interfaces(${PROJECT_NAME}
+  ...
+<span class="hl">  "msg/Turtle.msg"</span>
+<span class="hl">  "msg/TurtleArray.msg"</span>
+)</code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws &amp;&amp; colcon build --packages-select my_robot_interfaces &amp;&amp; source ~/.bashrc
 ros2 interface show my_robot_interfaces/msg/TurtleArray</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>Turtle[] turtles
+	string name
+	float64 x
+	float64 y
+	float64 theta</pre></div>
   </div>
 
   <div class="step" id="m3-2">
     <div class="step-h"><span class="step-n">2</span><span class="step-t">Spawner: keep a list and publish it</span></div>
-    <div class="cmd file"><div class="cmd-h">📄 turtle_spawner.py (changes)</div><pre><code><span class="hl">from my_robot_interfaces.msg import Turtle, TurtleArray</span>
+    <div class="cmd file" data-widget="explain"><div class="cmd-h">📄 turtle_spawner.py (changes)</div><pre><code><span class="hl">from my_robot_interfaces.msg import Turtle, TurtleArray</span>
 ...
     def __init__(self):
         ...
-<span class="hl">        self.alive_turtles_ = []</span>
-<span class="hl">        self.alive_turtles_publisher_ = self.create_publisher(TurtleArray, "alive_turtles", 10)</span>
+<span class="ex" data-tip="The spawner <b>owns</b> this list: only it adds and removes turtles.">        self.alive_turtles_ = []</span>
+        self.alive_turtles_publisher_ = self.create_publisher(TurtleArray, "alive_turtles", 10)
 
-<span class="hl">    def publish_alive_turtles(self):</span>
-<span class="hl">        msg = TurtleArray()</span>
-<span class="hl">        msg.turtles = self.alive_turtles_</span>
-<span class="hl">        self.alive_turtles_publisher_.publish(msg)</span>
+<span class="ex" data-tip="Publish the whole list every time it changes. A <code>TurtleArray</code> holds a Python list of <code>Turtle</code> messages.">    def publish_alive_turtles(self):
+        msg = TurtleArray()
+        msg.turtles = self.alive_turtles_
+        self.alive_turtles_publisher_.publish(msg)</span>
 
     def callback_spawn(self, future, x, y, theta):
         try:
             response = future.result()
             if response.name != "":
                 self.get_logger().info("Turtle " + response.name + " is now alive")
-<span class="hl">                new_turtle = Turtle()</span>
-<span class="hl">                new_turtle.name = response.name</span>
-<span class="hl">                new_turtle.x, new_turtle.y, new_turtle.theta = x, y, theta</span>
-<span class="hl">                self.alive_turtles_.append(new_turtle)</span>
-<span class="hl">                self.publish_alive_turtles()</span>
+<span class="ex" data-tip="Here is why we passed x, y, theta with <code>partial</code>: the response only has the name.">                new_turtle = Turtle()
+                new_turtle.name = response.name
+                new_turtle.x, new_turtle.y, new_turtle.theta = x, y, theta</span>
+                self.alive_turtles_.append(new_turtle)
+                self.publish_alive_turtles()
         except Exception as e:
             self.get_logger().error(f"Service call failed {e!r}")</code></pre></div>
   </div>
@@ -344,7 +795,7 @@ ros2 interface show my_robot_interfaces/msg/TurtleArray</code></pre></div>
 <span class="hl">            TurtleArray, "alive_turtles", self.callback_alive_turtles, 10)</span>
 
 <span class="hl">    def callback_alive_turtles(self, msg):</span>
-<span class="hl">        if len(msg.turtles) > 0:</span>
+<span class="hl">        if len(msg.turtles) &gt; 0:</span>
 <span class="hl">            self.turtle_to_catch_ = msg.turtles[0]</span>
 
     def control_loop(self):
@@ -353,107 +804,117 @@ ros2 interface show my_robot_interfaces/msg/TurtleArray</code></pre></div>
 <span class="hl">        dist_x = self.turtle_to_catch_.x - self.pose_.x</span>
 <span class="hl">        dist_y = self.turtle_to_catch_.y - self.pose_.y</span>
         ...   # the rest is unchanged</code></pre></div>
+    <p>Add <code>&lt;depend&gt;my_robot_interfaces&lt;/depend&gt;</code> to <code>package.xml</code> if it isn't there yet.</p>
     <div class="cmd"><div class="cmd-h">💻 3 terminals</div><pre><code>cd ~/ros2_ws &amp;&amp; colcon build --symlink-install &amp;&amp; source ~/.bashrc
 ros2 run turtlesim turtlesim_node
 ros2 run turtlesim_catch_them_all turtle_controller
 ros2 run turtlesim_catch_them_all turtle_spawner</code></pre></div>
-    <p>✅ turtle1 drives to the first spawned turtle and stops on top of it, but doesn't catch it yet. Check <code>ros2 topic echo /alive_turtles</code>.</p>
+    <p>✅ turtle1 drives to the first spawned turtle and stops on top of it, but doesn't catch it yet. Check with <code>ros2 topic echo /alive_turtles</code>: the list keeps growing.</p>
   </div>
 </div>
 
 <!-- ============================================================ -->
-<h2 id="m4"><span class="num">M4</span>Milestone 4 — Catch (kill) it with a service</h2>
+<h2 id="m4"><span class="num">M4</span>Milestone 4 — Catch it with a service</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">MILESTONE 4 · 35 min</span><h3>/catch_turtle</h3></div>
+  <div class="lab-h"><span class="badge">MILESTONE 4 · 35 min</span><h3>/catch_turtle: the controller asks, the spawner decides</h3></div>
+  <p class="lab-goal">Goal: when the hunter reaches its target, it calls <code>/catch_turtle</code>; the spawner removes the turtle from its list and calls turtlesim's <code>/kill</code>. Turtles disappear one after another.</p>
 
   <div class="step" id="m4-1">
     <div class="step-h"><span class="step-n">1</span><span class="step-t">The service definition</span></div>
     <div class="cmd file"><div class="cmd-h">📄 my_robot_interfaces/srv/CatchTurtle.srv</div><pre><code>string name
 ---
 bool success</code></pre></div>
-    <p>Add <code>"srv/CatchTurtle.srv"</code> to CMakeLists and rebuild the interfaces.</p>
+    <p>Add <code>"srv/CatchTurtle.srv"</code> to <code>rosidl_generate_interfaces</code>, rebuild the interfaces and check with <code>ros2 interface show my_robot_interfaces/srv/CatchTurtle</code>.</p>
   </div>
 
   <div class="step" id="m4-2">
     <div class="step-h"><span class="step-n">2</span><span class="step-t">Spawner: serve <code>/catch_turtle</code> and call turtlesim's <code>/kill</code></span></div>
-    <div class="cmd file"><div class="cmd-h">📄 turtle_spawner.py (changes)</div><pre><code><span class="hl">from turtlesim.srv import Spawn, Kill</span>
+    <div class="cmd file" data-widget="explain"><div class="cmd-h">📄 turtle_spawner.py (changes)</div><pre><code><span class="hl">from turtlesim.srv import Spawn, Kill</span>
 <span class="hl">from my_robot_interfaces.srv import CatchTurtle</span>
 ...
     def __init__(self):
         ...
-<span class="hl">        self.kill_client_ = self.create_client(Kill, "kill")</span>
-<span class="hl">        self.catch_turtle_service_ = self.create_service(</span>
-<span class="hl">            CatchTurtle, "catch_turtle", self.callback_catch_turtle)</span>
+<span class="ex" data-tip="One node can be a client (<code>/kill</code>) and a server (<code>/catch_turtle</code>) at the same time.">        self.kill_client_ = self.create_client(Kill, "kill")
+        self.catch_turtle_service_ = self.create_service(
+            CatchTurtle, "catch_turtle", self.callback_catch_turtle)</span>
 
-<span class="hl">    def callback_catch_turtle(self, request, response):</span>
-<span class="hl">        self.call_kill_server(request.name)</span>
-<span class="hl">        response.success = True</span>
-<span class="hl">        return response</span>
+    def callback_catch_turtle(self, request, response):
+<span class="ex" data-tip="Check the request: is this turtle still alive? The controller may ask twice, or a second hunter may ask for the same turtle (Challenge 7.3). Refuse with <code>success = False</code>.">        if request.name not in [t.name for t in self.alive_turtles_]:
+            response.success = False
+            return response</span>
+<span class="ex" data-tip="Update the list <em>now</em> and tell everyone, so the controller immediately picks a new target instead of asking again.">        self.alive_turtles_ = [t for t in self.alive_turtles_ if t.name != request.name]
+        self.publish_alive_turtles()</span>
+<span class="ex" data-tip="Then remove it from the window. A server callback must return quickly, so it starts an <b>async</b> call and doesn't wait for <code>/kill</code> to finish.">        self.call_kill_server(request.name)</span>
+        response.success = True
+        return response
 
-<span class="hl">    def call_kill_server(self, turtle_name):</span>
-<span class="hl">        request = Kill.Request()</span>
-<span class="hl">        request.name = turtle_name</span>
-<span class="hl">        future = self.kill_client_.call_async(request)</span>
-<span class="hl">        future.add_done_callback(partial(self.callback_kill, turtle_name=turtle_name))</span>
+    def call_kill_server(self, turtle_name):
+        request = Kill.Request()
+        request.name = turtle_name
+        future = self.kill_client_.call_async(request)
+        future.add_done_callback(partial(self.callback_kill, turtle_name=turtle_name))
 
-<span class="hl">    def callback_kill(self, future, turtle_name):</span>
-<span class="hl">        try:</span>
-<span class="hl">            future.result()</span>
-<span class="hl">            for i, turtle in enumerate(self.alive_turtles_):</span>
-<span class="hl">                if turtle.name == turtle_name:</span>
-<span class="hl">                    del self.alive_turtles_[i]</span>
-<span class="hl">                    self.publish_alive_turtles()</span>
-<span class="hl">                    break</span>
-<span class="hl">        except Exception as e:</span>
-<span class="hl">            self.get_logger().error(f"Kill failed {e!r}")</span></code></pre></div>
+    def callback_kill(self, future, turtle_name):
+        try:
+            future.result()
+            self.get_logger().info("Turtle " + turtle_name + " caught")
+        except Exception as e:
+            self.get_logger().error(f"Kill failed {e!r}")</code></pre></div>
   </div>
 
   <div class="step" id="m4-3">
     <div class="step-h"><span class="step-n">3</span><span class="step-t">Controller: when the target is reached, ask for it to be caught</span></div>
-    <div class="cmd file"><div class="cmd-h">📄 turtle_controller.py (changes)</div><pre><code><span class="hl">from functools import partial</span>
+    <div class="cmd file" data-widget="explain"><div class="cmd-h">📄 turtle_controller.py (changes)</div><pre><code><span class="hl">from functools import partial</span>
 <span class="hl">from my_robot_interfaces.srv import CatchTurtle</span>
 ...
     def __init__(self):
         ...
-<span class="hl">        self.catch_client_ = self.create_client(CatchTurtle, "catch_turtle")</span>
+        self.catch_client_ = self.create_client(CatchTurtle, "catch_turtle")
 
     def control_loop(self):
         ...
         else:
             msg.linear.x = 0.0
             msg.angular.z = 0.0
-<span class="hl">            self.call_catch_turtle_server(self.turtle_to_catch_.name)</span>
-<span class="hl">            self.turtle_to_catch_ = None</span>
+<span class="ex" data-tip="Ask once, then forget the target. The next <code>/alive_turtles</code> message (sent right away by the spawner) gives the next one.">            self.call_catch_turtle_server(self.turtle_to_catch_.name)
+            self.turtle_to_catch_ = None</span>
 
         self.cmd_vel_publisher_.publish(msg)
 
-<span class="hl">    def call_catch_turtle_server(self, turtle_name):</span>
-<span class="hl">        request = CatchTurtle.Request()</span>
-<span class="hl">        request.name = turtle_name</span>
-<span class="hl">        future = self.catch_client_.call_async(request)</span>
-<span class="hl">        future.add_done_callback(partial(self.callback_catch, turtle_name=turtle_name))</span>
+    def call_catch_turtle_server(self, turtle_name):
+        if not self.catch_client_.service_is_ready():
+            self.get_logger().warn("catch_turtle service not available")
+            return
+        request = CatchTurtle.Request()
+        request.name = turtle_name
+        future = self.catch_client_.call_async(request)
+        future.add_done_callback(partial(self.callback_catch, turtle_name=turtle_name))
 
-<span class="hl">    def callback_catch(self, future, turtle_name):</span>
-<span class="hl">        try:</span>
-<span class="hl">            if not future.result().success:</span>
-<span class="hl">                self.get_logger().error("Turtle " + turtle_name + " could not be caught")</span>
-<span class="hl">        except Exception as e:</span>
-<span class="hl">            self.get_logger().error(f"Service call failed {e!r}")</span></code></pre></div>
-    <p>✅ Rebuild, then run the 3 nodes again. turtle1 now eats each turtle and goes to the next one. <strong>You have a working autonomous system.</strong></p>
+<span class="ex" data-tip="The response tells us whether the spawner accepted. A refusal is not a crash: log it and move on.">    def callback_catch(self, future, turtle_name):
+        try:
+            if not future.result().success:
+                self.get_logger().warn("Turtle " + turtle_name + " could not be caught")
+        except Exception as e:
+            self.get_logger().error(f"Service call failed {e!r}")</span></code></pre></div>
+    <div class="cmd"><div class="cmd-h">💻 Rebuild, then the same 3 terminals as M3</div><pre><code>cd ~/ros2_ws &amp;&amp; colcon build --symlink-install &amp;&amp; source ~/.bashrc</code></pre></div>
+    <p>✅ turtle1 now eats each turtle and goes to the next one. <strong>You have a working autonomous system.</strong> Look at it in <code>rqt_graph</code> and compare with your drawing from 7.1.</p>
   </div>
+
+  <div class="game" data-widget="order"><div class="kc-head"><span class="sim-tag">🎮 Game</span><b>One catch, in order: what happens first?</b></div><ol><li>The control loop computes <code>distance &lt; 0.5</code></li><li>The controller calls <code>/catch_turtle</code> with the name</li><li>The spawner checks the name is still alive</li><li>The spawner removes it and publishes <code>/alive_turtles</code></li><li>The spawner calls turtlesim's <code>/kill</code></li><li>The spawner answers <code>success: True</code></li><li>The controller receives the new list and picks the next target</li></ol></div>
 </div>
 
 <!-- ============================================================ -->
 <h2 id="m5"><span class="num">M5</span>Milestone 5 — Chase the closest turtle</h2>
 <div class="lab">
   <div class="lab-h"><span class="badge">MILESTONE 5 · 15 min</span><h3>A smarter choice of target</h3></div>
+  <p class="lab-goal">Goal: the hunter picks the nearest turtle, like a robotaxi dispatcher picking the nearest passenger.</p>
   <div class="step" id="m5-1">
     <div class="step-h"><span class="step-n">1</span><span class="step-t">Pick the nearest turtle instead of the first one</span></div>
-    <div class="cmd file"><div class="cmd-h">📄 turtle_controller.py → callback_alive_turtles</div><pre><code>    def callback_alive_turtles(self, msg):
+    <div class="cmd file" data-widget="explain"><div class="cmd-h">📄 turtle_controller.py → callback_alive_turtles</div><pre><code>    def callback_alive_turtles(self, msg):
         if len(msg.turtles) == 0 or self.pose_ is None:
             return
         if self.catch_closest_turtle_first_:
-            closest_turtle = None
+<span class="ex" data-tip="The classic &quot;find the minimum&quot; loop: remember the best so far, replace it when you find a better one.">            closest_turtle = None
             closest_distance = None
             for turtle in msg.turtles:
                 dist_x = turtle.x - self.pose_.x
@@ -461,20 +922,22 @@ bool success</code></pre></div>
                 distance = math.sqrt(dist_x * dist_x + dist_y * dist_y)
                 if closest_turtle is None or distance &lt; closest_distance:
                     closest_turtle = turtle
-                    closest_distance = distance
+                    closest_distance = distance</span>
             self.turtle_to_catch_ = closest_turtle
         else:
             self.turtle_to_catch_ = msg.turtles[0]</code></pre></div>
-    <p>Add <code>self.catch_closest_turtle_first_ = True</code> in <code>__init__</code> (it becomes a parameter in M6). This is a classic "find the minimum" loop. Compare how many turtles are caught per minute with and without it.</p>
+    <p>Add <code>self.catch_closest_turtle_first_ = True</code> in <code>__init__</code> (it becomes a parameter in M6). Then count how many turtles are caught in one minute, with and without it. The simulator in 7.2 step 4 has the same switch.</p>
+    <div class="box tip"><div class="box-title">💡 Closest isn't always best</div><p>"Closest first" is a <em>greedy</em> strategy: good, not optimal. Delivery companies solve the full "best order to visit everyone" problem (the Travelling Salesman Problem) with much more maths. For a robot that must also react to new turtles, greedy is a sensible start.</p></div>
   </div>
 </div>
 
 <!-- ============================================================ -->
-<h2 id="m6"><span class="num">M6</span>Milestone 6 — Parameters + launch file</h2>
+<h2 id="m6"><span class="num">M6</span>Milestone 6 — Parameters, YAML + launch file</h2>
 <div class="lab">
   <div class="lab-h"><span class="badge">MILESTONE 6 · 20 min</span><h3>One command starts the game</h3></div>
+  <p class="lab-goal">Goal: <code>ros2 launch my_robot_bringup catch_them_all.launch.py</code> starts all three nodes with settings from a YAML file, and <code>closest:=false</code> changes the strategy without editing code.</p>
   <div class="step" id="m6-1">
-    <div class="step-h"><span class="step-n">1</span><span class="step-t">Turn the fixed values into parameters</span></div>
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Turn the fixed values into parameters (Lecture 5)</span></div>
     <div class="cmd file"><div class="cmd-h">📄 turtle_spawner.py → __init__</div><pre><code>        self.declare_parameter("spawn_frequency", 1.0)
         self.declare_parameter("turtle_name_prefix", "turtle")
         self.spawn_frequency_ = self.get_parameter("spawn_frequency").value
@@ -485,38 +948,45 @@ bool success</code></pre></div>
         self.catch_closest_turtle_first_ = self.get_parameter("catch_closest_turtle_first").value</code></pre></div>
   </div>
   <div class="step" id="m6-2">
-    <div class="step-h"><span class="step-n">2</span><span class="step-t">The launch file</span></div>
-    <div class="cmd file"><div class="cmd-h">📄 my_robot_bringup/launch/turtlesim_catch_them_all.launch.py</div><pre><code>from launch import LaunchDescription
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">A YAML file in the bringup package (Lecture 6, Lab 2)</span></div>
+    <div class="cmd file"><div class="cmd-h">📄 my_robot_bringup/config/catch_them_all.yaml</div><pre><code>/turtle_spawner:
+  ros__parameters:
+    spawn_frequency: 1.5
+    turtle_name_prefix: "my_turtle"
+/turtle_controller:
+  ros__parameters:
+    catch_closest_turtle_first: true</code></pre></div>
+  </div>
+  <div class="step" id="m6-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">The launch file, with one argument (Lecture 6, Lab 3)</span></div>
+    <div class="cmd file" data-widget="explain"><div class="cmd-h">📄 my_robot_bringup/launch/catch_them_all.launch.py</div><pre><code>import os
+from ament_index_python.packages import get_package_share_directory
+from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    ld = LaunchDescription()
+<span class="ex" data-tip="The installed copy of the YAML file (the <code>config</code> folder is installed since Lecture 6).">    param_file = os.path.join(
+        get_package_share_directory("my_robot_bringup"), "config", "catch_them_all.yaml")</span>
 
-    turtlesim_node = Node(package="turtlesim", executable="turtlesim_node")
-
-    turtle_spawner_node = Node(
-        package="turtlesim_catch_them_all",
-        executable="turtle_spawner",
-        parameters=[{"spawn_frequency": 1.5,
-                     "turtle_name_prefix": "my_turtle"}],
-    )
-
-    turtle_controller_node = Node(
-        package="turtlesim_catch_them_all",
-        executable="turtle_controller",
-        parameters=[{"catch_closest_turtle_first": True}],
-    )
-
-    ld.add_action(turtlesim_node)
-    ld.add_action(turtle_spawner_node)
-    ld.add_action(turtle_controller_node)
-    return ld</code></pre></div>
+    return LaunchDescription([
+<span class="ex" data-tip="A launch argument: <code>closest:=false</code> on the command line.">        DeclareLaunchArgument("closest", default_value="true",
+                              description="Chase the closest turtle first"),</span>
+        Node(package="turtlesim", executable="turtlesim_node"),
+        Node(package="turtlesim_catch_them_all", executable="turtle_spawner",
+             parameters=[param_file]),
+<span class="ex" data-tip="First the YAML file, then a dictionary: later entries win, so the argument overrides the file.">        Node(package="turtlesim_catch_them_all", executable="turtle_controller",
+             parameters=[param_file,
+                         {"catch_closest_turtle_first": LaunchConfiguration("closest")}]),</span>
+    ])</code></pre></div>
     <div class="cmd file"><div class="cmd-h">📄 my_robot_bringup/package.xml (add)</div><pre><code>  &lt;exec_depend&gt;turtlesim&lt;/exec_depend&gt;
   &lt;exec_depend&gt;turtlesim_catch_them_all&lt;/exec_depend&gt;</code></pre></div>
     <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>cd ~/ros2_ws &amp;&amp; colcon build --symlink-install &amp;&amp; source ~/.bashrc
-ros2 launch my_robot_bringup turtlesim_catch_them_all.launch.py</code></pre></div>
-    <p>With the prefix <code>my_turtle</code> there's no name clash any more, so you could start the counter at 0 again.</p>
+ros2 launch my_robot_bringup catch_them_all.launch.py
+ros2 launch my_robot_bringup catch_them_all.launch.py closest:=false</code></pre></div>
+    <p>✅ One command, three nodes; turtles are now called <code>my_turtle2</code>, <code>my_turtle3</code>, …, 1.5 per second. With the new prefix there is no name clash any more, so the counter could start at 0.</p>
   </div>
 </div>
 
@@ -577,11 +1047,11 @@ class TurtleControllerNode(Node):
         distance = math.sqrt(dist_x * dist_x + dist_y * dist_y)
 
         msg = Twist()
-        if distance > 0.5:
+        if distance &gt; 0.5:
             msg.linear.x = 2 * distance
             goal_theta = math.atan2(dist_y, dist_x)
             diff = goal_theta - self.pose_.theta
-            if diff > math.pi:
+            if diff &gt; math.pi:
                 diff -= 2 * math.pi
             elif diff &lt; -math.pi:
                 diff += 2 * math.pi
@@ -605,7 +1075,7 @@ class TurtleControllerNode(Node):
     def callback_catch(self, future, turtle_name):
         try:
             if not future.result().success:
-                self.get_logger().error("Turtle " + turtle_name + " could not be caught")
+                self.get_logger().warn("Turtle " + turtle_name + " could not be caught")
         except Exception as e:
             self.get_logger().error(f"Service call failed {e!r}")
 
@@ -646,6 +1116,11 @@ class TurtleSpawnerNode(Node):
         self.spawn_timer_ = self.create_timer(1.0 / self.spawn_frequency_, self.spawn_new_turtle)
 
     def callback_catch_turtle(self, request, response):
+        if request.name not in [t.name for t in self.alive_turtles_]:
+            response.success = False
+            return response
+        self.alive_turtles_ = [t for t in self.alive_turtles_ if t.name != request.name]
+        self.publish_alive_turtles()
         self.call_kill_server(request.name)
         response.success = True
         return response
@@ -691,11 +1166,7 @@ class TurtleSpawnerNode(Node):
     def callback_kill(self, future, turtle_name):
         try:
             future.result()
-            for i, turtle in enumerate(self.alive_turtles_):
-                if turtle.name == turtle_name:
-                    del self.alive_turtles_[i]
-                    self.publish_alive_turtles()
-                    break
+            self.get_logger().info("Turtle " + turtle_name + " caught")
         except Exception as e:
             self.get_logger().error(f"Kill failed {e!r}")
 
@@ -712,72 +1183,267 @@ if __name__ == "__main__":
 </details>
 
 <!-- ============================================================ -->
-<h2 id="bags"><span class="num">Lab</span>Record &amp; replay with ros2 bag</h2>
+<h2 id="bags"><span class="num">Lab</span>Inspect, record &amp; replay</h2>
 <div class="lab">
-  <div class="lab-h"><span class="badge">LAB · 20 min</span><h3>A flight recorder for your robot</h3></div>
-  <p class="lab-goal">A <strong>bag</strong> saves topic messages to disk, so you can replay them later: to debug, to test a node without the robot, or as evidence that your code worked.</p>
+  <div class="lab-h"><span class="badge">LAB · 25 min</span><h3>Look inside the running game, then give it a flight recorder</h3></div>
+  <p class="lab-goal">Goal: check the running system with the Lecture 3–6 tools, catch a turtle by hand, then record a run with <code>ros2 bag</code> and replay it without the nodes.</p>
 
   <div class="step" id="b-1">
-    <div class="step-h"><span class="step-n">1</span><span class="step-t">Record a topic</span></div>
+    <div class="step-h"><span class="step-n">1</span><span class="step-t">Inspect the running system</span></div>
+    <p>Start the game with the launch file from M6, then in a second terminal:</p>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>rqt_graph                                   # compare with your drawing from 7.1
+ros2 topic hz /turtle1/pose                 # ≈ 62 Hz
+ros2 topic echo /alive_turtles --once       # the current list, once
+ros2 node info /turtle_spawner              # publishers, subscribers, servers, clients
+ros2 run rqt_plot rqt_plot /turtle1/pose/x /turtle1/pose/y</code></pre></div>
+  </div>
+
+  <div class="step" id="b-2">
+    <div class="step-h"><span class="step-n">2</span><span class="step-t">Be the controller: catch a turtle by hand</span></div>
+    <p>Pick a name from <code>/alive_turtles</code> and call your own service from the terminal:</p>
+    <div class="cmd"><div class="cmd-h">💻 Terminal 2</div><pre><code>ros2 service call /catch_turtle my_robot_interfaces/srv/CatchTurtle "{name: 'my_turtle5'}"
+ros2 service call /catch_turtle my_robot_interfaces/srv/CatchTurtle "{name: 'my_turtle5'}"</code></pre></div>
+    <div class="out"><div class="out-h">✅ You should see</div><pre>response:
+my_robot_interfaces.srv.CatchTurtle_Response(success=True)
+...
+response:
+my_robot_interfaces.srv.CatchTurtle_Response(success=False)</pre></div>
+    <p>The turtle disappears even though the hunter never touched it, and the second call is refused. Testing a service by hand, without the client node, is how you debug one side of a connection at a time.</p>
+  </div>
+
+  <div class="step" id="b-3">
+    <div class="step-h"><span class="step-n">3</span><span class="step-t">Record a topic, then replay it without the publisher</span></div>
     <div class="cmd"><div class="cmd-h">💻 Terminal 1</div><pre><code>ros2 run my_py_pkg number_publisher</code></pre></div>
     <div class="cmd"><div class="cmd-h">💻 Terminal 2 (let it run ~10 s, then Ctrl+C)</div><pre><code>mkdir -p ~/bags &amp;&amp; cd ~/bags
 ros2 bag record /number -o test
 ros2 bag info test</code></pre></div>
-    <div class="out"><div class="out-h">✅ bag info shows something like</div><pre>Duration:          10.2s
+    <div class="out"><div class="out-h">✅ bag info shows something like</div><pre>Storage id:        sqlite3
+Duration:          10.2s
 Messages:          20
-Topic information: Topic: /number | Type: example_interfaces/msg/Int64 | Count: 20</pre></div>
-  </div>
-
-  <div class="step" id="b-2">
-    <div class="step-h"><span class="step-n">2</span><span class="step-t">Replay it without the publisher</span></div>
-    <p>Stop <code>number_publisher</code>. Then:</p>
-    <div class="cmd"><div class="cmd-h">💻 Terminals 2 &amp; 3</div><pre><code>ros2 bag play ~/bags/test
+Topic information: Topic: /number | Type: example_interfaces/msg/Int64 | Count: 20 | Serialization Format: cdr</pre></div>
+    <p>Stop <code>number_publisher</code>. Then replay, and listen:</p>
+    <div class="cmd"><div class="cmd-h">💻 Terminals 2 &amp; 3</div><pre><code>ros2 bag play ~/bags/test               # at normal speed
+ros2 bag play ~/bags/test --rate 4.0    # four times faster
+ros2 bag play ~/bags/test --loop        # forever, until Ctrl+C
 ros2 topic echo /number</code></pre></div>
     <p>The data comes back as if the node were running.</p>
   </div>
 
-  <div class="step" id="b-3">
-    <div class="step-h"><span class="step-n">3</span><span class="step-t">Record the game, and replay the turtle's moves on an empty turtlesim</span></div>
+  <div class="step" id="b-4">
+    <div class="step-h"><span class="step-n">4</span><span class="step-t">Record the game, and replay the hunter's moves on an empty turtlesim</span></div>
     <div class="cmd"><div class="cmd-h">💻 While the Catch-Them-All launch runs (~30 s)</div><pre><code>cd ~/bags
 ros2 bag record /turtle1/cmd_vel /turtle1/pose /alive_turtles -o catch_run</code></pre></div>
     <div class="cmd"><div class="cmd-h">💻 Stop everything. Start a fresh turtlesim, then replay only the commands</div><pre><code>ros2 run turtlesim turtlesim_node
 ros2 bag play ~/bags/catch_run --topics /turtle1/cmd_vel</code></pre></div>
-    <p>turtle1 repeats the same moves, "hunting" turtles that are not there. That's the power of bags: <strong>the same inputs, replayed exactly.</strong></p>
+    <p>turtle1 repeats the same moves, "hunting" turtles that are not there. That's the power of bags: <strong>the same inputs, replayed exactly</strong>. Self-driving teams record every test drive and replay it into new versions of their software every night.</p>
+    <div class="box tip"><div class="box-title">💡 Record everything, choose later</div><p><code>ros2 bag record -a</code> records all topics. Great for short tests; on a real robot with cameras it fills the disk quickly, so list the topics you need.</p></div>
   </div>
 </div>
 
+
 <!-- ============================================================ -->
+<h2 id="activity"><span class="num">7.3</span>Your turn: challenges</h2>
+<div class="activity">
+  <div class="lvl">Challenge 7.1 · Core · 20 min</div>
+  <h3>Tune the hunter while it runs</h3>
+  <p>Replace the numbers 2, 6 and 0.5 in the controller with parameters <code>kp_linear</code>, <code>kp_angular</code> and <code>catch_distance</code>, and add a parameter callback (Lecture 5, Lab 7) so that <code>ros2 param set /turtle_controller kp_angular 1.0</code> changes the behaviour <strong>immediately</strong>. Refuse negative values.</p>
+  <details class="hint"><summary>Hint</summary><div class="inner"><code>from rcl_interfaces.msg import SetParametersResult</code>, then <code>self.add_on_set_parameters_callback(self.callback_parameters)</code>. In the callback, loop over the parameters, check <code>param.value &gt;= 0.0</code>, store the new values, and return <code>SetParametersResult(successful=True)</code>.</div></details>
+  <details class="solution"><summary>Solution</summary><div class="inner">
+  <div class="cmd file"><div class="cmd-h">📄 turtle_controller.py (new parts)</div><pre><code>from rcl_interfaces.msg import SetParametersResult
+...
+        self.declare_parameter("kp_linear", 2.0)
+        self.declare_parameter("kp_angular", 6.0)
+        self.declare_parameter("catch_distance", 0.5)
+        self.kp_linear_ = self.get_parameter("kp_linear").value
+        self.kp_angular_ = self.get_parameter("kp_angular").value
+        self.catch_distance_ = self.get_parameter("catch_distance").value
+        self.add_on_set_parameters_callback(self.callback_parameters)
 
-<div class="kc" data-widget="kc"><div class="kc-head"><span class="sim-tag">✅ Knowledge check</span><b>Lecture 7 check: 5 questions</b></div><div class="kc-q" data-a="2"><p>The turtle is at (2, 2), the target at (5, 6). What is the distance?</p><div class="kc-opts"><button>3</button><button>4</button><button>5</button><button>7</button></div><div class="kc-why">√(3² + 4²) = 5. This is the first line of every go-to-goal controller.</div></div><div class="kc-q" data-a="1"><p>What does <code>atan2(dist_y, dist_x)</code> return?</p><div class="kc-opts"><button>The distance</button><button>The direction to the target, in radians</button><button>The turtle's speed</button><button>The time to arrive</button></div><div class="kc-why">goal_theta is the angle from the x-axis to the target.</div></div><div class="kc-q" data-a="1"><p>Without wrapping <code>diff</code> into [−π, π], what can happen?</p><div class="kc-opts"><button>Nothing</button><button>The turtle may turn the long way round</button><button>It drives backwards</button><button>It stops</button></div><div class="kc-why">Switch off the wrap in the simulator and watch.</div></div><div class="kc-q" data-a="1"><p>Why does the spawner counter start at 1?</p><div class="kc-opts"><button>It is faster</button><button>turtle1 already exists, and turtlesim refuses a duplicate name</button><button>Python lists start at 1</button><button>For the launch file</button></div><div class="kc-why">The first spawned turtle is turtle2.</div></div><div class="kc-q" data-a="1"><p>What does <code>ros2 bag play</code> do?</p><div class="kc-opts"><button>Records topics</button><button>Republishes recorded messages as if the nodes were running</button><button>Deletes the bag</button><button>Plots data</button></div><div class="kc-why">Replaying the same inputs is a powerful way to debug.</div></div></div>
+    def callback_parameters(self, params):
+        for param in params:
+            if param.name in ("kp_linear", "kp_angular", "catch_distance"):
+                if param.value &lt; 0.0:
+                    return SetParametersResult(successful=False,
+                                               reason=param.name + " must be &gt;= 0")
+        for param in params:
+            if param.name == "kp_linear":
+                self.kp_linear_ = param.value
+            elif param.name == "kp_angular":
+                self.kp_angular_ = param.value
+            elif param.name == "catch_distance":
+                self.catch_distance_ = param.value
+        return SetParametersResult(successful=True)
 
-<h2 id="exit"><span class="num">7.2</span>Exit ticket &amp; assessment</h2>
+    # in control_loop: use self.kp_linear_, self.kp_angular_, self.catch_distance_</code></pre></div>
+  <div class="cmd"><div class="cmd-h">💻 While the game runs</div><pre><code>ros2 param set /turtle_controller kp_angular 1.0     # wide, lazy curves
+ros2 param set /turtle_controller kp_angular 15.0    # snappy
+ros2 param set /turtle_controller kp_linear -1.0     # refused</code></pre></div>
+  </div></details>
+</div>
+
+<div class="activity">
+  <div class="lvl">Challenge 7.2 · Stretch · 25 min</div>
+  <h3>A crash-proof game launch</h3>
+  <p>Improve <code>catch_them_all.launch.py</code> with what you learned in Lecture 6: an argument <code>spawn_frequency</code> that is passed to the spawner; the controller starts <strong>2 s after</strong> the others; closing the turtlesim window <strong>stops everything</strong>; and with <code>record:=true</code> the launch also records a bag of the run.</p>
+  <details class="hint"><summary>Hint</summary><div class="inner">Lecture 6, Labs 3 and 6: <code>TimerAction</code>, <code>RegisterEventHandler(OnProcessExit(…))</code> with <code>EmitEvent(event=Shutdown())</code>, and <code>ExecuteProcess(cmd=["ros2", "bag", "record", …], condition=IfCondition(LaunchConfiguration("record")))</code>. A dictionary after the YAML file overrides it.</div></details>
+  <details class="solution"><summary>Solution</summary><div class="inner">
+  <div class="cmd file"><div class="cmd-h">📄 my_robot_bringup/launch/catch_them_all.launch.py (version 2)</div><pre><code>import os
+from ament_index_python.packages import get_package_share_directory
+from launch import LaunchDescription
+from launch.actions import (DeclareLaunchArgument, EmitEvent, ExecuteProcess,
+                            RegisterEventHandler, TimerAction)
+from launch.conditions import IfCondition
+from launch.event_handlers import OnProcessExit
+from launch.events import Shutdown
+from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import Node
+
+
+def generate_launch_description():
+    param_file = os.path.join(
+        get_package_share_directory("my_robot_bringup"), "config", "catch_them_all.yaml")
+
+    turtlesim_node = Node(package="turtlesim", executable="turtlesim_node")
+    spawner_node = Node(
+        package="turtlesim_catch_them_all", executable="turtle_spawner",
+        parameters=[param_file,
+                    {"spawn_frequency": LaunchConfiguration("spawn_frequency")}])
+    controller_node = Node(
+        package="turtlesim_catch_them_all", executable="turtle_controller",
+        parameters=[param_file,
+                    {"catch_closest_turtle_first": LaunchConfiguration("closest")}])
+    record_bag = ExecuteProcess(
+        cmd=["ros2", "bag", "record", "/turtle1/pose", "/turtle1/cmd_vel",
+             "/alive_turtles"],
+        condition=IfCondition(LaunchConfiguration("record")), output="screen")
+
+    return LaunchDescription([
+        DeclareLaunchArgument("closest", default_value="true"),
+        DeclareLaunchArgument("spawn_frequency", default_value="1.5",
+                              description="Turtles per second (a float)"),
+        DeclareLaunchArgument("record", default_value="false"),
+        turtlesim_node,
+        spawner_node,
+        TimerAction(period=2.0, actions=[controller_node]),
+        record_bag,
+        RegisterEventHandler(OnProcessExit(
+            target_action=turtlesim_node,
+            on_exit=[EmitEvent(event=Shutdown(reason="turtlesim closed"))])),
+    ])</code></pre></div>
+  <div class="cmd"><div class="cmd-h">💻 Terminal</div><pre><code>ros2 launch my_robot_bringup catch_them_all.launch.py spawn_frequency:=3.0 record:=true</code></pre></div>
+  <p>The bag is written to a folder <code>rosbag2_&lt;date&gt;_&lt;time&gt;</code> in the directory you launched from. Close the turtlesim window: everything, including the recording, stops cleanly.</p>
+  </div></details>
+</div>
+
+<div class="activity">
+  <div class="lvl">Challenge 7.3 · Gold · multi-robot</div>
+  <h3>Two hunters, one game</h3>
+  <p>Add a second hunter, <code>hunter2</code>, and let the two compete for the same turtles. Give the controller a parameter <code>hunter_name</code> (default <code>"turtle1"</code>) and build its topic names from it. Start <code>hunter2</code> with a <code>/spawn</code> call from the launch file, and run two controllers. The spawner from M4 already refuses a turtle that's been caught, so the slower hunter gets <code>success: False</code>. Bonus: each controller logs its score.</p>
+  <details class="hint"><summary>Hint</summary><div class="inner">In the controller: <code>hunter = self.get_parameter("hunter_name").value</code>, then <code>hunter + "/cmd_vel"</code> and <code>hunter + "/pose"</code>. In the launch file: an <code>ExecuteProcess</code> calling <code>ros2 service call /spawn turtlesim/srv/Spawn "{x: 2.0, y: 9.0, theta: 0.0, name: 'hunter2'}"</code>, started by <code>OnProcessStart</code> of turtlesim (Lecture 6, Lab 6), and a second controller <code>Node(…, name="turtle_controller_2", parameters=[{"hunter_name": "hunter2"}])</code>. Each controller must ignore its rival: the spawner never lists the hunters, so that's automatic.</div></details>
+  <div class="mermaid">
+flowchart LR
+  TS(["turtlesim_node"]) -- "/turtle1/pose" --> C1(["turtle_controller<br/>hunter_name: turtle1"])
+  TS -- "/hunter2/pose" --> C2(["turtle_controller_2<br/>hunter_name: hunter2"])
+  SP(["turtle_spawner"]) -- "/alive_turtles" --> C1 & C2
+  C1 -. "/catch_turtle" .-> SP
+  C2 -. "/catch_turtle" .-> SP
+</div>
+</div>
+
+<div class="activity">
+  <div class="lvl">Mini-project 7.4 · Homework · self-driving</div>
+  <h3>The robotaxi dispatcher</h3>
+  <p>Turn the game into a robotaxi: turtles are passengers. Change the spawner's prefix to <code>passenger</code>, give each <code>Turtle</code> a waiting time (add <code>float64 waiting_s</code> to <code>Turtle.msg</code> and update it every second), and make the controller pick the passenger with the best <em>score</em> = <code>waiting_s − 2 · distance</code> instead of the closest. Compare the average waiting time with "closest first". Real ride-hailing dispatchers balance exactly these two numbers.</p>
+</div>
+
+<h3>🏅 Level up: choose your challenge</h3>
+<div class="levels"><div class="lv bronze"><b>🥉 Bronze: everyone</b><span>Milestones 1–4: the hunter catches turtles through your own service. The inspect, record &amp; replay lab, steps 1–3.</span></div><div class="lv silver"><b>🥈 Silver: confident</b><span>Milestones 5–6 (closest first, YAML + launch file), Challenge 7.1 (live tuning), and a recorded bag of a full run replayed on an empty turtlesim.</span></div><div class="lv gold"><b>🥇 Gold: future expert</b><span>Challenge 7.2 (crash-proof launch with recording) and Challenge 7.3 (two hunters competing), or the robotaxi dispatcher with a measured comparison.</span></div></div>
+
+<div class="kc" data-widget="kc"><div class="kc-head"><span class="sim-tag">✅ Knowledge check</span><b>Lecture 7 check: 10 questions</b></div><div class="kc-q" data-a="2"><p>The turtle is at (2, 2), the target at (5, 6). What is the distance?</p><div class="kc-opts"><button>3</button><button>4</button><button>5</button><button>7</button></div><div class="kc-why">√(3² + 4²) = 5. The first line of every go-to-goal controller.</div></div><div class="kc-q" data-a="1"><p>What does <code>atan2(dist_y, dist_x)</code> return?</p><div class="kc-opts"><button>The distance</button><button>The direction to the target, in radians</button><button>The turtle's speed</button><button>The time to arrive</button></div><div class="kc-why">goal_theta: the angle from the x-axis to the target, correct in all quadrants.</div></div><div class="kc-q" data-a="1"><p>Heading 170°, goal −170°, no wrapping. What does the turtle do?</p><div class="kc-opts"><button>Turns 20° left</button><button>Turns 340° the long way round</button><button>Drives backwards</button><button>Stops</button></div><div class="kc-why">diff = −340°. Wrapping adds 360°: +20°.</div></div><div class="kc-q" data-a="0"><p>Why does the pose callback only store the pose?</p><div class="kc-opts"><button>Decisions run at a steady rate in one timer, and callbacks stay short</button><button>Callbacks can't publish</button><button>It uses less memory</button><button>Turtlesim requires it</button></div><div class="kc-why">"Store in the callback, act in the timer": the pattern you reuse on the LIMO.</div></div><div class="kc-q" data-a="1"><p>Why does the spawner counter start at 1?</p><div class="kc-opts"><button>It is faster</button><button>turtle1 already exists, and turtlesim refuses a duplicate name</button><button>Python lists start at 1</button><button>For the launch file</button></div><div class="kc-why">The first spawned turtle is turtle2.</div></div><div class="kc-q" data-a="2"><p>Why does the controller call <code>/catch_turtle</code> instead of <code>/kill</code>?</p><div class="kc-opts"><button><code>/kill</code> is slower</button><button>Only C++ nodes may call <code>/kill</code></button><button>The spawner owns the list; it must remove the turtle so the list stays correct</button><button>No reason</button></div><div class="kc-why">One owner per piece of data.</div></div><div class="kc-q" data-a="3"><p>Why is the response from <code>/spawn</code> handled in <code>callback_spawn</code> and not right after <code>call_async</code>?</p><div class="kc-opts"><button>It's shorter</button><button>The response is sent by a topic</button><button><code>call_async</code> returns the response directly</button><button>The call is asynchronous: the answer arrives later, while the node keeps spinning</button></div><div class="kc-why">Lecture 4: never block a callback waiting for a service.</div></div><div class="kc-q" data-a="0"><p>The controller sends <code>/catch_turtle</code> for a turtle that's already gone. With the M4 server, what happens?</p><div class="kc-opts"><button><code>success: False</code>, and nothing else changes</button><button>The spawner crashes</button><button>turtlesim crashes</button><button>A new turtle is created</button></div><div class="kc-why">A server should check its request before acting.</div></div><div class="kc-q" data-a="1"><p>In the launch file, <code>parameters=[param_file, {"catch_closest_turtle_first": closest}]</code>. Which value wins?</p><div class="kc-opts"><button>The YAML file</button><button>The dictionary, because it comes later</button><button>Neither: it's an error</button><button>The default in the code</button></div><div class="kc-why">Later entries override earlier ones.</div></div><div class="kc-q" data-a="1"><p>What does <code>ros2 bag play --topics /turtle1/cmd_vel</code> do?</p><div class="kc-opts"><button>Records that topic</button><button>Republishes only the recorded velocity commands</button><button>Deletes the other topics</button><button>Plots the topic</button></div><div class="kc-why">An empty turtlesim then repeats the hunter's moves.</div></div></div>
+
+<h2 id="errors"><span class="num">7.4</span>When things go wrong</h2>
+<div class="table-wrap"><table class="fix">
+  <tr><th>You see…</th><th>Why</th><th>Fix</th></tr>
+  <tr><td>The hunter doesn't move at all</td><td>No pose yet (<code>self.pose_</code> is <code>None</code>), no target, or a wrong topic name.</td><td><code>ros2 topic info /turtle1/cmd_vel</code> should show 1 publisher; <code>rqt_graph</code>.</td></tr>
+  <tr><td>The hunter spins around the target forever</td><td><code>kp_angular</code> too small for the speed, or the stop distance too small.</td><td>Raise <code>kp_angular</code> (6); keep <code>distance &gt; 0.5</code>.</td></tr>
+  <tr><td>It turns the long way round</td><td><code>diff</code> isn't wrapped into [−π, π].</td><td>Add the wrap (7.2 step 3).</td></tr>
+  <tr><td><code>A turtle named [turtle1] already exists</code></td><td>The spawner's counter starts at 0.</td><td>Start it at 1, or use another prefix.</td></tr>
+  <tr><td><code>Waiting for turtlesim /spawn ...</code> forever</td><td>turtlesim isn't running, or a different <code>ROS_DOMAIN_ID</code>.</td><td>Start turtlesim; check <code>ros2 service list</code>.</td></tr>
+  <tr><td><code>cannot import name 'TurtleArray'</code></td><td>Not in <code>rosidl_generate_interfaces</code>, or not rebuilt/sourced.</td><td>Add it, rebuild <code>my_robot_interfaces</code>, <code>source ~/.bashrc</code>.</td></tr>
+  <tr><td>The hunter stops on a turtle that doesn't disappear</td><td>The controller has no <code>/catch_turtle</code> client yet (M3), or the service name differs.</td><td><code>ros2 service list | grep catch</code>; same name in both nodes.</td></tr>
+  <tr><td><code>Kill failed … turtle not found</code></td><td>The same turtle was killed twice.</td><td>Check the name in <code>callback_catch_turtle</code> and remove it before calling <code>/kill</code> (M4).</td></tr>
+  <tr><td>The hunter keeps chasing a turtle that's gone</td><td>The controller kept an old target, or the spawner didn't publish the new list.</td><td>Set <code>turtle_to_catch_ = None</code> after calling catch; publish after every change.</td></tr>
+  <tr><td>Parameters in the YAML file are ignored</td><td>The YAML key doesn't match the node name.</td><td><code>/turtle_spawner:</code> and <code>/turtle_controller:</code>, with <code>ros__parameters</code>.</td></tr>
+</table></div>
+
+<h2 id="exit"><span class="num">7.5</span>Exit ticket, rubric &amp; homework</h2>
+<p>Five quick questions (5 min), then the rubric, today's commands and homework.</p>
 <div class="quiz">
-  <div class="q"><p>Why does <code>callback_turtle_pose</code> only store the pose instead of computing the command?</p><details><summary>Answer</summary><div class="inner">Keeping callbacks short and making decisions in one control timer gives a steady control rate and code that is easy to reason about.</div></details></div>
-  <div class="q"><p>What does <code>atan2(dist_y, dist_x)</code> give you?</p><details><summary>Answer</summary><div class="inner">The direction (angle) from the turtle to the target, measured from the x-axis, in radians.</div></details></div>
-  <div class="q"><p>Why wrap <code>diff</code> into [−π, π]?</p><details><summary>Answer</summary><div class="inner">So the robot turns the short way. Without it, a 350° left turn might be chosen instead of a 10° right turn.</div></details></div>
-  <div class="q"><p>Why is <code>/catch_turtle</code> a service and <code>/alive_turtles</code> a topic?</p><details><summary>Answer</summary><div class="inner">Catching is a one-off request that needs a confirmation. The alive list is state that must be shared with anyone who listens.</div></details></div>
+  <div class="q"><p>Why does <code>callback_turtle_pose</code> only store the pose instead of computing the command?</p><details><summary>Answer</summary><div class="inner">Short callbacks and one control timer give a steady control rate and code that is easy to reason about.</div></details></div>
+  <div class="q"><p>Why wrap <code>diff</code> into [−π, π]?</p><details><summary>Answer</summary><div class="inner">So the robot turns the short way: a 20° left turn instead of a 340° right turn.</div></details></div>
+  <div class="q"><p>Why is <code>/catch_turtle</code> a service and <code>/alive_turtles</code> a topic?</p><details><summary>Answer</summary><div class="inner">Catching is a one-off request that needs a yes/no answer. The alive list is state that changes and must be shared with anyone who listens.</div></details></div>
+  <div class="q"><p>Name the three parts of the sense–think–act loop in the controller, with their ROS 2 pieces.</p><details><summary>Answer</summary><div class="inner">Sense: subscriptions to <code>/turtle1/pose</code> and <code>/alive_turtles</code>. Think: the control-loop timer (target choice + go-to-goal maths). Act: publishing <code>Twist</code> on <code>/turtle1/cmd_vel</code> and calling <code>/catch_turtle</code>.</div></details></div>
+  <div class="q"><p>Which two topic names change when the controller drives the LIMO next week?</p><details><summary>Answer</summary><div class="inner"><code>/turtle1/pose</code> → <code>/odom</code> (with a quaternion instead of theta), and <code>/turtle1/cmd_vel</code> → <code>/cmd_vel</code>.</div></details></div>
 </div>
 
 <div class="box note">
   <div class="box-title">📝 Suggested rubric (Catch Them All, 20 marks)</div>
   <div class="table-wrap"><table>
     <tr><th>Criterion</th><th>Marks</th></tr>
-    <tr><td>M1: controller reaches a fixed goal and stops</td><td>3</td></tr>
-    <tr><td>M2–M3: spawner + /alive_turtles with custom messages</td><td>4</td></tr>
-    <tr><td>M4: catching works through a custom service</td><td>5</td></tr>
+    <tr><td>M1: controller reaches a fixed goal and stops; angle wrapped</td><td>3</td></tr>
+    <tr><td>M2–M3: spawner + <code>/alive_turtles</code> with custom messages</td><td>4</td></tr>
+    <tr><td>M4: catching works through a custom service that checks its request</td><td>5</td></tr>
     <tr><td>M5: closest-turtle strategy</td><td>2</td></tr>
-    <tr><td>M6: parameters + one-command launch</td><td>3</td></tr>
-    <tr><td>Evidence: rqt_graph screenshot + bag of a run + a clean, commented code</td><td>3</td></tr>
+    <tr><td>M6: parameters, YAML file and one-command launch with an argument</td><td>3</td></tr>
+    <tr><td>Evidence: <code>rqt_graph</code> screenshot + a bag of a run + clean, commented code</td><td>3</td></tr>
   </table></div>
+  <p>Bonus (up to +3): Challenge 7.1, 7.2 or 7.3.</p>
+</div>
+
+<h3>📋 Today's commands and patterns</h3>
+<div class="cheat">
+  <div><code>distance = math.sqrt(dx*dx + dy*dy)</code><span>how far</span></div>
+  <div><code>goal_theta = math.atan2(dy, dx)</code><span>which direction</span></div>
+  <div><code>diff = math.atan2(math.sin(d), math.cos(d))</code><span>wrap an angle into [−π, π]</span></div>
+  <div><code>linear.x = kp_l·distance</code> · <code>angular.z = kp_a·diff</code><span>P-control</span></div>
+  <div><code>callback stores · timer acts</code><span>the control-loop pattern</span></div>
+  <div><code>call_async(req).add_done_callback(partial(cb, …))</code><span>async service call with extra data</span></div>
+  <div><code>ros2 service call /catch_turtle my_robot_interfaces/srv/CatchTurtle "{name: 'x'}"</code><span>test a server by hand</span></div>
+  <div><code>ros2 topic echo /alive_turtles --once</code><span>one message, then exit</span></div>
+  <div><code>ros2 run rqt_plot rqt_plot /turtle1/pose/x</code><span>plot a field live</span></div>
+  <div><code>ros2 bag record T1 T2 -o name</code> · <code>-a</code><span>record topics</span></div>
+  <div><code>ros2 bag info name</code> · <code>play name --rate 2 --loop --topics T</code><span>inspect and replay</span></div>
+  <div><code>ros2 launch my_robot_bringup catch_them_all.launch.py closest:=false</code><span>the whole game</span></div>
 </div>
 
 <div class="box tip">
   <div class="box-title">🎉 Part A complete: you now know the ROS 2 core</div>
-  <p>Nodes, topics, services, interfaces, parameters, launch files and bags: this is 90% of what every ROS 2 robot uses. In Part B we apply it all to a <strong>real robot</strong>, the AgileX LIMO. Your go-to-goal controller moves over almost unchanged; only the topic names and the units are new.</p>
+  <p>Nodes, topics, services, actions, interfaces, parameters, launch files, QoS and bags: this is most of what every ROS 2 robot uses. In Part B we apply it all to a <strong>real robot</strong>, the AgileX LIMO. Your go-to-goal controller moves over almost unchanged; only the topic names, the units and the safety limits are new.</p>
+</div>
+
+<div class="box note">
+  <div class="box-title">🏠 Homework</div>
+  <ol>
+    <li>Finish Milestones 5 and 6, and submit the evidence for the rubric (screenshot of <code>rqt_graph</code>, a bag of a successful run, your code).</li>
+    <li>Do at least one challenge (7.1 is the best preparation for Lecture 8).</li>
+    <li>Preview Lecture 8: <code>ros2 launch limo_gazebosim limo_gazebo_diff.launch.py</code>, then <code>ros2 topic echo /odom --once</code>. Find the robot's x, y and the orientation. Why is there no <code>theta</code>?</li>
+  </ol>
+</div>
+
+<div class="box">
+  <div class="box-title">📚 Read more</div>
+  <ul>
+    <li><a href="https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Introducing-Turtlesim/Introducing-Turtlesim.html">ROS 2 Humble docs: Introducing turtlesim</a> (the <code>/spawn</code> and <code>/kill</code> services)</li>
+    <li><a href="https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries/Writing-A-Simple-Py-Service-And-Client.html">Writing a simple service and client (Python)</a></li>
+    <li><a href="https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Recording-And-Playing-Back-Data/Recording-And-Playing-Back-Data.html">Recording and playing back data with ros2 bag</a></li>
+    <li><a href="https://docs.ros.org/en/humble/Concepts/Intermediate/About-Executors.html">About executors and callbacks</a> (why callbacks must stay short)</li>
+    <li><a href="https://en.wikipedia.org/wiki/Proportional_control">Proportional control</a> and <a href="https://en.wikipedia.org/wiki/PID_controller">PID controllers</a> (Wikipedia)</li>
+    <li><a href="https://en.wikipedia.org/wiki/Atan2">atan2</a>: why not plain <code>atan</code></li>
+  </ul>
 </div>
 
 <div class="footer-nav">
-  <a href="L06-parameters-launch.html">← Lecture 6: Launch Files &amp; Toolkit</a>
+  <a href="L06-parameters-launch.html">← Lecture 6: Launch Files + Project</a>
   <a href="index.html#lectures">All lectures</a>
   <a href="L08-drive-limo.html">Lecture 8: Drive the LIMO →</a>
 </div>

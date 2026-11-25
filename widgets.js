@@ -20,6 +20,7 @@
      launchsim  car bringup: args, namespace, respawn (L6)
      qos       QoS reliability / durability over Wi-Fi (L6)
      gotogoal  turtle go-to-goal + catch them all     (L7)
+     catchgraph  Catch Them All game + its ROS traffic (L7)
      twist     Twist → path, open-loop drift          (L8)
      quat      quaternion ↔ yaw                       (L8)
      tf2d      laser point through the TF chain       (L9)
@@ -1780,6 +1781,126 @@
         if (p.stopAt) label(ctx, '✖', x, y - 18, c.red, 15, 'center', true);
         ctx.restore();
       });
+    });
+  };
+
+  /* ================================================== L7: Catch Them All, the game and its ROS traffic */
+  W.catchgraph = function (root) {
+    var body = shell(root, 'Catch Them All: watch the game and the ROS 2 messages behind it');
+    var WD = 680, HT = 300, cv = mkCanvas(WD, HT), ctx = cv.ctx;
+    var WX = 12, WY = 30, WS = 250, U = WS / 11;               // the mini turtlesim world
+    var NP = { ts: { x: 500, y: 62, t: 'turtlesim_node' }, sp: { x: 360, y: 236, t: 'turtle_spawner' }, ct: { x: 600, y: 236, t: 'turtle_controller' } };
+    var freq = 0.5, closest = true, slow = false, paused = false;
+    var hunter, alive, count, spawnAcc, poseAcc, flights, caught, busy;
+    var logEl = h('div', { class: 'sim-log' });
+    function log(s) { logEl.insertBefore(h('div', { text: s }), logEl.firstChild); while (logEl.childNodes.length > 8) logEl.removeChild(logEl.lastChild); }
+    var rd = readouts([['alive', '/alive_turtles'], ['tgt', 'turtle_to_catch_'], ['c', 'caught'], ['n', 'messages so far']]);
+    var nMsg = 0;
+    function reset() { hunter = { x: 5.5, y: 5.5, th: 0 }; alive = []; count = 1; spawnAcc = 0.7; poseAcc = 0; flights = []; caught = 0; busy = null; nMsg = 0; }
+    reset();
+    // a message flying along an edge; kind: topic | req | res
+    function fly(a, b, kind, txt, done, dur) { nMsg++; flights.push({ a: a, b: b, kind: kind, txt: txt, t: 0, dur: dur || 1.1, done: done }); }
+    function pick() {
+      if (!alive.length) return null;
+      if (!closest) return alive[0];
+      var best = null, bd = 1e9;
+      alive.forEach(function (t) { var d = Math.hypot(t.x - hunter.x, t.y - hunter.y); if (d < bd) { bd = d; best = t; } });
+      return best;
+    }
+    function spawn() {
+      count++;
+      var t = { x: +(0.8 + Math.random() * 9.4).toFixed(1), y: +(0.8 + Math.random() * 9.4).toFixed(1), name: 'turtle' + count, shown: false };
+      log('turtle_spawner → /spawn request {x: ' + t.x + ', y: ' + t.y + ", name: '" + t.name + "'}");
+      fly('sp', 'ts', 'req', '/spawn', function () {
+        t.shown = true;
+        fly('ts', 'sp', 'res', t.name, function () {
+          alive.push(t);
+          log('turtlesim → response {name: ' + t.name + '}  ·  spawner publishes /alive_turtles [' + alive.length + ']');
+          fly('sp', 'ct', 'topic', '/alive_turtles [' + alive.length + ']');
+        });
+      });
+    }
+    function catchIt(t) {
+      busy = t;
+      log("turtle_controller → /catch_turtle request {name: '" + t.name + "'}");
+      fly('ct', 'sp', 'req', '/catch_turtle', function () {
+        log("turtle_spawner → /kill request {name: '" + t.name + "'}");
+        fly('sp', 'ts', 'req', '/kill', function () {
+          t.dead = true;
+          fly('ts', 'sp', 'res', 'killed', function () {
+            alive = alive.filter(function (x) { return x !== t; }); caught++; busy = null;
+            log('spawner removes ' + t.name + ', publishes /alive_turtles [' + alive.length + ']  ·  responds success: True');
+            fly('sp', 'ct', 'res', 'success', null);
+            fly('sp', 'ct', 'topic', '/alive_turtles [' + alive.length + ']');
+          });
+        });
+      });
+    }
+    body.appendChild(cv.c);
+    body.appendChild(h('div', { class: 'sim-split' }, [
+      h('div', { class: 'sim-side' }, [
+        slider('spawn_frequency', 0.2, 1.5, 0.1, freq, function (v) { freq = v; }, function (v) { return v.toFixed(1) + ' Hz'; }).el,
+        row([check('catch_closest_turtle_first', closest, function (v) { closest = v; })]),
+        row([check('slow motion (read each message)', slow, function (v) { slow = v; })]),
+        row([btn('🐢 spawn now', 'primary', spawn), btn('⏯ pause', 'ghost', function () { paused = !paused; }), btn('↺ reset', 'ghost', function () { reset(); log('reset'); })])
+      ]),
+      h('div', { class: 'sim-side' }, [rd.el])
+    ]));
+    body.appendChild(logEl);
+    body.appendChild(h('p', { class: 'sim-hint', html: '<b>Blue</b> = topic messages (<code>/turtle1/pose</code>, <code>/turtle1/cmd_vel</code>, <code>/alive_turtles</code>), <b>gold</b> = service requests (<code>/spawn</code>, <code>/catch_turtle</code>, <code>/kill</code>), <b>green</b> = service responses. Tick <b>slow motion</b> and follow one turtle from <code>/spawn</code> to <code>/kill</code>: that is Milestones 2 to 4.' }));
+    addLoop(root, function (rdt) {
+      var dt = paused ? 0 : rdt * (slow ? 0.35 : 1);
+      spawnAcc += dt * freq;
+      if (spawnAcc >= 1) { spawnAcc -= 1; if (alive.length < 8) spawn(); }
+      // pose / cmd_vel stream (drawn only, not logged)
+      poseAcc += dt;
+      if (poseAcc > 0.45) { poseAcc = 0; flights.push({ a: 'ts', b: 'ct', kind: 'topic', txt: '', t: 0, dur: 0.8, small: true }); flights.push({ a: 'ct', b: 'ts', kind: 'topic', txt: '', t: 0, dur: 0.8, small: true, off: true }); }
+      // go-to-goal on the chosen target
+      var t = busy ? null : pick(), v = 0, w = 0;
+      if (t) {
+        var dx = t.x - hunter.x, dy = t.y - hunter.y, d = Math.hypot(dx, dy), diff = wrap(Math.atan2(dy, dx) - hunter.th);
+        if (d > 0.5) { v = Math.min(2 * d, 3); w = 6 * diff; } else catchIt(t);
+      }
+      hunter.x = clamp(hunter.x + v * Math.cos(hunter.th) * dt, 0.2, 10.8);
+      hunter.y = clamp(hunter.y + v * Math.sin(hunter.th) * dt, 0.2, 10.8);
+      hunter.th = wrap(hunter.th + w * dt);
+      flights.forEach(function (f) { f.t += dt / f.dur; if (f.t >= 1 && !f.fired) { f.fired = true; if (f.done) f.done(); } });
+      flights = flights.filter(function (f) { return f.t < 1; });
+
+      var c = C();
+      ctx.clearRect(0, 0, WD, HT); ctx.fillStyle = c.bg2; rr(ctx, 0, 0, WD, HT, 14); ctx.fill();
+      // world
+      label(ctx, 'what you see: turtlesim', WX, 16, c.muted, 11, 'left', true);
+      ctx.fillStyle = '#4556ff'; rr(ctx, WX, WY, WS, WS, 8); ctx.fill();
+      function wx(x) { return WX + x * U; } function wy(y) { return WY + WS - y * U; }
+      function turtle(x, y, th, col, r) {
+        ctx.save(); ctx.translate(wx(x), wy(y)); ctx.rotate(-th); ctx.fillStyle = col;
+        ctx.beginPath(); ctx.ellipse(0, 0, r, r * 0.8, 0, 0, 7); ctx.fill(); ctx.beginPath(); ctx.arc(r * 1.1, 0, r * 0.4, 0, 7); ctx.fill(); ctx.restore();
+      }
+      alive.concat(busy && alive.indexOf(busy) < 0 ? [busy] : []).forEach(function (a) { if (!a.dead) { turtle(a.x, a.y, 1.2, '#ffd166', 6); label(ctx, a.name, wx(a.x), wy(a.y) - 12, '#fff', 9); } });
+      var tg = busy || pick();
+      if (tg) { ctx.setLineDash([3, 3]); ctx.strokeStyle = '#fff'; ctx.beginPath(); ctx.moveTo(wx(hunter.x), wy(hunter.y)); ctx.lineTo(wx(tg.x), wy(tg.y)); ctx.stroke(); ctx.setLineDash([]); }
+      turtle(hunter.x, hunter.y, hunter.th, '#3ee8a0', 9);
+      // graph
+      label(ctx, 'what ROS 2 does: the node graph', 300, 16, c.muted, 11, 'left', true);
+      function edge(a, b, col) { var A = NP[a], B = NP[b]; ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.5; ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.stroke(); ctx.globalAlpha = 1; }
+      edge('ts', 'ct', c.border); edge('sp', 'ts', c.border); edge('sp', 'ct', c.border);
+      Object.keys(NP).forEach(function (k) { var n = NP[k]; node(ctx, n.x, n.y, 142, 38, n.t, c.bg, k === 'ts' ? c.accent : k === 'sp' ? c.gold : c.green, c.text); });
+      label(ctx, 'pose → / ← cmd_vel', 590, 140, c.muted, 10);
+      label(ctx, '/spawn · /kill', 392, 140, c.muted, 10);
+      label(ctx, '/alive_turtles · /catch_turtle', 480, 270, c.muted, 10);
+      flights.forEach(function (f) {
+        var A = NP[f.a], B = NP[f.b], o = f.off ? 8 : f.small ? -8 : 0;
+        var x = A.x + (B.x - A.x) * f.t + o, y = A.y + (B.y - A.y) * f.t + o;
+        var col = f.kind === 'req' ? c.gold : f.kind === 'res' ? c.green : c.accent;
+        if (f.small) { ctx.globalAlpha = 0.6; ctx.beginPath(); ctx.arc(x, y, 3.5, 0, 7); ctx.fillStyle = col; ctx.fill(); ctx.globalAlpha = 1; return; }
+        ctx.font = '700 10px Inter, sans-serif'; var tw = ctx.measureText(f.txt).width + 14;
+        rr(ctx, x - tw / 2, y - 10, tw, 20, 6); ctx.fillStyle = col; ctx.fill();
+        label(ctx, f.txt, x, y, '#fff', 10, 'center', true);
+      });
+      rd.set('alive', alive.map(function (a) { return a.name; }).join(', ') || '[]');
+      rd.set('tgt', tg ? tg.name + (busy ? ' (catching…)' : '') : 'None');
+      rd.set('c', String(caught)); rd.set('n', String(nMsg));
     });
   };
 
