@@ -187,7 +187,7 @@
   .lpath.dsg a b, .lstep.dsg .n{background:linear-gradient(135deg,#a78bfa,var(--purple));}
   .lpath.ctl a b, .lstep.ctl .n{background:linear-gradient(135deg,var(--accent2),#12b886);}
   /* go-to-goal picture (7.2 step 1) */
-  .ggfig svg{max-width:720px;}
+  .ggfig svg{max-width:1080px;}
   .ggfig .gw{fill:#4556ff;} .ggfig .gg{stroke:rgba(255,255,255,.14); stroke-width:1;}
   .ggfig .gt{fill:#fff; font-size:12px;}
   .ggfig .dx{stroke:#fff; stroke-width:1.6; stroke-dasharray:5 5; opacity:.7;}
@@ -208,8 +208,12 @@
   .ggfig .mr{display:flex; align-items:center; gap:10px; min-height:26px;}
   .ggfig .mr .mi{flex:none; width:18px; height:18px; border-radius:50%; background:var(--panel2); border:1px solid var(--border); font:700 10.5px Inter,sans-serif; display:grid; place-items:center; color:var(--muted);}
   .ggfig .mr.y math{color:#c99410;} .ggfig .mr.p math{color:#d6336c;} .ggfig .mr.g math{color:var(--accent2);}
-  .ggfig .mr .mn{margin-left:auto; font:600 11px 'JetBrains Mono',monospace; color:var(--muted);}
-  .ggfig .mr .mn::before{content:"→ ";}
+  .ggfig .mr .mx{flex:0 0 195px; text-align:left;}
+  .ggfig .mr .pc{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; font:600 11.5px 'JetBrains Mono',monospace; color:var(--text); background:var(--panel2); border:1px solid var(--border); border-radius:6px; padding:3px 8px; white-space:nowrap;}
+  .ggfig .mr .pc i{font-style:normal; color:var(--muted);}
+  .ggfig .mr.mh{min-height:0;} .ggfig .mr.mh .mi{visibility:hidden;}
+  .ggfig .mr.mh b{flex:0 0 195px; font:800 11px Inter,sans-serif; letter-spacing:.06em; text-transform:uppercase; color:var(--accent);}
+  .ggfig .mr.mh b.pc{flex:1; background:none; border:0; padding:0 8px;}
   .ggfig .mkey{font:500 11px Inter,sans-serif; color:var(--muted);} .ggfig .mkey i{font-family:'Times New Roman',serif; font-size:13px;}
   .ggfig .eq .y{fill:#c99410;} .ggfig .eq .p{fill:#d6336c;} .ggfig .eq .g{fill:var(--accent2);}
   html[data-theme="dark"] .ggfig .eq .y{fill:#ffd166;} html[data-theme="dark"] .ggfig .eq .p{fill:#ff8fab;}
@@ -769,7 +773,7 @@ flowchart LR
 
 <h3>The go-to-goal maths used by the controller</h3>
 <figure class="helpdesk ggfig">
-<svg viewBox="0 0 680 300" role="img" aria-label="Animated: in a blue turtlesim world, the green hunter turtle turns towards the yellow target, then drives along the distance line and stops on the target. On the right, the seven equations of the controller: delta x equals x target minus x; delta y equals y target minus y; d equals the square root of delta x squared plus delta y squared; theta g equals atan2 of delta y and delta x; e theta equals theta g minus theta, wrapped into minus pi to pi; v equals 2 d; omega equals 6 e theta.">
+<svg viewBox="0 0 1060 300" role="img" aria-label="Animated: in a blue turtlesim world, the green hunter turtle turns towards the yellow target, then drives along the distance line and stops on the target. On the right, the seven equations of the controller: delta x equals x target minus x; delta y equals y target minus y; d equals the square root of delta x squared plus delta y squared; theta g equals atan2 of delta y and delta x; e theta equals theta g minus theta, wrapped into minus pi to pi; v equals 2 d; omega equals 6 e theta.">
   <rect class="gw" x="20" y="16" width="330" height="236" rx="10"/>
   <line class="gg" x1="86" y1="16" x2="86" y2="252"/><line class="gg" x1="152" y1="16" x2="152" y2="252"/><line class="gg" x1="218" y1="16" x2="218" y2="252"/><line class="gg" x1="284" y1="16" x2="284" y2="252"/>
   <line class="gg" x1="20" y1="75" x2="350" y2="75"/><line class="gg" x1="20" y1="134" x2="350" y2="134"/><line class="gg" x1="20" y1="193" x2="350" y2="193"/>
@@ -786,21 +790,22 @@ flowchart LR
     <line class="head" x1="70" y1="226" x2="122" y2="226"/>
     <ellipse class="me" cx="70" cy="226" rx="14" ry="11"/><circle class="me" cx="86" cy="226" r="5"/>
   </g></g>
-  <foreignObject x="362" y="14" width="314" height="244">
+  <foreignObject x="362" y="8" width="692" height="252">
   <div xmlns="http://www.w3.org/1999/xhtml" class="mathcol">
-    <div class="mr "><span class="mi">1</span><math><mrow><mi mathvariant="normal">Δ</mi><mi>x</mi></mrow><mo>=</mo><msub><mi>x</mi><mi>t</mi></msub><mo>−</mo><mi>x</mi></math></div>
-    <div class="mr "><span class="mi">2</span><math><mrow><mi mathvariant="normal">Δ</mi><mi>y</mi></mrow><mo>=</mo><msub><mi>y</mi><mi>t</mi></msub><mo>−</mo><mi>y</mi></math></div>
-    <div class="mr y"><span class="mi">3</span><math><mi>d</mi><mo>=</mo><msqrt><msup><mrow><mi mathvariant="normal">Δ</mi><mi>x</mi></mrow><mn>2</mn></msup><mo>+</mo><msup><mrow><mi mathvariant="normal">Δ</mi><mi>y</mi></mrow><mn>2</mn></msup></msqrt></math></div>
-    <div class="mr p"><span class="mi">4</span><math><msub><mi>θ</mi><mi>g</mi></msub><mo>=</mo><mi>atan2</mi><mo stretchy="false">(</mo><mrow><mi mathvariant="normal">Δ</mi><mi>y</mi></mrow><mo>,</mo><mrow><mi mathvariant="normal">Δ</mi><mi>x</mi></mrow><mo stretchy="false">)</mo></math></div>
-    <div class="mr "><span class="mi">5</span><math><msub><mi>e</mi><mi>θ</mi></msub><mo>=</mo><msub><mi>θ</mi><mi>g</mi></msub><mo>−</mo><mi>θ</mi><mo>,</mo><mspace width="0.6em"/><msub><mi>e</mi><mi>θ</mi></msub><mo>∈</mo><mo stretchy="false">[</mo><mo form="prefix" lspace="0" rspace="0">−</mo><mi>π</mi><mo>,</mo><mi>π</mi><mo stretchy="false">]</mo></math></div>
-    <div class="mr g"><span class="mi">6</span><math><mi>v</mi><mo>=</mo><mn>2</mn><mi>d</mi></math><span class="mn">linear.x</span></div>
-    <div class="mr g"><span class="mi">7</span><math><mi>ω</mi><mo>=</mo><mn>6</mn><msub><mi>e</mi><mi>θ</mi></msub></math><span class="mn">angular.z</span></div>
+    <div class="mr mh"><span class="mi"></span><b>Maths</b><b class="pc">Python (controller code)</b></div>
+    <div class="mr "><span class="mi">1</span><span class="mx"><math><mrow><mi mathvariant="normal">Δ</mi><mi>x</mi></mrow><mo>=</mo><msub><mi>x</mi><mi>t</mi></msub><mo>−</mo><mi>x</mi></math></span><code class="pc">dist_x = target.x - pose.x</code></div>
+    <div class="mr "><span class="mi">2</span><span class="mx"><math><mrow><mi mathvariant="normal">Δ</mi><mi>y</mi></mrow><mo>=</mo><msub><mi>y</mi><mi>t</mi></msub><mo>−</mo><mi>y</mi></math></span><code class="pc">dist_y = target.y - pose.y</code></div>
+    <div class="mr y"><span class="mi">3</span><span class="mx"><math><mi>d</mi><mo>=</mo><msqrt><msup><mrow><mi mathvariant="normal">Δ</mi><mi>x</mi></mrow><mn>2</mn></msup><mo>+</mo><msup><mrow><mi mathvariant="normal">Δ</mi><mi>y</mi></mrow><mn>2</mn></msup></msqrt></math></span><code class="pc">distance = math.sqrt(dist_x**2 + dist_y**2)</code></div>
+    <div class="mr p"><span class="mi">4</span><span class="mx"><math><msub><mi>θ</mi><mi>g</mi></msub><mo>=</mo><mi>atan2</mi><mo stretchy="false">(</mo><mrow><mi mathvariant="normal">Δ</mi><mi>y</mi></mrow><mo>,</mo><mrow><mi mathvariant="normal">Δ</mi><mi>x</mi></mrow><mo stretchy="false">)</mo></math></span><code class="pc">goal_theta = math.atan2(dist_y, dist_x)</code></div>
+    <div class="mr "><span class="mi">5</span><span class="mx"><math><msub><mi>e</mi><mi>θ</mi></msub><mo>=</mo><msub><mi>θ</mi><mi>g</mi></msub><mo>−</mo><mi>θ</mi><mo>,</mo><mspace width="0.6em"/><msub><mi>e</mi><mi>θ</mi></msub><mo>∈</mo><mo stretchy="false">[</mo><mo form="prefix" lspace="0" rspace="0">−</mo><mi>π</mi><mo>,</mo><mi>π</mi><mo stretchy="false">]</mo></math></span><code class="pc">diff = goal_theta - pose.theta</code></div>
+    <div class="mr g"><span class="mi">6</span><span class="mx"><math><mi>v</mi><mo>=</mo><mn>2</mn><mi>d</mi></math></span><code class="pc">msg.linear.x = 2*distance</code></div>
+    <div class="mr g"><span class="mi">7</span><span class="mx"><math><mi>ω</mi><mo>=</mo><mn>6</mn><msub><mi>e</mi><mi>θ</mi></msub></math></span><code class="pc">msg.angular.z = 6*diff</code></div>
     <div class="mkey">(<i>x</i>, <i>y</i>, <i>θ</i>) = turtle pose · (<i>x</i><sub>t</sub>, <i>y</i><sub>t</sub>) = target</div>
   </div>
   </foreignObject>
-  <g class="hd-stage phase ph1"><rect x="14" y="264" width="206" height="28" rx="14"/><text x="117" y="283">① big diff: turn first</text></g>
-  <g class="hd-stage phase ph2"><rect x="237" y="264" width="206" height="28" rx="14"/><text x="340" y="283">② drive, slowing down</text></g>
-  <g class="hd-stage phase ph3"><rect x="460" y="264" width="206" height="28" rx="14"/><text x="563" y="283">③ distance &lt; 0.5: catch</text></g>
+  <g class="hd-stage phase ph1"><rect x="20" y="264" width="320" height="28" rx="14"/><text x="180" y="283">① big diff: turn first</text></g>
+  <g class="hd-stage phase ph2"><rect x="370" y="264" width="320" height="28" rx="14"/><text x="530" y="283">② drive, slowing down</text></g>
+  <g class="hd-stage phase ph3"><rect x="720" y="264" width="320" height="28" rx="14"/><text x="880" y="283">③ distance &lt; 0.5: catch</text></g>
 </svg>
 </figure>
 <p>Speed is proportional to the distance, turning is proportional to the angle error: a <strong>P-controller</strong>. The angle error <var>e</var><sub>θ</sub> (<code>diff</code> in the code) is wrapped into [−π, π] so the turtle always turns the short way. Try it in the browser:</p>
