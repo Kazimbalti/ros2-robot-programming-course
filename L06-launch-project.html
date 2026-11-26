@@ -516,7 +516,7 @@ def generate_launch_description():
 <p>🚗 <strong>Real examples</strong> of one-command start-up:</p>
 <div class="trio two">
   <div class="t-lch"><div class="big">🚗</div><b>Self-driving car (Autoware)</b><ul><li><code>ros2 launch autoware_launch autoware.launch.xml</code></li><li>starts sensing, perception, planning and control</li></ul></div>
-  <div class="t-tk"><div class="big">🤖</div><b>Your LIMO (Lecture 8)</b><ul><li><code>ros2 launch limo_gazebosim limo_gazebo_diff.launch.py</code></li><li>one command: Gazebo + robot + sensors</li></ul></div>
+  <div class="t-tk"><div class="big">🤖</div><b>Your LIMO robot</b><ul><li><code>ros2 launch limo_gazebosim limo_gazebo_diff.launch.py</code></li><li>one command: Gazebo + robot + sensors</li></ul></div>
 </div>
 
 <div class="lab">
@@ -738,7 +738,7 @@ rqt_graph</code></pre></div>
 <p>We use turtlesim as the simulator so we can see what the robot is doing. The master turtle, <code>turtle1</code>, drives by itself to other turtles that appear at random places, and catches them one after another.</p>
 
 <div class="table-wrap"><table class="vs">
-  <tr><th></th><th>🐢 Catch Them All</th><th>🚕 Robotaxi</th><th>🤖 LIMO (Lecture 8)</th></tr>
+  <tr><th></th><th>🐢 Catch Them All</th><th>🚕 Robotaxi</th><th>🤖 LIMO robot</th></tr>
   <tr><td>Sense: where am I?</td><td><code>/turtle1/pose</code></td><td>GPS + LiDAR</td><td><code>/odom</code></td></tr>
   <tr><td>Sense: what's out there?</td><td><code>/alive_turtles</code></td><td>ride requests</td><td>a goal you choose</td></tr>
   <tr><td>Think: which first?</td><td>nearest turtle</td><td>nearest passenger</td><td>one goal at a time</td></tr>
@@ -1579,14 +1579,12 @@ ros2 bag play test2/</code></pre></div>
   <ol>
     <li>Finish the radio activity and the complete Catch Them All project. Submit an <code>rqt_graph</code> screenshot, a bag of a run, and your code.</li>
     <li>Challenge: make the gains <code>2</code> and <code>6</code> parameters <code>kp_linear</code> and <code>kp_angular</code>, and try different values from the launch file.</li>
-    <li>Preview Lecture 8: <code>ros2 launch limo_gazebosim limo_gazebo_diff.launch.py</code>, then <code>ros2 topic echo /odom --once</code>.</li>
   </ol>
 </div>
 
 <div class="footer-nav">
   <a href="L05-custom-interfaces.html">← Lecture 5: Interfaces &amp; Parameters</a>
   <a href="index.html#lectures">All lectures</a>
-  <a href="L08-drive-limo.html">Lecture 8: Drive the LIMO →</a>
 </div>
 </div>
 <script src="lab.js"></script>
