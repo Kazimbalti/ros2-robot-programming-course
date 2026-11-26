@@ -864,25 +864,25 @@ class TurtleControllerNode(Node):
         if self.pose_ == None:
             return
 
-        dist_x = self.target_x - self.pose_.x   # Δx = x_t − x
-        dist_y = self.target_y - self.pose_.y   # Δy = y_t − y
-        distance = math.sqrt(dist_x * dist_x + dist_y * dist_y)   # d = √(Δx² + Δy²)
+        dist_x = self.target_x - self.pose_.x
+        dist_y = self.target_y - self.pose_.y
+        distance = math.sqrt(dist_x * dist_x + dist_y * dist_y)
 
         msg = Twist()
 
         if distance &gt; 0.5:
             # position
-            msg.linear.x = 2*distance   # v = 2d
+            msg.linear.x = 2*distance
 
             # orientation
-            goal_theta = math.atan2(dist_y, dist_x)   # θ_g = atan2(Δy, Δx)
-            diff = goal_theta - self.pose_.theta   # e_θ = θ_g − θ
-            if diff &gt; math.pi:   # wrap e_θ into [−π, π]
+            goal_theta = math.atan2(dist_y, dist_x)
+            diff = goal_theta - self.pose_.theta
+            if diff &gt; math.pi:
                 diff -= 2*math.pi
             elif diff &lt; -math.pi:
                 diff += 2*math.pi
 
-            msg.angular.z = 6*diff   # ω = 6·e_θ
+            msg.angular.z = 6*diff
         else:
             # target reached!
             msg.linear.x = 0.0
@@ -1069,25 +1069,25 @@ class TurtleControllerNode(Node):
 <span class="hl">        if self.pose_ == None or self.turtle_to_catch_ == None:</span>
             return
 
-<span class="hl">        dist_x = self.turtle_to_catch_.x - self.pose_.x   # Δx = x_t − x</span>
-<span class="hl">        dist_y = self.turtle_to_catch_.y - self.pose_.y   # Δy = y_t − y</span>
-        distance = math.sqrt(dist_x * dist_x + dist_y * dist_y)   # d = √(Δx² + Δy²)
+<span class="hl">        dist_x = self.turtle_to_catch_.x - self.pose_.x</span>
+<span class="hl">        dist_y = self.turtle_to_catch_.y - self.pose_.y</span>
+        distance = math.sqrt(dist_x * dist_x + dist_y * dist_y)
 
         msg = Twist()
 
         if distance &gt; 0.5:
             # position
-            msg.linear.x = 2*distance   # v = 2d
+            msg.linear.x = 2*distance
 
             # orientation
-            goal_theta = math.atan2(dist_y, dist_x)   # θ_g = atan2(Δy, Δx)
-            diff = goal_theta - self.pose_.theta   # e_θ = θ_g − θ
-            if diff &gt; math.pi:   # wrap e_θ into [−π, π]
+            goal_theta = math.atan2(dist_y, dist_x)
+            diff = goal_theta - self.pose_.theta
+            if diff &gt; math.pi:
                 diff -= 2*math.pi
             elif diff &lt; -math.pi:
                 diff += 2*math.pi
 
-            msg.angular.z = 6*diff   # ω = 6·e_θ
+            msg.angular.z = 6*diff
         else:
             # target reached!
             msg.linear.x = 0.0
@@ -1370,25 +1370,25 @@ class TurtleControllerNode(Node):
         if self.pose_ == None or self.turtle_to_catch_ == None:
             return
 
-        dist_x = self.turtle_to_catch_.x - self.pose_.x   # Δx = x_t − x
-        dist_y = self.turtle_to_catch_.y - self.pose_.y   # Δy = y_t − y
-        distance = math.sqrt(dist_x * dist_x + dist_y * dist_y)   # d = √(Δx² + Δy²)
+        dist_x = self.turtle_to_catch_.x - self.pose_.x
+        dist_y = self.turtle_to_catch_.y - self.pose_.y
+        distance = math.sqrt(dist_x * dist_x + dist_y * dist_y)
 
         msg = Twist()
 
         if distance &gt; 0.5:
             # position
-            msg.linear.x = 2*distance   # v = 2d
+            msg.linear.x = 2*distance
 
             # orientation
-            goal_theta = math.atan2(dist_y, dist_x)   # θ_g = atan2(Δy, Δx)
-            diff = goal_theta - self.pose_.theta   # e_θ = θ_g − θ
-            if diff &gt; math.pi:   # wrap e_θ into [−π, π]
+            goal_theta = math.atan2(dist_y, dist_x)
+            diff = goal_theta - self.pose_.theta
+            if diff &gt; math.pi:
                 diff -= 2*math.pi
             elif diff &lt; -math.pi:
                 diff += 2*math.pi
 
-            msg.angular.z = 6*diff   # ω = 6·e_θ
+            msg.angular.z = 6*diff
         else:
             # target reached!
             msg.linear.x = 0.0
@@ -1461,9 +1461,9 @@ ros2 run turtlesim_catch_them_all turtle_spawner</code></pre></div>
 <span class="hl">                closest_turtle_distance = None</span>
 
 <span class="hl">                for turtle in msg.turtles:</span>
-<span class="hl">                    dist_x = turtle.x - self.pose_.x   # Δx = x_t − x</span>
-<span class="hl">                    dist_y = turtle.y - self.pose_.y   # Δy = y_t − y</span>
-<span class="hl">                    distance = math.sqrt(dist_x * dist_x + dist_y * dist_y)   # d = √(Δx² + Δy²)</span>
+<span class="hl">                    dist_x = turtle.x - self.pose_.x</span>
+<span class="hl">                    dist_y = turtle.y - self.pose_.y</span>
+<span class="hl">                    distance = math.sqrt(dist_x * dist_x + dist_y * dist_y)</span>
 <span class="hl">                    if closest_turtle == None or distance &lt; closest_turtle_distance:</span>
 <span class="hl">                        closest_turtle = turtle</span>
 <span class="hl">                        closest_turtle_distance = distance</span>
